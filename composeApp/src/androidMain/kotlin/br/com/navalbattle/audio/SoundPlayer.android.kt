@@ -22,6 +22,7 @@ actual class SoundPlayer actual constructor() {
         .build()
 
     private val ids: Map<Sfx, Int> = mapOf(
+        Sfx.LAUNCH to pool.load(AudioContextHolder.appContext, R.raw.sfx_launch, 1),
         Sfx.MISS to pool.load(AudioContextHolder.appContext, R.raw.sfx_miss, 1),
         Sfx.HIT to pool.load(AudioContextHolder.appContext, R.raw.sfx_hit, 1),
         Sfx.SUNK to pool.load(AudioContextHolder.appContext, R.raw.sfx_sunk, 1)
@@ -29,7 +30,11 @@ actual class SoundPlayer actual constructor() {
 
     actual fun play(sfx: Sfx) {
         val id = ids[sfx] ?: return
-        val volume = if (sfx == Sfx.SUNK) 1f else 0.85f
+        val volume = when (sfx) {
+            Sfx.SUNK -> 1f
+            Sfx.LAUNCH -> 0.6f
+            else -> 0.9f
+        }
         pool.play(id, volume, volume, 1, 0, 1f)
     }
 
