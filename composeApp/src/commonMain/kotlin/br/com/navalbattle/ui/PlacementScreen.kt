@@ -33,7 +33,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.ui.input.pointer.PointerInputScope
-import androidx.compose.ui.input.pointer.awaitFirstDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
@@ -265,7 +264,11 @@ private suspend fun PointerInputScope.awaitEachDrag(
     onEnd: () -> Unit
 ) {
     awaitEachGesture {
-        val down = awaitFirstDown()
+        var firstDown: androidx.compose.ui.input.pointer.PointerInputChange? = null
+        while (firstDown == null) {
+            firstDown = awaitPointerEvent().changes.firstOrNull { it.pressed }
+        }
+        val down = firstDown
         val cellPx = boardSize() / BOARD_SIZE
         val startCoord = Coord((down.position.x / cellPx).toInt(), (down.position.y / cellPx).toInt())
         val ship = findShip(startCoord) ?: return@awaitEachGesture
