@@ -47,7 +47,7 @@ class Board {
 
     fun remainingShips(): List<Ship> = _ships.filterNot { isSunk(it) }
 
-    fun fireAt(coord: Coord): ShotOutcome {
+    fun fireAt(coord: Coord, abilitiesEnabled: Boolean = true): ShotOutcome {
         val existing = marks[coord]
         if (existing == Mark.MISS || existing == Mark.HIT || existing == Mark.SUNK) {
             return ShotOutcome(coord, ShotResult.ALREADY_FIRED)
@@ -59,8 +59,8 @@ class Board {
             return ShotOutcome(coord, ShotResult.MISS)
         }
 
-        // Imersão: o submarino absorve o primeiro acerto e o tiro é reportado como erro.
-        if (ship.type == ShipClass.SUBMARINE && ShipClass.SUBMARINE !in diveUsed) {
+        // Imersão: só existe no modo Tático. No Clássico nenhum navio tem habilidade.
+        if (abilitiesEnabled && ship.type == ShipClass.SUBMARINE && ShipClass.SUBMARINE !in diveUsed) {
             diveUsed += ShipClass.SUBMARINE
             marks[coord] = Mark.MISS
             return ShotOutcome(coord, ShotResult.MISS, ship.type, absorbedByDive = true)
