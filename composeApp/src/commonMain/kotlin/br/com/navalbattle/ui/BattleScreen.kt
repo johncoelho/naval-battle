@@ -65,25 +65,33 @@ fun BattleScreen(state: AppState, match: Match) {
 
     LaunchedEffect(match.turnOwner, match.phase) {
         if (match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
-            delay(1200)
+            delay(1500)
             match.enemyTurn()
         }
     }
 
-    LaunchedEffect(match.playerImpact?.id, match.enemyImpact?.id) {
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-    }
-
+    // o disparo sai com o whoosh do míssil; o impacto só soa quando ele chega
     LaunchedEffect(match.playerImpact?.id) {
-        match.playerImpact?.let { sound.play(it.tone.toSfx()) }
+        match.playerImpact?.let { imp ->
+            sound.play(Sfx.LAUNCH)
+            delay(SHOT_TRAVEL_MS.toLong())
+            sound.play(imp.tone.toSfx())
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
     }
     LaunchedEffect(match.enemyImpact?.id) {
-        match.enemyImpact?.let { sound.play(it.tone.toSfx()) }
+        match.enemyImpact?.let { imp ->
+            sound.play(Sfx.LAUNCH)
+            delay(SHOT_TRAVEL_MS.toLong())
+            sound.play(imp.tone.toSfx())
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
     }
 
+    // espera o naufrágio final terminar antes de sair para o relatório
     LaunchedEffect(match.phase) {
         if (match.phase == Phase.RESULT) {
-            delay(1600)
+            delay(3800)
             state.screen = Screen.RESULT
         }
     }
