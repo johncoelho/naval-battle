@@ -11,7 +11,7 @@ enum class Tone { HIT, SUNK, MISS, SCAN, INFO }
 
 data class Callout(val main: String, val sub: String, val tone: Tone, val id: Long)
 
-data class Impact(val coord: Coord, val tone: Tone, val id: Long)
+data class Impact(val coord: Coord, val tone: Tone, val id: Long, val sunkShip: Ship? = null)
 
 /**
  * Estado completo de uma partida contra a IA. Todo o fluxo de turnos vive aqui;
@@ -62,7 +62,11 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
         if (playerBoard.ships.size != ShipClass.fleet.size) return
         phase = Phase.BATTLE
         turnOwner = Side.PLAYER
-        say("Frota a postos", "Aguardando coordenada", Tone.INFO)
+        if (mode == GameMode.TACTICAL) {
+            say("Frota a postos", "Toque nos ícones abaixo para usar uma habilidade", Tone.INFO)
+        } else {
+            say("Frota a postos", "Aguardando coordenada", Tone.INFO)
+        }
     }
 
     // ---------------- habilidades ----------------
@@ -134,7 +138,8 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
         if (outcome.result == ShotResult.ALREADY_FIRED) return
 
         playerShots++
-        playerImpact = Impact(coord, outcome.tone(), nextId())
+        val sunkShip = if (outcome.result == ShotResult.SUNK) enemyBoard.ships.firstOrNull { it.type == outcome.ship } else null
+        playerImpact = Impact(coord, outcome.tone(), nextId(), sunkShip)
         announce(outcome, attackerIsPlayer = true)
         if (outcome.result == ShotResult.HIT || outcome.result == ShotResult.SUNK) playerHits++
 
@@ -195,7 +200,8 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
         val shot = ai.nextShot(playerBoard)
         val outcome = playerBoard.fireAt(shot, abilitiesEnabled = mode == GameMode.TACTICAL)
         ai.registerOutcome(outcome, playerBoard)
-        enemyImpact = Impact(shot, outcome.tone(), nextId())
+        val sunkShip = if (outcome.result == ShotResult.SUNK) playerBoard.ships.firstOrNull { it.type == outcome.ship } else null
+        enemyImpact = Impact(shot, outcome.tone(), nextId(), sunkShip)
         announce(outcome, attackerIsPlayer = false)
 
         if (playerBoard.allSunk()) {
