@@ -52,3 +52,13 @@ O APK sai em `composeApp/build/outputs/apk/debug/`.
 
 Cada push na `main` dispara o workflow do GitHub Actions, que compila o APK de depuração
 e o publica na release `latest` para download direto no celular.
+
+## Créditos de áudio
+
+Os efeitos sonoros em `composeApp/src/androidMain/res/raw/` foram montados a partir de
+gravações em **domínio público** do Wikimedia Commons, cortadas, filtradas e mixadas com ffmpeg:
+
+- `sfx_hit.wav` — [Explosion-LS100155.ogg](https://commons.wikimedia.org/wiki/File:Explosion-LS100155.ogg) (Fg2, domínio público)
+- `sfx_sunk.wav` — [Explosion 10.ogg](https://commons.wikimedia.org/wiki/File:Explosion_10.ogg) (tcpp, domínio público) em camadas com o anterior e com a água
+- `sfx_miss.wav` — [Bathtub water splashes.ogg](https://commons.wikimedia.org/wiki/File:Bathtub_water_splashes.ogg) (domínio público)
+- `sfx_launch.wav` — cauda de "Explosion 10.ogg" invertida, formando o assobio do projétil chegando
