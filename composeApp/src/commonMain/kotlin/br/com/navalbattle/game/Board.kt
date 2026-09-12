@@ -24,9 +24,10 @@ class Board {
     /** Ativada pelo dono do tabuleiro: anula a próxima varredura inimiga. */
     var smokeActive by mutableStateOf(false)
 
-    fun canPlace(ship: Ship): Boolean {
+    /** [ignoring] permite validar o reposicionamento/giro do próprio navio, sem colidir consigo mesmo. */
+    fun canPlace(ship: Ship, ignoring: ShipClass? = ship.type): Boolean {
         if (!ship.fitsOnBoard()) return false
-        val occupied = _ships.flatMap { it.cells }.toSet()
+        val occupied = _ships.filter { it.type != ignoring }.flatMap { it.cells }.toSet()
         return ship.cells.none { it in occupied }
     }
 
