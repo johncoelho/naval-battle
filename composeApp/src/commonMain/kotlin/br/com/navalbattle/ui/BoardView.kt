@@ -27,7 +27,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.offset
+import kotlin.math.roundToInt
 import br.com.navalbattle.design.Livery
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.drawShip
@@ -65,16 +68,27 @@ fun BoardView(
     )
 
     val impactAnim = remember { Animatable(1f) }
+    val impactDuration = if (impact?.tone == Tone.SUNK) 1300 else 700
     LaunchedEffect(impact?.id) {
         if (impact != null) {
             impactAnim.snapTo(0f)
-            impactAnim.animateTo(1f, tween(700, easing = LinearEasing))
+            impactAnim.animateTo(1f, tween(impactDuration, easing = LinearEasing))
+        }
+    }
+
+    val shake = remember { Animatable(0f) }
+    LaunchedEffect(impact?.id) {
+        if (impact?.tone == Tone.SUNK) {
+            for (offsetPx in listOf(-14f, 10f, -7f, 4f, -2f, 0f)) {
+                shake.animateTo(offsetPx, tween(45, easing = LinearEasing))
+            }
         }
     }
 
     Canvas(
         modifier = modifier
             .aspectRatio(1f)
+            .offset { IntOffset(shake.value.roundToInt(), 0) }
             .background(Naval.abyss)
             .border(1.dp, Naval.line)
             .padding(3.dp)
@@ -186,6 +200,29 @@ fun BoardView(
                     center = c,
                     style = Stroke(2f)
                 )
+
+                if (imp.tone == Tone.SUNK) {
+                    // segundo anel de choque, um pouco atrasado e maior
+                    val t2 = ((t - 0.12f) / 0.88f).coerceIn(0f, 1f)
+                    drawCircle(
+                        color = Naval.amberStrong.copy(alpha = (1f - t2) * 0.6f),
+                        radius = cell * (0.4f + t2 * 2.6f),
+                        center = c,
+                        style = Stroke(2.5f)
+                    )
+                    // fumaça/destroços subindo e dissipando
+                    val plumeSeeds = listOf(-0.55f to 0.9f, 0.05f to 1.15f, 0.5f to 0.75f, -0.15f to 1.4f)
+                    plumeSeeds.forEachIndexed { i, (dx, speed) ->
+                        val local = ((t - i * 0.06f) / (1f - i * 0.06f)).coerceIn(0f, 1f)
+                        val rise = local * cell * 1.8f * speed
+                        val puff = Offset(c.x + dx * cell, c.y - rise)
+                        drawCircle(
+                            color = Naval.inkSoft.copy(alpha = (1f - local) * 0.5f),
+                            radius = cell * (0.14f + local * 0.16f),
+                            center = puff
+                        )
+                    }
+                }
             }
         }
     }

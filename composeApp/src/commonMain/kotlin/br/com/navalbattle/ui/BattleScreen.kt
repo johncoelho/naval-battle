@@ -27,8 +27,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.DisposableEffect
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.audio.Sfx
+import br.com.navalbattle.audio.SoundPlayer
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Ability
@@ -37,6 +40,7 @@ import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.ShipClass
 import br.com.navalbattle.game.Side
+import br.com.navalbattle.game.Tone
 import kotlinx.coroutines.delay
 
 private const val TURN_SECONDS = 20
@@ -45,6 +49,8 @@ private const val TURN_SECONDS = 20
 fun BattleScreen(state: AppState, match: Match) {
     var secondsLeft by remember { mutableStateOf(TURN_SECONDS) }
     val haptics = LocalHapticFeedback.current
+    val sound = remember { SoundPlayer() }
+    DisposableEffect(Unit) { onDispose { sound.release() } }
 
     LaunchedEffect(match.turnOwner, match.turnCount, match.phase) {
         if (match.phase == Phase.BATTLE && match.turnOwner == Side.PLAYER) {
@@ -66,6 +72,13 @@ fun BattleScreen(state: AppState, match: Match) {
 
     LaunchedEffect(match.playerImpact?.id, match.enemyImpact?.id) {
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+
+    LaunchedEffect(match.playerImpact?.id) {
+        match.playerImpact?.let { sound.play(it.tone.toSfx()) }
+    }
+    LaunchedEffect(match.enemyImpact?.id) {
+        match.enemyImpact?.let { sound.play(it.tone.toSfx()) }
     }
 
     LaunchedEffect(match.phase) {
@@ -190,4 +203,10 @@ private fun formatTime(seconds: Int): String {
     val m = seconds / 60
     val s = seconds % 60
     return "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
+}
+
+private fun Tone.toSfx(): Sfx = when (this) {
+    Tone.HIT -> Sfx.HIT
+    Tone.SUNK -> Sfx.SUNK
+    else -> Sfx.MISS
 }
