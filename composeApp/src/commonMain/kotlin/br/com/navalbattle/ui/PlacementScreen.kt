@@ -21,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
@@ -136,7 +135,3 @@ fun PlacementScreen(state: AppState, match: Match) {
 
 private fun Orientation.labelPt(): String =
     if (this == Orientation.HORIZONTAL) "HORIZONTAL" else "VERTICAL"
-
-@Composable
-private fun BoxAlign(content: @Composable () -> Unit) =
-    Box(contentAlignment = Alignment.Center) { content() }

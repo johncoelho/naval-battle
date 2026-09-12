@@ -45,7 +45,7 @@ composeApp/
 ## Build
 
 ```bash
-./gradlew :composeApp:assembleDebug
+gradle :composeApp:assembleDebug
 ```
 
 O APK sai em `composeApp/build/outputs/apk/debug/`.

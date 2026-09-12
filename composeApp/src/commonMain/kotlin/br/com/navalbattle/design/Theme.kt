@@ -1,6 +1,5 @@
 package br.com.navalbattle.design
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -84,10 +83,9 @@ object NavalType {
     )
 }
 
+/** O jogo mantém um único mundo visual, noturno — não segue o tema do sistema. */
 @Composable
 fun NavalTheme(content: @Composable () -> Unit) {
-    @Suppress("UNUSED_EXPRESSION")
-    isSystemInDarkTheme() // o jogo mantém um único mundo visual, noturno
     MaterialTheme(
         colorScheme = darkColorScheme(
             primary = Naval.amber,
