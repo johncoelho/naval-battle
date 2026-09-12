@@ -164,7 +164,11 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
             val mark = enemyBoard.marks[c]
             if (mark != Mark.MISS && mark != Mark.HIT && mark != Mark.SUNK) open += c
         }
-        if (open.isEmpty()) return
+        // sem célula disponível o turno tem que passar mesmo assim, senão a partida congela
+        if (open.isEmpty()) {
+            endPlayerTurn()
+            return
+        }
         playerAct(open[random.nextInt(open.size)])
     }
 

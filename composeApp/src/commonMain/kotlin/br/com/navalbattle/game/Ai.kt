@@ -74,6 +74,7 @@ class Ai(private val random: Random = Random.Default) {
             if ((x + y) % 2 == 0) openParity += c
         }
         val pool = openParity.ifEmpty { open }
+        if (pool.isEmpty()) return Coord(0, 0) // tabuleiro esgotado: devolve algo válido em vez de estourar
         return pool[random.nextInt(pool.size)]
     }
 

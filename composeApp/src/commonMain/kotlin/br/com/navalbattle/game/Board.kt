@@ -21,6 +21,12 @@ class Board {
     private val hits = mutableSetOf<Coord>()
     private val diveUsed = mutableSetOf<ShipClass>()
 
+    /**
+     * Célula que a Imersão engoliu. Ela fica marcada como água e não aceita novo tiro,
+     * então precisa contar como resolvida — senão o submarino nunca afunda e a partida trava.
+     */
+    private val diveAbsorbed = mutableSetOf<Coord>()
+
     /** Ativada pelo dono do tabuleiro: anula a próxima varredura inimiga. */
     var smokeActive by mutableStateOf(false)
 
@@ -42,7 +48,7 @@ class Board {
 
     fun shipAt(coord: Coord): Ship? = _ships.firstOrNull { coord in it.cells }
 
-    fun isSunk(ship: Ship): Boolean = ship.cells.all { it in hits }
+    fun isSunk(ship: Ship): Boolean = ship.cells.all { it in hits || it in diveAbsorbed }
 
     fun allSunk(): Boolean = _ships.isNotEmpty() && _ships.all { isSunk(it) }
 
@@ -63,6 +69,7 @@ class Board {
         // Imersão: só existe no modo Tático. No Clássico nenhum navio tem habilidade.
         if (abilitiesEnabled && ship.type == ShipClass.SUBMARINE && ShipClass.SUBMARINE !in diveUsed) {
             diveUsed += ShipClass.SUBMARINE
+            diveAbsorbed += coord
             marks[coord] = Mark.MISS
             return ShotOutcome(coord, ShotResult.MISS, ship.type, absorbedByDive = true)
         }
@@ -112,6 +119,7 @@ class Board {
         marks.clear()
         hits.clear()
         diveUsed.clear()
+        diveAbsorbed.clear()
         smokeActive = false
     }
 
