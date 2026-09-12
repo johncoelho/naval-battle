@@ -182,20 +182,21 @@ private fun AbilityBar(match: Match) {
     Column {
         HudLabel("HABILIDADES TÁTICAS")
         Gap(6)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             abilities.forEach { ability ->
                 AbilityButton(
                     code = ability.code,
+                    name = ability.shortName(),
                     enabled = match.abilityAvailable(ability),
                     selected = match.pendingAbility == ability,
                     cooldown = match.abilityCooldown(ability)
                 ) { match.selectAbility(ability) }
             }
         }
-        match.pendingAbility?.let {
-            Gap(6)
-            HudLabel("${it.label}: toque no alvo", Naval.amberStrong)
-        }
+        Gap(6)
+        val hint = match.pendingAbility?.let { "${it.label}: toque no alvo" }
+            ?: "Toque num ícone para usar, ou dispare direto no alvo"
+        HudLabel(hint, if (match.pendingAbility != null) Naval.amberStrong else Naval.muted)
     }
 }
 
@@ -203,6 +204,14 @@ private fun formatTime(seconds: Int): String {
     val m = seconds / 60
     val s = seconds % 60
     return "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
+}
+
+private fun Ability.shortName(): String = when (this) {
+    Ability.SONAR_PING -> "Sonar"
+    Ability.AIR_RECON -> "Radar"
+    Ability.DOUBLE_BARRAGE -> "2x Tiro"
+    Ability.SMOKE -> "Fumaça"
+    Ability.DIVE -> "Imersão"
 }
 
 private fun Tone.toSfx(): Sfx = when (this) {

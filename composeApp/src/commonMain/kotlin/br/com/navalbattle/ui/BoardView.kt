@@ -12,7 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,8 +29,6 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.offset
-import kotlin.math.roundToInt
 import br.com.navalbattle.design.Livery
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.drawShip
@@ -42,6 +40,11 @@ import br.com.navalbattle.game.Mark
 import br.com.navalbattle.game.Orientation
 import br.com.navalbattle.game.Ship
 import br.com.navalbattle.game.Tone
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlinx.coroutines.delay
+
+private const val TRAVEL_MS = 260
 
 @Composable
 fun BoardView(
@@ -67,10 +70,15 @@ fun BoardView(
         label = "sweepAngle"
     )
 
+    // fase 1: projétil viajando até o alvo. fase 2: explosão/respingo no impacto.
+    val travelAnim = remember { Animatable(1f) }
     val impactAnim = remember { Animatable(1f) }
-    val impactDuration = if (impact?.tone == Tone.SUNK) 1300 else 700
+    val impactDuration = if (impact?.tone == Tone.SUNK) 1500 else 650
     LaunchedEffect(impact?.id) {
         if (impact != null) {
+            impactAnim.snapTo(1f)
+            travelAnim.snapTo(0f)
+            travelAnim.animateTo(1f, tween(TRAVEL_MS, easing = LinearEasing))
             impactAnim.snapTo(0f)
             impactAnim.animateTo(1f, tween(impactDuration, easing = LinearEasing))
         }
@@ -79,6 +87,7 @@ fun BoardView(
     val shake = remember { Animatable(0f) }
     LaunchedEffect(impact?.id) {
         if (impact?.tone == Tone.SUNK) {
+            delay(TRAVEL_MS.toLong())
             for (offsetPx in listOf(-14f, 10f, -7f, 4f, -2f, 0f)) {
                 shake.animateTo(offsetPx, tween(45, easing = LinearEasing))
             }
@@ -175,55 +184,160 @@ fun BoardView(
             }
         }
 
-        // impacto
+        // projétil e impacto
         impact?.let { imp ->
-            val t = impactAnim.value
-            if (t < 1f) {
-                val c = Offset(imp.coord.x * cell + cell / 2f, imp.coord.y * cell + cell / 2f)
-                val tint = when (imp.tone) {
-                    Tone.MISS -> Naval.inkSoft
-                    Tone.SUNK -> Naval.danger
-                    else -> Naval.amberStrong
-                }
-                drawCircle(
-                    brush = Brush.radialGradient(
-                        colors = listOf(tint.copy(alpha = (1f - t) * 0.9f), Color.Transparent),
-                        center = c,
-                        radius = cell * (0.6f + t)
-                    ),
-                    radius = cell * (0.6f + t),
-                    center = c
-                )
-                drawCircle(
-                    color = tint.copy(alpha = (1f - t) * 0.85f),
-                    radius = cell * (0.3f + t * 1.6f),
-                    center = c,
-                    style = Stroke(2f)
-                )
+            val target = Offset(imp.coord.x * cell + cell / 2f, imp.coord.y * cell + cell / 2f)
+            val tt = travelAnim.value
 
-                if (imp.tone == Tone.SUNK) {
-                    // segundo anel de choque, um pouco atrasado e maior
-                    val t2 = ((t - 0.12f) / 0.88f).coerceIn(0f, 1f)
-                    drawCircle(
-                        color = Naval.amberStrong.copy(alpha = (1f - t2) * 0.6f),
-                        radius = cell * (0.4f + t2 * 2.6f),
-                        center = c,
-                        style = Stroke(2.5f)
-                    )
-                    // fumaça/destroços subindo e dissipando
-                    val plumeSeeds = listOf(-0.55f to 0.9f, 0.05f to 1.15f, 0.5f to 0.75f, -0.15f to 1.4f)
-                    plumeSeeds.forEachIndexed { i, (dx, speed) ->
-                        val local = ((t - i * 0.06f) / (1f - i * 0.06f)).coerceIn(0f, 1f)
-                        val rise = local * cell * 1.8f * speed
-                        val puff = Offset(c.x + dx * cell, c.y - rise)
-                        drawCircle(
-                            color = Naval.inkSoft.copy(alpha = (1f - local) * 0.5f),
-                            radius = cell * (0.14f + local * 0.16f),
-                            center = puff
-                        )
-                    }
+            if (tt < 1f) {
+                drawIncomingMissile(target, cell, tt)
+            } else {
+                val t = impactAnim.value
+                if (t < 1f) {
+                    drawImpactBurst(imp, target, cell, t)
                 }
             }
+        }
+    }
+}
+
+private fun DrawScope.drawIncomingMissile(target: Offset, cell: Float, tt: Float) {
+    val origin = Offset(target.x, 0f)
+    val pos = Offset(origin.x, origin.y + (target.y - origin.y) * tt)
+    val trailLen = cell * 1.1f
+    val trailStart = Offset(pos.x, (pos.y - trailLen).coerceAtLeast(0f))
+    drawLine(
+        brush = Brush.verticalGradient(
+            colors = listOf(Color.Transparent, Naval.amberStrong.copy(alpha = 0.75f)),
+            startY = trailStart.y,
+            endY = pos.y
+        ),
+        start = trailStart,
+        end = pos,
+        strokeWidth = cell * 0.09f
+    )
+    drawCircle(Naval.amberStrong, radius = cell * 0.1f, center = pos)
+    drawCircle(Color.White.copy(alpha = 0.8f), radius = cell * 0.05f, center = pos)
+}
+
+private fun DrawScope.drawImpactBurst(imp: Impact, c: Offset, cell: Float, t: Float) {
+    val tint = when (imp.tone) {
+        Tone.MISS -> Naval.inkSoft
+        Tone.SUNK -> Naval.danger
+        else -> Naval.amberStrong
+    }
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(tint.copy(alpha = (1f - t) * 0.9f), Color.Transparent),
+            center = c,
+            radius = cell * (0.6f + t)
+        ),
+        radius = cell * (0.6f + t),
+        center = c
+    )
+    drawCircle(
+        color = tint.copy(alpha = (1f - t) * 0.85f),
+        radius = cell * (0.3f + t * 1.6f),
+        center = c,
+        style = Stroke(2f)
+    )
+
+    when (imp.tone) {
+        Tone.MISS -> {
+            // respingo: anéis d'água se espalhando
+            for (i in 0..2) {
+                val local = ((t - i * 0.1f) / (1f - i * 0.1f)).coerceIn(0f, 1f)
+                drawCircle(
+                    color = Naval.greenBright.copy(alpha = (1f - local) * 0.35f),
+                    radius = cell * (0.25f + local * 0.9f),
+                    center = c,
+                    style = Stroke(1.5f)
+                )
+            }
+        }
+
+        Tone.SUNK -> drawSinkingShip(imp, c, cell, t)
+        else -> Unit
+    }
+}
+
+/** Fogo ao longo do casco, marinheiros pulando na água e a silhueta submergindo. */
+private fun DrawScope.drawSinkingShip(imp: Impact, c: Offset, cell: Float, t: Float) {
+    // segundo anel de choque, maior e um pouco atrasado
+    val t2 = ((t - 0.1f) / 0.9f).coerceIn(0f, 1f)
+    drawCircle(
+        color = Naval.amberStrong.copy(alpha = (1f - t2) * 0.6f),
+        radius = cell * (0.4f + t2 * 2.6f),
+        center = c,
+        style = Stroke(2.5f)
+    )
+
+    val ship = imp.sunkShip
+    val cells = ship?.cells ?: listOf(imp.coord)
+    val sinkT = t2 // 0 = recém atingido, 1 = totalmente submerso
+
+    cells.forEachIndexed { i, coord ->
+        val cx = coord.x * cell + cell / 2f
+        val cy = coord.y * cell + cell / 2f + sinkT * cell * 0.5f // afunda visualmente
+        val fade = 1f - sinkT
+
+        // fumaça densa subindo
+        val riseSeed = i * 0.37f
+        for (p in 0..1) {
+            val local = ((t - (i * 0.05f + p * 0.18f)) / 0.85f).coerceIn(0f, 1f)
+            val rise = local * cell * 2.0f
+            val sway = sin((local * 6f + riseSeed) * 3.1416f) * cell * 0.12f
+            drawCircle(
+                color = Naval.inkSoft.copy(alpha = (1f - local) * 0.45f),
+                radius = cell * (0.13f + local * 0.17f),
+                center = Offset(cx + sway, cy - rise)
+            )
+        }
+
+        // fogo lambendo o casco, tremeluzindo
+        if (fade > 0.05f) {
+            val flicker = 0.6f + 0.4f * sin((t * 50f + i * 2f))
+            drawCircle(
+                color = Naval.amberStrong.copy(alpha = fade * 0.8f * flicker),
+                radius = cell * 0.16f * flicker,
+                center = Offset(cx, cy - cell * 0.1f)
+            )
+            drawCircle(
+                color = Naval.danger.copy(alpha = fade * 0.7f),
+                radius = cell * 0.1f,
+                center = Offset(cx, cy - cell * 0.05f)
+            )
+        }
+    }
+
+    // marinheiros pulando das pontas do navio para a água
+    val ends = listOf(cells.first(), cells.last())
+    ends.forEachIndexed { i, coord ->
+        val local = ((t - 0.05f) / 0.7f).coerceIn(0f, 1f)
+        if (local <= 0f) return@forEachIndexed
+        val dir = if (i == 0) -1f else 1f
+        val startX = coord.x * cell + cell / 2f
+        val startY = coord.y * cell + cell / 2f
+        val travel = cell * 1.3f
+        val jumpX = startX + dir * travel * local
+        val arc = sin(3.1416f * local) * cell * 0.55f
+        val jumpY = startY - arc + local * cell * 0.2f
+
+        if (local < 0.92f) {
+            drawCircle(
+                color = Naval.ink.copy(alpha = (1f - local * 0.5f)),
+                radius = cell * 0.06f,
+                center = Offset(jumpX, jumpY)
+            )
+        } else {
+            // splash na água
+            val splashT = ((local - 0.92f) / 0.08f).coerceIn(0f, 1f)
+            drawCircle(
+                color = Naval.greenBright.copy(alpha = (1f - splashT) * 0.6f),
+                radius = cell * (0.08f + splashT * 0.22f),
+                center = Offset(jumpX, jumpY),
+                style = Stroke(1.5f)
+            )
         }
     }
 }

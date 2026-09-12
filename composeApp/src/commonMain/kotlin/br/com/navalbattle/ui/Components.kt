@@ -13,8 +13,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -157,27 +160,45 @@ fun CalloutBanner(callout: Callout?, modifier: Modifier = Modifier) {
 @Composable
 fun AbilityButton(
     code: String,
+    name: String,
     enabled: Boolean,
     selected: Boolean,
     cooldown: Int,
     onClick: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .background(if (selected) Naval.surface3 else Color.Transparent)
-            .border(BorderStroke(1.5.dp, if (enabled) Naval.green else Naval.line))
-            .clickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            if (cooldown > 0) "$cooldown" else code,
-            style = NavalType.mono,
-            color = when {
-                selected -> Naval.amberStrong
-                enabled -> Naval.greenBright
-                else -> Naval.muted
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .background(if (selected) Naval.surface3 else Color.Transparent)
+                .border(BorderStroke(1.5.dp, if (enabled) Naval.green else Naval.line))
+                .clickable(enabled = enabled, onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                code,
+                style = NavalType.mono,
+                color = when {
+                    selected -> Naval.amberStrong
+                    enabled -> Naval.greenBright
+                    else -> Naval.muted
+                }
+            )
+            if (cooldown > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 6.dp, y = (-6).dp)
+                        .size(18.dp)
+                        .background(Naval.bg)
+                        .border(BorderStroke(1.dp, Naval.muted)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("$cooldown", style = NavalType.monoSmall, color = Naval.muted)
+                }
             }
-        )
+        }
+        Spacer(Modifier.height(3.dp))
+        Text(name.uppercase(), style = NavalType.monoSmall, color = if (enabled) Naval.inkSoft else Naval.muted)
     }
 }
