@@ -1,6 +1,6 @@
 package br.com.navalbattle.audio
 
-enum class Sfx { MISS, HIT, SUNK }
+enum class Sfx { LAUNCH, MISS, HIT, SUNK }
 
 /** Toca efeitos sonoros curtos de combate. Implementação nativa por plataforma. */
 expect class SoundPlayer() {
