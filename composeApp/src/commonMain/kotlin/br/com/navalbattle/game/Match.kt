@@ -130,7 +130,7 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
             else -> Unit
         }
 
-        val outcome = enemyBoard.fireAt(coord)
+        val outcome = enemyBoard.fireAt(coord, abilitiesEnabled = mode == GameMode.TACTICAL)
         if (outcome.result == ShotResult.ALREADY_FIRED) return
 
         playerShots++
@@ -193,7 +193,7 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
         }
 
         val shot = ai.nextShot(playerBoard)
-        val outcome = playerBoard.fireAt(shot)
+        val outcome = playerBoard.fireAt(shot, abilitiesEnabled = mode == GameMode.TACTICAL)
         ai.registerOutcome(outcome, playerBoard)
         enemyImpact = Impact(shot, outcome.tone(), nextId())
         announce(outcome, attackerIsPlayer = false)
