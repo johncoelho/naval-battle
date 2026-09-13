@@ -45,7 +45,12 @@ data class CloudProfile(
 /** Resultado de uma chamada à nuvem, com a mensagem já pronta para a tela. */
 sealed class CloudResult<out T> {
     data class Ok<T>(val value: T) : CloudResult<T>()
-    data class Fail(val message: String) : CloudResult<Nothing>()
+
+    /**
+     * [expired] marca a falha por sessão vencida: é o sinal para renovar o token
+     * com o refresh guardado e repetir a chamada, sem incomodar o comandante.
+     */
+    data class Fail(val message: String, val expired: Boolean = false) : CloudResult<Nothing>()
 }
 
 /**
