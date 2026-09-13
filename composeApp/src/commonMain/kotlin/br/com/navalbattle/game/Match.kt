@@ -58,6 +58,10 @@ class Match(
     var enemyImpact by mutableStateOf<Impact?>(null)
         private set
 
+    /** Id do disparo mais recente — a tela só anima o impacto que acabou de acontecer. */
+    var lastImpactId by mutableStateOf(0L)
+        private set
+
     var winner by mutableStateOf<Side?>(null)
         private set
 
@@ -210,6 +214,7 @@ class Match(
             target.ships.firstOrNull { it.type == outcome.ship }
         } else null
         val impact = Impact(coord, outcome.tone(), nextId(), sunkShip)
+        lastImpactId = impact.id
 
         val scored = outcome.result == ShotResult.HIT || outcome.result == ShotResult.SUNK
         if (attacker == Side.PLAYER) {
