@@ -70,7 +70,7 @@ fun BattleScreen(state: AppState, match: Match) {
         }
     }
 
-    // o disparo sai com o whoosh do míssil; o impacto só soa quando ele chega
+    // seu disparo: whoosh na saída, impacto quando o míssil chega
     LaunchedEffect(match.playerImpact?.id) {
         match.playerImpact?.let { imp ->
             sound.play(Sfx.LAUNCH)
@@ -79,12 +79,28 @@ fun BattleScreen(state: AppState, match: Match) {
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }
+
+    // tiro inimigo: se acertar a SUA frota, entra alarme de bordo por cima do impacto,
+    // para você distinguir na hora quem levou o tiro
     LaunchedEffect(match.enemyImpact?.id) {
         match.enemyImpact?.let { imp ->
             sound.play(Sfx.LAUNCH)
             delay(SHOT_TRAVEL_MS.toLong())
             sound.play(imp.tone.toSfx())
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            when (imp.tone) {
+                Tone.SUNK -> {
+                    delay(220)
+                    sound.play(Sfx.ALARM_CRITICAL)
+                }
+
+                Tone.HIT -> {
+                    delay(160)
+                    sound.play(Sfx.ALARM)
+                }
+
+                else -> Unit
+            }
         }
     }
 
