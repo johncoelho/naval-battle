@@ -246,9 +246,12 @@ fun BattleScreen(state: AppState, match: Match) {
  * Frota própria em tela cheia, como no modo solo: ocupa toda a faixa livre da
  * metade de baixo, sempre quadrada. Usada contra a IA e na rede — nos dois casos
  * ninguém mais está olhando para este aparelho.
+ *
+ * Extensão de [ColumnScope] de propósito: é o que dá acesso ao `Modifier.weight`
+ * que estica o mapa até preencher o que sobrou da coluna que a chama.
  */
 @Composable
-private fun OwnFleetPanel(state: AppState, match: Match, viewSide: Side, incomingImpact: Impact?) {
+private fun ColumnScope.OwnFleetPanel(state: AppState, match: Match, viewSide: Side, incomingImpact: Impact?) {
     val board = match.board(viewSide)
     val afloat = board.remainingShips().size
     Gap(6)
