@@ -4,11 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import br.com.navalbattle.audio.Music
+import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.design.Livery
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
@@ -36,6 +40,9 @@ class AppState {
     /** Quem deve pegar o aparelho para posicionar a própria frota. */
     var handoffSide by mutableStateOf(Side.PLAYER)
 
+    /** Trilha ligada. Os efeitos de combate continuam tocando de qualquer jeito. */
+    var musicOn by mutableStateOf(true)
+
     fun newMatch(opponent: Opponent) {
         match = Match(mode, opponent)
         // no modo local os dois se identificam antes de posicionar as frotas
@@ -60,6 +67,17 @@ class AppState {
 @Composable
 fun App() {
     val state = remember { AppState() }
+    val music = remember { MusicPlayer() }
+
+    // a trilha acompanha a tela: tema no deque, faixa de combate na batalha
+    LaunchedEffect(state.screen, state.musicOn) {
+        if (!state.musicOn) {
+            music.stop()
+        } else {
+            music.play(if (state.screen == Screen.BATTLE) Music.BATTLE else Music.THEME)
+        }
+    }
+    DisposableEffect(Unit) { onDispose { music.release() } }
 
     NavalTheme {
         Box(Modifier.fillMaxSize().background(Naval.bg)) {
