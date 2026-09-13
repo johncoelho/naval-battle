@@ -97,6 +97,15 @@ class Profile(private val prefs: Prefs) {
 
     val signedIn: Boolean get() = accountId.isNotBlank()
 
+    /** Preferência de trilha: fica no aparelho, não viaja para a nuvem. */
+    var musicOn: Boolean = prefs.getInt(K_MUSIC, 1) == 1
+        private set
+
+    fun setMusic(on: Boolean) {
+        musicOn = on
+        prefs.putInt(K_MUSIC, if (on) 1 else 0)
+    }
+
     fun rememberSession(session: Session) {
         accountId = session.userId
         accountEmail = session.email
@@ -309,5 +318,6 @@ class Profile(private val prefs: Prefs) {
         const val K_EMAIL = "email"
         const val K_TOKEN = "token"
         const val K_REFRESH = "refresh"
+        const val K_MUSIC = "music"
     }
 }
