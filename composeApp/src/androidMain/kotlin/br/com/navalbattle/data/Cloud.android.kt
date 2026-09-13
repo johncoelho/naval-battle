@@ -40,6 +40,14 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(session)
     }
 
+    actual suspend fun signInWithGoogle(idToken: String): CloudResult<Session> = call {
+        val body = JSONObject().put("provider", "google").put("id_token", idToken)
+        val json = post("/auth/v1/token?grant_type=id_token", body, token = null)
+        val session = sessionOf(json, fallbackName = "Comandante")
+            ?: return@call CloudResult.Fail("Não consegui abrir a sessão com o Google.")
+        CloudResult.Ok(session)
+    }
+
     actual suspend fun refresh(refreshToken: String): CloudResult<Session> = call {
         val body = JSONObject().put("refresh_token", refreshToken)
         val json = post("/auth/v1/token?grant_type=refresh_token", body, token = null)
@@ -215,10 +223,15 @@ actual class CloudApi actual constructor() {
         if (token.isBlank()) return null
         val user = o.optJSONObject("user") ?: return null
         val meta = user.optJSONObject("user_metadata")
+        // login social (Google) não manda "username" — usa o nome de conta dele
+        val name = meta?.optString("username").orEmpty()
+            .ifBlank { meta?.optString("full_name").orEmpty() }
+            .ifBlank { meta?.optString("name").orEmpty() }
+            .ifBlank { fallbackName }
         return Session(
             userId = user.optString("id"),
             email = user.optString("email"),
-            username = meta?.optString("username").orEmpty().ifBlank { fallbackName },
+            username = name,
             accessToken = token,
             refreshToken = o.optString("refresh_token")
         )
