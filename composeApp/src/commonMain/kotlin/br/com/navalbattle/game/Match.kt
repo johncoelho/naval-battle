@@ -6,7 +6,13 @@ import androidx.compose.runtime.setValue
 import kotlin.random.Random
 
 enum class Phase { PLACEMENT, BATTLE, RESULT }
-enum class Side { PLAYER, ENEMY }
+
+enum class Side {
+    PLAYER, ENEMY;
+
+    fun other(): Side = if (this == PLAYER) ENEMY else PLAYER
+}
+
 enum class Tone { HIT, SUNK, MISS, SCAN, INFO }
 
 data class Callout(val main: String, val sub: String, val tone: Tone, val id: Long)
@@ -14,52 +20,106 @@ data class Callout(val main: String, val sub: String, val tone: Tone, val id: Lo
 data class Impact(val coord: Coord, val tone: Tone, val id: Long, val sunkShip: Ship? = null)
 
 /**
- * Estado completo de uma partida contra a IA. Todo o fluxo de turnos vive aqui;
- * a UI só observa e dispara ações.
+ * Estado completo de uma partida. Os dois lados são simétricos: contra a IA o lado
+ * ENEMY é jogado pela máquina, no modo local é a segunda pessoa no mesmo aparelho.
  */
-class Match(val mode: GameMode, private val random: Random = Random.Default) {
+class Match(
+    val mode: GameMode,
+    val opponent: Opponent = Opponent.AI,
+    private val random: Random = Random.Default
+) {
 
     val playerBoard = Board()
     val enemyBoard = Board()
+
+    fun board(side: Side): Board = if (side == Side.PLAYER) playerBoard else enemyBoard
+
     private val ai = Ai(random)
 
     var phase by mutableStateOf(Phase.PLACEMENT)
         private set
     var turnOwner by mutableStateOf(Side.PLAYER)
         private set
+
+    /** Quem está posicionando a frota agora (no modo local os dois posicionam, em sequência). */
+    var placingSide by mutableStateOf(Side.PLAYER)
+        private set
+
     var turnCount by mutableStateOf(1)
         private set
     var callout by mutableStateOf<Callout?>(null)
         private set
+
+    /** Impacto causado PELO lado PLAYER (cai no tabuleiro adversário). */
     var playerImpact by mutableStateOf<Impact?>(null)
         private set
+
+    /** Impacto causado PELO lado ENEMY. */
     var enemyImpact by mutableStateOf<Impact?>(null)
         private set
+
     var winner by mutableStateOf<Side?>(null)
         private set
 
     var pendingAbility by mutableStateOf<Ability?>(null)
         private set
     private var extraShots by mutableStateOf(0)
-    private val cooldowns = mutableMapOf<Ability, Int>()
+    private val cooldowns = mutableMapOf<Side, MutableMap<Ability, Int>>()
 
     var playerShots by mutableStateOf(0)
         private set
     var playerHits by mutableStateOf(0)
         private set
+    var enemyShots by mutableStateOf(0)
+        private set
+    var enemyHits by mutableStateOf(0)
+        private set
 
     private var calloutSeq = 0L
 
+    /** Nomes escolhidos pelos dois jogadores no modo local. */
+    var nameOne by mutableStateOf("Comandante 1")
+    var nameTwo by mutableStateOf("Comandante 2")
+
     init {
+        playerBoard.randomize(random)
         enemyBoard.randomize(random)
+    }
+
+    fun setName(side: Side, name: String) {
+        val clean = name.trim().take(16)
+        val fallback = if (side == Side.PLAYER) "Comandante 1" else "Comandante 2"
+        if (side == Side.PLAYER) nameOne = clean.ifEmpty { fallback }
+        else nameTwo = clean.ifEmpty { fallback }
+    }
+
+    fun sideName(side: Side): String = when (opponent) {
+        Opponent.AI -> if (side == Side.PLAYER) "Você" else "Inimigo"
+        Opponent.LOCAL -> if (side == Side.PLAYER) nameOne else nameTwo
     }
 
     // ---------------- posicionamento ----------------
 
-    fun randomizePlayerFleet() = playerBoard.randomize(random)
+    fun placementBoard(): Board = board(placingSide)
 
-    fun startBattle() {
-        if (playerBoard.ships.size != ShipClass.fleet.size) return
+    fun randomizePlacingFleet() = placementBoard().randomize(random)
+
+    fun placementReady(): Boolean = placementBoard().ships.size == ShipClass.fleet.size
+
+    /**
+     * Confirma a frota de quem está posicionando. No modo local passa a vez para o
+     * segundo comandante; quando os dois terminam, a batalha começa.
+     */
+    fun confirmPlacement() {
+        if (!placementReady()) return
+        if (opponent == Opponent.LOCAL && placingSide == Side.PLAYER) {
+            placingSide = Side.ENEMY
+        } else {
+            startBattle()
+        }
+    }
+
+    private fun startBattle() {
         phase = Phase.BATTLE
         turnOwner = Side.PLAYER
         if (mode == GameMode.TACTICAL) {
@@ -71,14 +131,20 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
 
     // ---------------- habilidades ----------------
 
-    fun abilityCooldown(ability: Ability): Int = cooldowns[ability] ?: 0
+    private fun cooldownsOf(side: Side): MutableMap<Ability, Int> =
+        cooldowns.getOrPut(side) { mutableMapOf() }
+
+    fun abilityCooldown(ability: Ability): Int = cooldownsOf(turnOwner)[ability] ?: 0
 
     fun abilityAvailable(ability: Ability): Boolean {
         if (mode != GameMode.TACTICAL || !ability.active) return false
-        if (phase != Phase.BATTLE || turnOwner != Side.PLAYER) return false
+        if (phase != Phase.BATTLE) return false
+        // contra a IA as habilidades só ficam ativas na vez do humano
+        if (opponent == Opponent.AI && turnOwner != Side.PLAYER) return false
         val owner = ShipClass.fleet.firstOrNull { it.ability == ability } ?: return false
-        val ship = playerBoard.ships.firstOrNull { it.type == owner } ?: return false
-        if (playerBoard.isSunk(ship)) return false
+        val myBoard = board(turnOwner)
+        val ship = myBoard.ships.firstOrNull { it.type == owner } ?: return false
+        if (myBoard.isSunk(ship)) return false
         return abilityCooldown(ability) == 0
     }
 
@@ -86,14 +152,14 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
         if (!abilityAvailable(ability)) return
         when (ability) {
             Ability.SMOKE -> {
-                playerBoard.smokeActive = true
-                cooldowns[ability] = ability.cooldown
+                board(turnOwner).smokeActive = true
+                cooldownsOf(turnOwner)[ability] = ability.cooldown
                 say("Cortina lançada", "Próxima varredura inimiga bloqueada", Tone.SCAN)
-                endPlayerTurn()
+                endTurn()
             }
 
             Ability.DOUBLE_BARRAGE -> {
-                cooldowns[ability] = ability.cooldown
+                cooldownsOf(turnOwner)[ability] = ability.cooldown
                 extraShots = 1
                 pendingAbility = null
                 say("Barragem dupla", "Dois disparos neste turno", Tone.INFO)
@@ -105,86 +171,107 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
         }
     }
 
-    // ---------------- turno do jogador ----------------
+    // ---------------- ação de turno ----------------
 
-    fun playerAct(coord: Coord) {
-        if (phase != Phase.BATTLE || turnOwner != Side.PLAYER) return
+    /** Dispara (ou usa a habilidade selecionada) contra o tabuleiro adversário de quem tem a vez. */
+    fun act(coord: Coord): ShotOutcome? {
+        if (phase != Phase.BATTLE) return null
+        val attacker = turnOwner
+        val target = board(attacker.other())
 
         when (val ability = pendingAbility) {
             Ability.AIR_RECON -> {
-                val worked = enemyBoard.revealRow(coord.y)
-                cooldowns[ability] = ability.cooldown
+                val worked = target.revealRow(coord.y)
+                cooldownsOf(attacker)[ability] = ability.cooldown
                 pendingAbility = null
                 if (worked) say("Reconhecimento aéreo", "Linha ${coord.y + 1} revelada", Tone.SCAN)
                 else say("Varredura falhou", "Cortina de fumaça inimiga", Tone.MISS)
-                endPlayerTurn()
-                return
+                endTurn()
+                return null
             }
 
             Ability.SONAR_PING -> {
-                val worked = enemyBoard.sonarPing(coord)
-                cooldowns[ability] = ability.cooldown
+                val worked = target.sonarPing(coord)
+                cooldownsOf(attacker)[ability] = ability.cooldown
                 pendingAbility = null
                 if (worked) say("Contato no sonar", "Setor ${coord.label} varrido", Tone.SCAN)
                 else say("Varredura falhou", "Cortina de fumaça inimiga", Tone.MISS)
-                endPlayerTurn()
-                return
+                endTurn()
+                return null
             }
 
             else -> Unit
         }
 
-        val outcome = enemyBoard.fireAt(coord, abilitiesEnabled = mode == GameMode.TACTICAL)
-        if (outcome.result == ShotResult.ALREADY_FIRED) return
+        val outcome = target.fireAt(coord, abilitiesEnabled = mode == GameMode.TACTICAL)
+        if (outcome.result == ShotResult.ALREADY_FIRED) return null
 
-        playerShots++
-        val sunkShip = if (outcome.result == ShotResult.SUNK) enemyBoard.ships.firstOrNull { it.type == outcome.ship } else null
-        playerImpact = Impact(coord, outcome.tone(), nextId(), sunkShip)
-        announce(outcome, attackerIsPlayer = true)
-        if (outcome.result == ShotResult.HIT || outcome.result == ShotResult.SUNK) playerHits++
+        val sunkShip = if (outcome.result == ShotResult.SUNK) {
+            target.ships.firstOrNull { it.type == outcome.ship }
+        } else null
+        val impact = Impact(coord, outcome.tone(), nextId(), sunkShip)
 
-        if (enemyBoard.allSunk()) {
-            finish(Side.PLAYER)
-            return
+        val scored = outcome.result == ShotResult.HIT || outcome.result == ShotResult.SUNK
+        if (attacker == Side.PLAYER) {
+            playerImpact = impact
+            playerShots++
+            if (scored) playerHits++
+        } else {
+            enemyImpact = impact
+            enemyShots++
+            if (scored) enemyHits++
+        }
+
+        announce(outcome, attacker)
+
+        if (target.allSunk()) {
+            finish(attacker)
+            return outcome
         }
 
         if (extraShots > 0) {
             extraShots--
-            return
+            return outcome
         }
-        endPlayerTurn()
+        endTurn()
+        return outcome
     }
 
-    fun playerFireRandom() {
-        if (phase != Phase.BATTLE || turnOwner != Side.PLAYER) return
+    /** Disparo automático quando o tempo do turno acaba. */
+    fun fireRandom() {
+        if (phase != Phase.BATTLE) return
         pendingAbility = null
+        val target = board(turnOwner.other())
         val open = mutableListOf<Coord>()
         for (y in 0 until BOARD_SIZE) for (x in 0 until BOARD_SIZE) {
             val c = Coord(x, y)
-            val mark = enemyBoard.marks[c]
+            val mark = target.marks[c]
             if (mark != Mark.MISS && mark != Mark.HIT && mark != Mark.SUNK) open += c
         }
         // sem célula disponível o turno tem que passar mesmo assim, senão a partida congela
         if (open.isEmpty()) {
-            endPlayerTurn()
+            endTurn()
             return
         }
-        playerAct(open[random.nextInt(open.size)])
+        act(open[random.nextInt(open.size)])
     }
 
-    private fun endPlayerTurn() {
+    private fun endTurn() {
         extraShots = 0
         pendingAbility = null
-        cooldowns.keys.toList().forEach { key ->
-            val left = (cooldowns[key] ?: 0) - 1
-            if (left <= 0) cooldowns.remove(key) else cooldowns[key] = left
+        val map = cooldownsOf(turnOwner)
+        map.keys.toList().forEach { key ->
+            val left = (map[key] ?: 0) - 1
+            if (left <= 0) map.remove(key) else map[key] = left
         }
-        turnOwner = Side.ENEMY
+        turnOwner = turnOwner.other()
+        if (turnOwner == Side.PLAYER) turnCount++
     }
 
     // ---------------- turno da IA ----------------
 
     fun enemyTurn() {
+        if (opponent != Opponent.AI) return
         if (phase != Phase.BATTLE || turnOwner != Side.ENEMY) return
 
         if (ai.shouldUseSonar(mode, turnCount)) {
@@ -197,27 +284,13 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
             } else {
                 say("Cortina resistiu", "Varredura inimiga bloqueada", Tone.SCAN)
             }
-            finishEnemyTurn()
+            endTurn()
             return
         }
 
         val shot = ai.nextShot(playerBoard)
-        val outcome = playerBoard.fireAt(shot, abilitiesEnabled = mode == GameMode.TACTICAL)
-        ai.registerOutcome(outcome, playerBoard)
-        val sunkShip = if (outcome.result == ShotResult.SUNK) playerBoard.ships.firstOrNull { it.type == outcome.ship } else null
-        enemyImpact = Impact(shot, outcome.tone(), nextId(), sunkShip)
-        announce(outcome, attackerIsPlayer = false)
-
-        if (playerBoard.allSunk()) {
-            finish(Side.ENEMY)
-            return
-        }
-        finishEnemyTurn()
-    }
-
-    private fun finishEnemyTurn() {
-        turnOwner = Side.PLAYER
-        turnCount++
+        val outcome = act(shot)
+        if (outcome != null) ai.registerOutcome(outcome, playerBoard)
     }
 
     // ---------------- utilidades ----------------
@@ -225,15 +298,25 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
     private fun finish(side: Side) {
         winner = side
         phase = Phase.RESULT
-        if (side == Side.PLAYER) say("Frota inimiga neutralizada", "Vitória, comandante", Tone.SUNK)
-        else say("Perdemos o contato", "Nossa frota foi destruída", Tone.SUNK)
+        if (opponent == Opponent.LOCAL) {
+            say("${sideName(side)} venceu", "Frota adversária neutralizada", Tone.SUNK)
+        } else if (side == Side.PLAYER) {
+            say("Frota inimiga neutralizada", "Vitória, comandante", Tone.SUNK)
+        } else {
+            say("Perdemos o contato", "Nossa frota foi destruída", Tone.SUNK)
+        }
     }
 
-    private fun announce(outcome: ShotOutcome, attackerIsPlayer: Boolean) {
-        val who = if (attackerIsPlayer) "" else "Inimigo · "
+    private fun announce(outcome: ShotOutcome, attacker: Side) {
+        val who = when {
+            opponent == Opponent.LOCAL -> "${sideName(attacker)} · "
+            attacker == Side.ENEMY -> "Inimigo · "
+            else -> ""
+        }
+        val alvo = outcome.ship?.label ?: "Alvo"
         when (outcome.result) {
-            ShotResult.HIT -> say("Acerto direto!", "$who${outcome.ship?.label ?: "Alvo"} atingido · ${outcome.coord.label}", Tone.HIT)
-            ShotResult.SUNK -> say("Navio afundado", "$who${outcome.ship?.label ?: "Alvo"} abatido · ${outcome.coord.label}", Tone.SUNK)
+            ShotResult.HIT -> say("Acerto direto!", "$who$alvo atingido · ${outcome.coord.label}", Tone.HIT)
+            ShotResult.SUNK -> say("Navio afundado", "$who$alvo abatido · ${outcome.coord.label}", Tone.SUNK)
             ShotResult.MISS -> say("Na água", "$who${outcome.coord.label}", Tone.MISS)
             ShotResult.ALREADY_FIRED -> Unit
         }
@@ -245,8 +328,13 @@ class Match(val mode: GameMode, private val random: Random = Random.Default) {
 
     private fun nextId(): Long = ++calloutSeq
 
-    val accuracy: Int
-        get() = if (playerShots == 0) 0 else (playerHits * 100) / playerShots
+    fun accuracyOf(side: Side): Int {
+        val shots = if (side == Side.PLAYER) playerShots else enemyShots
+        val hits = if (side == Side.PLAYER) playerHits else enemyHits
+        return if (shots == 0) 0 else (hits * 100) / shots
+    }
+
+    val accuracy: Int get() = accuracyOf(Side.PLAYER)
 }
 
 private fun ShotOutcome.tone(): Tone = when (result) {

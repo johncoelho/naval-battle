@@ -7,6 +7,9 @@ enum class GameMode(val label: String, val description: String) {
     TACTICAL("Tático", "Habilidades por classe de navio")
 }
 
+/** Contra quem se joga: a IA do aparelho ou outra pessoa no mesmo celular. */
+enum class Opponent { AI, LOCAL }
+
 enum class Ability(
     val code: String,
     val label: String,
