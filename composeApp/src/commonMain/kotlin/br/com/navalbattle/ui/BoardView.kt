@@ -30,7 +30,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import br.com.navalbattle.design.Livery
+import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.BOARD_SIZE
@@ -51,7 +51,7 @@ const val SHOT_TRAVEL_MS = 420
 @Composable
 fun BoardView(
     board: Board,
-    livery: Livery,
+    skin: Skin,
     showShips: Boolean,
     modifier: Modifier = Modifier,
     interactive: Boolean = false,
@@ -170,12 +170,12 @@ fun BoardView(
         if (showShips) {
             board.ships.forEach { ship ->
                 val sunk = board.isSunk(ship)
-                drawFleetShip(ship, cell, livery, if (sunk) 0.35f else 1f)
+                drawFleetShip(ship, cell, skin, if (sunk) 0.35f else 1f)
                 markTint?.let { drawShipOutline(ship, cell, it) }
             }
             overlay?.ships?.forEach { ship ->
                 val sunk = overlay.isSunk(ship)
-                drawFleetShip(ship, cell, livery, if (sunk) 0.35f else 1f)
+                drawFleetShip(ship, cell, skin, if (sunk) 0.35f else 1f)
                 overlayTint?.let { drawShipOutline(ship, cell, it) }
             }
         }
@@ -230,7 +230,7 @@ fun BoardView(
             } else {
                 val t = impactAnim.value
                 if (t < 1f) {
-                    drawImpactBurst(imp, target, cell, t, livery)
+                    drawImpactBurst(imp, target, cell, t, skin)
                 }
             }
         }
@@ -390,7 +390,7 @@ private fun DrawScope.drawSailor(pos: Offset, cell: Float, spin: Float, alpha: F
     }
 }
 
-private fun DrawScope.drawImpactBurst(imp: Impact, c: Offset, cell: Float, t: Float, livery: Livery) {
+private fun DrawScope.drawImpactBurst(imp: Impact, c: Offset, cell: Float, t: Float, skin: Skin) {
     val tint = when (imp.tone) {
         Tone.MISS -> Naval.inkSoft
         Tone.SUNK -> Naval.danger
@@ -448,7 +448,7 @@ private fun DrawScope.drawImpactBurst(imp: Impact, c: Offset, cell: Float, t: Fl
             )
         }
 
-        Tone.SUNK -> drawSinkingShip(imp, cell, t, livery)
+        Tone.SUNK -> drawSinkingShip(imp, cell, t, skin)
         else -> Unit
     }
 }
@@ -457,7 +457,7 @@ private fun DrawScope.drawImpactBurst(imp: Impact, c: Offset, cell: Float, t: Fl
  * Sequência de naufrágio: o navio real aparece, inclina, pega fogo e submerge,
  * enquanto a tripulação salta na água e destroços voam.
  */
-private fun DrawScope.drawSinkingShip(imp: Impact, cell: Float, t: Float, livery: Livery) {
+private fun DrawScope.drawSinkingShip(imp: Impact, cell: Float, t: Float, skin: Skin) {
     val ship = imp.sunkShip ?: return
     val vertical = ship.orientation == Orientation.VERTICAL
     val length = ship.type.size * cell
@@ -491,7 +491,7 @@ private fun DrawScope.drawSinkingShip(imp: Impact, cell: Float, t: Float, livery
                 lengthPx = length,
                 thicknessPx = cell,
                 vertical = vertical,
-                livery = livery,
+                skin = skin,
                 alpha = visible.coerceIn(0f, 1f)
             )
         }
@@ -575,7 +575,7 @@ private fun DrawScope.drawSinkingShip(imp: Impact, cell: Float, t: Float, livery
     }
 }
 
-private fun DrawScope.drawFleetShip(ship: Ship, cell: Float, livery: Livery, alpha: Float) {
+private fun DrawScope.drawFleetShip(ship: Ship, cell: Float, skin: Skin, alpha: Float) {
     val vertical = ship.orientation == Orientation.VERTICAL
     val length = ship.type.size * cell
     val cx = if (vertical) ship.origin.x * cell + cell / 2f
@@ -589,7 +589,7 @@ private fun DrawScope.drawFleetShip(ship: Ship, cell: Float, livery: Livery, alp
         lengthPx = length,
         thicknessPx = cell,
         vertical = vertical,
-        livery = livery,
+        skin = skin,
         alpha = alpha
     )
 }

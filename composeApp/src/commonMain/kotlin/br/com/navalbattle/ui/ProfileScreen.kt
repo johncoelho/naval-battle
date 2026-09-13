@@ -162,7 +162,8 @@ fun ProfileScreen(state: AppState) {
                 StatLine("NAVIOS AFUNDADOS", profile.sunk.toString())
                 StatLine("SEQUÊNCIA ATUAL", "${profile.streak} vitórias")
                 StatLine("MELHOR SEQUÊNCIA", "${profile.bestStreak} vitórias")
-                StatLine("FROTAS NO ESTALEIRO", profile.owned.size.toString())
+                StatLine("CASCOS NO ESTALEIRO", profile.ownedFleets.size.toString())
+                StatLine("CAMUFLAGENS", profile.owned.size.toString())
 
                 Gap(18)
                 HudLabel("PRÓXIMAS PATENTES", Naval.muted)

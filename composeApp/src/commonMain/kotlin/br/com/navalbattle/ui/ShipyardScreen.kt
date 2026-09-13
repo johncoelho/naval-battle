@@ -15,10 +15,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,21 +32,25 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.design.FleetLine
 import br.com.navalbattle.design.Livery
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.ShipClass
 
+/**
+ * Bancada de montagem: combina o que já foi conquistado — linha de casco e
+ * camuflagem. Comprar é assunto da loja; aqui só se monta a frota.
+ */
 @Composable
 fun ShipyardScreen(state: AppState) {
     val profile = state.profile
-    var preview by remember { mutableStateOf(Livery.of(profile.equipped)) }
-    var notice by remember { mutableStateOf<String?>(null) }
-
-    val owned = profile.owns(preview.id)
-    val equipped = profile.equipped == preview.id
-    val canAfford = profile.credits >= preview.price
+    var fleet by remember { mutableStateOf(FleetLine.of(profile.equippedFleet)) }
+    var livery by remember { mutableStateOf(Livery.of(profile.equipped)) }
+    val preview = Skin(livery, fleet)
+    val inService = profile.equippedFleet == fleet.id && profile.equipped == livery.id
 
     Column(
         Modifier
@@ -54,14 +59,15 @@ fun ShipyardScreen(state: AppState) {
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         ScreenTopBar("ESTALEIRO", "◆ ${profile.credits}")
-        Gap(14)
+        Gap(12)
 
+        // as três silhuetas mais características, na combinação escolhida
         Column(
             Modifier
                 .fillMaxWidth()
                 .background(Naval.abyss)
                 .border(1.dp, Naval.lineSoft)
-                .padding(vertical = 16.dp, horizontal = 12.dp)
+                .padding(vertical = 14.dp, horizontal = 12.dp)
         ) {
             listOf(ShipClass.CARRIER, ShipClass.CRUISER, ShipClass.DESTROYER).forEach { type ->
                 Canvas(Modifier.fillMaxWidth().height(34.dp)) {
@@ -72,138 +78,131 @@ fun ShipyardScreen(state: AppState) {
                         lengthPx = length,
                         thicknessPx = length / type.size,
                         vertical = false,
-                        livery = preview
+                        skin = preview
                     )
                 }
             }
         }
 
         Gap(10)
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(preview.name.uppercase(), style = NavalType.title, color = Naval.ink)
-                HudLabel(
-                    when {
-                        equipped -> "EM SERVIÇO NA SUA FROTA"
-                        owned -> "NO SEU ESTALEIRO"
-                        else -> "CUSTA ${preview.priceLabel} · VOCÊ TEM ◆ ${profile.credits}"
-                    },
-                    if (equipped) Naval.greenBright else Naval.muted
-                )
-            }
-            if (!owned) Text(preview.priceLabel, style = NavalType.mono, color = Naval.amberStrong)
-        }
+        Text(
+            "${fleet.name.uppercase()} · ${livery.name.uppercase()}",
+            style = NavalType.title,
+            color = Naval.ink
+        )
+        HudLabel(fleet.description, Naval.muted)
 
-        Gap(14)
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f)
+        Column(
+            Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
         ) {
-            items(Livery.all) { livery ->
-                LiveryCard(
-                    livery = livery,
-                    selected = preview.id == livery.id,
-                    owned = profile.owns(livery.id),
-                    equipped = profile.equipped == livery.id
-                ) {
-                    preview = livery
-                    notice = null
-                }
-            }
-        }
-
-        notice?.let {
+            Gap(16)
+            HudLabel("LINHA DE CASCO")
             Gap(8)
-            HudLabel(it, Naval.amberStrong)
-        }
-
-        Gap(10)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SecondaryButton("Voltar", modifier = Modifier.weight(1f)) {
-                state.screen = Screen.MENU
-            }
-            PrimaryButton(
-                when {
-                    equipped -> "Em serviço"
-                    owned -> "Equipar"
-                    else -> "Comprar"
-                },
-                enabled = !equipped && (owned || canAfford),
-                modifier = Modifier.weight(1f)
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (owned) {
-                    profile.equip(preview.id)
-                    notice = "${preview.name} entrou em serviço"
-                } else if (profile.buy(preview.id, preview.price)) {
-                    profile.equip(preview.id)
-                    notice = "${preview.name} construída e em serviço"
+                FleetLine.all.forEach { line ->
+                    OptionCard(
+                        label = line.name,
+                        note = if (profile.ownsFleet(line.id)) "SUA" else line.priceLabel,
+                        selected = fleet.id == line.id,
+                        owned = profile.ownsFleet(line.id),
+                        skin = Skin(livery, line),
+                        onClick = { if (profile.ownsFleet(line.id)) fleet = line }
+                    )
                 }
             }
+
+            Gap(18)
+            HudLabel("CAMUFLAGEM")
+            Gap(8)
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Livery.all.forEach { option ->
+                    OptionCard(
+                        label = option.name,
+                        note = if (profile.owns(option.id)) "SUA" else option.priceLabel,
+                        selected = livery.id == option.id,
+                        owned = profile.owns(option.id),
+                        skin = Skin(option, fleet),
+                        onClick = { if (profile.owns(option.id)) livery = option }
+                    )
+                }
+            }
+            Gap(12)
+            HudLabel("O QUE ESTIVER MARCADO COM PREÇO SE COMPRA NA LOJA", Naval.muted)
+            Gap(10)
         }
-        if (!owned && !canAfford) {
-            Gap(6)
-            HudLabel(
-                "FALTAM ◆ ${preview.price - profile.credits} — GANHE CRÉDITOS EM COMBATE",
-                Naval.danger
-            )
+
+        Gap(8)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SecondaryButton("Voltar", modifier = Modifier.weight(1f)) { state.screen = Screen.MENU }
+            SecondaryButton("Loja", modifier = Modifier.weight(1f)) { state.screen = Screen.STORE }
+        }
+        Gap(8)
+        PrimaryButton(
+            if (inService) "Em serviço" else "Pôr em serviço",
+            enabled = !inService
+        ) {
+            profile.equipFleet(fleet.id)
+            profile.equip(livery.id)
         }
     }
 }
 
 @Composable
-private fun LiveryCard(
-    livery: Livery,
+private fun OptionCard(
+    label: String,
+    note: String,
     selected: Boolean,
     owned: Boolean,
-    equipped: Boolean,
+    skin: Skin,
     onClick: () -> Unit
 ) {
     Column(
         Modifier
+            .width(132.dp)
             .background(Naval.surface)
             .border(1.dp, if (selected) Naval.amber else Naval.line)
             .clickable(onClick = onClick)
     ) {
-        Box {
-            Canvas(
-                Modifier
-                    .fillMaxWidth()
-                    .height(46.dp)
-                    .background(Naval.abyss)
-                    .padding(horizontal = 10.dp)
-            ) {
-                drawShip(
-                    type = ShipClass.BATTLESHIP,
-                    center = Offset(size.width / 2f, size.height / 2f),
-                    lengthPx = size.width,
-                    thicknessPx = size.width / 4f,
-                    vertical = false,
-                    livery = livery,
-                    alpha = if (owned) 1f else 0.45f
-                )
-            }
-            if (equipped) {
-                HudLabel(
-                    "EM SERVIÇO",
-                    Naval.greenBright,
-                    Modifier.align(Alignment.TopEnd).padding(6.dp)
-                )
-            }
+        Canvas(
+            Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .background(Naval.abyss)
+                .padding(horizontal = 8.dp)
+        ) {
+            drawShip(
+                type = ShipClass.BATTLESHIP,
+                center = Offset(size.width / 2f, size.height / 2f),
+                lengthPx = size.width,
+                thicknessPx = size.width / 4f,
+                vertical = false,
+                skin = skin,
+                alpha = if (owned) 1f else 0.4f
+            )
         }
-        Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+        Column(Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
             Text(
-                livery.name.uppercase(),
+                label.uppercase(),
                 style = NavalType.monoSmall,
-                color = if (selected) Naval.amberStrong else Naval.ink
+                color = if (selected) Naval.amberStrong else if (owned) Naval.ink else Naval.muted,
+                maxLines = 1
             )
             Spacer(Modifier.height(3.dp))
-            Text(
-                if (owned) "CONQUISTADA" else livery.priceLabel,
-                style = NavalType.monoSmall,
-                color = if (owned) Naval.muted else Naval.amberStrong
-            )
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                Text(
+                    note,
+                    style = NavalType.monoSmall,
+                    color = if (owned) Naval.muted else Naval.amberStrong
+                )
+            }
         }
     }
 }

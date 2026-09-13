@@ -87,10 +87,10 @@ fun MenuScreen(state: AppState) {
         Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
             PrimaryButton("Partida rápida", "vs. IA") { state.newMatch(Opponent.AI) }
             SecondaryButton("Dois jogadores", "no mesmo aparelho") { state.newMatch(Opponent.LOCAL) }
-            SecondaryButton("Estaleiro", state.livery.name) { state.screen = Screen.SHIPYARD }
+            SecondaryButton("Estaleiro", state.skin.livery.name) { state.screen = Screen.SHIPYARD }
+            SecondaryButton("Loja do arsenal", "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
             SecondaryButton("Perfil", state.profile.rank.label) { state.screen = Screen.PROFILE }
             SecondaryButton("Ranqueada", "em breve", enabled = false) {}
-            SecondaryButton("Convidar amigo", "em breve", enabled = false) {}
         }
 
         Spacer(Modifier.weight(1f))
@@ -109,7 +109,11 @@ fun MenuScreen(state: AppState) {
                 Naval.muted,
                 Modifier.clickable { state.screen = Screen.PROFILE }
             )
-            HudLabel("LOJA · EM BREVE")
+            HudLabel(
+                "LOJA",
+                Naval.muted,
+                Modifier.clickable { state.screen = Screen.STORE }
+            )
         }
     }
 }
@@ -137,11 +141,11 @@ private fun FleetPreview(state: AppState) {
                 lengthPx = size.width * 0.94f,
                 thicknessPx = size.width * 0.94f / 5f,
                 vertical = false,
-                livery = state.livery
+                skin = state.skin
             )
         }
         Spacer(Modifier.height(8.dp))
-        HudLabel("FROTA ATIVA · ${state.livery.name}")
+        HudLabel("${state.skin.fleet.name.uppercase()} · ${state.skin.livery.name.uppercase()}")
     }
 }
 
