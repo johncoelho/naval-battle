@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.11.1] — 2026-09-13 · Google configurado de ponta a ponta
+
+### Configurado
+- Projeto **AIGAMESFACTORY** no Google Cloud: tela de consentimento OAuth (app
+  "Naval Battle", externa, em teste), cliente **Web** (redirect para o Supabase) e
+  cliente **Android** (pacote `br.com.navalbattle` + SHA-1 da chave de depuração).
+  Provedor Google ativado no Supabase com os dois Client IDs e o Client Secret do
+  cliente Web. `GoogleAuthConfig.WEB_CLIENT_ID` preenchido — o botão "Entrar com o
+  Google" já aparece e funciona. Passo a passo e estado atual em
+  [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código).
+
 ## [0.11.0] — 2026-09-13 · Login com Google
 
 ### Adicionado

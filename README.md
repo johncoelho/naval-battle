@@ -204,7 +204,7 @@ detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume n
 
 ## Roadmap
 
-- [x] Login com Google — falta só a configuração externa (Google Cloud + Supabase),
+- [x] Login com Google — configurado de ponta a ponta (Google Cloud + Supabase),
       ver [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código)
 - [ ] Convite de amigo e partida rápida pela internet (via Supabase Realtime)
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
