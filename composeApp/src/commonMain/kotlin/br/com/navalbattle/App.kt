@@ -14,13 +14,17 @@ import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Match
+import br.com.navalbattle.game.Opponent
+import br.com.navalbattle.game.Side
 import br.com.navalbattle.ui.BattleScreen
+import br.com.navalbattle.ui.HandoffScreen
 import br.com.navalbattle.ui.MenuScreen
+import br.com.navalbattle.ui.NamesScreen
 import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ResultScreen
 import br.com.navalbattle.ui.ShipyardScreen
 
-enum class Screen { MENU, SHIPYARD, PLACEMENT, BATTLE, RESULT }
+enum class Screen { MENU, SHIPYARD, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
 
 class AppState {
     var screen by mutableStateOf(Screen.MENU)
@@ -28,9 +32,27 @@ class AppState {
     var livery by mutableStateOf(Livery.BRAZIL)
     var match by mutableStateOf<Match?>(null)
 
-    fun newMatch() {
-        match = Match(mode).also { it.randomizePlayerFleet() }
-        screen = Screen.PLACEMENT
+    /** Para onde ir depois que a pessoa certa estiver com o aparelho na mão. */
+    var handoffTarget by mutableStateOf(Screen.BATTLE)
+    var handoffSide by mutableStateOf(Side.PLAYER)
+
+    /**
+     * De quem é a tela no modo local. Fica fixo mesmo depois que o turno passa,
+     * para a jogada terminar de ser exibida antes de trocar de mãos.
+     */
+    var battleViewSide by mutableStateOf(Side.PLAYER)
+
+    fun newMatch(opponent: Opponent) {
+        match = Match(mode, opponent)
+        // no modo local os dois se identificam antes de posicionar as frotas
+        screen = if (opponent == Opponent.LOCAL) Screen.NAMES else Screen.PLACEMENT
+    }
+
+    /** Cobre a tela até o comandante [side] confirmar que está com o aparelho. */
+    fun handoffTo(side: Side, target: Screen) {
+        handoffSide = side
+        handoffTarget = target
+        screen = Screen.HANDOFF
     }
 }
 
@@ -43,7 +65,9 @@ fun App() {
             when (state.screen) {
                 Screen.MENU -> MenuScreen(state)
                 Screen.SHIPYARD -> ShipyardScreen(state)
+                Screen.NAMES -> state.match?.let { NamesScreen(state, it) }
                 Screen.PLACEMENT -> state.match?.let { PlacementScreen(state, it) }
+                Screen.HANDOFF -> state.match?.let { HandoffScreen(state, it) }
                 Screen.BATTLE -> state.match?.let { BattleScreen(state, it) }
                 Screen.RESULT -> state.match?.let { ResultScreen(state, it) }
             }
