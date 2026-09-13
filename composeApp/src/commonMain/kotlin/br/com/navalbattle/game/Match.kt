@@ -301,7 +301,8 @@ class Match(
             extraShots--
             return outcome
         }
-        endTurn()
+        // regra clássica da batalha naval: quem acerta joga de novo; só passa a vez no erro
+        if (!scored) endTurn()
         return outcome
     }
 
