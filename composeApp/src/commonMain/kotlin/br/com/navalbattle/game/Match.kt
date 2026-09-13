@@ -81,9 +81,11 @@ class Match(
 
     private var calloutSeq = 0L
 
-    /** Nomes escolhidos pelos dois jogadores no modo local. */
-    var nameOne by mutableStateOf("Comandante 1")
-    var nameTwo by mutableStateOf("Comandante 2")
+    /** Nomes escolhidos pelos dois jogadores no modo local (vazio = nome padrão). */
+    var nameOne by mutableStateOf("")
+        private set
+    var nameTwo by mutableStateOf("")
+        private set
 
     init {
         playerBoard.randomize(random)
@@ -92,14 +94,14 @@ class Match(
 
     fun setName(side: Side, name: String) {
         val clean = name.trim().take(16)
-        val fallback = if (side == Side.PLAYER) "Comandante 1" else "Comandante 2"
-        if (side == Side.PLAYER) nameOne = clean.ifEmpty { fallback }
-        else nameTwo = clean.ifEmpty { fallback }
+        if (side == Side.PLAYER) nameOne = clean else nameTwo = clean
     }
 
     fun sideName(side: Side): String = when (opponent) {
         Opponent.AI -> if (side == Side.PLAYER) "Você" else "Inimigo"
-        Opponent.LOCAL -> if (side == Side.PLAYER) nameOne else nameTwo
+        Opponent.LOCAL ->
+            if (side == Side.PLAYER) nameOne.ifBlank { "Comandante 1" }
+            else nameTwo.ifBlank { "Comandante 2" }
     }
 
     // ---------------- posicionamento ----------------
@@ -121,6 +123,13 @@ class Match(
         } else {
             startBattle()
         }
+    }
+
+    /** Botão voltar do modo local: devolve o posicionamento ao primeiro comandante. */
+    fun backPlacement(): Boolean {
+        if (phase != Phase.PLACEMENT || placingSide != Side.ENEMY) return false
+        placingSide = Side.PLAYER
+        return true
     }
 
     private fun startBattle() {
