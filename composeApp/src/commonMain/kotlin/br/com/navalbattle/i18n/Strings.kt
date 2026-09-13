@@ -89,7 +89,7 @@ enum class K(val pt: String, val en: String, val es: String) {
 
     // ---------------------------------------------------------------- modos e classes
     MODE_CLASSIC("Clássico", "Classic", "Clásico"),
-    MODE_CLASSIC_SUB("Um tiro por turno, sem habilidades", "One shot per turn, no abilities", "Un disparo por turno, sin habilidades"),
+    MODE_CLASSIC_SUB("Sem habilidades — acertou, atira de novo", "No abilities — hit and you shoot again", "Sin habilidades — si aciertas, disparas de nuevo"),
     MODE_TACTICAL("Tático", "Tactical", "Táctico"),
     MODE_TACTICAL_SUB("Cada classe concede uma habilidade", "Each class grants an ability", "Cada clase otorga una habilidad"),
     SHIP_CARRIER("Porta-aviões", "Carrier", "Portaaviones"),
