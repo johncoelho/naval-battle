@@ -7,7 +7,8 @@ package br.com.navalbattle.data
  * o passo a passo completo de como gerar esse valor.
  */
 object GoogleAuthConfig {
-    const val WEB_CLIENT_ID = ""
+    const val WEB_CLIENT_ID =
+        "66774326611-010ggjho4008i5duqnau05br5oq1ubbo.apps.googleusercontent.com"
 
     val isConfigured: Boolean get() = WEB_CLIENT_ID.isNotBlank()
 }
