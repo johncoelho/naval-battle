@@ -62,3 +62,11 @@ gravações em **domínio público** do Wikimedia Commons, cortadas, filtradas e
 - `sfx_sunk.wav` — [Explosion 10.ogg](https://commons.wikimedia.org/wiki/File:Explosion_10.ogg) (tcpp, domínio público) em camadas com o anterior e com a água
 - `sfx_miss1/2/3.wav` — três quebras de onda diferentes de [Ocean Waves on a Tropical Beach.ogg](https://commons.wikimedia.org/wiki/File:Ocean_Waves_on_a_Tropical_Beach.ogg) (CC0), sorteadas em jogo para o tiro na água não enjoar
 - `sfx_launch.wav` — cauda de "Explosion 10.ogg" invertida, formando o assobio do projétil chegando
+
+### Trilha
+
+Laços de 1 minuto cortados em número inteiro de compassos (tempo e tempo forte detectados por
+análise de envelope), com fusão cruzada de 1 s na emenda e normalização de volume:
+
+- `music_theme.ogg` — "Systems Go", do conjunto de rock **Systems Go** da [United States Air Force Band of Flight](https://commons.wikimedia.org/wiki/File:4th_Street_Exit_-_Systems_Go_-_United_States_Air_Force_Band_of_Flight.mp3) (composição de Steve Ward). Obra do governo dos EUA, **domínio público**. Toca na abertura e no deque de comando.
+- `music_battle.ogg` — ["Secret Agent Rock"](https://commons.wikimedia.org/wiki/File:John_Bartmann_-_17_-_Secret_Agent_Rock.ogg), de John Bartmann (**CC0**). Toca no combate, num volume mais baixo para não cobrir os tiros.
