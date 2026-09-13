@@ -42,6 +42,7 @@ import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.GameMode
+import br.com.navalbattle.game.Impact
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
@@ -52,7 +53,7 @@ import kotlinx.coroutines.delay
 
 private const val TURN_SECONDS = 20
 
-/** Cor de identificação de cada comandante no modo local. */
+/** Cor de identificação de cada comandante no modo local (mesmo aparelho). */
 fun commanderColor(side: Side): Color =
     if (side == Side.PLAYER) Naval.commanderOne else Naval.commanderTwo
 
@@ -65,11 +66,15 @@ fun BattleScreen(state: AppState, match: Match) {
 
     val local = match.opponent == Opponent.LOCAL
     val lan = match.opponent == Opponent.LAN
+    // aparelhos separados (IA ou rede) mostram a experiência cheia de single player:
+    // frota própria sempre visível, alarme de bordo, tabuleiro alvo grande. Só o modo
+    // local (mesmo aparelho, tela compartilhada) esconde a frota e reveza a visão.
+    val solo = !local
     var confirmQuit by remember { mutableStateOf(false) }
 
     // no modo local cada comandante enxerga só a própria memória de tiros: a carta
-    // exibida é sempre a da frota que ele ataca. Em rede, cada aparelho comanda o seu
-    // lado. Contra a IA a tela é sempre a do humano.
+    // exibida é sempre a da frota que ele ataca. Em rede e contra a IA, cada aparelho
+    // é sempre o mesmo lado do início ao fim da partida.
     var localView by remember { mutableStateOf(Side.PLAYER) }
     val viewSide = when {
         local -> localView
@@ -81,7 +86,9 @@ fun BattleScreen(state: AppState, match: Match) {
     // só o disparo mais recente anima — as marcas antigas ficam paradas na carta
     val playerImpact = match.playerImpact?.takeIf { it.id == match.lastImpactId }
     val enemyImpact = match.enemyImpact?.takeIf { it.id == match.lastImpactId }
+    // impacto que EU causei (mira o tabuleiro alvo) e o que EU sofri (mira minha frota)
     val myImpact = if (viewSide == Side.PLAYER) playerImpact else enemyImpact
+    val incomingImpact = if (viewSide == Side.PLAYER) enemyImpact else playerImpact
 
     // a carta só troca de dono depois que a jogada termina de tocar
     LaunchedEffect(match.turnOwner, match.phase) {
@@ -112,14 +119,17 @@ fun BattleScreen(state: AppState, match: Match) {
         }
     }
 
+    // alarme de bordo: soa quando A MINHA frota é atingida, nunca no meu próprio tiro.
+    // no modo local não há identidade fixa por aparelho, então o alarme fica desligado.
+    val mySide = if (solo) viewSide else null
     LaunchedEffect(match.playerImpact?.id) {
-        match.playerImpact?.let { imp -> playShot(sound, haptics, imp.tone, alarm = false) }
+        match.playerImpact?.let { imp ->
+            playShot(sound, haptics, imp.tone, alarm = mySide != null && mySide != Side.PLAYER)
+        }
     }
-
     LaunchedEffect(match.enemyImpact?.id) {
         match.enemyImpact?.let { imp ->
-            // contra a IA, um tiro do adversário sempre cai na SUA frota: entra o alarme de bordo
-            playShot(sound, haptics, imp.tone, alarm = !local)
+            playShot(sound, haptics, imp.tone, alarm = mySide != null && mySide != Side.ENEMY)
         }
     }
 
@@ -139,7 +149,7 @@ fun BattleScreen(state: AppState, match: Match) {
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 ScreenTopBar(
-                    if (local || lan) t(K.BATTLE_TURN_OF, match.sideName(viewSide)).uppercase()
+                    if (local) t(K.BATTLE_TURN_OF, match.sideName(viewSide)).uppercase()
                     else t(K.BATTLE_ENEMY_TARGET),
                     "${t(K.TURN)} ${match.turnCount.toString().padStart(2, '0')}",
                     Modifier.weight(1f)
@@ -165,22 +175,18 @@ fun BattleScreen(state: AppState, match: Match) {
             )
             HudLabel(
                 when {
-                    lan && match.phase == Phase.PLACEMENT ->
-                        t(K.BATTLE_WAITING_FLEET, match.sideName(viewSide.other())).uppercase()
-                    lan && myTurn -> t(K.BATTLE_ATTACK_FLEET, match.sideName(viewSide.other())).uppercase()
-                    lan -> t(K.BATTLE_TURN_OF, match.sideName(match.turnOwner)).uppercase()
                     local && myTurn -> t(K.BATTLE_MEMORY, match.sideName(viewSide.other())).uppercase()
                     local -> t(K.BATTLE_PASSING, match.sideName(match.turnOwner)).uppercase()
                     myTurn -> t(K.BATTLE_YOUR_TURN)
                     else -> t(K.WAIT)
                 },
-                // a cor é sempre a da frota alvo, a mesma das marcas na carta
-                if (local || lan) commanderColor(viewSide.other()) else Naval.muted,
+                // no modo local a cor é a da frota alvo, a mesma das marcas na carta
+                if (local) commanderColor(viewSide.other()) else Naval.muted,
                 Modifier.fillMaxWidth().padding(top = 2.dp)
             )
 
             Gap(10)
-            if (local || lan) {
+            if (local) {
                 // cada comandante vê só os próprios tiros: a carta da frota que ele ataca
                 BoardView(
                     board = match.board(viewSide.other()),
@@ -190,16 +196,17 @@ fun BattleScreen(state: AppState, match: Match) {
                     impact = myImpact,
                     markTint = commanderColor(viewSide.other()),
                     modifier = Modifier.fillMaxWidth()
-                ) { coord -> if (lan) state.fireShared(coord) else match.act(coord) }
+                ) { coord -> match.act(coord) }
             } else {
+                // IA e rede: sempre o mesmo alvo, do início ao fim da partida
                 BoardView(
-                    board = match.enemyBoard,
+                    board = match.board(viewSide.other()),
                     skin = state.skin,
                     showShips = false,
                     interactive = myTurn,
-                    impact = playerImpact,
+                    impact = myImpact,
                     modifier = Modifier.fillMaxWidth()
-                ) { coord -> match.act(coord) }
+                ) { coord -> if (lan) state.fireShared(coord) else match.act(coord) }
             }
 
             // mensagens ficam abaixo do tabuleiro para não cobrir a ação
@@ -216,50 +223,13 @@ fun BattleScreen(state: AppState, match: Match) {
                 }
             }
 
-            if (local || lan) {
+            if (local) {
                 Spacer(Modifier.weight(1f))
                 Scoreboard(match)
             } else {
-                // os números viram uma linha só para a carta da própria frota poder
-                // crescer e ocupar toda a faixa livre da metade de baixo
-                val afloat = match.playerBoard.remainingShips().size
-                Gap(6)
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
-                    Text(
-                        "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}" +
-                            " · ${t(K.ACCURACY)} ${match.accuracyOf(Side.PLAYER)}%",
-                        style = NavalType.mono,
-                        color = if (afloat <= 2) Naval.danger else Naval.greenBright
-                    )
-                }
-                if (match.playerBoard.smokeActive) {
-                    HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
-                }
-                Gap(6)
-                BoxWithConstraints(
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(bottom = 4.dp),
-                    contentAlignment = Alignment.TopCenter
-                ) {
-                    // quadrada, do tamanho do que sobrou — larga no clássico, um pouco
-                    // menor no tático, onde a barra de habilidades ocupa parte da faixa
-                    val side = if (maxWidth < maxHeight) maxWidth else maxHeight
-                    BoardView(
-                        board = match.playerBoard,
-                        skin = state.skin,
-                        showShips = true,
-                        sweep = false,
-                        impact = enemyImpact,
-                        modifier = Modifier.size(side)
-                    )
-                }
+                // IA e rede mostram a própria frota inteira, do jeito que o single
+                // player sempre mostrou — inclusive em rede, onde ninguém mais vê esta tela
+                OwnFleetPanel(state, match, viewSide, incomingImpact)
             }
         }
 
@@ -269,6 +239,54 @@ fun BattleScreen(state: AppState, match: Match) {
                 onQuit = { state.quitToMenu() }
             )
         }
+    }
+}
+
+/**
+ * Frota própria em tela cheia, como no modo solo: ocupa toda a faixa livre da
+ * metade de baixo, sempre quadrada. Usada contra a IA e na rede — nos dois casos
+ * ninguém mais está olhando para este aparelho.
+ */
+@Composable
+private fun OwnFleetPanel(state: AppState, match: Match, viewSide: Side, incomingImpact: Impact?) {
+    val board = match.board(viewSide)
+    val afloat = board.remainingShips().size
+    Gap(6)
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
+        Text(
+            "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}" +
+                " · ${t(K.ACCURACY)} ${match.accuracyOf(viewSide)}%",
+            style = NavalType.mono,
+            color = if (afloat <= 2) Naval.danger else Naval.greenBright
+        )
+    }
+    if (board.smokeActive) {
+        HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
+    }
+    Gap(6)
+    BoxWithConstraints(
+        Modifier
+            .fillMaxWidth()
+            .weight(1f)
+            .padding(bottom = 4.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        // quadrada, do tamanho do que sobrou — larga no clássico, um pouco menor no
+        // tático, onde a barra de habilidades ocupa parte da faixa
+        val side = if (maxWidth < maxHeight) maxWidth else maxHeight
+        BoardView(
+            board = board,
+            skin = state.skin,
+            showShips = true,
+            sweep = false,
+            impact = incomingImpact,
+            modifier = Modifier.size(side)
+        )
     }
 }
 
