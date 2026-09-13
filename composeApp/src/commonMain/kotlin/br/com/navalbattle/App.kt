@@ -9,25 +9,36 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.CloudResult
+import br.com.navalbattle.data.LanGame
+import br.com.navalbattle.data.LanLink
+import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.data.Prefs
+import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
 import br.com.navalbattle.design.FleetLine
 import br.com.navalbattle.design.Livery
 import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
+import br.com.navalbattle.game.Ability
+import br.com.navalbattle.game.Coord
+import br.com.navalbattle.game.FleetCodec
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Profile
 import br.com.navalbattle.game.Side
 import br.com.navalbattle.ui.AuthScreen
+import br.com.navalbattle.ui.LanScreen
 import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
 import br.com.navalbattle.ui.MenuScreen
@@ -39,7 +50,7 @@ import br.com.navalbattle.ui.ShipyardScreen
 import br.com.navalbattle.ui.StoreScreen
 import br.com.navalbattle.ui.SplashScreen
 
-enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, AUTH, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
+enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, AUTH, LAN, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
@@ -72,8 +83,119 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     fun quitToMenu() {
+        if (match?.opponent == Opponent.LAN) closeLink()
         match = null
         screen = Screen.MENU
+    }
+
+    // ---------------- partida na rede local ----------------
+
+    /** Corrotina da interface, para trazer as mensagens da rede para a thread da tela. */
+    var uiScope: CoroutineScope? = null
+
+    var linkState by mutableStateOf(LinkState.IDLE)
+        private set
+    var foundGames by mutableStateOf<List<LanGame>>(emptyList())
+        private set
+
+    private val link = LanLink()
+
+    private fun onMain(block: () -> Unit) {
+        val scope = uiScope
+        if (scope == null) block() else scope.launch { block() }
+    }
+
+    /** Anuncia a partida no Wi-Fi e espera alguém entrar. Quem hospeda joga primeiro. */
+    fun hostGame() {
+        link.close()
+        linkState = LinkState.HOSTING
+        link.host(
+            name = profile.name,
+            onState = { s -> onMain { onLinkState(s, Side.PLAYER) } },
+            onLine = { line -> onMain { onLine(line) } }
+        )
+    }
+
+    fun searchGames() {
+        link.close()
+        foundGames = emptyList()
+        linkState = LinkState.SEARCHING
+        link.search(
+            onFound = { list -> onMain { foundGames = list } },
+            onState = { s -> onMain { linkState = s } }
+        )
+    }
+
+    fun joinGame(game: LanGame) {
+        link.join(
+            game = game,
+            onState = { s -> onMain { onLinkState(s, Side.ENEMY) } },
+            onLine = { line -> onMain { onLine(line) } }
+        )
+    }
+
+    fun closeLink() {
+        link.close()
+        linkState = LinkState.IDLE
+        foundGames = emptyList()
+    }
+
+    /** Conectou: abre a partida deste lado e se apresenta ao adversário. */
+    private fun onLinkState(state: LinkState, side: Side) {
+        linkState = state
+        if (state != LinkState.CONNECTED) return
+        val m = Match(mode, Opponent.LAN, mySide = side)
+        m.setName(side, profile.name)
+        match = m
+        link.send(Protocol.hello(profile.name, mode.name))
+        screen = Screen.PLACEMENT
+    }
+
+    /** Uma linha chegou do outro aparelho. */
+    private fun onLine(line: String) {
+        val m = match ?: return
+        val parts = Protocol.parts(line)
+        when (parts.firstOrNull()) {
+            Protocol.HELLO -> parts.getOrNull(1)?.let { m.setName(m.mySide.other(), it) }
+
+            Protocol.FLEET -> parts.getOrNull(1)
+                ?.let { m.applyRemoteFleet(FleetCodec.decode(it)) }
+
+            Protocol.ABILITY -> parts.getOrNull(1)
+                ?.let { code -> Ability.entries.firstOrNull { it.code == code } }
+                ?.let { m.selectAbility(it) }
+
+            Protocol.ACT -> {
+                val x = parts.getOrNull(1)?.toIntOrNull() ?: return
+                val y = parts.getOrNull(2)?.toIntOrNull() ?: return
+                m.act(Coord(x, y))
+            }
+
+            Protocol.QUIT -> {
+                m.abandon(m.mySide)
+                closeLink()
+            }
+        }
+    }
+
+    /** Dispara e conta ao adversário — os dois aparelhos resolvem o mesmo tiro. */
+    fun fireShared(coord: Coord) {
+        val m = match ?: return
+        if (m.opponent == Opponent.LAN) link.send(Protocol.act(coord.x, coord.y))
+        m.act(coord)
+    }
+
+    fun useAbilityShared(ability: Ability) {
+        val m = match ?: return
+        if (m.opponent == Opponent.LAN) link.send(Protocol.ability(ability.code))
+        m.selectAbility(ability)
+    }
+
+    /** Manda a própria frota assim que ela é confirmada. */
+    fun sendFleet() {
+        val m = match ?: return
+        if (m.opponent != Opponent.LAN) return
+        link.send(Protocol.fleet(FleetCodec.encode(m.board(m.mySide).ships)))
     }
 
     // ---------------- conta e sincronização ----------------
@@ -180,6 +302,8 @@ fun App() {
     val profile = remember { Profile(Prefs()) }
     val cloud = remember { CloudApi() }
     val state = remember { AppState(profile, cloud) }
+    val scope = rememberCoroutineScope()
+    state.uiScope = scope
     val music = remember { MusicPlayer() }
 
     // a trilha acompanha a tela: tema no deque, faixa de combate na batalha
@@ -205,6 +329,7 @@ fun App() {
                 Screen.STORE -> StoreScreen(state)
                 Screen.PROFILE -> ProfileScreen(state)
                 Screen.AUTH -> AuthScreen(state)
+                Screen.LAN -> LanScreen(state)
                 Screen.NAMES -> state.match?.let { NamesScreen(state, it) }
                 Screen.PLACEMENT -> state.match?.let { PlacementScreen(state, it) }
                 Screen.HANDOFF -> state.match?.let { HandoffScreen(state, it) }
