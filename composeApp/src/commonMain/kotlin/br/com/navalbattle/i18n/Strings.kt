@@ -1,0 +1,362 @@
+package br.com.navalbattle.i18n
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
+/** Os três idiomas do jogo. O código é o que fica gravado no aparelho. */
+enum class Lang(val code: String, val label: String) {
+    PT("pt", "Português"),
+    EN("en", "English"),
+    ES("es", "Español");
+
+    companion object {
+        fun of(code: String): Lang = entries.firstOrNull { it.code == code } ?: PT
+    }
+}
+
+/**
+ * Idioma em uso. É estado observável do Compose: trocar aqui redesenha o jogo inteiro
+ * na hora, sem reiniciar.
+ */
+object I18n {
+    var lang by mutableStateOf(Lang.PT)
+}
+
+/** Atalho de tradução. */
+fun t(key: K): String = when (I18n.lang) {
+    Lang.PT -> key.pt
+    Lang.EN -> key.en
+    Lang.ES -> key.es
+}
+
+/** Tradução com um valor no lugar de `%s`. */
+fun t(key: K, arg: Any): String = t(key).replace("%s", arg.toString())
+
+fun t(key: K, a: Any, b: Any): String = t(key).replace("%1", a.toString()).replace("%2", b.toString())
+
+/**
+ * Todo texto que o comandante lê, nos três idiomas lado a lado — juntos de propósito:
+ * é o que impede uma tradução de ficar para trás quando a frase muda.
+ */
+enum class K(val pt: String, val en: String, val es: String) {
+    // ---------------------------------------------------------------- comum
+    BACK("Voltar", "Back", "Volver"),
+    BACK_TO_DECK("Voltar ao deque", "Back to deck", "Volver a cubierta"),
+    QUIT_MATCH("Encerrar partida", "Quit match", "Terminar partida"),
+    QUIT("Encerrar", "Quit", "Terminar"),
+    CONFIRM("Confirmar", "Confirm", "Confirmar"),
+    RANDOM("Aleatório", "Random", "Aleatorio"),
+    SAVE("Salvar", "Save", "Guardar"),
+    START("Começar", "Start", "Empezar"),
+    WAIT("Aguarde", "Stand by", "Espere"),
+    TURN("Turno", "Turn", "Turno"),
+    SHIPS_AFLOAT("Navios à tona", "Ships afloat", "Barcos a flote"),
+    ACCURACY("Precisão", "Accuracy", "Precisión"),
+    TURNS("Turnos", "Turns", "Turnos"),
+
+    // ---------------------------------------------------------------- abertura
+    SPLASH_TAG("Comando de frota", "Fleet command", "Mando de flota"),
+    LOAD_1("Abastecendo a frota", "Fueling the fleet", "Abasteciendo la flota"),
+    LOAD_2("Carregando os canhões", "Loading the guns", "Cargando los cañones"),
+    LOAD_3("Calibrando o sonar", "Calibrating sonar", "Calibrando el sonar"),
+    LOAD_4("Traçando a carta náutica", "Plotting the chart", "Trazando la carta náutica"),
+    LOAD_5("Içando âncora", "Weighing anchor", "Levando anclas"),
+
+    // ---------------------------------------------------------------- menu
+    MENU_TITLE_1("Deque de", "Command", "Cubierta de"),
+    MENU_TITLE_2("Comando", "deck", "mando"),
+    MENU_MODE("Modo de combate", "Combat mode", "Modo de combate"),
+    MENU_QUICK("Partida rápida", "Quick battle", "Partida rápida"),
+    MENU_QUICK_SUB("vs. IA", "vs. AI", "vs. IA"),
+    MENU_LOCAL("Dois jogadores", "Two players", "Dos jugadores"),
+    MENU_LOCAL_SUB("no mesmo aparelho", "same device", "en el mismo aparato"),
+    MENU_LAN("Rede local", "Local network", "Red local"),
+    MENU_LAN_SUB("outro celular no mesmo Wi-Fi", "another phone on this Wi-Fi", "otro móvil en la misma Wi-Fi"),
+    MENU_SHIPYARD("Estaleiro", "Shipyard", "Astillero"),
+    MENU_STORE("Loja do arsenal", "Arsenal store", "Tienda del arsenal"),
+    MENU_PROFILE("Perfil", "Profile", "Perfil"),
+    MENU_ACCOUNT("Conta", "Account", "Cuenta"),
+    MENU_CREATE_ACCOUNT("Criar conta", "Create account", "Crear cuenta"),
+    MENU_ACCOUNT_SUB("salvar na nuvem", "save to the cloud", "guardar en la nube"),
+    MENU_RANKED("Ranqueada", "Ranked", "Clasificatoria"),
+    MENU_SOON("em breve", "coming soon", "muy pronto"),
+    MENU_MUSIC_ON("Trilha ligada", "Music on", "Música activada"),
+    MENU_MUSIC_OFF("Trilha desligada", "Music off", "Música apagada"),
+    MENU_ACTIVE_FLEET("Frota ativa", "Active fleet", "Flota activa"),
+    MENU_TAB_DECK("Deque", "Deck", "Cubierta"),
+    MENU_TAB_STORE("Loja", "Store", "Tienda"),
+
+    // ---------------------------------------------------------------- modos e classes
+    MODE_CLASSIC("Clássico", "Classic", "Clásico"),
+    MODE_CLASSIC_SUB("Um tiro por turno, sem habilidades", "One shot per turn, no abilities", "Un disparo por turno, sin habilidades"),
+    MODE_TACTICAL("Tático", "Tactical", "Táctico"),
+    MODE_TACTICAL_SUB("Cada classe concede uma habilidade", "Each class grants an ability", "Cada clase otorga una habilidad"),
+    SHIP_CARRIER("Porta-aviões", "Carrier", "Portaaviones"),
+    SHIP_BATTLESHIP("Encouraçado", "Battleship", "Acorazado"),
+    SHIP_CRUISER("Cruzador", "Cruiser", "Crucero"),
+    SHIP_SUBMARINE("Submarino", "Submarine", "Submarino"),
+    SHIP_DESTROYER("Destróier", "Destroyer", "Destructor"),
+    ABILITY_SONAR("Sonar", "Sonar", "Sonar"),
+    ABILITY_RADAR("Radar", "Radar", "Radar"),
+    ABILITY_DOUBLE("2x Tiro", "2x Shot", "2x Tiro"),
+    ABILITY_SMOKE("Fumaça", "Smoke", "Humo"),
+    ABILITY_DIVE("Imersão", "Dive", "Inmersión"),
+    ABILITY_SONAR_FULL("Ping de sonar", "Sonar ping", "Ping de sonar"),
+    ABILITY_RADAR_FULL("Reconhecimento aéreo", "Air recon", "Reconocimiento aéreo"),
+    ABILITY_DOUBLE_FULL("Barragem dupla", "Double barrage", "Doble andanada"),
+    ABILITY_SMOKE_FULL("Cortina de fumaça", "Smoke screen", "Cortina de humo"),
+    ABILITY_DIVE_FULL("Imersão", "Dive", "Inmersión"),
+
+    // ---------------------------------------------------------------- posicionamento
+    PLACEMENT("Posicionamento", "Deployment", "Despliegue"),
+    PLACEMENT_HINT("Toque no navio para girar · arraste para reposicionar", "Tap a ship to rotate · drag to move", "Toca un barco para girar · arrastra para mover"),
+    PLACEMENT_INVALID("Posição inválida", "Invalid position", "Posición inválida"),
+    PLACEMENT_NO_ROOM("Sem espaço para girar aqui", "No room to rotate here", "Sin espacio para girar aquí"),
+
+    // ---------------------------------------------------------------- nomes e passagem
+    NAMES_TITLE_1("Quem está no", "Who is in", "¿Quién está al"),
+    NAMES_TITLE_2("comando?", "command?", "mando?"),
+    NAMES_SUB("O placar da batalha usa esses nomes", "The battle scoreboard uses these names", "El marcador usa estos nombres"),
+    NAMES_ONE("Comandante 1", "Commander 1", "Comandante 1"),
+    NAMES_TWO("Comandante 2", "Commander 2", "Comandante 2"),
+    HANDOFF_PASS("Passe o aparelho", "Pass the device", "Pasa el aparato"),
+    HANDOFF_PLACE("Posicione a sua frota", "Deploy your fleet", "Despliega tu flota"),
+    HANDOFF_HIDE("O outro comandante não deve ver a tela", "The other commander must not see the screen", "El otro comandante no debe ver la pantalla"),
+    HANDOFF_HAVE_IT("Estou com o aparelho", "I have the device", "Tengo el aparato"),
+    HANDOFF_PREP("Preparação", "Preparation", "Preparación"),
+
+    // ---------------------------------------------------------------- batalha
+    BATTLE_ENEMY_TARGET("Alvo inimigo", "Enemy target", "Objetivo enemigo"),
+    BATTLE_YOUR_TURN("Seu turno · aguardando coordenada", "Your turn · awaiting coordinates", "Tu turno · esperando coordenadas"),
+    BATTLE_YOUR_FLEET("Sua frota", "Your fleet", "Tu flota"),
+    BATTLE_SCOREBOARD("Placar da batalha", "Battle scoreboard", "Marcador de batalla"),
+    BATTLE_SMOKE_ACTIVE("Cortina ativa", "Smoke active", "Humo activo"),
+    BATTLE_ABILITIES("Habilidades táticas", "Tactical abilities", "Habilidades tácticas"),
+    BATTLE_ABILITY_HINT("Toque num ícone para usar, ou dispare direto no alvo", "Tap an icon to use one, or fire straight at the target", "Toca un icono para usarla, o dispara directo al objetivo"),
+    BATTLE_ABILITY_AIM("%s: toque no alvo", "%s: tap the target", "%s: toca el objetivo"),
+    BATTLE_TURN_OF("Vez de %s", "%s's turn", "Turno de %s"),
+    BATTLE_MEMORY("Sua memória de tiro na frota de %s", "Your firing record on %s's fleet", "Tu registro de disparos en la flota de %s"),
+    BATTLE_PASSING("Passando para %s", "Passing to %s", "Pasando a %s"),
+    BATTLE_ATTACK_FLEET("Ataque a frota de %s", "Attack %s's fleet", "Ataca la flota de %s"),
+    BATTLE_WAITING_FLEET("Aguardando a frota de %s", "Waiting for %s's fleet", "Esperando la flota de %s"),
+    BATTLE_QUIT_TITLE("Encerrar a partida?", "Quit the match?", "¿Terminar la partida?"),
+    BATTLE_QUIT_EYEBROW("Abandonar operação", "Abort operation", "Abandonar operación"),
+    BATTLE_QUIT_WARN("O progresso desta batalha será perdido", "This battle's progress will be lost", "El progreso de esta batalla se perderá"),
+    BATTLE_KEEP_PLAYING("Continuar jogando", "Keep playing", "Seguir jugando"),
+
+    // ---------------------------------------------------------------- avisos de combate
+    CALL_HIT("Acerto direto!", "Direct hit!", "¡Impacto directo!"),
+    CALL_SUNK("Navio afundado", "Ship sunk", "Barco hundido"),
+    CALL_MISS("Na água", "Miss", "Al agua"),
+    CALL_TARGET("Alvo", "Target", "Objetivo"),
+    CALL_HIT_SUB("%1 atingido · %2", "%1 hit · %2", "%1 alcanzado · %2"),
+    CALL_SUNK_SUB("%1 abatido · %2", "%1 destroyed · %2", "%1 abatido · %2"),
+    CALL_FLEET_READY("Frota a postos", "Fleet at station", "Flota en posición"),
+    CALL_FLEET_READY_TACTICAL("Toque nos ícones abaixo para usar uma habilidade", "Tap the icons below to use an ability", "Toca los iconos de abajo para usar una habilidad"),
+    CALL_FLEET_READY_CLASSIC("Aguardando coordenada", "Awaiting coordinates", "Esperando coordenadas"),
+    CALL_SMOKE("Cortina lançada", "Smoke deployed", "Cortina desplegada"),
+    CALL_SMOKE_SUB("Próxima varredura inimiga bloqueada", "Next enemy sweep blocked", "Próximo barrido enemigo bloqueado"),
+    CALL_DOUBLE("Barragem dupla", "Double barrage", "Doble andanada"),
+    CALL_DOUBLE_SUB("Dois disparos neste turno", "Two shots this turn", "Dos disparos en este turno"),
+    CALL_RECON("Reconhecimento aéreo", "Air recon", "Reconocimiento aéreo"),
+    CALL_RECON_SUB("Linha %s revelada", "Row %s revealed", "Fila %s revelada"),
+    CALL_SONAR("Contato no sonar", "Sonar contact", "Contacto en el sonar"),
+    CALL_SONAR_SUB("Setor %s varrido", "Sector %s swept", "Sector %s barrido"),
+    CALL_SCAN_FAIL("Varredura falhou", "Sweep failed", "Barrido fallido"),
+    CALL_SCAN_FAIL_SUB("Cortina de fumaça inimiga", "Enemy smoke screen", "Cortina de humo enemiga"),
+    CALL_ENEMY_SONAR("Sonar inimigo", "Enemy sonar", "Sonar enemigo"),
+    CALL_ENEMY_SONAR_SUB("Varredura em %s", "Sweep at %s", "Barrido en %s"),
+    CALL_SMOKE_HELD("Cortina resistiu", "Smoke held", "La cortina resistió"),
+    CALL_SMOKE_HELD_SUB("Varredura inimiga bloqueada", "Enemy sweep blocked", "Barrido enemigo bloqueado"),
+    CALL_WON("%s venceu", "%s won", "%s ganó"),
+    CALL_WON_SUB("Frota adversária neutralizada", "Opposing fleet neutralized", "Flota rival neutralizada"),
+    CALL_VICTORY("Frota inimiga neutralizada", "Enemy fleet neutralized", "Flota enemiga neutralizada"),
+    CALL_VICTORY_SUB("Vitória, comandante", "Victory, commander", "Victoria, comandante"),
+    CALL_DEFEAT("Perdemos o contato", "We lost contact", "Perdimos el contacto"),
+    CALL_DEFEAT_SUB("Nossa frota foi destruída", "Our fleet was destroyed", "Nuestra flota fue destruida"),
+    ENEMY("Inimigo", "Enemy", "Enemigo"),
+    YOU("Você", "You", "Tú"),
+
+    // ---------------------------------------------------------------- relatório
+    RESULT_TITLE("Relatório de combate", "Battle report", "Informe de combate"),
+    RESULT_VICTORY("Vitória", "Victory", "Victoria"),
+    RESULT_DEFEAT("Derrota", "Defeat", "Derrota"),
+    RESULT_WON_BATTLE("Venceu a batalha", "Won the battle", "Ganó la batalla"),
+    RESULT_CHART("Carta da batalha", "Battle chart", "Carta de la batalla"),
+    RESULT_FLEET_OF("Frota de %s", "%s's fleet", "Flota de %s"),
+    RESULT_SHOTS_HITS("Tiros / acertos · precisão", "Shots / hits · accuracy", "Disparos / impactos · precisión"),
+    RESULT_SHIPS_LEFT("Navios restantes", "Ships remaining", "Barcos restantes"),
+    RESULT_SHOTS_FIRED("Tiros disparados", "Shots fired", "Disparos realizados"),
+    RESULT_HITS("Acertos", "Hits", "Impactos"),
+    RESULT_CAREER("Carreira", "Career", "Carrera"),
+    RESULT_PROMOTED("Promovido a %s", "Promoted to %s", "Ascendido a %s"),
+    RESULT_CREDITS_HINT("Créditos valem novas frotas no estaleiro", "Credits buy new fleets in the shipyard", "Los créditos compran nuevas flotas en el astillero"),
+    RESULT_NEW_MATCH("Nova partida", "New match", "Nueva partida"),
+
+    // ---------------------------------------------------------------- estaleiro e loja
+    SHIPYARD_HULL("Linha de casco", "Hull line", "Línea de casco"),
+    SHIPYARD_CAMO("Camuflagem", "Camouflage", "Camuflaje"),
+    SHIPYARD_YOURS("Sua", "Owned", "Tuya"),
+    SHIPYARD_IN_SERVICE("Em serviço", "In service", "En servicio"),
+    SHIPYARD_COMMISSION("Pôr em serviço", "Commission", "Poner en servicio"),
+    SHIPYARD_STORE_HINT("O que estiver marcado com preço se compra na loja", "Anything with a price is bought in the store", "Lo que tiene precio se compra en la tienda"),
+    STORE_TITLE("Loja do arsenal", "Arsenal store", "Tienda del arsenal"),
+    STORE_HULLS("Cascos", "Hulls", "Cascos"),
+    STORE_CAMOS("Camuflagens", "Camouflages", "Camuflajes"),
+    STORE_HULLS_SUB("Mudam a silhueta das cinco embarcações", "They change the silhouette of all five ships", "Cambian la silueta de las cinco naves"),
+    STORE_CAMOS_SUB("Mudam a pintura e o padrão de camuflagem", "They change the paint and camouflage pattern", "Cambian la pintura y el patrón de camuflaje"),
+    STORE_USE("Usar", "Use", "Usar"),
+    STORE_IN_USE("Em uso", "In use", "En uso"),
+    STORE_MISSING("Faltam ◆ %1 para a %2", "◆ %1 short for %2", "Faltan ◆ %1 para %2"),
+    STORE_COMMISSIONED("%s entrou em serviço", "%s is in service", "%s entró en servicio"),
+    STORE_PAINTED("%s aplicada na frota", "%s applied to the fleet", "%s aplicada a la flota"),
+    STORE_CREDITS_HINT("Créditos se ganham em combate · pagamento real entra na publicação", "Credits are earned in battle · real payment comes at launch", "Los créditos se ganan en combate · el pago real llega al publicar"),
+    STORE_INCLUDED("Inclusa", "Included", "Incluida"),
+    STORE_OWNED("Conquistada", "Owned", "Conseguida"),
+    STORE_COST("Custa %1 · você tem ◆ %2", "Costs %1 · you have ◆ %2", "Cuesta %1 · tienes ◆ %2"),
+    STORE_IN_YARD("No seu estaleiro", "In your shipyard", "En tu astillero"),
+    STORE_IN_FLEET("Em serviço na sua frota", "Serving in your fleet", "En servicio en tu flota"),
+    STORE_EARN_HINT("Faltam ◆ %s — ganhe créditos em combate", "◆ %s short — earn credits in battle", "Faltan ◆ %s — gana créditos en combate"),
+
+    // ---------------------------------------------------------------- perfil
+    PROFILE_TITLE("Perfil", "Profile", "Perfil"),
+    PROFILE_NAME("Nome de guerra", "Call sign", "Nombre de guerra"),
+    PROFILE_INSIGNIA("Insígnia", "Insignia", "Insignia"),
+    PROFILE_RECORD("Folha de serviço", "Service record", "Hoja de servicio"),
+    PROFILE_MATCHES("Partidas", "Matches", "Partidas"),
+    PROFILE_WINS("Vitórias", "Wins", "Victorias"),
+    PROFILE_LOSSES("Derrotas", "Losses", "Derrotas"),
+    PROFILE_WINRATE("Aproveitamento", "Win rate", "Efectividad"),
+    PROFILE_SHOT_ACC("Precisão de tiro", "Firing accuracy", "Precisión de tiro"),
+    PROFILE_SHOTS_HITS("Tiros / acertos", "Shots / hits", "Disparos / impactos"),
+    PROFILE_SUNK("Navios afundados", "Ships sunk", "Barcos hundidos"),
+    PROFILE_STREAK("Sequência atual", "Current streak", "Racha actual"),
+    PROFILE_BEST_STREAK("Melhor sequência", "Best streak", "Mejor racha"),
+    PROFILE_HULLS_OWNED("Cascos no estaleiro", "Hulls in the shipyard", "Cascos en el astillero"),
+    PROFILE_CAMOS_OWNED("Camuflagens", "Camouflages", "Camuflajes"),
+    PROFILE_NEXT_RANKS("Próximas patentes", "Next ranks", "Próximos rangos"),
+    PROFILE_MAX_RANK("Patente máxima alcançada", "Highest rank reached", "Rango máximo alcanzado"),
+    PROFILE_XP_TO("Faltam %1 XP para %2", "%1 XP to %2", "Faltan %1 XP para %2"),
+    PROFILE_CAREER_DONE("Carreira completa", "Career complete", "Carrera completa"),
+    PROFILE_RESET("Zerar carreira", "Reset career", "Reiniciar carrera"),
+    PROFILE_RESET_TITLE("Zerar a carreira?", "Reset the career?", "¿Reiniciar la carrera?"),
+    PROFILE_RESET_EYEBROW("Baixa definitiva", "Permanent discharge", "Baja definitiva"),
+    PROFILE_RESET_WARN("Patente, créditos, estatísticas e frotas voltam ao início", "Rank, credits, stats and fleets go back to zero", "Rango, créditos, estadísticas y flotas vuelven a cero"),
+    PROFILE_RESET_KEEP("Manter carreira", "Keep career", "Mantener carrera"),
+    PROFILE_RESET_DO("Zerar tudo", "Reset everything", "Reiniciar todo"),
+    PROFILE_WINS_SUFFIX("vitórias", "wins", "victorias"),
+    PROFILE_LANGUAGE("Idioma", "Language", "Idioma"),
+
+    // ---------------------------------------------------------------- conta
+    AUTH_TITLE("Conta", "Account", "Cuenta"),
+    AUTH_CONNECTED("Conectado", "Connected", "Conectado"),
+    AUTH_LOCAL("Local", "Local", "Local"),
+    AUTH_HEAD_1("Sua carreira", "Your career", "Tu carrera"),
+    AUTH_HEAD_2("em qualquer mar", "on any sea", "en cualquier mar"),
+    AUTH_SUB("Patente, créditos e frotas guardados na base do jogo", "Rank, credits and fleets kept in the game's database", "Rango, créditos y flotas guardados en la base del juego"),
+    AUTH_CONNECTED_AS("Conectado como", "Connected as", "Conectado como"),
+    AUTH_SYNC_NOW("Sincronizar agora", "Sync now", "Sincronizar ahora"),
+    AUTH_SYNCING("Sincronizando…", "Syncing…", "Sincronizando…"),
+    AUTH_SYNCED("Carreira sincronizada.", "Career synced.", "Carrera sincronizada."),
+    AUTH_SYNC_FAIL("Não consegui sincronizar agora.", "Could not sync right now.", "No pude sincronizar ahora."),
+    AUTH_SIGN_OUT("Sair da conta", "Sign out", "Cerrar sesión"),
+    AUTH_SIGNED_OUT("Sessão encerrada. A carreira continua neste aparelho.", "Signed out. Your career stays on this device.", "Sesión cerrada. La carrera sigue en este aparato."),
+    AUTH_SIGN_IN("Entrar", "Sign in", "Entrar"),
+    AUTH_EMAIL("E-mail", "Email", "Correo"),
+    AUTH_PASSWORD("Senha", "Password", "Contraseña"),
+    AUTH_USERNAME("Nome de usuário", "Username", "Nombre de usuario"),
+    AUTH_MIN_CHARS("Mínimo de 6 caracteres", "At least 6 characters", "Mínimo 6 caracteres"),
+    AUTH_WAIT("aguarde", "please wait", "espere"),
+    AUTH_NO_SERVER("Servidor ainda não ligado", "Server not connected yet", "Servidor aún no conectado"),
+    AUTH_NO_SERVER_SUB("A carreira está sendo gravada neste aparelho. Quando a base entrar, ela sobe para a conta sem perder nada.", "Your career is saved on this device. When the database comes online it will upload without losing anything.", "La carrera se guarda en este aparato. Cuando la base entre, subirá sin perder nada."),
+    AUTH_GOOGLE_HINT("O login com Google usa o mesmo e-mail e cai na mesma conta", "Google sign-in uses the same email and lands in the same account", "El acceso con Google usa el mismo correo y cae en la misma cuenta"),
+    AUTH_NO_ACCOUNT("Sem conta", "No account", "Sin cuenta"),
+    AUTH_ACCOUNT_ON("Conta conectada", "Account connected", "Cuenta conectada"),
+    AUTH_CREATE_HINT("Crie uma para guardar a carreira na nuvem", "Create one to keep your career in the cloud", "Crea una para guardar la carrera en la nube"),
+    AUTH_MANAGE("Gerir", "Manage", "Gestionar"),
+    AUTH_CREATE("Criar", "Create", "Crear"),
+    AUTH_CREATED("Conta criada. A carreira já está na nuvem.", "Account created. Your career is in the cloud.", "Cuenta creada. La carrera ya está en la nube."),
+    AUTH_RESTORED("Carreira da nuvem restaurada neste aparelho.", "Cloud career restored on this device.", "Carrera de la nube restaurada en este aparato."),
+    AUTH_UPLOADED("Carreira deste aparelho enviada para a nuvem.", "This device's career uploaded to the cloud.", "La carrera de este aparato subió a la nube."),
+    AUTH_CONNECTED_NO_SYNC("Conectado. Não consegui sincronizar agora.", "Connected. Could not sync right now.", "Conectado. No pude sincronizar ahora."),
+    AUTH_SIGN_IN_TO_SYNC("Entre na conta para sincronizar.", "Sign in to sync.", "Entra en la cuenta para sincronizar."),
+    AUTH_EXPIRED("Sua sessão expirou. Entre de novo para sincronizar.", "Your session expired. Sign in again to sync.", "Tu sesión expiró. Entra de nuevo para sincronizar."),
+
+    // ---------------------------------------------------------------- rede local
+    LAN_TITLE("Rede local", "Local network", "Red local"),
+    LAN_HEAD_1("Batalha", "Battle", "Batalla"),
+    LAN_HEAD_2("no mesmo Wi-Fi", "on the same Wi-Fi", "en la misma Wi-Fi"),
+    LAN_SUB("Os dois aparelhos precisam estar na mesma rede", "Both devices must be on the same network", "Los dos aparatos deben estar en la misma red"),
+    LAN_HOST("Criar partida", "Host a match", "Crear partida"),
+    LAN_HOST_SUB("você abre o fogo", "you fire first", "tú abres fuego"),
+    LAN_SEARCH("Procurar partida", "Find a match", "Buscar partida"),
+    LAN_SEARCH_SUB("entrar em uma aberta", "join an open one", "entrar en una abierta"),
+    LAN_ANNOUNCING("Anunciando na rede", "Announced on the network", "Anunciando en la red"),
+    LAN_ANNOUNCING_SUB("Peça para o outro comandante tocar em procurar partida", "Ask the other commander to tap find a match", "Pide al otro comandante que toque buscar partida"),
+    LAN_FOUND("Partidas encontradas", "Matches found", "Partidas encontradas"),
+    LAN_LOOKING("Procurando…", "Searching…", "Buscando…"),
+    LAN_NONE_YET("Nenhuma partida anunciada ainda", "No match announced yet", "Ninguna partida anunciada aún"),
+    LAN_JOIN("Entrar", "Join", "Entrar"),
+    LAN_CONNECTING("Conectando…", "Connecting…", "Conectando…"),
+    LAN_DROPPED("A ligação caiu", "The link dropped", "La conexión se cayó"),
+    LAN_DROPPED_SUB("Confirme que os dois estão na mesma rede e tente de novo", "Make sure both are on the same network and try again", "Comprueba que ambos están en la misma red e inténtalo de nuevo"),
+    LAN_HOW("Como funciona", "How it works", "Cómo funciona"),
+    LAN_STEP_1("Um comandante toca em criar partida", "One commander taps host a match", "Un comandante toca crear partida"),
+    LAN_STEP_2("O outro toca em procurar e escolhe o nome que aparecer", "The other taps find and picks the name that shows up", "El otro toca buscar y elige el nombre que aparezca"),
+    LAN_STEP_3("Cada um posiciona a própria frota e a batalha começa", "Each deploys their own fleet and the battle starts", "Cada uno despliega su flota y empieza la batalla"),
+    LAN_HOST_FIRST("Quem cria a partida atira primeiro", "Whoever hosts fires first", "Quien crea la partida dispara primero"),
+    LAN_READY("Pronto", "Ready", "Listo"),
+    LAN_STATE_ANNOUNCING("Anunciando", "Announcing", "Anunciando"),
+    LAN_STATE_SEARCHING("Procurando", "Searching", "Buscando"),
+    LAN_STATE_CONNECTING("Conectando", "Connecting", "Conectando"),
+    LAN_STATE_CONNECTED("Conectado", "Connected", "Conectado"),
+    LAN_STATE_FAILED("Sem ligação", "No link", "Sin conexión"),
+
+    // ---------------------------------------------------------------- patentes
+    RANK_RECRUIT("Recruta", "Recruit", "Recluta"),
+    RANK_SAILOR("Marinheiro", "Seaman", "Marinero"),
+    RANK_CORPORAL("Cabo", "Petty Officer", "Cabo"),
+    RANK_SERGEANT("Sargento", "Chief Petty Officer", "Sargento"),
+    RANK_LIEUTENANT("Tenente", "Lieutenant", "Teniente"),
+    RANK_CORVETTE("Capitão de Corveta", "Lieutenant Commander", "Capitán de Corbeta"),
+    RANK_FRIGATE("Capitão de Fragata", "Commander", "Capitán de Fragata"),
+    RANK_CAPTAIN("Capitão de Mar e Guerra", "Captain", "Capitán de Navío"),
+    RANK_REAR_ADMIRAL("Contra-Almirante", "Rear Admiral", "Contraalmirante"),
+    RANK_ADMIRAL("Almirante", "Admiral", "Almirante"),
+    COMMANDER("Comandante", "Commander", "Comandante"),
+
+    // ---------------------------------------------------------------- insígnias
+    INSIGNIA_ANCHOR("Âncora", "Anchor", "Ancla"),
+    INSIGNIA_TRIDENT("Tridente", "Trident", "Tridente"),
+    INSIGNIA_STAR("Estrela", "Star", "Estrella"),
+    INSIGNIA_WHEEL("Timão", "Helm", "Timón"),
+    INSIGNIA_WAVES("Vagas", "Waves", "Olas"),
+    INSIGNIA_SKULL("Caveira", "Skull", "Calavera"),
+
+    // ---------------------------------------------------------------- librés e cascos
+    PAINT_STD("Padrão Naval", "Navy Standard", "Estándar Naval"),
+    PAINT_BR("Frota Brasil", "Brazil Fleet", "Flota Brasil"),
+    PAINT_JP("Frota Japão", "Japan Fleet", "Flota Japón"),
+    PAINT_US("Frota EUA", "USA Fleet", "Flota EE. UU."),
+    PAINT_UK("Frota Reino Unido", "UK Fleet", "Flota Reino Unido"),
+    PAINT_PT("Frota Portugal", "Portugal Fleet", "Flota Portugal"),
+    PAINT_ARC("Camuflagem Ártica", "Arctic Camo", "Camuflaje Ártico"),
+    PAINT_DZL("Dazzle 1918", "Dazzle 1918", "Dazzle 1918"),
+    PAINT_SPL("Estilhaço Báltico", "Baltic Splinter", "Astilla Báltica"),
+    PAINT_COR("Corsária", "Corsair", "Corsaria"),
+    PAINT_SLT("Furtiva", "Stealth", "Furtiva"),
+    CAMO_PLAIN("Pintura lisa", "Plain paint", "Pintura lisa"),
+    CAMO_DAZZLE("Faixas dazzle de alto contraste", "High-contrast dazzle stripes", "Franjas dazzle de alto contraste"),
+    CAMO_SPLINTER("Manchas angulares de estilhaço", "Angular splinter patches", "Manchas angulares de astilla"),
+    CAMO_STRIPES("Faixas de linha d'água", "Waterline stripes", "Franjas de línea de flotación"),
+    CAMO_DIGITAL("Retículo digital moderno", "Modern digital grid", "Retícula digital moderna"),
+    FLEET_STD("Linha Padrão", "Standard Line", "Línea Estándar"),
+    FLEET_STD_SUB("Cascos de série, equilibrados em boca e proa.", "Stock hulls, balanced in beam and bow.", "Cascos de serie, equilibrados en manga y proa."),
+    FLEET_IMP("Linha Imperial", "Imperial Line", "Línea Imperial"),
+    FLEET_IMP_SUB("Cascos estreitos, proa clipper e mastro em pagode.", "Narrow hulls, clipper bow and pagoda mast.", "Cascos estrechos, proa clíper y mástil en pagoda."),
+    FLEET_ATL("Linha Atlântica", "Atlantic Line", "Línea Atlántica"),
+    FLEET_ATL_SUB("Cascos largos, proa bulbosa e superestrutura em bloco.", "Wide hulls, bulbous bow and block superstructure.", "Cascos anchos, proa bulbosa y superestructura en bloque."),
+    FLEET_GHO("Linha Fantasma", "Ghost Line", "Línea Fantasma"),
+    FLEET_GHO_SUB("Cascos facetados de baixa assinatura, sem chaminés.", "Faceted low-signature hulls, no funnels.", "Cascos facetados de baja firma, sin chimeneas.")
+}
