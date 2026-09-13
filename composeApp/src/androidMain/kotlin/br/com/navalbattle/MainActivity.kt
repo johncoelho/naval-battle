@@ -11,6 +11,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         AudioContextHolder.appContext = applicationContext
+        ActivityHolder.current = this
         setContent { App() }
+    }
+
+    override fun onDestroy() {
+        if (ActivityHolder.current == this) ActivityHolder.current = null
+        super.onDestroy()
     }
 }
