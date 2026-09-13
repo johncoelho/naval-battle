@@ -9,6 +9,40 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.7.0] — 2026-09-13 · Rede local e embarcações com volume
+
+Dois celulares no mesmo Wi-Fi passam a jogar um contra o outro, sem servidor.
+
+### Adicionado
+- **Modo rede local**: um aparelho anuncia a partida, o outro encontra e entra. A
+  descoberta usa NSD (o mesmo mDNS do Bonjour, o que abre caminho para o iOS) e a
+  conversa corre num socket TCP direto. Sem servidor, sem internet, sem dependência nova.
+- **Protocolo de linha** (`HELLO`, `FLEET`, `ACT`, `ABIL`, `QUIT`): as frotas são
+  trocadas no início e depois só as jogadas viajam. Os dois aparelhos rodam a mesma
+  partida e resolvem cada tiro igual — inclusive as habilidades táticas.
+- `Match` ganhou `mySide`: em rede, quem hospeda comanda o lado PLAYER e abre o fogo;
+  quem entra comanda o ENEMY. O motor já era simétrico desde o modo local.
+- Tela **Rede local** com criar, procurar, lista de partidas encontradas, estado da
+  ligação e as três instruções de uso.
+
+### Alterado
+- **Arte das embarcações agora tem volume.** Luz fixa vindo de cima à esquerda: sombra
+  projetada na água, gradiente de bordo a bordo no casco, fio de luz na amurada
+  iluminada, superestruturas com face superior extrudada e torres com cúpula sombreada.
+  A vista de topo continua chapada, mas lê como maquete.
+- Partidas em rede não contam carreira, pela mesma razão do modo local: o placar de
+  progresso é do aparelho, não da mesa.
+- O relatório final mostra os dois comandantes por nome também em rede.
+
+### Nota de projeto
+A frota inteira é enviada ao adversário no início da partida, e cada aparelho resolve os
+tiros localmente. É o desenho mais simples e o que mantém os dois lados sincronizados sem
+mensagem de confirmação. Em compensação, um cliente adulterado poderia ler a frota
+adversária — aceitável para jogo entre amigos na mesma rede, e a trocar por resolução no
+lado do dono quando existir ranqueada valendo pontuação.
+
+---
+
 ## [0.6.0] — 2026-09-13 · Conta na nuvem
 
 A carreira deixa de morrer no aparelho: passa a ter conta, e a conta vive no Supabase.

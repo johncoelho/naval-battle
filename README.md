@@ -39,7 +39,10 @@ Documentação complementar: [processo de build](docs/BUILD.md) · [stack e conv
   em sigilo (com tela de passagem entre os dois) e a batalha corre toda numa tela só.
   Cada um enxerga apenas a **própria memória de tiro**; ao fim, a carta se revela inteira,
   com as duas frotas e todos os tiros, cada um na cor do seu dono.
-- **Ranqueada online** e **convite a amigos** — planejadas, ainda não implementadas.
+- **Rede local** — dois celulares no mesmo Wi-Fi. Um cria a partida, o outro encontra pelo
+  nome e entra; cada um posiciona a própria frota no seu aparelho e a batalha corre nos dois
+  ao mesmo tempo. Não passa por servidor: funciona sem internet.
+- **Ranqueada online** — planejada, ainda não implementada.
 
 ### Carreira
 
@@ -62,6 +65,17 @@ Dois eixos independentes, ambos comprados com créditos:
   faixas de linha d'água e retículo digital. Onze pinturas, duas inclusas.
 
 A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado.
+
+### Como a rede local funciona
+
+As frotas são trocadas no começo da partida e, dali em diante, só as jogadas viajam
+(`ACT|x|y`). Os dois aparelhos rodam a mesma partida e resolvem cada tiro de forma
+idêntica — nada precisa ser confirmado de volta. A descoberta usa NSD/mDNS, o mesmo
+mecanismo do Bonjour, o que deixa o caminho pronto para o iOS.
+
+Como cada aparelho conhece a frota do outro para resolver os tiros, um cliente adulterado
+poderia espiar. É aceitável entre amigos na mesma rede; quando houver ranqueada valendo
+pontuação, a resolução passa para o lado do dono da frota.
 
 ### Conta e sincronização
 
@@ -163,4 +177,5 @@ detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume n
 - [ ] Ranqueada online com Supabase Realtime
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
 - [ ] Compras com pagamento real (Google Play Billing) vendendo créditos
-- [ ] Alvo iOS: escrever os `actual` de áudio, preferências e rede
+- [ ] Alvo iOS: escrever os `actual` de áudio, preferências e rede. O IPA instalável
+      depende ainda de conta paga no Apple Developer para assinar
