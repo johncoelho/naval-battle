@@ -13,7 +13,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
+import br.com.navalbattle.data.CloudApi
+import br.com.navalbattle.data.CloudResult
 import br.com.navalbattle.data.Prefs
+import br.com.navalbattle.data.Session
 import br.com.navalbattle.design.FleetLine
 import br.com.navalbattle.design.Livery
 import br.com.navalbattle.design.Skin
@@ -24,6 +27,7 @@ import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Profile
 import br.com.navalbattle.game.Side
+import br.com.navalbattle.ui.AuthScreen
 import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
 import br.com.navalbattle.ui.MenuScreen
@@ -35,9 +39,9 @@ import br.com.navalbattle.ui.ShipyardScreen
 import br.com.navalbattle.ui.StoreScreen
 import br.com.navalbattle.ui.SplashScreen
 
-enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
+enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, AUTH, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
 
-class AppState(val profile: Profile) {
+class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
     var mode by mutableStateOf(GameMode.TACTICAL)
     var match by mutableStateOf<Match?>(null)
@@ -71,12 +75,72 @@ class AppState(val profile: Profile) {
         match = null
         screen = Screen.MENU
     }
+
+    // ---------------- conta e sincronização ----------------
+
+    /** Cria a conta e já sobe a carreira que existir neste aparelho. */
+    suspend fun createAccount(email: String, password: String, username: String): Pair<Boolean, String> =
+        when (val r = cloud.signUp(email, password, username)) {
+            is CloudResult.Ok -> {
+                profile.rememberSession(r.value)
+                profile.rename(username)
+                cloud.saveProfile(r.value, profile.snapshot())
+                true to "Conta criada. A carreira já está na nuvem."
+            }
+
+            is CloudResult.Fail -> false to r.message
+        }
+
+    /**
+     * Entra na conta. Se a nuvem tiver carreira mais avançada, ela vence; se a deste
+     * aparelho estiver na frente, é ela que sobe. Nunca se perde o maior progresso.
+     */
+    suspend fun signIn(email: String, password: String): Pair<Boolean, String> =
+        when (val r = cloud.signIn(email, password)) {
+            is CloudResult.Ok -> {
+                profile.rememberSession(r.value)
+                val merged = mergeWithCloud(r.value)
+                true to merged
+            }
+
+            is CloudResult.Fail -> false to r.message
+        }
+
+    /** Sincroniza sob demanda, pelo botão da tela de conta. */
+    suspend fun syncNow(): Boolean {
+        val session = profile.currentSession() ?: return false
+        mergeWithCloud(session)
+        return true
+    }
+
+    /** Sobe a carreira em silêncio depois de uma partida ou de uma compra. */
+    suspend fun pushQuietly() {
+        val session = profile.currentSession() ?: return
+        cloud.saveProfile(session, profile.snapshot())
+    }
+
+    private suspend fun mergeWithCloud(session: Session): String =
+        when (val remote = cloud.loadProfile(session)) {
+            is CloudResult.Ok -> {
+                val cloudProfile = remote.value
+                if (cloudProfile != null && cloudProfile.xp > profile.xp) {
+                    profile.adopt(cloudProfile)
+                    "Carreira da nuvem restaurada neste aparelho."
+                } else {
+                    cloud.saveProfile(session, profile.snapshot())
+                    "Carreira deste aparelho enviada para a nuvem."
+                }
+            }
+
+            is CloudResult.Fail -> remote.message
+        }
 }
 
 @Composable
 fun App() {
     val profile = remember { Profile(Prefs()) }
-    val state = remember { AppState(profile) }
+    val cloud = remember { CloudApi() }
+    val state = remember { AppState(profile, cloud) }
     val music = remember { MusicPlayer() }
 
     // a trilha acompanha a tela: tema no deque, faixa de combate na batalha
@@ -97,6 +161,7 @@ fun App() {
                 Screen.SHIPYARD -> ShipyardScreen(state)
                 Screen.STORE -> StoreScreen(state)
                 Screen.PROFILE -> ProfileScreen(state)
+                Screen.AUTH -> AuthScreen(state)
                 Screen.NAMES -> state.match?.let { NamesScreen(state, it) }
                 Screen.PLACEMENT -> state.match?.let { PlacementScreen(state, it) }
                 Screen.HANDOFF -> state.match?.let { HandoffScreen(state, it) }
