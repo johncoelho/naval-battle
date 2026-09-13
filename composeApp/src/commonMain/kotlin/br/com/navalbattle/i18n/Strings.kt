@@ -295,6 +295,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     AUTH_WAIT("aguarde", "please wait", "espere"),
     AUTH_NO_SERVER("Servidor ainda não ligado", "Server not connected yet", "Servidor aún no conectado"),
     AUTH_NO_SERVER_SUB("A carreira está sendo gravada neste aparelho. Quando a base entrar, ela sobe para a conta sem perder nada.", "Your career is saved on this device. When the database comes online it will upload without losing anything.", "La carrera se guarda en este aparato. Cuando la base entre, subirá sin perder nada."),
+    AUTH_GOOGLE("Entrar com o Google", "Sign in with Google", "Entrar con Google"),
     AUTH_GOOGLE_HINT("O login com Google usa o mesmo e-mail e cai na mesma conta", "Google sign-in uses the same email and lands in the same account", "El acceso con Google usa el mismo correo y cae en la misma cuenta"),
     AUTH_NO_ACCOUNT("Sem conta", "No account", "Sin cuenta"),
     AUTH_ACCOUNT_ON("Conta conectada", "Account connected", "Cuenta conectada"),
