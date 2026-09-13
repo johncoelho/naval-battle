@@ -2,12 +2,34 @@ package br.com.navalbattle.design
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import br.com.navalbattle.game.ShipClass
+
+/**
+ * Luz da cena: vem de cima e da esquerda. Todo relevo do desenho — casco, convés,
+ * superestrutura, torres — é sombreado por essa mesma convenção, e é isso que faz a
+ * vista de topo, que é plana, ler como volume.
+ */
+private const val LIGHT_DY = -1.1f
+private const val LIGHT_DX = -0.9f
+
+/** Clareia em direção ao branco. [t] de 0 (cor original) a 1 (branco). */
+private fun Color.lit(t: Float) = Color(
+    red + (1f - red) * t,
+    green + (1f - green) * t,
+    blue + (1f - blue) * t,
+    alpha
+)
+
+/** Escurece em direção ao preto. */
+private fun Color.shaded(t: Float) = Color(red * (1f - t), green * (1f - t), blue * (1f - t), alpha)
 
 /**
  * Cada classe é desenhada em um viewBox de (tamanho * 50) x 50 — vista de topo,
@@ -98,8 +120,8 @@ private fun DrawScope.drawFunnels(type: ShipClass, line: FleetLine, l: Livery, a
     val h = half * 0.62f
     for (i in 0 until line.funnels) {
         val x = bow * (0.36f + i * 0.10f)
-        box(x, 25f - h / 2f, w, h, l.dark, a)
-        box(x + w * 0.18f, 25f - h / 2f, w * 0.3f, h * 0.28f, l.trim, a * 0.8f)
+        deckBlock(x, 25f - h / 2f, w, h, l.dark, a, 2.6f)
+        deckBlock(x + w * 0.18f, 25f - h / 2f, w * 0.3f, h * 0.28f, l.trim, a * 0.8f, 3f)
     }
 }
 
@@ -115,15 +137,15 @@ private fun DrawScope.drawTower(type: ShipClass, line: FleetLine, l: Livery, a: 
             for (i in 0 until 3) {
                 val w = half * (1.05f - i * 0.26f)
                 val h = half * (0.34f - i * 0.06f)
-                box(cx - w / 2f, 25f - half * (0.30f + i * 0.34f), w, h, l.dark, a)
+                deckBlock(cx - w / 2f, 25f - half * (0.30f + i * 0.34f), w, h, l.dark, a, 2f + i)
             }
             box(cx - half * 0.06f, 25f - half * 1.5f, half * 0.12f, half * 0.42f, l.trim, a)
         }
 
         Tower.BLOCO -> {
             val w = half * 1.5f
-            box(cx - w / 2f, 25f - half * 0.62f, w, half * 1.24f, l.dark, a)
-            box(cx - w / 2f + half * 0.16f, 25f - half * 0.36f, w - half * 0.32f, half * 0.72f, l.deck, a * 0.9f)
+            deckBlock(cx - w / 2f, 25f - half * 0.62f, w, half * 1.24f, l.dark, a, 2.4f)
+            deckBlock(cx - w / 2f + half * 0.16f, 25f - half * 0.36f, w - half * 0.32f, half * 0.72f, l.deck, a * 0.9f, 3f)
             // mastro em treliça
             drawLine(l.trim, Offset(cx - half * 0.3f, 25f - half * 0.62f), Offset(cx + half * 0.3f, 25f + half * 0.62f), 1f, alpha = a * 0.8f)
             drawLine(l.trim, Offset(cx + half * 0.3f, 25f - half * 0.62f), Offset(cx - half * 0.3f, 25f + half * 0.62f), 1f, alpha = a * 0.8f)
@@ -169,12 +191,78 @@ private fun hullHalf(type: ShipClass): Float = when (type) {
     ShipClass.DESTROYER -> 11f
 }
 
+/**
+ * Casco com volume: sombra projetada na água, gradiente de bordo a bordo, camuflagem
+ * recortada no contorno e um fio de luz na amurada iluminada.
+ */
 private fun DrawScope.hull(path: Path, livery: Livery, alpha: Float, stroke: Float = 1.4f) {
-    drawPath(path, livery.hull, alpha = alpha)
+    // sombra na água, deslocada no sentido contrário à luz
+    translate(-LIGHT_DX * 2.4f, -LIGHT_DY * 2.4f) {
+        drawPath(path, Color.Black.copy(alpha = 0.28f * alpha))
+    }
+
+    drawPath(
+        path = path,
+        brush = Brush.verticalGradient(
+            0.00f to livery.hull.lit(0.30f),
+            0.28f to livery.hull.lit(0.08f),
+            0.62f to livery.hull,
+            1.00f to livery.hull.shaded(0.34f)
+        ),
+        alpha = alpha
+    )
     if (livery.camo != Camo.LISA) {
         clipPath(path) { drawCamo(livery, alpha) }
     }
-    drawPath(path, livery.dark, alpha = alpha, style = Stroke(width = stroke))
+    // amurada iluminada: um traço claro só na borda que recebe a luz
+    clipPath(path) {
+        drawPath(
+            path = path,
+            brush = Brush.verticalGradient(
+                0.00f to Color.White.copy(alpha = 0.38f * alpha),
+                0.22f to Color.Transparent
+            ),
+            style = Stroke(width = stroke * 2.2f)
+        )
+    }
+    drawPath(path, livery.dark.shaded(0.2f), alpha = alpha, style = Stroke(width = stroke))
+}
+
+/**
+ * Bloco de superestrutura em falso relevo: sombra no lado escuro, corpo, e a face de
+ * cima puxada na direção da luz. É o que dá altura ao que é um retângulo chapado.
+ */
+private fun DrawScope.deckBlock(
+    x: Float, y: Float, w: Float, h: Float,
+    color: Color, alpha: Float, height: Float = 1.6f
+) {
+    // lado na sombra
+    drawRect(
+        color = Color.Black.copy(alpha = 0.34f * alpha),
+        topLeft = Offset(x - LIGHT_DX * height, y - LIGHT_DY * height),
+        size = Size(w, h)
+    )
+    // corpo
+    drawRect(color.shaded(0.18f), topLeft = Offset(x, y), size = Size(w, h), alpha = alpha)
+    // face superior, na direção da luz
+    drawRect(
+        brush = Brush.verticalGradient(
+            0f to color.lit(0.34f),
+            1f to color.lit(0.05f),
+            startY = y + LIGHT_DY * height,
+            endY = y + h + LIGHT_DY * height
+        ),
+        topLeft = Offset(x + LIGHT_DX * height, y + LIGHT_DY * height),
+        size = Size(w, h),
+        alpha = alpha
+    )
+    drawRect(
+        color = color.shaded(0.55f),
+        topLeft = Offset(x + LIGHT_DX * height, y + LIGHT_DY * height),
+        size = Size(w, h),
+        alpha = alpha * 0.9f,
+        style = Stroke(0.6f)
+    )
 }
 
 /** Padrão de camuflagem, sempre recortado no contorno do casco. */
@@ -285,8 +373,8 @@ private fun DrawScope.drawCarrier(l: Livery, a: Float) {
     box(150f, 18.5f, 16f, 13f, l.dark, a * 0.5f)
 
     // ilha de comando a boreste
-    box(176f, 7f, 30f, 9f, l.dark, a)
-    box(182f, 3.5f, 8f, 4f, l.trim, a)
+    deckBlock(176f, 7f, 30f, 9f, l.dark, a, 2.2f)
+    deckBlock(182f, 3.5f, 8f, 4f, l.trim, a, 2.8f)
     drawCircle(l.trim, radius = 2f, center = Offset(198f, 11.5f), alpha = a)
 }
 
@@ -319,9 +407,9 @@ private fun DrawScope.drawBattleship(l: Livery, a: Float) {
     turret(74f, 25f, 7f, 79f, 23.4f, 15f, 3.2f, l, a)
     turret(150f, 25f, 7.5f, 130f, 23.4f, 17f, 3.2f, l, a)
 
-    box(96f, 16f, 26f, 18f, l.dark, a)
-    box(102f, 19f, 14f, 12f, l.deck, a)
-    box(107f, 10f, 4f, 8f, l.trim, a)
+    deckBlock(96f, 16f, 26f, 18f, l.dark, a, 2.4f)
+    deckBlock(102f, 19f, 14f, 12f, l.deck, a, 3f)
+    deckBlock(107f, 10f, 4f, 8f, l.trim, a, 3.4f)
     drawCircle(l.trim, radius = 2.4f, center = Offset(109f, 25f), alpha = a)
 }
 
@@ -353,9 +441,9 @@ private fun DrawScope.drawCruiser(l: Livery, a: Float) {
     turret(36f, 25f, 6.5f, 41f, 23.6f, 14f, 2.9f, l, a)
     turret(112f, 25f, 6f, 96f, 23.6f, 13f, 2.9f, l, a)
 
-    box(66f, 17.5f, 22f, 15f, l.dark, a)
-    box(71f, 20f, 12f, 10f, l.deck, a)
-    box(75f, 11f, 3.4f, 8f, l.trim, a)
+    deckBlock(66f, 17.5f, 22f, 15f, l.dark, a, 2.2f)
+    deckBlock(71f, 20f, 12f, 10f, l.deck, a, 2.8f)
+    deckBlock(75f, 11f, 3.4f, 8f, l.trim, a, 3.2f)
     drawCircle(l.trim, radius = 2.1f, center = Offset(76.5f, 25f), alpha = a)
 }
 
@@ -384,9 +472,9 @@ private fun DrawScope.drawSubmarine(l: Livery, a: Float) {
     }
     drawPath(deck, l.deck, alpha = a * 0.55f)
 
-    box(58f, 16.5f, 24f, 17f, l.dark, a)
-    box(63f, 19.5f, 14f, 11f, l.deck, a)
-    box(68f, 9.5f, 3f, 8f, l.trim, a)
+    deckBlock(58f, 16.5f, 24f, 17f, l.dark, a, 2.2f)
+    deckBlock(63f, 19.5f, 14f, 11f, l.deck, a, 2.6f)
+    deckBlock(68f, 9.5f, 3f, 8f, l.trim, a, 3f)
     box(16f, 24.2f, 10f, 1.6f, l.trim, a * 0.8f)
     box(28.5f, 10f, 3f, 5f, l.dark, a)
     box(28.5f, 35f, 3f, 5f, l.dark, a)
@@ -418,17 +506,46 @@ private fun DrawScope.drawDestroyer(l: Livery, a: Float) {
     drawPath(deck, l.deck, alpha = a * 0.9f)
 
     turret(28f, 25f, 5.6f, 32f, 23.7f, 12f, 2.6f, l, a)
-    box(50f, 19f, 16f, 12f, l.dark, a)
-    box(54f, 21.5f, 8f, 7f, l.deck, a)
-    box(57f, 13f, 3f, 7f, l.trim, a)
+    deckBlock(50f, 19f, 16f, 12f, l.dark, a, 2f)
+    deckBlock(54f, 21.5f, 8f, 7f, l.deck, a, 2.4f)
+    deckBlock(57f, 13f, 3f, 7f, l.trim, a, 2.8f)
     drawCircle(l.trim, radius = 1.9f, center = Offset(58.5f, 25f), alpha = a)
 }
 
+/** Torre de artilharia: cúpula com brilho e canos com fio de luz. */
 private fun DrawScope.turret(
     cx: Float, cy: Float, r: Float,
     bx: Float, by: Float, bw: Float, bh: Float,
     l: Livery, a: Float
 ) {
-    drawCircle(l.dark, radius = r, center = Offset(cx, cy), alpha = a)
-    box(bx, by, bw, bh, l.dark, a)
+    // canos
+    drawRect(
+        color = Color.Black.copy(alpha = 0.3f * a),
+        topLeft = Offset(bx - LIGHT_DX * 1.2f, by - LIGHT_DY * 1.2f),
+        size = Size(bw, bh)
+    )
+    drawRect(l.dark.shaded(0.1f), topLeft = Offset(bx, by), size = Size(bw, bh), alpha = a)
+    drawRect(
+        l.dark.lit(0.35f),
+        topLeft = Offset(bx, by),
+        size = Size(bw, bh * 0.34f),
+        alpha = a * 0.8f
+    )
+
+    // cúpula
+    drawCircle(
+        color = Color.Black.copy(alpha = 0.32f * a),
+        radius = r,
+        center = Offset(cx - LIGHT_DX * 1.4f, cy - LIGHT_DY * 1.4f)
+    )
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(l.dark.lit(0.42f), l.dark, l.dark.shaded(0.35f)),
+            center = Offset(cx + LIGHT_DX * r * 0.45f, cy + LIGHT_DY * r * 0.45f),
+            radius = r * 1.4f
+        ),
+        radius = r,
+        center = Offset(cx, cy),
+        alpha = a
+    )
 }
