@@ -219,8 +219,8 @@ fun PlacementScreen(state: AppState, match: Match) {
                 match.randomizePlacingFleet()
                 error = null
             }
-            SecondaryButton("Voltar", modifier = Modifier.weight(1f)) {
-                state.screen = Screen.MENU
+            SecondaryButton("Encerrar", modifier = Modifier.weight(1f)) {
+                state.quitToMenu()
             }
         }
         Gap(8)
@@ -229,11 +229,12 @@ fun PlacementScreen(state: AppState, match: Match) {
             enabled = board.ships.size == ShipClass.fleet.size
         ) {
             match.confirmPlacement()
-            when {
-                // ainda falta o segundo comandante posicionar a frota dele
-                match.phase == Phase.PLACEMENT -> state.handoffTo(match.placingSide, Screen.PLACEMENT)
-                match.opponent == Opponent.LOCAL -> state.handoffTo(match.turnOwner, Screen.BATTLE)
-                else -> state.screen = Screen.BATTLE
+            // no modo local ainda falta o segundo comandante posicionar a frota dele;
+            // a partir daí a batalha inteira corre na mesma tela
+            if (match.phase == Phase.PLACEMENT) {
+                state.handoffToPlacement(match.placingSide)
+            } else {
+                state.screen = Screen.BATTLE
             }
         }
     }

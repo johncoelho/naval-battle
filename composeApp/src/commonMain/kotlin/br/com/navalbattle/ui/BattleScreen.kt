@@ -2,6 +2,7 @@ package br.com.navalbattle.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,15 +56,23 @@ fun BattleScreen(state: AppState, match: Match) {
     DisposableEffect(Unit) { onDispose { sound.release() } }
 
     val local = match.opponent == Opponent.LOCAL
-    // contra a IA a tela é sempre a do humano; no local é de quem pegou o aparelho
-    val viewSide = if (local) state.battleViewSide else Side.PLAYER
+    var confirmQuit by remember { mutableStateOf(false) }
+
+    // contra a IA a tela é sempre a do humano; no local ela acompanha quem tem a vez,
+    // só esperando a jogada anterior terminar de tocar antes de virar
+    var localView by remember { mutableStateOf(Side.PLAYER) }
+    val viewSide = if (local) localView else Side.PLAYER
     val targetBoard = match.board(viewSide.other())
     val ownBoard = match.board(viewSide)
-    val myImpact = if (viewSide == Side.PLAYER) match.playerImpact else match.enemyImpact
-    val incomingImpact = if (viewSide == Side.PLAYER) match.enemyImpact else match.playerImpact
+    // só o disparo mais recente anima: ao virar o tabuleiro não se repete um tiro antigo
+    val myImpact = (if (viewSide == Side.PLAYER) match.playerImpact else match.enemyImpact)
+        ?.takeIf { it.id == match.lastImpactId }
+    val incomingImpact = (if (viewSide == Side.PLAYER) match.enemyImpact else match.playerImpact)
+        ?.takeIf { it.id == match.lastImpactId }
     val myTurn = match.phase == Phase.BATTLE && match.turnOwner == viewSide
 
-    LaunchedEffect(match.turnOwner, match.turnCount, match.phase) {
+    // viewSide entra nas chaves: no modo local o relógio só começa quando o tabuleiro vira
+    LaunchedEffect(match.turnOwner, match.turnCount, match.phase, viewSide) {
         if (match.phase == Phase.BATTLE && myTurn) {
             secondsLeft = TURN_SECONDS
             while (secondsLeft > 0) {
@@ -82,14 +91,13 @@ fun BattleScreen(state: AppState, match: Match) {
         }
     }
 
-    // no modo local: quando a vez passa, deixa a jogada terminar de tocar e então
-    // cobre a tela para o aparelho trocar de mãos
+    // no modo local: quando a vez passa, deixa a jogada terminar de tocar e só então
+    // troca o tabuleiro em exibição — nada de tela intermediária
     LaunchedEffect(match.turnOwner, match.phase) {
-        if (local && match.phase == Phase.BATTLE && match.turnOwner != viewSide) {
-            delay(2800)
-            if (match.phase == Phase.BATTLE) {
-                state.handoffTo(match.turnOwner, Screen.BATTLE)
-            }
+        if (local && match.phase == Phase.BATTLE && match.turnOwner != localView) {
+            val lastTone = (if (localView == Side.PLAYER) match.playerImpact else match.enemyImpact)?.tone
+            delay(if (lastTone == Tone.SUNK) 3400L else 1700L)
+            if (match.phase == Phase.BATTLE) localView = match.turnOwner
         }
     }
 
@@ -111,94 +119,146 @@ fun BattleScreen(state: AppState, match: Match) {
         }
     }
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        ScreenTopBar(
-            if (local) "${match.sideName(viewSide).uppercase()} ATACA" else "ALVO INIMIGO",
-            "TURNO ${match.turnCount.toString().padStart(2, '0')}"
-        )
-        Gap(6)
-
-        Text(
-            if (myTurn) formatTime(secondsLeft) else "--:--",
-            style = NavalType.timer,
-            color = if (secondsLeft <= 5 && myTurn) Naval.danger else Naval.amberStrong,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-        HudLabel(
-            if (myTurn) "SEU TURNO · AGUARDANDO COORDENADA" else "AGUARDE",
-            Naval.muted,
-            Modifier.fillMaxWidth().padding(top = 2.dp)
-        )
-
-        Gap(10)
-        BoardView(
-            board = targetBoard,
-            livery = state.livery,
-            showShips = false,
-            interactive = myTurn,
-            impact = myImpact,
-            modifier = Modifier.fillMaxWidth()
-        ) { coord -> match.act(coord) }
-
-        // mensagens ficam abaixo do tabuleiro para não cobrir a ação
-        Box(
-            Modifier.fillMaxWidth().height(56.dp),
-            contentAlignment = Alignment.Center
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.systemBars)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            CalloutBanner(match.callout)
-        }
-
-        if (match.mode == GameMode.TACTICAL) {
-            AbilityBar(match)
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        if (local) {
-            // nenhum dos dois vê a própria frota (o outro está do lado), mas ambos
-            // acompanham o placar ao vivo
-            Scoreboard(match, viewSide, ownBoard.smokeActive)
-        } else {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Box(
+                ScreenTopBar(
+                    if (local) "${match.sideName(viewSide).uppercase()} ATACA" else "ALVO INIMIGO",
+                    "TURNO ${match.turnCount.toString().padStart(2, '0')}",
+                    Modifier.weight(1f)
+                )
+                GapW(10)
+                HudLabel(
+                    "ENCERRAR",
+                    Naval.danger,
                     Modifier
-                        .size(150.dp)
-                        .background(Naval.abyss)
                         .border(1.dp, Naval.line)
-                ) {
-                    BoardView(
-                        board = ownBoard,
-                        livery = state.livery,
-                        showShips = true,
-                        sweep = false,
-                        impact = incomingImpact,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-                GapW(14)
-                Column {
-                    HudLabel("SUA FROTA", Naval.inkSoft)
-                    Gap(4)
-                    val afloat = ownBoard.remainingShips().size
-                    Text(
-                        "$afloat / ${ShipClass.fleet.size} À TONA",
-                        style = NavalType.mono,
-                        color = if (afloat <= 2) Naval.danger else Naval.greenBright
-                    )
-                    Gap(6)
-                    HudLabel("PRECISÃO ${match.accuracyOf(viewSide)}%")
-                    if (ownBoard.smokeActive) {
+                        .clickable { confirmQuit = true }
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                )
+            }
+            Gap(6)
+
+            Text(
+                if (myTurn) formatTime(secondsLeft) else "--:--",
+                style = NavalType.timer,
+                color = if (secondsLeft <= 5 && myTurn) Naval.danger else Naval.amberStrong,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+            HudLabel(
+                when {
+                    local && myTurn -> "MIRANDO A FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
+                    local -> "TROCANDO PARA ${match.sideName(match.turnOwner).uppercase()}"
+                    myTurn -> "SEU TURNO · AGUARDANDO COORDENADA"
+                    else -> "AGUARDE"
+                },
+                Naval.muted,
+                Modifier.fillMaxWidth().padding(top = 2.dp)
+            )
+
+            Gap(10)
+            BoardView(
+                board = targetBoard,
+                livery = state.livery,
+                showShips = false,
+                interactive = myTurn,
+                impact = myImpact,
+                modifier = Modifier.fillMaxWidth()
+            ) { coord -> match.act(coord) }
+
+            // mensagens ficam abaixo do tabuleiro para não cobrir a ação
+            Box(
+                Modifier.fillMaxWidth().height(56.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CalloutBanner(match.callout)
+            }
+
+            if (match.mode == GameMode.TACTICAL) {
+                AbilityBar(match)
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            if (local) {
+                // nenhum dos dois vê a própria frota (o outro está do lado), mas ambos
+                // acompanham o placar ao vivo
+                Scoreboard(match, viewSide, ownBoard.smokeActive)
+            } else {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(150.dp)
+                            .background(Naval.abyss)
+                            .border(1.dp, Naval.line)
+                    ) {
+                        BoardView(
+                            board = ownBoard,
+                            livery = state.livery,
+                            showShips = true,
+                            sweep = false,
+                            impact = incomingImpact,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    GapW(14)
+                    Column {
+                        HudLabel("SUA FROTA", Naval.inkSoft)
                         Gap(4)
-                        HudLabel("CORTINA ATIVA", Naval.greenBright)
+                        val afloat = ownBoard.remainingShips().size
+                        Text(
+                            "$afloat / ${ShipClass.fleet.size} À TONA",
+                            style = NavalType.mono,
+                            color = if (afloat <= 2) Naval.danger else Naval.greenBright
+                        )
+                        Gap(6)
+                        HudLabel("PRECISÃO ${match.accuracyOf(viewSide)}%")
+                        if (ownBoard.smokeActive) {
+                            Gap(4)
+                            HudLabel("CORTINA ATIVA", Naval.greenBright)
+                        }
                     }
                 }
             }
+        }
+
+        if (confirmQuit) {
+            QuitOverlay(
+                onKeep = { confirmQuit = false },
+                onQuit = { state.quitToMenu() }
+            )
+        }
+    }
+}
+
+/** Confirmação para abandonar a partida no meio — evita sair por toque acidental. */
+@Composable
+private fun QuitOverlay(onKeep: () -> Unit, onQuit: () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Naval.bg.copy(alpha = 0.94f))
+            .clickable(enabled = false) {}
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(Modifier.fillMaxWidth()) {
+            HudLabel("ABANDONAR OPERAÇÃO", Naval.muted)
+            Gap(8)
+            Text("ENCERRAR A PARTIDA?", style = NavalType.display, color = Naval.ink)
+            Gap(6)
+            HudLabel("O PROGRESSO DESTA BATALHA SERÁ PERDIDO", Naval.muted)
+            Gap(22)
+            PrimaryButton("Continuar jogando") { onKeep() }
+            Gap(8)
+            SecondaryButton("Encerrar partida") { onQuit() }
         }
     }
 }

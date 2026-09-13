@@ -65,7 +65,7 @@ fun NamesScreen(state: AppState, match: Match) {
             state.screen = Screen.PLACEMENT
         }
         Gap(8)
-        SecondaryButton("Voltar") { state.screen = Screen.MENU }
+        SecondaryButton("Voltar") { state.quitToMenu() }
     }
 }
 

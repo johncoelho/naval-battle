@@ -25,18 +25,16 @@ import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.Match
-import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.ShipClass
 
 /**
- * Cobre a tela entre as vezes de cada comandante no modo local, para ninguém
- * ver o tabuleiro do outro ao trocar de mãos.
+ * Cobre a tela entre o posicionamento de um comandante e o do outro, para
+ * ninguém ver onde o adversário pôs a frota. Na batalha não há troca de mãos.
  */
 @Composable
 fun HandoffScreen(state: AppState, match: Match) {
     val side = state.handoffSide
     val name = match.sideName(side)
-    val goingToPlacement = state.handoffTarget == Screen.PLACEMENT
 
     Column(
         Modifier
@@ -57,7 +55,7 @@ fun HandoffScreen(state: AppState, match: Match) {
         )
         Gap(6)
         Text(
-            if (goingToPlacement) "Posicione a sua frota" else "É a sua vez de atacar",
+            "Posicione a sua frota",
             style = NavalType.body,
             color = Naval.inkSoft,
             textAlign = TextAlign.Center
@@ -88,13 +86,11 @@ fun HandoffScreen(state: AppState, match: Match) {
         Spacer(Modifier.weight(1f))
 
         PrimaryButton("Estou com o aparelho") {
-            state.battleViewSide = side
-            state.screen = state.handoffTarget
+            state.screen = Screen.PLACEMENT
         }
         Gap(10)
-        HudLabel(
-            if (match.phase == Phase.BATTLE) "TURNO ${match.turnCount}" else "PREPARAÇÃO",
-            Naval.muted
-        )
+        SecondaryButton("Encerrar partida") { state.quitToMenu() }
+        Gap(10)
+        HudLabel("PREPARAÇÃO", Naval.muted)
     }
 }

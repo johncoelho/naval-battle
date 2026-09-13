@@ -106,7 +106,7 @@ fun ResultScreen(state: AppState, match: Match) {
         Spacer(Modifier.weight(1f))
         PrimaryButton("Nova partida") { state.newMatch(match.opponent) }
         Gap(8)
-        SecondaryButton("Deque de comando") { state.screen = Screen.MENU }
+        SecondaryButton("Deque de comando") { state.quitToMenu() }
     }
 }
 
