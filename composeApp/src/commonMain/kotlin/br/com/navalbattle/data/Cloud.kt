@@ -63,4 +63,14 @@ expect class CloudApi() {
     suspend fun refresh(refreshToken: String): CloudResult<Session>
     suspend fun loadProfile(session: Session): CloudResult<CloudProfile?>
     suspend fun saveProfile(session: Session, profile: CloudProfile): CloudResult<Unit>
+
+    /**
+     * Troca a senha de quem já está logado. O Supabase aceita a troca com só o token
+     * de sessão válido, mas exigimos a senha atual antes de chamar isto — reautenticando
+     * com [signIn] — para ninguém trocar a senha de uma sessão esquecida aberta.
+     */
+    suspend fun updatePassword(session: Session, newPassword: String): CloudResult<Unit>
+
+    /** Manda o e-mail de "esqueci minha senha" — link de recuperação do Supabase Auth. */
+    suspend fun sendPasswordReset(email: String): CloudResult<Unit>
 }
