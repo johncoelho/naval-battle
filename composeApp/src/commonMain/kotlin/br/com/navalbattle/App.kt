@@ -14,7 +14,9 @@ import androidx.compose.ui.Modifier
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.data.Prefs
+import br.com.navalbattle.design.FleetLine
 import br.com.navalbattle.design.Livery
+import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
 import br.com.navalbattle.game.GameMode
@@ -30,17 +32,19 @@ import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ProfileScreen
 import br.com.navalbattle.ui.ResultScreen
 import br.com.navalbattle.ui.ShipyardScreen
+import br.com.navalbattle.ui.StoreScreen
 import br.com.navalbattle.ui.SplashScreen
 
-enum class Screen { SPLASH, MENU, SHIPYARD, PROFILE, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
+enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
 
 class AppState(val profile: Profile) {
     var screen by mutableStateOf(Screen.SPLASH)
     var mode by mutableStateOf(GameMode.TACTICAL)
     var match by mutableStateOf<Match?>(null)
 
-    /** A libré em uso vem do estaleiro do perfil, que é gravado no aparelho. */
-    val livery: Livery get() = Livery.of(profile.equipped)
+    /** O visual em uso — linha de casco e camuflagem — vem do perfil gravado no aparelho. */
+    val skin: Skin
+        get() = Skin(Livery.of(profile.equipped), FleetLine.of(profile.equippedFleet))
 
     /** Quem deve pegar o aparelho para posicionar a própria frota. */
     var handoffSide by mutableStateOf(Side.PLAYER)
@@ -91,6 +95,7 @@ fun App() {
                 Screen.SPLASH -> SplashScreen(state)
                 Screen.MENU -> MenuScreen(state)
                 Screen.SHIPYARD -> ShipyardScreen(state)
+                Screen.STORE -> StoreScreen(state)
                 Screen.PROFILE -> ProfileScreen(state)
                 Screen.NAMES -> state.match?.let { NamesScreen(state, it) }
                 Screen.PLACEMENT -> state.match?.let { PlacementScreen(state, it) }
