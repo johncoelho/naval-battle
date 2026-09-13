@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.data.GoogleAuthConfig
 import br.com.navalbattle.data.SupabaseConfig
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.i18n.K
@@ -192,6 +193,21 @@ fun AuthScreen(state: AppState) {
                         if (result.first) password = ""
                     }
                 }
+
+                if (GoogleAuthConfig.isConfigured) {
+                    Gap(10)
+                    SecondaryButton(t(K.AUTH_GOOGLE), enabled = !busy) {
+                        busy = true; failed = false; message = null
+                        scope.launch {
+                            val result = state.signInWithGoogle()
+                            busy = false
+                            // cancelou a caixa de seleção de conta: não é erro, só volta calado
+                            if (!result.first && result.second.isBlank()) return@launch
+                            failed = !result.first
+                            message = result.second
+                        }
+                    }
+                }
             }
 
             message?.let {
@@ -214,8 +230,10 @@ fun AuthScreen(state: AppState) {
                 }
             }
 
-            Gap(18)
-            HudLabel(t(K.AUTH_GOOGLE_HINT), Naval.muted)
+            if (GoogleAuthConfig.isConfigured) {
+                Gap(18)
+                HudLabel(t(K.AUTH_GOOGLE_HINT), Naval.muted)
+            }
             Gap(16)
         }
 
