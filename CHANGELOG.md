@@ -1,0 +1,153 @@
+# Histórico de alterações
+
+Todas as mudanças relevantes do Naval Battle, da mais recente para a mais antiga.
+Cada entrada aponta os commits que a compõem, para o versionamento servir de resgate.
+
+Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
+Atualizar este arquivo é obrigatório a cada versão compilada — ver
+[docs/BUILD.md](docs/BUILD.md#regra-dos-artefatos).
+
+---
+
+## [0.6.0] — 2026-09-13 · Conta na nuvem
+
+A carreira deixa de morrer no aparelho: passa a ter conta, e a conta vive no Supabase.
+
+### Adicionado
+- **Cadastro e login** com e-mail, senha e nome de usuário, em tela própria (`AuthScreen`),
+  acessível pelo menu e pelo cartão de conta dentro do Perfil. `6cf938e`, `47422de`
+- **Cliente Supabase** escrito à mão sobre `HttpURLConnection` e `org.json`, sem somar
+  biblioteca de rede ao APK: cadastro, login, renovação, leitura e gravação da carreira.
+  `10f4b71`, `2186c00`
+- **Sincronização automática** ao entrar, na abertura do app, ao fim de cada partida
+  contra a IA, em cada compra e ao mudar nome ou insígnia. `6cf938e`, `3d5180a`
+- **Regra de fusão** ao entrar: se a nuvem tiver mais XP ela desce; senão o aparelho sobe.
+  O maior progresso nunca se perde. `47422de`
+- **Renovação silenciosa da sessão**: o token do Supabase vive uma hora; agora um 401
+  dispara o refresh e repete a chamada, e a abertura do app já revalida a sessão.
+  `007a9c5`, `e46c44f`, `011ac72`
+- **Esquema da base** em `supabase/schema.sql`: tabela `profiles` presa ao Auth, RLS por
+  dono, gatilho que cria a carreira junto com a conta — inclusive em login social, para o
+  Google cair na mesma carreira do e-mail — e view `leaderboard`. `acc115a`, `c940322`
+- Preferência de trilha passa a ser gravada entre sessões. `d03a76c`
+
+### Corrigido
+- **Progresso zerava a cada APK novo.** A causa não era o app: o CI assinava cada build com
+  uma chave de depuração nova, o Android recusava instalar por cima e a desinstalação
+  apagava os dados. Passou a existir uma chave fixa versionada. `11f755d`, `fc4138b`
+- Nome de usuário repetido derrubava o cadastro; agora ganha sufixo. `c940322`
+
+### Alterado
+- Títulos das telas viraram "Perfil" e "Conta" — a patente já aparece no conteúdo. `1c7b587`
+- Permissão de internet no manifesto. `19d2b7c`
+
+### Verificado
+- Cadastro, login, gravação e isolamento testados por chamada real à API: com a chave
+  anônima sozinha, sem sessão, a tabela devolve vazio. O RLS está segurando.
+
+---
+
+## [0.5.0] — 2026-09-13 · Loja, cascos e camuflagens
+
+Personalização deixa de ser só troca de cor e vira item de verdade.
+
+### Adicionado
+- **Linhas de casco** (`FleetLine`), que mudam a silhueta das cinco embarcações por
+  parâmetros de boca, proa, superestrutura e chaminés: Padrão, Imperial, Atlântica e
+  Fantasma. `a836a8f`
+- **Padrões de camuflagem** (`Camo`) recortados no contorno do casco: dazzle, estilhaço,
+  faixas de linha d'água e retículo digital; três pinturas novas. `a836a8f`
+- **Loja do Arsenal** com dois corredores, pré-visualização de cada item aplicado à frota,
+  compra com créditos e aviso de quanto falta. `d871063`, `4471208`
+- **Estaleiro** vira bancada de montagem: combina casco e camuflagem já conquistados.
+  `d871063`
+
+### Alterado
+- O visual da frota passou a ser o tipo `Skin` (casco + camuflagem), trocando o antigo
+  parâmetro `livery` em todas as telas. `6d62516`
+- O perfil guarda os dois conjuntos de itens conquistados. `5fd251c`
+
+---
+
+## [0.4.0] — 2026-09-13 · Carreira, perfil e estaleiro
+
+### Adicionado
+- **Persistência local** (`Prefs` sobre `SharedPreferences`) — a base de tudo que vem
+  depois. `71b6103`, `3307573`
+- **Carreira**: XP, patentes de Recruta a Almirante, créditos ganhos por partida e folha
+  de serviço completa. `bb4674b`
+- **Perfil** com nome de guerra, seis insígnias vetoriais, barra de patente, estatísticas
+  e "zerar carreira". `e646896`, `c7ca133`
+- **Economia**: partidas contra a IA rendem XP e créditos, com bônus por precisão, navios
+  afundados e vitória rápida; o relatório mostra o ganho e a promoção. `bb4674b`
+- Librés passam a ter preço em créditos; entram Portugal e Dazzle 1918. `f963126`
+
+---
+
+## [0.3.0] — 2026-09-13 · Abertura, trilha e modo local maduro
+
+### Adicionado
+- **Tela de abertura "Varredura"**: grade acendendo, duas voltas de radar, contatos,
+  clarão e carimbo da marca, com barra de carregamento e jargão naval. `aba4535`, `21b8a8b`
+- **Trilha sonora**: laços de um minuto cortados em número inteiro de compassos, com rock
+  naval de domínio público no menu e faixa CC0 mais contida no combate; botão de liga e
+  desliga. `f9e75b8`, `aac0d86`, `73ef93e`, `f3c6d41`, `3fe6a40`, `e4cb16e`
+- **Memória de tiro por comandante** no modo local: cada um vê só os próprios disparos, e
+  a carta se revela inteira no fim da partida. `aba4535`
+- Cores de identificação dos dois comandantes. `23143e5`
+
+### Alterado
+- O modo local passou por três formatos até achar o certo: troca de tela com aviso de
+  passagem (`11f4d7f`), dois mapas lado a lado (`2f24572`) e, por fim, **uma carta só**
+  com memória individual (`397c22e`, `aba4535`).
+- Botão de encerrar partida com confirmação, e botões de voltar em todos os fluxos.
+  `11f4d7f`, `bab627d`, `2f24572`
+
+### Corrigido
+- Ao virar o tabuleiro, a animação do disparo anterior tocava de novo e redesenhava o
+  impacto sobre as marcas. Passou a animar só o disparo mais recente. `2e49601`
+- O cronômetro não reiniciava depois da troca de vez. `2e49601`
+
+---
+
+## [0.2.0] — 2026-09-12 · Ação, som e sensação
+
+### Adicionado
+- Míssil que cruza a tela até o alvo, explosão, tremor do tabuleiro e sequência de
+  naufrágio com fogo, fumaça, destroços e tripulação saltando ao mar.
+- Efeitos sonoros reais, montados a partir de gravações de domínio público e CC0: água,
+  explosão, naufrágio e assobio do projétil.
+- Alarme de bordo que soa **só** quando a sua frota é atingida.
+- Posicionamento por manipulação direta: toque no navio gira, arrasto reposiciona.
+
+### Corrigido
+- **Partidas que nunca terminavam**: a imersão do submarino marcava a célula como água,
+  e células marcadas não aceitavam novo tiro — o navio ficava imortal e a vitória nunca
+  chegava. A célula absorvida passou a contar para o afundamento. `6a9eb2d`, `f25e4a5`
+- Tiro na água soava repetitivo e artificial: virou três gravações sorteadas com afinação
+  variável.
+
+---
+
+## [0.1.0] — 2026-09-12 · MVP jogável
+
+### Adicionado
+- Motor de jogo completo: posicionamento, turnos, resolução de tiro e vitória. `14a86d3`
+- IA de caça com padrão de paridade e perseguição de contatos.
+- Modos Clássico e Tático, com as cinco habilidades por classe de navio.
+- Tabuleiro de radar em Canvas e as cinco embarcações em vetor, repintáveis por libré.
+- Identidade visual Command HUD (verde naval, âmbar de ação, tipografia de painel).
+
+### Infraestrutura
+- Build por GitHub Actions publicando o APK na release rolante `latest`. `ced8d40`, `db0b83c`
+- Versões alinhadas em AGP 8.7.3 / Gradle 8.11.1 / SDK 35, depois de descobrir que o AGP 9
+  não é compatível com o plugin multiplataforma do Kotlin. `a7e5a82`, `18d8fcd`, `4477997`, `7c237dc`
+
+---
+
+## Notas sobre o histórico
+
+Os commits entre `6869cb2` e `b6bc64a` aparecem como "Add files via upload" porque o envio
+foi feito pela interface web do GitHub — o `git push` local está quebrado nesta máquina
+(o gerenciador de credenciais trava). O conteúdo de cada um está descrito nas entradas
+acima, agrupado por tema.
