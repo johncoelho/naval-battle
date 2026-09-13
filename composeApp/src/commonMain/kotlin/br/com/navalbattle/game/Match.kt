@@ -21,6 +21,9 @@ data class Callout(val main: String, val sub: String, val tone: Tone, val id: Lo
 
 data class Impact(val coord: Coord, val tone: Tone, val id: Long, val sunkShip: Ship? = null)
 
+/** Emoji ou grito de guerra mandado por um lado — decoração, não mexe na partida. */
+data class Taunt(val from: Side, val code: String, val id: Long)
+
 /**
  * Estado completo de uma partida. Os dois lados são simétricos: contra a IA o lado
  * ENEMY é jogado pela máquina, no modo local é a segunda pessoa no mesmo aparelho.
@@ -77,6 +80,14 @@ class Match(
 
     var winner by mutableStateOf<Side?>(null)
         private set
+
+    /** Último emoji/grito recebido — só o mais recente fica na tela. */
+    var lastTaunt by mutableStateOf<Taunt?>(null)
+        private set
+
+    fun sendTaunt(from: Side, code: String) {
+        lastTaunt = Taunt(from, code, nextId())
+    }
 
     var pendingAbility by mutableStateOf<Ability?>(null)
         private set
@@ -201,7 +212,11 @@ class Match(
 
     fun abilityCooldown(ability: Ability): Int = cooldownsOf(turnOwner)[ability] ?: 0
 
-    fun abilityAvailable(ability: Ability): Boolean {
+    /**
+     * [ignoreCooldown] deixa passar mesmo com a habilidade ainda recarregando — é o
+     * cartucho avulso comprado na loja, que a tela consulta antes de habilitar o botão.
+     */
+    fun abilityAvailable(ability: Ability, ignoreCooldown: Boolean = false): Boolean {
         if (mode != GameMode.TACTICAL || !ability.active) return false
         if (phase != Phase.BATTLE) return false
         // contra a IA as habilidades só ficam ativas na vez do humano
@@ -212,11 +227,16 @@ class Match(
         val myBoard = board(turnOwner)
         val ship = myBoard.ships.firstOrNull { it.type == owner } ?: return false
         if (myBoard.isSunk(ship)) return false
-        return abilityCooldown(ability) == 0
+        return ignoreCooldown || abilityCooldown(ability) == 0
     }
 
-    fun selectAbility(ability: Ability) {
-        if (!abilityAvailable(ability)) return
+    /**
+     * [ignoreCooldown] precisa viajar para o outro aparelho em rede (ver
+     * `Protocol.ability`) — senão o lado que recebe recusa aplicar o efeito porque,
+     * do ponto de vista dele, a habilidade ainda está recarregando.
+     */
+    fun selectAbility(ability: Ability, ignoreCooldown: Boolean = false) {
+        if (!abilityAvailable(ability, ignoreCooldown)) return
         when (ability) {
             Ability.SMOKE -> {
                 board(turnOwner).smokeActive = true

@@ -22,19 +22,23 @@ enum class Opponent { AI, LOCAL, LAN }
 
 enum class Ability(
     val code: String,
+    /** Glifo Unicode — mantém a regra de nenhuma imagem no APK. */
+    val icon: String,
     val key: K,
     val shortKey: K,
+    val descKey: K,
     val cooldown: Int,
     val active: Boolean
 ) {
-    AIR_RECON("REC", K.ABILITY_RADAR_FULL, K.ABILITY_RADAR, 4, true),
-    DOUBLE_BARRAGE("2X", K.ABILITY_DOUBLE_FULL, K.ABILITY_DOUBLE, 3, true),
-    SONAR_PING("SNR", K.ABILITY_SONAR_FULL, K.ABILITY_SONAR, 2, true),
-    DIVE("IMR", K.ABILITY_DIVE_FULL, K.ABILITY_DIVE, 0, false),
-    SMOKE("FUM", K.ABILITY_SMOKE_FULL, K.ABILITY_SMOKE, 4, true);
+    AIR_RECON("REC", "📡", K.ABILITY_RADAR_FULL, K.ABILITY_RADAR, K.ABILITY_RADAR_DESC, 4, true),
+    DOUBLE_BARRAGE("2X", "💥", K.ABILITY_DOUBLE_FULL, K.ABILITY_DOUBLE, K.ABILITY_DOUBLE_DESC, 3, true),
+    SONAR_PING("SNR", "📶", K.ABILITY_SONAR_FULL, K.ABILITY_SONAR, K.ABILITY_SONAR_DESC, 2, true),
+    DIVE("IMR", "🫧", K.ABILITY_DIVE_FULL, K.ABILITY_DIVE, K.ABILITY_DIVE_DESC, 0, false),
+    SMOKE("FUM", "💨", K.ABILITY_SMOKE_FULL, K.ABILITY_SMOKE, K.ABILITY_SMOKE_DESC, 4, true);
 
     val label: String get() = t(key)
     val shortName: String get() = t(shortKey)
+    val description: String get() = t(descKey)
 }
 
 enum class ShipClass(

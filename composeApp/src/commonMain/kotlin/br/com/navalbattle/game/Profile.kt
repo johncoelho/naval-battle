@@ -92,6 +92,42 @@ class Profile(private val prefs: Prefs) {
     var equippedFleet by mutableStateOf(prefs.getString(K_FLEET, "std"))
         private set
 
+    /**
+     * Cartuchos avulsos de habilidade comprados na loja: liberam um uso mesmo com a
+     * habilidade em recarga, mas se gastam — não voltam sozinhos como o cooldown normal.
+     * Só neste aparelho: não viaja para a nuvem, do mesmo jeito que a trilha e o idioma.
+     */
+    private var abilityCharges by mutableStateOf(decodeCharges(prefs.getString(K_ABILITY_CHARGES, "")))
+
+    fun chargesOf(ability: Ability): Int = abilityCharges[ability.code] ?: 0
+
+    fun buyAbilityCharge(ability: Ability, price: Int): Boolean {
+        if (credits < price) return false
+        credits -= price
+        abilityCharges = abilityCharges + (ability.code to (chargesOf(ability) + 1))
+        prefs.putInt(K_CREDITS, credits)
+        persistCharges()
+        return true
+    }
+
+    fun consumeCharge(ability: Ability) {
+        val left = chargesOf(ability)
+        if (left <= 0) return
+        abilityCharges = if (left <= 1) abilityCharges - ability.code else abilityCharges + (ability.code to left - 1)
+        persistCharges()
+    }
+
+    private fun persistCharges() {
+        prefs.putString(K_ABILITY_CHARGES, abilityCharges.entries.joinToString(",") { "${it.key}:${it.value}" })
+    }
+
+    private fun decodeCharges(raw: String): Map<String, Int> =
+        raw.split(",").filter { it.isNotBlank() }.mapNotNull { entry ->
+            val parts = entry.split(":")
+            val count = parts.getOrNull(1)?.toIntOrNull() ?: return@mapNotNull null
+            (parts.getOrNull(0) ?: return@mapNotNull null) to count
+        }.toMap()
+
     // ---------------- conta na nuvem ----------------
 
     var accountEmail by mutableStateOf(prefs.getString(K_EMAIL, ""))
@@ -314,6 +350,7 @@ class Profile(private val prefs: Prefs) {
         equipped = "br"
         ownedFleets = setOf("std")
         equippedFleet = "std"
+        abilityCharges = emptyMap()
     }
 
     private companion object {
@@ -332,6 +369,7 @@ class Profile(private val prefs: Prefs) {
         const val K_EQUIPPED = "equipped"
         const val K_FLEETS = "fleets"
         const val K_FLEET = "fleet"
+        const val K_ABILITY_CHARGES = "ability_charges"
         const val K_UID = "uid"
         const val K_EMAIL = "email"
         const val K_TOKEN = "token"
