@@ -59,7 +59,7 @@ enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, AUTH, LAN, NAMES, PL
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
-    var mode by mutableStateOf(GameMode.TACTICAL)
+    var mode by mutableStateOf(GameMode.CLASSIC)
     var match by mutableStateOf<Match?>(null)
 
     /** O visual em uso — linha de casco e camuflagem — vem do perfil gravado no aparelho. */
@@ -115,6 +115,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var foundGames by mutableStateOf<List<LanGame>>(emptyList())
         private set
 
+    /** Revanche em rede: os dois lados precisam pedir antes de a partida recomeçar. */
+    var rematchRequestedByMe by mutableStateOf(false)
+        private set
+    var rematchRequestedByOpponent by mutableStateOf(false)
+        private set
+
     private val link = LanLink()
 
     private fun onMain(block: () -> Unit) {
@@ -160,12 +166,19 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         link.close()
         linkState = LinkState.IDLE
         foundGames = emptyList()
+        rematchRequestedByMe = false
+        rematchRequestedByOpponent = false
     }
 
     /** Conectou: abre a partida deste lado e se apresenta ao adversário. */
     private fun onLinkState(state: LinkState, side: Side) {
         linkState = state
         if (state != LinkState.CONNECTED) return
+        startLanMatch(side)
+    }
+
+    /** Abre uma partida em rede — na primeira ligação e em toda revanche seguinte. */
+    private fun startLanMatch(side: Side) {
         val m = Match(mode, Opponent.LAN, mySide = side)
         m.setName(side, profile.displayName)
         match = m
@@ -185,12 +198,19 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
             Protocol.ABILITY -> parts.getOrNull(1)
                 ?.let { code -> Ability.entries.firstOrNull { it.code == code } }
-                ?.let { m.selectAbility(it) }
+                ?.let { m.selectAbility(it, ignoreCooldown = parts.getOrNull(2) == "1") }
 
             Protocol.ACT -> {
                 val x = parts.getOrNull(1)?.toIntOrNull() ?: return
                 val y = parts.getOrNull(2)?.toIntOrNull() ?: return
                 m.act(Coord(x, y))
+            }
+
+            Protocol.TAUNT -> parts.getOrNull(1)?.let { m.sendTaunt(m.mySide.other(), it) }
+
+            Protocol.REMATCH -> {
+                rematchRequestedByOpponent = true
+                maybeStartRematch()
             }
 
             Protocol.QUIT -> {
@@ -207,10 +227,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         m.act(coord)
     }
 
-    fun useAbilityShared(ability: Ability) {
+    fun useAbilityShared(ability: Ability, ignoreCooldown: Boolean = false) {
         val m = match ?: return
-        if (m.opponent == Opponent.LAN) link.send(Protocol.ability(ability.code))
-        m.selectAbility(ability)
+        if (m.opponent == Opponent.LAN) link.send(Protocol.ability(ability.code, ignoreCooldown))
+        m.selectAbility(ability, ignoreCooldown)
     }
 
     /** Manda a própria frota assim que ela é confirmada. */
@@ -218,6 +238,35 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val m = match ?: return
         if (m.opponent != Opponent.LAN) return
         link.send(Protocol.fleet(FleetCodec.encode(m.board(m.mySide).ships)))
+    }
+
+    /** Emoji ou grito de guerra: decoração pura, não passa pela lógica da partida. */
+    fun sendTaunt(code: String) {
+        val m = match ?: return
+        if (m.opponent != Opponent.LAN) return
+        link.send(Protocol.taunt(code))
+        m.sendTaunt(m.mySide, code)
+    }
+
+    /**
+     * Pede revanche na mesma ligação: os dois lados precisam pedir para a partida
+     * recomeçar, senão um dos dois ficaria esperando sem saber que o outro já saiu
+     * da tela de resultado.
+     */
+    fun requestRematch() {
+        val m = match ?: return
+        if (m.opponent != Opponent.LAN || linkState != LinkState.CONNECTED) return
+        rematchRequestedByMe = true
+        link.send(Protocol.REMATCH)
+        maybeStartRematch()
+    }
+
+    private fun maybeStartRematch() {
+        if (!rematchRequestedByMe || !rematchRequestedByOpponent) return
+        val old = match ?: return
+        rematchRequestedByMe = false
+        rematchRequestedByOpponent = false
+        startLanMatch(old.mySide)
     }
 
     // ---------------- conta e sincronização ----------------
