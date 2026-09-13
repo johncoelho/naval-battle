@@ -27,6 +27,7 @@ import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.GameMode
+import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.ShipClass
 
 @Composable
@@ -68,7 +69,8 @@ fun MenuScreen(state: AppState) {
 
         Spacer(Modifier.height(20.dp))
         Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            PrimaryButton("Partida rápida", "vs. IA") { state.newMatch() }
+            PrimaryButton("Partida rápida", "vs. IA") { state.newMatch(Opponent.AI) }
+            SecondaryButton("Dois jogadores", "no mesmo aparelho") { state.newMatch(Opponent.LOCAL) }
             SecondaryButton("Estaleiro", state.livery.name) { state.screen = Screen.SHIPYARD }
             SecondaryButton("Ranqueada", "em breve", enabled = false) {}
             SecondaryButton("Convidar amigo", "em breve", enabled = false) {}

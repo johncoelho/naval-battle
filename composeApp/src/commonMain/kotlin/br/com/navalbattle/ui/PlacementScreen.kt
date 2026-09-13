@@ -43,7 +43,9 @@ import br.com.navalbattle.game.BOARD_SIZE
 import br.com.navalbattle.game.Board
 import br.com.navalbattle.game.Coord
 import br.com.navalbattle.game.Match
+import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Orientation
+import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.Ship
 import br.com.navalbattle.game.ShipClass
 import kotlinx.coroutines.launch
@@ -61,7 +63,7 @@ private data class DragState(
 
 @Composable
 fun PlacementScreen(state: AppState, match: Match) {
-    val board = match.playerBoard
+    val board = match.placementBoard()
     var error by remember { mutableStateOf<String?>(null) }
     var drag by remember { mutableStateOf<DragState?>(null) }
     var rotatingType by remember { mutableStateOf<ShipClass?>(null) }
@@ -75,7 +77,14 @@ fun PlacementScreen(state: AppState, match: Match) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        ScreenTopBar("POSICIONAMENTO", match.mode.label.uppercase())
+        ScreenTopBar(
+            if (match.opponent == Opponent.LOCAL) {
+                "POSICIONAMENTO · ${match.sideName(match.placingSide).uppercase()}"
+            } else {
+                "POSICIONAMENTO"
+            },
+            match.mode.label.uppercase()
+        )
         Gap(10)
 
         Canvas(
@@ -207,7 +216,7 @@ fun PlacementScreen(state: AppState, match: Match) {
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SecondaryButton("Aleatório", modifier = Modifier.weight(1f)) {
-                match.randomizePlayerFleet()
+                match.randomizePlacingFleet()
                 error = null
             }
             SecondaryButton("Voltar", modifier = Modifier.weight(1f)) {
@@ -219,8 +228,13 @@ fun PlacementScreen(state: AppState, match: Match) {
             "Confirmar",
             enabled = board.ships.size == ShipClass.fleet.size
         ) {
-            match.startBattle()
-            state.screen = Screen.BATTLE
+            match.confirmPlacement()
+            when {
+                // ainda falta o segundo comandante posicionar a frota dele
+                match.phase == Phase.PLACEMENT -> state.handoffTo(match.placingSide, Screen.PLACEMENT)
+                match.opponent == Opponent.LOCAL -> state.handoffTo(match.turnOwner, Screen.BATTLE)
+                else -> state.screen = Screen.BATTLE
+            }
         }
     }
 }

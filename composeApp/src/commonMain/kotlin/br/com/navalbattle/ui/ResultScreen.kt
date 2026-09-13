@@ -21,12 +21,15 @@ import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Match
+import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.ShipClass
 import br.com.navalbattle.game.Side
 
 @Composable
 fun ResultScreen(state: AppState, match: Match) {
     val victory = match.winner == Side.PLAYER
+    val local = match.opponent == Opponent.LOCAL
+    val winnerSide = match.winner ?: Side.PLAYER
 
     Column(
         Modifier
@@ -38,47 +41,70 @@ fun ResultScreen(state: AppState, match: Match) {
         Spacer(Modifier.weight(0.4f))
 
         Text(
-            if (victory) "VITÓRIA" else "DERROTA",
+            if (local) match.sideName(winnerSide).uppercase() else if (victory) "VITÓRIA" else "DERROTA",
             style = NavalType.display,
-            color = if (victory) Naval.amberStrong else Naval.danger
+            color = if (local || victory) Naval.amberStrong else Naval.danger
         )
         Gap(4)
         HudLabel(
-            if (victory) "FROTA INIMIGA NEUTRALIZADA" else "NOSSA FROTA FOI DESTRUÍDA",
+            when {
+                local -> "VENCEU A BATALHA"
+                victory -> "FROTA INIMIGA NEUTRALIZADA"
+                else -> "NOSSA FROTA FOI DESTRUÍDA"
+            },
             Naval.inkSoft
         )
 
         Gap(24)
-        StatRow("TIROS DISPARADOS", match.playerShots.toString())
-        StatRow("ACERTOS", match.playerHits.toString())
-        StatRow("PRECISÃO", "${match.accuracy}%")
-        StatRow("TURNOS", match.turnCount.toString())
-        StatRow(
-            "NAVIOS RESTANTES",
-            "${match.playerBoard.remainingShips().size} / ${ShipClass.fleet.size}"
-        )
-
-        Gap(24)
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(Naval.surface2)
-                .border(1.dp, Naval.line)
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            HudLabel("ELO", Naval.muted)
-            Text(
-                if (victory) "1742 → 1766  (+24)" else "1742 → 1723  (−19)",
-                style = NavalType.mono,
-                color = if (victory) Naval.greenBright else Naval.danger
+        if (local) {
+            listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
+                HudLabel(match.sideName(side).uppercase(), Naval.amberStrong)
+                Gap(4)
+                StatRow(
+                    "TIROS / ACERTOS",
+                    "${if (side == Side.PLAYER) match.playerShots else match.enemyShots} / " +
+                        "${if (side == Side.PLAYER) match.playerHits else match.enemyHits}"
+                )
+                StatRow("PRECISÃO", "${match.accuracyOf(side)}%")
+                StatRow(
+                    "NAVIOS RESTANTES",
+                    "${match.board(side).remainingShips().size} / ${ShipClass.fleet.size}"
+                )
+                Gap(12)
+            }
+            StatRow("TURNOS", match.turnCount.toString())
+        } else {
+            StatRow("TIROS DISPARADOS", match.playerShots.toString())
+            StatRow("ACERTOS", match.playerHits.toString())
+            StatRow("PRECISÃO", "${match.accuracy}%")
+            StatRow("TURNOS", match.turnCount.toString())
+            StatRow(
+                "NAVIOS RESTANTES",
+                "${match.playerBoard.remainingShips().size} / ${ShipClass.fleet.size}"
             )
+
+            Gap(24)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Naval.surface2)
+                    .border(1.dp, Naval.line)
+                    .padding(14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                HudLabel("ELO", Naval.muted)
+                Text(
+                    if (victory) "1742 → 1766  (+24)" else "1742 → 1723  (−19)",
+                    style = NavalType.mono,
+                    color = if (victory) Naval.greenBright else Naval.danger
+                )
+            }
+            Gap(6)
+            HudLabel("SIMULADO — RANQUEADA ONLINE ENTRA NA PRÓXIMA FASE", Naval.muted)
         }
-        Gap(6)
-        HudLabel("SIMULADO — RANQUEADA ONLINE ENTRA NA PRÓXIMA FASE", Naval.muted)
 
         Spacer(Modifier.weight(1f))
-        PrimaryButton("Nova partida") { state.newMatch() }
+        PrimaryButton("Nova partida") { state.newMatch(match.opponent) }
         Gap(8)
         SecondaryButton("Deque de comando") { state.screen = Screen.MENU }
     }
