@@ -6,8 +6,10 @@ package br.com.navalbattle.data
  * Enquanto estiver em branco o jogo roda inteiro no aparelho, sem conta.
  */
 object SupabaseConfig {
-    const val URL = ""
-    const val ANON_KEY = ""
+    const val URL = "https://cwtslesnthbenxswdcbv.supabase.co"
+    const val ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+        "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dHNsZXNudGhiZW54c3dkY2J2Iiwicm9sZSI6ImFub24i" +
+        "LCJpYXQiOjE3ODkyNjc4MDksImV4cCI6MjEwNDg0MzgwOX0.nNN323ZRPocbcRVc4DPHNoWtgP2nVBjjojWIMNSZI_g"
 
     val isConfigured: Boolean get() = URL.isNotBlank() && ANON_KEY.isNotBlank()
 }
