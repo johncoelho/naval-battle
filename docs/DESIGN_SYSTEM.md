@@ -4,7 +4,7 @@ A identidade do Naval Battle é um **centro de comando naval noturno**: carta de
 esverdeada no escuro, âmbar reservado para ação, tipografia condensada em caixa alta.
 Este documento é a referência para manter isso consistente em qualquer tela nova.
 
-Código-fonte da verdade: `design/Theme.kt`, `design/Livery.kt`, `design/FleetLine.kt`,
+Código-fonte da verdade: `design/Theme.kt`, `design/Paint.kt`, `design/FleetLine.kt`,
 `design/ShipArt.kt`, `design/InsigniaArt.kt` e `ui/Components.kt`.
 
 ## Princípios
@@ -78,12 +78,13 @@ e escala; o desenho nunca conhece pixels de tela.
 
 O visual é a combinação de dois eixos independentes, no tipo `Skin`:
 
-- **`Livery`** (camuflagem) — quatro tokens de cor (`hull`, `deck`, `trim`, `dark`) mais um
-  padrão `Camo` recortado no contorno do casco.
+- **`Paint`** (camuflagem) — quatro tokens de cor (`hull`, `deck`, `trim`, `dark`) mais um
+  padrão `Camo` recortado no contorno do casco. O termo *libré* saiu do projeto: para quem
+  joga é **pintura**, e o código acompanha.
 - **`FleetLine`** (linha de casco) — parâmetros de silhueta: `beam` (multiplicador de
   largura), `prow` (padrão, clipper, bulbosa, facetada), `tower` e `funnels`.
 
-**Ao criar item novo:** camuflagem nova é uma entrada em `Livery.all`; casco novo é uma
+**Ao criar item novo:** camuflagem nova é uma entrada em `Paint.all`; casco novo é uma
 entrada em `FleetLine.all`. Nenhum desenho precisa ser refeito — essa é a razão de os dois
 eixos serem paramétricos, e é o que torna barato produzir item de loja.
 
@@ -98,6 +99,15 @@ eixos serem paramétricos, e é o que torna barato produzir item de loja.
 
 No modo local, a cor da marca é a do **dono da frota atingida** — é o que permite ler a
 carta final sem legenda. Contra a IA, a marca usa a paleta padrão (vermelho para dano).
+
+## Texto e idiomas
+
+Nenhuma frase nasce dentro de uma tela. Todo texto entra como chave em `i18n/Strings.kt`,
+com português, inglês e espanhol na mesma linha — se a frase muda, as três mudam juntas.
+Na tela se usa `t(K.CHAVE)`, e `t(K.CHAVE, valor)` quando há um número ou nome no meio.
+
+Traduzir é parte de criar a tela, não uma etapa posterior: tela nova sem as três versões
+é tela pela metade.
 
 ## Movimento
 
