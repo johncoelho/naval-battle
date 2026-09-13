@@ -9,6 +9,22 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.8.1] — 2026-09-13 · Landing page e carta maior
+
+### Adicionado
+- **Landing page** em [johncoelho.github.io/naval-battle](https://johncoelho.github.io/naval-battle/),
+  publicada pelo GitHub Pages a cada mudança em `site/`. O botão de download aponta para a
+  release rolante `latest`, então o mesmo link serve sempre a compilação mais nova; a página
+  ainda consulta a API do GitHub para mostrar data e tamanho do APK atual.
+
+### Alterado
+- **A carta da própria frota, na batalha contra a IA, deixou de ter tamanho fixo** e passou
+  a ocupar toda a faixa livre da metade de baixo, sempre quadrada. Os números foram para uma
+  linha única acima dela. No modo clássico o ganho é maior, já que não há barra de
+  habilidades disputando o espaço.
+
+---
+
 ## [0.8.0] — 2026-09-13 · Três idiomas e vocabulário mais claro
 
 ### Adicionado

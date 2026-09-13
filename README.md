@@ -10,7 +10,8 @@ comando naval noturno. Todo o jogo é desenhado em Canvas: não há uma única i
 | **Base** | Supabase (Auth + Postgres com RLS) |
 | **Idiomas** | Português (BR), inglês, espanhol |
 | **Pacote** | `br.com.navalbattle` |
-| **APK de teste** | [release `latest`](https://github.com/johncoelho/naval-battle/releases/tag/latest) |
+| **Site** | [johncoelho.github.io/naval-battle](https://johncoelho.github.io/naval-battle/) |
+| **APK de teste** | [release `latest`](https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk) |
 
 Documentação complementar: [processo de build](docs/BUILD.md) · [stack e convenções](docs/STACK.md) ·
 [design system](docs/DESIGN_SYSTEM.md) · [histórico](CHANGELOG.md)
@@ -113,6 +114,7 @@ composeApp/src/
     data/         armazenamento local e cliente da nuvem (expect)
   androidMain/    Activity, manifesto, recursos, e os actual de áudio/dados
 supabase/schema.sql   tabela profiles, RLS, gatilhos e placar
+site/index.html       landing page publicada no GitHub Pages
 keystore/             chave de depuração fixa (ver docs/BUILD.md)
 docs/                 build, stack e design system
 ```
