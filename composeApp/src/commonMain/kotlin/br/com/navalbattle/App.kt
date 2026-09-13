@@ -32,15 +32,8 @@ class AppState {
     var livery by mutableStateOf(Livery.BRAZIL)
     var match by mutableStateOf<Match?>(null)
 
-    /** Para onde ir depois que a pessoa certa estiver com o aparelho na mão. */
-    var handoffTarget by mutableStateOf(Screen.BATTLE)
+    /** Quem deve pegar o aparelho para posicionar a própria frota. */
     var handoffSide by mutableStateOf(Side.PLAYER)
-
-    /**
-     * De quem é a tela no modo local. Fica fixo mesmo depois que o turno passa,
-     * para a jogada terminar de ser exibida antes de trocar de mãos.
-     */
-    var battleViewSide by mutableStateOf(Side.PLAYER)
 
     fun newMatch(opponent: Opponent) {
         match = Match(mode, opponent)
@@ -48,11 +41,18 @@ class AppState {
         screen = if (opponent == Opponent.LOCAL) Screen.NAMES else Screen.PLACEMENT
     }
 
-    /** Cobre a tela até o comandante [side] confirmar que está com o aparelho. */
-    fun handoffTo(side: Side, target: Screen) {
+    /**
+     * Única troca de mãos do jogo: cobre a tela entre o posicionamento de um
+     * comandante e o do outro. A batalha em si corre toda na mesma tela.
+     */
+    fun handoffToPlacement(side: Side) {
         handoffSide = side
-        handoffTarget = target
         screen = Screen.HANDOFF
+    }
+
+    fun quitToMenu() {
+        match = null
+        screen = Screen.MENU
     }
 }
 
