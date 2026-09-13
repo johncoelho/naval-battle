@@ -54,7 +54,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var handoffSide by mutableStateOf(Side.PLAYER)
 
     /** Trilha ligada. Os efeitos de combate continuam tocando de qualquer jeito. */
-    var musicOn by mutableStateOf(true)
+    var musicOn by mutableStateOf(profile.musicOn)
 
     fun newMatch(opponent: Opponent) {
         match = Match(mode, opponent)
@@ -99,7 +99,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         when (val r = cloud.signIn(email, password)) {
             is CloudResult.Ok -> {
                 profile.rememberSession(r.value)
-                val merged = mergeWithCloud(r.value)
+                val merged = mergeWithCloud() ?: "Conectado. Não consegui sincronizar agora."
                 true to merged
             }
 
@@ -108,31 +108,70 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Sincroniza sob demanda, pelo botão da tela de conta. */
     suspend fun syncNow(): Boolean {
-        val session = profile.currentSession() ?: return false
-        mergeWithCloud(session)
-        return true
+        if (!profile.signedIn) return false
+        return mergeWithCloud() != null
     }
 
     /** Sobe a carreira em silêncio depois de uma partida ou de uma compra. */
     suspend fun pushQuietly() {
-        val session = profile.currentSession() ?: return
-        cloud.saveProfile(session, profile.snapshot())
+        if (!profile.signedIn) return
+        authed { session -> cloud.saveProfile(session, profile.snapshot()) }
     }
 
-    private suspend fun mergeWithCloud(session: Session): String =
-        when (val remote = cloud.loadProfile(session)) {
+    /**
+     * Na abertura do app, com conta conectada: renova a sessão e traz o que estiver
+     * na nuvem. É o que garante token válido antes da primeira sincronização do dia.
+     */
+    suspend fun resumeSession() {
+        if (!profile.signedIn) return
+        renew()
+        mergeWithCloud()
+    }
+
+    /**
+     * Roda [block] com a sessão atual e, se ela tiver vencido, renova o token com o
+     * refresh guardado e repete uma vez. O comandante não vê nada disso.
+     */
+    private suspend fun <T> authed(block: suspend (Session) -> CloudResult<T>): CloudResult<T> {
+        val session = profile.currentSession()
+            ?: return CloudResult.Fail("Entre na conta para sincronizar.")
+        val first = block(session)
+        if (first !is CloudResult.Fail || !first.expired) return first
+
+        val renewed = renew() ?: return CloudResult.Fail(
+            "Sua sessão expirou. Entre de novo para sincronizar."
+        )
+        return block(renewed)
+    }
+
+    /** Troca o refresh token guardado por uma sessão nova. */
+    private suspend fun renew(): Session? {
+        val current = profile.currentSession() ?: return null
+        return when (val r = cloud.refresh(current.refreshToken)) {
+            is CloudResult.Ok -> {
+                profile.rememberSession(r.value)
+                r.value
+            }
+            // refresh recusado: a conta continua no aparelho, só a sessão caiu
+            is CloudResult.Fail -> null
+        }
+    }
+
+    /** Devolve a mensagem da fusão, ou nulo quando nem isso foi possível. */
+    private suspend fun mergeWithCloud(): String? =
+        when (val remote = authed { session -> cloud.loadProfile(session) }) {
             is CloudResult.Ok -> {
                 val cloudProfile = remote.value
                 if (cloudProfile != null && cloudProfile.xp > profile.xp) {
                     profile.adopt(cloudProfile)
                     "Carreira da nuvem restaurada neste aparelho."
                 } else {
-                    cloud.saveProfile(session, profile.snapshot())
+                    authed { session -> cloud.saveProfile(session, profile.snapshot()) }
                     "Carreira deste aparelho enviada para a nuvem."
                 }
             }
 
-            is CloudResult.Fail -> remote.message
+            is CloudResult.Fail -> null
         }
 }
 
@@ -145,6 +184,7 @@ fun App() {
 
     // a trilha acompanha a tela: tema no deque, faixa de combate na batalha
     LaunchedEffect(state.screen, state.musicOn) {
+        profile.setMusic(state.musicOn)
         if (!state.musicOn) {
             music.stop()
         } else {
@@ -152,6 +192,9 @@ fun App() {
         }
     }
     DisposableEffect(Unit) { onDispose { music.release() } }
+
+    // com conta conectada, a abertura já renova a sessão e busca o que há na nuvem
+    LaunchedEffect(Unit) { state.resumeSession() }
 
     NavalTheme {
         Box(Modifier.fillMaxSize().background(Naval.bg)) {
