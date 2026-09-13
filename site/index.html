@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Naval Battle — batalha naval tática para Android</title>
+<meta name="description" content="Batalha naval tática para Android: modo clássico e tático, dois jogadores no mesmo aparelho, partida na rede local, carreira com patentes e estaleiro. Download direto do APK.">
+<meta name="theme-color" content="#080B07">
+
+<meta property="og:title" content="Naval Battle">
+<meta property="og:description" content="Batalha naval tática para Android. Clássico, tático, dois jogadores e rede local.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://johncoelho.github.io/naval-battle/">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root{
+    --bg:#080B07; --surface:#101509; --surface2:#161C10; --surface3:#1F2717;
+    --line:#2B3520; --lineSoft:#1B2214;
+    --abyss:#08120E; --abyss2:#0C1A14; --grid:rgba(142,209,122,.16);
+    --ink:#EFF2E4; --inkSoft:#B4C0A4; --muted:#6B7760;
+    --green:#5F8F4A; --greenBright:#8ED17A;
+    --amber:#E6AC3F; --amberStrong:#FFC95C; --amberInk:#1E1402;
+    --danger:#E05A35; --cyan:#48C9F0; --magenta:#F06AC2;
+    --sans:'Chakra Petch',system-ui,-apple-system,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    background-image:radial-gradient(1200px 700px at 50% -15%,#0d1a0f 0%,var(--bg) 60%);
+  }
+  a{color:inherit}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin:0}
+  h1{font-size:clamp(42px,9vw,86px);line-height:.92;margin:14px 0 0;font-weight:700;letter-spacing:.01em}
+  h1 span{color:var(--amberStrong)}
+  h2{font-size:clamp(24px,4vw,34px);margin:0 0 8px;font-weight:700;letter-spacing:.01em;text-wrap:balance}
+  h3{font-size:18px;margin:0 0 6px;font-weight:600}
+  p{line-height:1.62;color:var(--inkSoft);margin:0 0 14px}
+  .lede{font-size:clamp(16px,2.2vw,19px);max-width:56ch}
+
+  /* ---------------------------------------------------------- topo */
+  header{position:sticky;top:0;z-index:20;backdrop-filter:blur(8px);
+         background:rgba(8,11,7,.82);border-bottom:1px solid var(--lineSoft)}
+  .bar{display:flex;align-items:center;justify-content:space-between;height:58px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.04em}
+  .brand svg{display:block}
+  .navlinks{display:flex;gap:22px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  .navlinks a{color:var(--muted);text-decoration:none}
+  .navlinks a:hover{color:var(--amberStrong)}
+  @media (max-width:720px){ .navlinks{display:none} }
+
+  /* ---------------------------------------------------------- herói */
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--lineSoft)}
+  .radar{position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:52px 52px;
+    mask-image:radial-gradient(circle at 72% 42%,#000 0%,transparent 68%);
+    -webkit-mask-image:radial-gradient(circle at 72% 42%,#000 0%,transparent 68%)}
+  .sweep{position:absolute;right:-6%;top:4%;width:min(620px,78vw);aspect-ratio:1;border-radius:50%;
+    background:conic-gradient(rgba(142,209,122,.26),rgba(142,209,122,.04) 12%,transparent 32%,transparent 100%);
+    animation:spin 6s linear infinite;pointer-events:none}
+  .rings{position:absolute;right:-6%;top:4%;width:min(620px,78vw);aspect-ratio:1;pointer-events:none}
+  .rings i{position:absolute;inset:0;border:1px solid rgba(142,209,122,.14);border-radius:50%}
+  .rings i:nth-child(2){inset:16%}.rings i:nth-child(3){inset:32%}.rings i:nth-child(4){inset:48%}
+  @keyframes spin{to{rotate:360deg}}
+  @media (prefers-reduced-motion:reduce){ .sweep{animation:none} }
+
+  .herobody{position:relative;padding:64px 0 72px;display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center}
+  @media (max-width:860px){ .herobody{grid-template-columns:1fr;padding:44px 0 52px} }
+
+  .modes{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 26px}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+       border:1px solid var(--line);color:var(--inkSoft);padding:7px 11px}
+
+  .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:700;
+       letter-spacing:.06em;text-transform:uppercase;font-size:15px;padding:16px 22px;border:1px solid transparent}
+  .btn-primary{background:var(--amber);color:var(--amberInk)}
+  .btn-primary:hover{background:var(--amberStrong)}
+  .btn-ghost{border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--amber);color:var(--amberStrong)}
+  .meta{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em;margin-top:14px}
+  .meta b{color:var(--inkSoft);font-weight:500}
+
+  /* ---------------------------------------------------------- celular */
+  .phone{justify-self:center;width:min(300px,80vw);aspect-ratio:9/19;position:relative;
+         background:var(--abyss);border:1px solid var(--line);overflow:hidden}
+  .screen{position:absolute;inset:0;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .hud{font-family:var(--mono);font-size:8px;letter-spacing:.2em;color:var(--muted);
+       display:flex;justify-content:space-between}
+  .timer{font-family:var(--mono);font-size:22px;letter-spacing:.18em;color:var(--amberStrong);text-align:center}
+  .board{position:relative;width:100%;aspect-ratio:1;background:
+      radial-gradient(circle at 50% 45%,var(--abyss2),var(--abyss) 75%);border:1px solid var(--line)}
+  .board .g{position:absolute;inset:3px;
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:10% 10%}
+  .mark{position:absolute;width:10%;aspect-ratio:1;display:grid;place-items:center}
+  .mark::after{content:'';width:34%;aspect-ratio:1;border-radius:50%;border:1.5px solid rgba(180,192,164,.5)}
+  .mark.hit::after{width:100%;border-radius:0;border:1px solid var(--danger);background:rgba(224,90,53,.32);
+    box-shadow:inset 0 0 0 3px rgba(255,201,92,.001)}
+  .mark.hit::before{content:'';position:absolute;width:32%;aspect-ratio:1;border-radius:50%;background:var(--amberStrong)}
+  .callout{border:1px solid var(--amberStrong);padding:6px 10px;text-align:center}
+  .callout b{display:block;font-size:12px;letter-spacing:.06em;color:var(--amberStrong)}
+  .callout span{font-family:var(--mono);font-size:7.5px;color:var(--inkSoft);letter-spacing:.14em}
+  .fleetrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;
+            letter-spacing:.16em;color:var(--muted)}
+  .fleetrow b{color:var(--greenBright);font-weight:500}
+
+  /* ---------------------------------------------------------- seções */
+  section{padding:72px 0;border-bottom:1px solid var(--lineSoft)}
+  .sechead{max-width:60ch;margin-bottom:34px}
+
+  .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .card{border:1px solid var(--line);background:var(--surface);padding:22px}
+  .card .k{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--amberStrong);text-transform:uppercase}
+  .card h3{margin-top:10px}
+  .card p{margin:0;font-size:14.5px}
+
+  .ships{display:flex;flex-direction:column;gap:14px;border:1px solid var(--line);
+         background:linear-gradient(180deg,var(--abyss2),var(--abyss));padding:26px 20px}
+  .ships svg{width:100%;height:auto;display:block}
+  .swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+  .sw{width:38px;height:38px;border:1px solid var(--line)}
+
+  .steps{counter-reset:s;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .step{border-left:2px solid var(--green);padding:4px 0 4px 16px}
+  .step b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--green)}
+  .step p{margin:6px 0 0;font-size:14.5px}
+
+  .install{border:1px solid var(--line);background:var(--surface2);padding:24px;margin-top:26px}
+  .install ol{margin:12px 0 0;padding-left:20px;color:var(--inkSoft);line-height:1.9;font-size:14.5px}
+
+  footer{padding:44px 0 60px;color:var(--muted);font-size:13px}
+  footer a{color:var(--inkSoft)}
+  .foothead{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+  .footgrid{display:grid;gap:26px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="#8ED17A" stroke-width="1.2" opacity=".7"/>
+        <circle cx="12" cy="12" r="5" fill="none" stroke="#8ED17A" stroke-width="1" opacity=".5"/>
+        <path d="M12 12 L21 8" stroke="#FFC95C" stroke-width="1.4"/>
+        <circle cx="16" cy="8" r="1.6" fill="#FFC95C"/>
+      </svg>
+      NAVAL BATTLE
+    </div>
+    <nav class="navlinks">
+      <a href="#jogo">O jogo</a>
+      <a href="#rede">Rede local</a>
+      <a href="#frota">Frota</a>
+      <a href="#baixar">Baixar</a>
+      <a href="https://github.com/johncoelho/naval-battle">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="radar" aria-hidden="true"></div>
+  <div class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="sweep" aria-hidden="true"></div>
+
+  <div class="wrap herobody">
+    <div>
+      <p class="eyebrow">Batalha naval tática · Android</p>
+      <h1>NAVAL<br><span>BATTLE</span></h1>
+      <p class="lede" style="margin-top:18px">
+        Um centro de comando naval no seu bolso. Radar varrendo a carta, míssil cruzando a
+        tela, navio afundando em chamas — e a decisão de sempre: onde está a frota dele?
+      </p>
+
+      <div class="modes">
+        <span class="tag">Clássico</span>
+        <span class="tag">Tático</span>
+        <span class="tag">Dois no mesmo aparelho</span>
+        <span class="tag">Rede local</span>
+        <span class="tag">PT · EN · ES</span>
+      </div>
+
+      <div class="cta">
+        <a class="btn btn-primary" id="download"
+           href="https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk">
+          ↓ Baixar o APK
+        </a>
+        <a class="btn btn-ghost" href="#jogo">Ver o jogo</a>
+      </div>
+      <p class="meta" id="release-meta">Versão de teste · sempre a última compilação</p>
+    </div>
+
+    <!-- maquete da tela de batalha, desenhada em HTML como no jogo -->
+    <div class="phone" role="img" aria-label="Tela de batalha do Naval Battle: radar, cronômetro e carta de tiro">
+      <div class="screen">
+        <div class="hud"><span>ALVO INIMIGO</span><span>TURNO 07</span></div>
+        <div class="timer">00:14</div>
+        <div class="board">
+          <div class="g"></div>
+          <div class="mark" style="left:20%;top:10%"></div>
+          <div class="mark" style="left:50%;top:20%"></div>
+          <div class="mark hit" style="left:60%;top:30%"></div>
+          <div class="mark hit" style="left:60%;top:40%"></div>
+          <div class="mark" style="left:30%;top:50%"></div>
+          <div class="mark" style="left:80%;top:60%"></div>
+          <div class="mark hit" style="left:20%;top:70%"></div>
+          <div class="mark" style="left:40%;top:80%"></div>
+        </div>
+        <div class="callout"><b>ACERTO DIRETO!</b><span>CRUZADOR ATINGIDO · F4</span></div>
+        <div class="fleetrow"><span>SUA FROTA</span><b>4 / 5 À TONA · 46%</b></div>
+        <div class="board" style="opacity:.92">
+          <div class="g"></div>
+          <svg viewBox="0 0 100 100" style="position:absolute;inset:3px;width:calc(100% - 6px)">
+            <rect x="10" y="20" width="40" height="8" fill="#2C3624" stroke="#1A2115" stroke-width=".6"/>
+            <rect x="12" y="21.5" width="36" height="3" fill="#46583A"/>
+            <rect x="60" y="40" width="8" height="30" fill="#2C3624" stroke="#1A2115" stroke-width=".6"/>
+            <rect x="61.5" y="42" width="5" height="26" fill="#46583A"/>
+            <rect x="20" y="70" width="24" height="8" fill="#2C3624" stroke="#1A2115" stroke-width=".6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="jogo">
+  <div class="wrap">
+    <div class="sechead">
+      <h2>Dois modos, cinco embarcações</h2>
+      <p>No clássico é um tiro por turno, como sempre foi. No tático cada classe entrega uma
+         habilidade com recarga própria — e a partida vira decisão, não sorte.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="k">Porta-aviões · 5</div><h3>Reconhecimento aéreo</h3>
+        <p>Revela uma linha inteira da carta inimiga.</p></div>
+      <div class="card"><div class="k">Encouraçado · 4</div><h3>Barragem dupla</h3>
+        <p>Dois disparos no mesmo turno.</p></div>
+      <div class="card"><div class="k">Cruzador · 3</div><h3>Ping de sonar</h3>
+        <p>Varre um setor 3×3 e diz se há metal ali.</p></div>
+      <div class="card"><div class="k">Submarino · 3</div><h3>Imersão</h3>
+        <p>Absorve o primeiro acerto — uma vez só.</p></div>
+      <div class="card"><div class="k">Destróier · 2</div><h3>Cortina de fumaça</h3>
+        <p>Bloqueia a próxima varredura do inimigo.</p></div>
+      <div class="card"><div class="k">Carreira</div><h3>Patentes e créditos</h3>
+        <p>De Recruta a Almirante. Cada partida rende XP e créditos para o estaleiro.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="rede">
+  <div class="wrap">
+    <div class="sechead">
+      <h2>Jogue com quem está do seu lado</h2>
+      <p>Dois jeitos de enfrentar gente de verdade, sem depender de internet nem de servidor.</p>
+    </div>
+    <div class="grid" style="margin-bottom:30px">
+      <div class="card">
+        <div class="k">Mesmo aparelho</div><h3>Passa e joga</h3>
+        <p>Cada comandante posiciona a frota em sigilo e a batalha corre numa tela só.
+           Cada um enxerga apenas os próprios tiros; no fim a carta se revela inteira,
+           com as duas frotas em cores diferentes.</p>
+      </div>
+      <div class="card">
+        <div class="k">Rede local</div><h3>Dois celulares, mesmo Wi-Fi</h3>
+        <p>Um cria a partida, o outro encontra pelo nome e entra. A conversa é direta entre
+           os aparelhos — funciona até sem internet, só com a rede da casa.</p>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step"><b>Passo 1</b><p>Um comandante toca em <b style="color:var(--ink)">criar partida</b>.</p></div>
+      <div class="step"><b>Passo 2</b><p>O outro toca em <b style="color:var(--ink)">procurar</b> e escolhe o nome que aparecer.</p></div>
+      <div class="step"><b>Passo 3</b><p>Cada um posiciona a frota e a batalha começa nos dois ao mesmo tempo.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="frota">
+  <div class="wrap">
+    <div class="sechead">
+      <h2>Sua frota, do seu jeito</h2>
+      <p>Duas coisas se compram com os créditos ganhos em combate: a <b style="color:var(--ink)">linha
+         de casco</b>, que muda a silhueta das cinco embarcações, e a
+         <b style="color:var(--ink)">camuflagem</b>, que muda pintura e padrão. Tudo é desenhado
+         em vetor — não há uma única imagem no aplicativo.</p>
+    </div>
+
+    <div class="ships">
+      <svg viewBox="0 0 250 50" aria-label="Porta-aviões">
+        <path d="M10 25C10 15 17 10 27 10L196 10C222 10 242 17 247 25C242 33 222 40 196 40L27 40C17 40 10 35 10 25Z" fill="#2C3624" stroke="#12180E" stroke-width="1.4"/>
+        <path d="M22 15L198 15C214 15 228 19 234 25C228 31 214 35 198 35L22 35Z" fill="#46583A"/>
+        <g fill="#8ED17A" opacity=".85">
+          <rect x="34" y="24.2" width="9" height="1.8"/><rect x="50" y="24.2" width="9" height="1.8"/>
+          <rect x="66" y="24.2" width="9" height="1.8"/><rect x="82" y="24.2" width="9" height="1.8"/>
+          <rect x="98" y="24.2" width="9" height="1.8"/><rect x="114" y="24.2" width="9" height="1.8"/>
+          <rect x="130" y="24.2" width="9" height="1.8"/><rect x="146" y="24.2" width="9" height="1.8"/>
+        </g>
+        <rect x="176" y="7" width="30" height="9" fill="#1A2115"/>
+        <rect x="182" y="3.5" width="8" height="4" fill="#8ED17A"/>
+      </svg>
+      <svg viewBox="0 0 200 50" aria-label="Encouraçado">
+        <path d="M8 25C8 16 14 11 23 11L158 11C180 11 194 18 198 25C194 32 180 39 158 39L23 39C14 39 8 34 8 25Z" fill="#2C3624" stroke="#12180E" stroke-width="1.4"/>
+        <path d="M20 16L156 16C172 16 184 20 189 25C184 30 172 34 156 34L20 34Z" fill="#46583A"/>
+        <circle cx="44" cy="25" r="8" fill="#1A2115"/><rect x="50" y="23.2" width="18" height="3.6" fill="#1A2115"/>
+        <circle cx="150" cy="25" r="7.5" fill="#1A2115"/><rect x="130" y="23.4" width="17" height="3.2" fill="#1A2115"/>
+        <rect x="96" y="16" width="26" height="18" fill="#1A2115"/><rect x="102" y="19" width="14" height="12" fill="#46583A"/>
+      </svg>
+      <svg viewBox="0 0 100 50" aria-label="Destróier">
+        <path d="M6 25C6 18 10 14 18 14L74 14C90 14 96 19.5 98.5 25C96 30.5 90 36 74 36L18 36C10 36 6 32 6 25Z" fill="#2C3624" stroke="#12180E" stroke-width="1.2"/>
+        <path d="M15 18L72 18C84 18 90 21.5 93 25C90 28.5 84 32 72 32L15 32Z" fill="#46583A"/>
+        <circle cx="28" cy="25" r="5.6" fill="#1A2115"/><rect x="32" y="23.7" width="12" height="2.6" fill="#1A2115"/>
+        <rect x="50" y="19" width="16" height="12" fill="#1A2115"/><rect x="54" y="21.5" width="8" height="7" fill="#46583A"/>
+      </svg>
+      <div class="swatches" aria-label="Camuflagens">
+        <span class="sw" style="background:#2C3624" title="Padrão Naval"></span>
+        <span class="sw" style="background:#123A1D" title="Frota Brasil"></span>
+        <span class="sw" style="background:#393F44" title="Frota Japão"></span>
+        <span class="sw" style="background:#2B3740" title="Frota EUA"></span>
+        <span class="sw" style="background:#1E4436" title="Frota Portugal"></span>
+        <span class="sw" style="background:#59626B" title="Camuflagem Ártica"></span>
+        <span class="sw" style="background:repeating-linear-gradient(115deg,#2A3138 0 6px,#B9C3CB 6px 12px)" title="Dazzle 1918"></span>
+        <span class="sw" style="background:#2A1F2E" title="Corsária"></span>
+        <span class="sw" style="background:#121412" title="Furtiva"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="baixar">
+  <div class="wrap">
+    <div class="sechead">
+      <h2>Baixar</h2>
+      <p>O botão aponta sempre para a compilação mais recente — a cada versão nova, o mesmo
+         link passa a servir o APK atualizado.</p>
+    </div>
+
+    <div class="cta">
+      <a class="btn btn-primary"
+         href="https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk">
+        ↓ Baixar o APK
+      </a>
+      <a class="btn btn-ghost" href="https://github.com/johncoelho/naval-battle/blob/main/CHANGELOG.md">
+        O que mudou
+      </a>
+    </div>
+    <p class="meta" id="release-meta-2">Carregando dados da última versão…</p>
+
+    <div class="install">
+      <h3 style="margin:0">Como instalar</h3>
+      <ol>
+        <li>Baixe o APK no próprio celular.</li>
+        <li>Abra o arquivo e permita a instalação de <b style="color:var(--ink)">fontes desconhecidas</b>
+            para o aplicativo que estiver abrindo (navegador ou gerenciador de arquivos).</li>
+        <li>Instale por cima da versão anterior — o progresso é preservado.</li>
+      </ol>
+      <p style="margin:14px 0 0;font-size:13.5px;color:var(--muted)">
+        Android 8.0 ou superior. Esta é uma versão de teste, assinada com chave de depuração;
+        a publicação na Play Store vem depois.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footgrid">
+    <div>
+      <div class="foothead">Naval Battle</div>
+      <p style="margin:0">Batalha naval tática feita em Kotlin Multiplatform e Compose.
+         Android hoje, iOS no horizonte.</p>
+    </div>
+    <div>
+      <div class="foothead">Projeto</div>
+      <p style="margin:0">
+        <a href="https://github.com/johncoelho/naval-battle">Repositório</a> ·
+        <a href="https://github.com/johncoelho/naval-battle/blob/main/CHANGELOG.md">Histórico</a> ·
+        <a href="https://github.com/johncoelho/naval-battle/blob/main/docs/DESIGN_SYSTEM.md">Design system</a>
+      </p>
+    </div>
+    <div>
+      <div class="foothead">Áudio</div>
+      <p style="margin:0">Efeitos e trilha vêm de gravações em domínio público e CC0 do
+         Wikimedia Commons, com os créditos no
+         <a href="https://github.com/johncoelho/naval-battle#créditos-de-áudio">README</a>.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // mostra data e tamanho da última compilação, direto da release rolante
+  (async () => {
+    const alvos = [document.getElementById('release-meta'), document.getElementById('release-meta-2')];
+    try {
+      const r = await fetch('https://api.github.com/repos/johncoelho/naval-battle/releases/tags/latest');
+      if (!r.ok) throw new Error('sem resposta');
+      const data = await r.json();
+      const apk = (data.assets || []).find(a => a.name.endsWith('.apk'));
+      const quando = new Date(data.published_at).toLocaleDateString('pt-BR', {
+        day: '2-digit', month: 'long', year: 'numeric'
+      });
+      const mb = apk ? (apk.size / 1048576).toFixed(1) + ' MB' : '';
+      const baixados = apk && apk.download_count ? ' · ' + apk.download_count + ' downloads' : '';
+      alvos.forEach(el => { if (el) el.innerHTML =
+        'Última compilação: <b>' + quando + '</b>' + (mb ? ' · <b>' + mb + '</b>' : '') + baixados; });
+    } catch (e) {
+      alvos.forEach(el => { if (el) el.textContent = 'Versão de teste · sempre a última compilação'; });
+    }
+  })();
+</script>
+</body>
+</html>
