@@ -282,6 +282,18 @@ enum class K(val pt: String, val en: String, val es: String) {
     AUTH_CONNECTED_NO_SYNC("Conectado. Não consegui sincronizar agora.", "Connected. Could not sync right now.", "Conectado. No pude sincronizar ahora."),
     AUTH_SIGN_IN_TO_SYNC("Entre na conta para sincronizar.", "Sign in to sync.", "Entra en la cuenta para sincronizar."),
     AUTH_EXPIRED("Sua sessão expirou. Entre de novo para sincronizar.", "Your session expired. Sign in again to sync.", "Tu sesión expiró. Entra de nuevo para sincronizar."),
+    AUTH_FORGOT("Esqueci minha senha", "Forgot my password", "Olvidé mi contraseña"),
+    AUTH_RESET_TITLE("Recuperar senha", "Recover password", "Recuperar contraseña"),
+    AUTH_RESET_HINT("Mandamos um link para o seu e-mail. Abra-o no aparelho para escolher uma senha nova.", "We'll send a link to your email. Open it on this device to pick a new password.", "Enviaremos un enlace a tu correo. Ábrelo en este aparato para elegir una contraseña nueva."),
+    AUTH_RESET_SEND("Enviar link", "Send link", "Enviar enlace"),
+    AUTH_RESET_SENT("Link enviado. Confira seu e-mail.", "Link sent. Check your email.", "Enlace enviado. Revisa tu correo."),
+    AUTH_CHANGE_PASSWORD("Trocar senha", "Change password", "Cambiar contraseña"),
+    AUTH_CURRENT_PASSWORD("Senha atual", "Current password", "Contraseña actual"),
+    AUTH_NEW_PASSWORD("Nova senha", "New password", "Contraseña nueva"),
+    AUTH_CONFIRM_PASSWORD("Confirmar nova senha", "Confirm new password", "Confirmar contraseña nueva"),
+    AUTH_PASSWORD_MISMATCH("As senhas novas não são iguais.", "The new passwords don't match.", "Las contraseñas nuevas no coinciden."),
+    AUTH_PASSWORD_CHANGED("Senha alterada.", "Password changed.", "Contraseña actualizada."),
+    AUTH_CANCEL("Cancelar", "Cancel", "Cancelar"),
 
     // ---------------------------------------------------------------- rede local
     LAN_TITLE("Rede local", "Local network", "Red local"),
