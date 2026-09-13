@@ -104,6 +104,18 @@ actual class CloudApi actual constructor() {
             CloudResult.Ok(Unit)
         }
 
+    actual suspend fun updatePassword(session: Session, newPassword: String): CloudResult<Unit> = call {
+        val body = JSONObject().put("password", newPassword)
+        put("/auth/v1/user", body, session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun sendPasswordReset(email: String): CloudResult<Unit> = call {
+        val body = JSONObject().put("email", email)
+        post("/auth/v1/recover", body, token = null)
+        CloudResult.Ok(Unit)
+    }
+
     // ------------------------------------------------------------------ HTTP
 
     /** Sessão vencida: quem chamou renova o token e repete. */
@@ -129,6 +141,9 @@ actual class CloudApi actual constructor() {
             "Invalid login credentials" in raw -> "E-mail ou senha incorretos."
             "User already registered" in raw -> "Esse e-mail já tem conta. Faça login."
             "Password should be" in raw -> "A senha precisa de pelo menos 6 caracteres."
+            "same_password" in raw || "should be different" in raw ->
+                "A nova senha precisa ser diferente da atual."
+            "rate limit" in raw.lowercase() -> "Muitas tentativas. Espere um pouco e tente de novo."
             "duplicate key" in raw && "username" in raw -> "Esse nome de usuário já está em uso."
             "Unable to validate email" in raw || "invalid format" in raw -> "E-mail inválido."
             raw.length > 120 -> "Não consegui falar com o servidor do jogo."
@@ -149,6 +164,13 @@ actual class CloudApi actual constructor() {
     }
 
     private fun get(path: String, token: String): String = read(open(path, "GET", token, null))
+
+    private fun put(path: String, body: JSONObject, token: String): String {
+        val conn = open(path, "PUT", token, null)
+        conn.doOutput = true
+        conn.outputStream.use { it.write(body.toString().toByteArray()) }
+        return read(conn)
+    }
 
     private fun open(
         path: String,
