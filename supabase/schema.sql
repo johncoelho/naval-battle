@@ -66,18 +66,23 @@ create trigger profiles_touch
 -- para o Google cair na mesma carreira do e-mail
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  wanted text := coalesce(
+    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'full_name',
+    split_part(coalesce(new.email, 'comandante'), '@', 1)
+  );
 begin
-  insert into public.profiles (id, email, username)
-  values (
-    new.id,
-    new.email,
-    coalesce(
-      new.raw_user_meta_data->>'username',
-      new.raw_user_meta_data->>'full_name',
-      split_part(coalesce(new.email, 'comandante'), '@', 1)
-    )
-  )
-  on conflict (id) do nothing;
+  begin
+    insert into public.profiles (id, email, username)
+    values (new.id, new.email, wanted)
+    on conflict (id) do nothing;
+  exception when unique_violation then
+    -- nome de usuário já tomado: entra com sufixo em vez de barrar o cadastro
+    insert into public.profiles (id, email, username)
+    values (new.id, new.email, wanted || '-' || substr(new.id::text, 1, 4))
+    on conflict (id) do nothing;
+  end;
   return new;
 end $$;
 
