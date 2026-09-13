@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -215,44 +216,49 @@ fun BattleScreen(state: AppState, match: Match) {
                 }
             }
 
-            Spacer(Modifier.weight(1f))
-
             if (local || lan) {
+                Spacer(Modifier.weight(1f))
                 Scoreboard(match)
             } else {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier
-                            .size(150.dp)
-                            .background(Naval.abyss)
-                            .border(1.dp, Naval.line)
-                    ) {
-                        BoardView(
-                            board = match.playerBoard,
-                            skin = state.skin,
-                            showShips = true,
-                            sweep = false,
-                            impact = enemyImpact,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                    GapW(14)
-                    Column {
-                        HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
-                        Gap(4)
-                        val afloat = match.playerBoard.remainingShips().size
-                        Text(
-                            "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}",
-                            style = NavalType.mono,
-                            color = if (afloat <= 2) Naval.danger else Naval.greenBright
-                        )
-                        Gap(6)
-                        HudLabel("${t(K.ACCURACY)} ${match.accuracyOf(Side.PLAYER)}%")
-                        if (match.playerBoard.smokeActive) {
-                            Gap(4)
-                            HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
-                        }
-                    }
+                // os números viram uma linha só para a carta da própria frota poder
+                // crescer e ocupar toda a faixa livre da metade de baixo
+                val afloat = match.playerBoard.remainingShips().size
+                Gap(6)
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
+                    Text(
+                        "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}" +
+                            " · ${t(K.ACCURACY)} ${match.accuracyOf(Side.PLAYER)}%",
+                        style = NavalType.mono,
+                        color = if (afloat <= 2) Naval.danger else Naval.greenBright
+                    )
+                }
+                if (match.playerBoard.smokeActive) {
+                    HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
+                }
+                Gap(6)
+                BoxWithConstraints(
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(bottom = 4.dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    // quadrada, do tamanho do que sobrou — larga no clássico, um pouco
+                    // menor no tático, onde a barra de habilidades ocupa parte da faixa
+                    val side = if (maxWidth < maxHeight) maxWidth else maxHeight
+                    BoardView(
+                        board = match.playerBoard,
+                        skin = state.skin,
+                        showShips = true,
+                        sweep = false,
+                        impact = enemyImpact,
+                        modifier = Modifier.size(side)
+                    )
                 }
             }
         }
