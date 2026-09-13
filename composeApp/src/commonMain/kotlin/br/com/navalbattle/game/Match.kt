@@ -4,6 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlin.random.Random
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 
 enum class Phase { PLACEMENT, BATTLE, RESULT }
 
@@ -111,10 +113,10 @@ class Match(
     }
 
     fun sideName(side: Side): String = when (opponent) {
-        Opponent.AI -> if (side == Side.PLAYER) "Você" else "Inimigo"
+        Opponent.AI -> if (side == Side.PLAYER) t(K.YOU) else t(K.ENEMY)
         Opponent.LOCAL, Opponent.LAN ->
-            if (side == Side.PLAYER) nameOne.ifBlank { "Comandante 1" }
-            else nameTwo.ifBlank { "Comandante 2" }
+            if (side == Side.PLAYER) nameOne.ifBlank { t(K.NAMES_ONE) }
+            else nameTwo.ifBlank { t(K.NAMES_TWO) }
     }
 
     // ---------------- posicionamento ----------------
@@ -186,9 +188,9 @@ class Match(
         phase = Phase.BATTLE
         turnOwner = Side.PLAYER
         if (mode == GameMode.TACTICAL) {
-            say("Frota a postos", "Toque nos ícones abaixo para usar uma habilidade", Tone.INFO)
+            say(t(K.CALL_FLEET_READY), t(K.CALL_FLEET_READY_TACTICAL), Tone.INFO)
         } else {
-            say("Frota a postos", "Aguardando coordenada", Tone.INFO)
+            say(t(K.CALL_FLEET_READY), t(K.CALL_FLEET_READY_CLASSIC), Tone.INFO)
         }
     }
 
@@ -219,7 +221,7 @@ class Match(
             Ability.SMOKE -> {
                 board(turnOwner).smokeActive = true
                 cooldownsOf(turnOwner)[ability] = ability.cooldown
-                say("Cortina lançada", "Próxima varredura inimiga bloqueada", Tone.SCAN)
+                say(t(K.CALL_SMOKE), t(K.CALL_SMOKE_SUB), Tone.SCAN)
                 endTurn()
             }
 
@@ -227,7 +229,7 @@ class Match(
                 cooldownsOf(turnOwner)[ability] = ability.cooldown
                 extraShots = 1
                 pendingAbility = null
-                say("Barragem dupla", "Dois disparos neste turno", Tone.INFO)
+                say(t(K.CALL_DOUBLE), t(K.CALL_DOUBLE_SUB), Tone.INFO)
             }
 
             else -> {
@@ -249,8 +251,8 @@ class Match(
                 val worked = target.revealRow(coord.y)
                 cooldownsOf(attacker)[ability] = ability.cooldown
                 pendingAbility = null
-                if (worked) say("Reconhecimento aéreo", "Linha ${coord.y + 1} revelada", Tone.SCAN)
-                else say("Varredura falhou", "Cortina de fumaça inimiga", Tone.MISS)
+                if (worked) say(t(K.CALL_RECON), t(K.CALL_RECON_SUB, coord.y + 1), Tone.SCAN)
+                else say(t(K.CALL_SCAN_FAIL), t(K.CALL_SCAN_FAIL_SUB), Tone.MISS)
                 endTurn()
                 return null
             }
@@ -259,8 +261,8 @@ class Match(
                 val worked = target.sonarPing(coord)
                 cooldownsOf(attacker)[ability] = ability.cooldown
                 pendingAbility = null
-                if (worked) say("Contato no sonar", "Setor ${coord.label} varrido", Tone.SCAN)
-                else say("Varredura falhou", "Cortina de fumaça inimiga", Tone.MISS)
+                if (worked) say(t(K.CALL_SONAR), t(K.CALL_SONAR_SUB, coord.label), Tone.SCAN)
+                else say(t(K.CALL_SCAN_FAIL), t(K.CALL_SCAN_FAIL_SUB), Tone.MISS)
                 endTurn()
                 return null
             }
@@ -346,9 +348,9 @@ class Match(
             if (worked) {
                 val hot = playerBoard.marks.filter { it.value == Mark.SCAN_HOT }.keys.toList()
                 ai.addTargets(hot)
-                say("Sonar inimigo", "Varredura em ${center.label}", Tone.SCAN)
+                say(t(K.CALL_ENEMY_SONAR), t(K.CALL_ENEMY_SONAR_SUB, center.label), Tone.SCAN)
             } else {
-                say("Cortina resistiu", "Varredura inimiga bloqueada", Tone.SCAN)
+                say(t(K.CALL_SMOKE_HELD), t(K.CALL_SMOKE_HELD_SUB), Tone.SCAN)
             }
             endTurn()
             return
@@ -365,25 +367,27 @@ class Match(
         winner = side
         phase = Phase.RESULT
         if (opponent == Opponent.LOCAL) {
-            say("${sideName(side)} venceu", "Frota adversária neutralizada", Tone.SUNK)
+            say(t(K.CALL_WON, sideName(side)), t(K.CALL_WON_SUB), Tone.SUNK)
         } else if (side == Side.PLAYER) {
-            say("Frota inimiga neutralizada", "Vitória, comandante", Tone.SUNK)
+            say(t(K.CALL_VICTORY), t(K.CALL_VICTORY_SUB), Tone.SUNK)
         } else {
-            say("Perdemos o contato", "Nossa frota foi destruída", Tone.SUNK)
+            say(t(K.CALL_DEFEAT), t(K.CALL_DEFEAT_SUB), Tone.SUNK)
         }
     }
 
     private fun announce(outcome: ShotOutcome, attacker: Side) {
         val who = when {
-            opponent == Opponent.LOCAL -> "${sideName(attacker)} · "
-            attacker == Side.ENEMY -> "Inimigo · "
+            opponent != Opponent.AI -> "${sideName(attacker)} · "
+            attacker == Side.ENEMY -> "${t(K.ENEMY)} · "
             else -> ""
         }
-        val alvo = outcome.ship?.label ?: "Alvo"
+        val alvo = outcome.ship?.label ?: t(K.CALL_TARGET)
         when (outcome.result) {
-            ShotResult.HIT -> say("Acerto direto!", "$who$alvo atingido · ${outcome.coord.label}", Tone.HIT)
-            ShotResult.SUNK -> say("Navio afundado", "$who$alvo abatido · ${outcome.coord.label}", Tone.SUNK)
-            ShotResult.MISS -> say("Na água", "$who${outcome.coord.label}", Tone.MISS)
+            ShotResult.HIT ->
+                say(t(K.CALL_HIT), who + t(K.CALL_HIT_SUB, alvo, outcome.coord.label), Tone.HIT)
+            ShotResult.SUNK ->
+                say(t(K.CALL_SUNK), who + t(K.CALL_SUNK_SUB, alvo, outcome.coord.label), Tone.SUNK)
+            ShotResult.MISS -> say(t(K.CALL_MISS), "$who${outcome.coord.label}", Tone.MISS)
             ShotResult.ALREADY_FIRED -> Unit
         }
     }

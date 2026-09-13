@@ -6,19 +6,23 @@ import androidx.compose.runtime.setValue
 import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Session
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 
 /** Patente do comandante. A carreira sobe por XP ganho em combate. */
-enum class Rank(val label: String, val xp: Int) {
-    RECRUTA("Recruta", 0),
-    MARINHEIRO("Marinheiro", 300),
-    CABO("Cabo", 800),
-    SARGENTO("Sargento", 1600),
-    TENENTE("Tenente", 2800),
-    CAPITAO_CORVETA("Capitão de Corveta", 4500),
-    CAPITAO_FRAGATA("Capitão de Fragata", 7000),
-    CAPITAO_MAR_GUERRA("Capitão de Mar e Guerra", 10500),
-    CONTRA_ALMIRANTE("Contra-Almirante", 15000),
-    ALMIRANTE("Almirante", 21000);
+enum class Rank(val key: K, val xp: Int) {
+    RECRUTA(K.RANK_RECRUIT, 0),
+    MARINHEIRO(K.RANK_SAILOR, 300),
+    CABO(K.RANK_CORPORAL, 800),
+    SARGENTO(K.RANK_SERGEANT, 1600),
+    TENENTE(K.RANK_LIEUTENANT, 2800),
+    CAPITAO_CORVETA(K.RANK_CORVETTE, 4500),
+    CAPITAO_FRAGATA(K.RANK_FRIGATE, 7000),
+    CAPITAO_MAR_GUERRA(K.RANK_CAPTAIN, 10500),
+    CONTRA_ALMIRANTE(K.RANK_REAR_ADMIRAL, 15000),
+    ALMIRANTE(K.RANK_ADMIRAL, 21000);
+
+    val label: String get() = t(key)
 
     companion object {
         fun of(xp: Int): Rank = entries.last { xp >= it.xp }
@@ -27,13 +31,15 @@ enum class Rank(val label: String, val xp: Int) {
 }
 
 /** Insígnia escolhida no perfil, desenhada no Canvas — nenhuma imagem no APK. */
-enum class Insignia(val id: String, val label: String) {
-    ANCHOR("anc", "Âncora"),
-    TRIDENT("tri", "Tridente"),
-    STAR("str", "Estrela"),
-    WHEEL("whl", "Timão"),
-    WAVES("wav", "Vagas"),
-    SKULL("skl", "Caveira");
+enum class Insignia(val id: String, val key: K) {
+    ANCHOR("anc", K.INSIGNIA_ANCHOR),
+    TRIDENT("tri", K.INSIGNIA_TRIDENT),
+    STAR("str", K.INSIGNIA_STAR),
+    WHEEL("whl", K.INSIGNIA_WHEEL),
+    WAVES("wav", K.INSIGNIA_WAVES),
+    SKULL("skl", K.INSIGNIA_SKULL);
+
+    val label: String get() = t(key)
 
     companion object {
         fun of(id: String): Insignia = entries.firstOrNull { it.id == id } ?: ANCHOR
@@ -49,7 +55,7 @@ data class Award(val xp: Int, val credits: Int, val victory: Boolean, val rankUp
  */
 class Profile(private val prefs: Prefs) {
 
-    var name by mutableStateOf(prefs.getString(K_NAME, "Comandante"))
+    var name by mutableStateOf(prefs.getString(K_NAME, ""))
         private set
     var insignia by mutableStateOf(Insignia.of(prefs.getString(K_INSIGNIA, Insignia.ANCHOR.id)))
         private set
@@ -115,12 +121,12 @@ class Profile(private val prefs: Prefs) {
         prefs.putString(K_EMAIL, accountEmail)
         prefs.putString(K_TOKEN, accessToken)
         prefs.putString(K_REFRESH, refreshToken)
-        if (name.isBlank() || name == "Comandante") rename(session.username)
+        if (name.isBlank()) rename(session.username)
     }
 
     fun currentSession(): Session? {
         if (!signedIn) return null
-        return Session(accountId, accountEmail, name, accessToken, refreshToken)
+        return Session(accountId, accountEmail, displayName, accessToken, refreshToken)
     }
 
     fun signOut() {
@@ -131,7 +137,7 @@ class Profile(private val prefs: Prefs) {
 
     /** A carreira como ela vai para a nuvem. */
     fun snapshot(): CloudProfile = CloudProfile(
-        username = name,
+        username = displayName,
         insignia = insignia.id,
         xp = xp,
         credits = credits,
@@ -199,9 +205,21 @@ class Profile(private val prefs: Prefs) {
             return ((xp - floor).toFloat() / (next.xp - floor)).coerceIn(0f, 1f)
         }
 
+    /** Em branco, o jogo chama o comandante pelo título traduzido. */
+    val displayName: String get() = name.ifBlank { t(K.COMMANDER) }
+
     fun rename(value: String) {
-        name = value.trim().take(18).ifBlank { "Comandante" }
+        name = value.trim().take(18)
         prefs.putString(K_NAME, name)
+    }
+
+    /** Idioma escolhido, gravado no aparelho. */
+    var langCode: String = prefs.getString(K_LANG, "pt")
+        private set
+
+    fun setLang(code: String) {
+        langCode = code
+        prefs.putString(K_LANG, code)
     }
 
     fun chooseInsignia(value: Insignia) {
@@ -286,7 +304,7 @@ class Profile(private val prefs: Prefs) {
     /** Zera a carreira inteira — pedido explícito do comandante no perfil. */
     fun reset() {
         prefs.clear()
-        name = "Comandante"
+        name = ""
         insignia = Insignia.ANCHOR
         xp = 0
         credits = 500
@@ -319,5 +337,6 @@ class Profile(private val prefs: Prefs) {
         const val K_TOKEN = "token"
         const val K_REFRESH = "refresh"
         const val K_MUSIC = "music"
+        const val K_LANG = "lang"
     }
 }

@@ -1,13 +1,19 @@
 package br.com.navalbattle.game
 
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
+
 const val BOARD_SIZE = 10
 
-enum class GameMode(val label: String, val description: String) {
-    CLASSIC("Clássico", "Um tiro por turno, sem habilidades"),
-    TACTICAL("Tático", "Habilidades por classe de navio")
+/** Os textos de domínio vêm do dicionário: o jogo inteiro troca de idioma na hora. */
+enum class GameMode(val key: K, val descriptionKey: K) {
+    CLASSIC(K.MODE_CLASSIC, K.MODE_CLASSIC_SUB),
+    TACTICAL(K.MODE_TACTICAL, K.MODE_TACTICAL_SUB);
+
+    val label: String get() = t(key)
+    val description: String get() = t(descriptionKey)
 }
 
-/** Contra quem se joga: a IA do aparelho ou outra pessoa no mesmo celular. */
 /**
  * Contra quem se joga: a IA do aparelho, outra pessoa no mesmo celular, ou outro
  * aparelho na mesma rede sem fio.
@@ -16,29 +22,34 @@ enum class Opponent { AI, LOCAL, LAN }
 
 enum class Ability(
     val code: String,
-    val label: String,
-    val description: String,
+    val key: K,
+    val shortKey: K,
     val cooldown: Int,
     val active: Boolean
 ) {
-    AIR_RECON("REC", "Reconhecimento aéreo", "Revela uma linha inteira do grid inimigo", 4, true),
-    DOUBLE_BARRAGE("2X", "Barragem dupla", "Dispara em duas células no mesmo turno", 3, true),
-    SONAR_PING("SNR", "Ping de sonar", "Marca uma área 3x3 como quente ou fria", 2, true),
-    DIVE("IMR", "Imersão", "Absorve o primeiro acerto no submarino", 0, false),
-    SMOKE("FUM", "Cortina de fumaça", "Bloqueia a próxima varredura inimiga", 4, true)
+    AIR_RECON("REC", K.ABILITY_RADAR_FULL, K.ABILITY_RADAR, 4, true),
+    DOUBLE_BARRAGE("2X", K.ABILITY_DOUBLE_FULL, K.ABILITY_DOUBLE, 3, true),
+    SONAR_PING("SNR", K.ABILITY_SONAR_FULL, K.ABILITY_SONAR, 2, true),
+    DIVE("IMR", K.ABILITY_DIVE_FULL, K.ABILITY_DIVE, 0, false),
+    SMOKE("FUM", K.ABILITY_SMOKE_FULL, K.ABILITY_SMOKE, 4, true);
+
+    val label: String get() = t(key)
+    val shortName: String get() = t(shortKey)
 }
 
 enum class ShipClass(
-    val label: String,
+    val key: K,
     val codename: String,
     val size: Int,
     val ability: Ability
 ) {
-    CARRIER("Porta-aviões", "Vanguarda", 5, Ability.AIR_RECON),
-    BATTLESHIP("Encouraçado", "Bastion", 4, Ability.DOUBLE_BARRAGE),
-    CRUISER("Cruzador", "Corsário", 3, Ability.SONAR_PING),
-    SUBMARINE("Submarino", "Fantasma", 3, Ability.DIVE),
-    DESTROYER("Destroyer", "Falcão", 2, Ability.SMOKE);
+    CARRIER(K.SHIP_CARRIER, "Vanguarda", 5, Ability.AIR_RECON),
+    BATTLESHIP(K.SHIP_BATTLESHIP, "Bastion", 4, Ability.DOUBLE_BARRAGE),
+    CRUISER(K.SHIP_CRUISER, "Corsário", 3, Ability.SONAR_PING),
+    SUBMARINE(K.SHIP_SUBMARINE, "Fantasma", 3, Ability.DIVE),
+    DESTROYER(K.SHIP_DESTROYER, "Falcão", 2, Ability.SMOKE);
+
+    val label: String get() = t(key)
 
     companion object {
         val fleet: List<ShipClass> = listOf(CARRIER, BATTLESHIP, CRUISER, SUBMARINE, DESTROYER)
