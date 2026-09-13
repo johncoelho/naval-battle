@@ -169,7 +169,7 @@ fun BattleScreen(state: AppState, match: Match) {
                 // cada comandante vê só os próprios tiros: a carta da frota que ele ataca
                 BoardView(
                     board = match.board(viewSide.other()),
-                    livery = state.livery,
+                    skin = state.skin,
                     showShips = false,
                     interactive = myTurn,
                     impact = myImpact,
@@ -179,7 +179,7 @@ fun BattleScreen(state: AppState, match: Match) {
             } else {
                 BoardView(
                     board = match.enemyBoard,
-                    livery = state.livery,
+                    skin = state.skin,
                     showShips = false,
                     interactive = myTurn,
                     impact = playerImpact,
@@ -213,7 +213,7 @@ fun BattleScreen(state: AppState, match: Match) {
                     ) {
                         BoardView(
                             board = match.playerBoard,
-                            livery = state.livery,
+                            skin = state.skin,
                             showShips = true,
                             sweep = false,
                             impact = enemyImpact,

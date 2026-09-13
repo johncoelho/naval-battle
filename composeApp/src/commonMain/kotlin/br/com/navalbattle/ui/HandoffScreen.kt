@@ -76,7 +76,7 @@ fun HandoffScreen(state: AppState, match: Match) {
                 lengthPx = size.width,
                 thicknessPx = size.width / 5f,
                 vertical = false,
-                livery = state.livery
+                skin = state.skin
             )
         }
 

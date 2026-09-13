@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.BOARD_SIZE
 import br.com.navalbattle.game.Board
@@ -181,8 +182,8 @@ fun PlacementScreen(state: AppState, match: Match) {
             board.ships.forEach { ship ->
                 when {
                     ship.type == draggingType -> Unit // desenhado como preview abaixo
-                    ship.type == rotatingType -> drawRotatingShip(ship, rotatingFrom, rotateAnim.value, cell, state.livery)
-                    else -> drawFleetShip(ship, cell, state.livery, 1f)
+                    ship.type == rotatingType -> drawRotatingShip(ship, rotatingFrom, rotateAnim.value, cell, state.skin)
+                    else -> drawFleetShip(ship, cell, state.skin, 1f)
                 }
             }
 
@@ -196,7 +197,7 @@ fun PlacementScreen(state: AppState, match: Match) {
                         drawRect(color.copy(alpha = 0.18f), topLeft = Offset(c.x * cell, c.y * cell), size = Size(cell, cell))
                         drawRect(color, topLeft = Offset(c.x * cell, c.y * cell), size = Size(cell, cell), style = Stroke(1.5f))
                     }
-                    drawFleetShip(preview, cell, state.livery, 0.85f)
+                    drawFleetShip(preview, cell, state.skin, 0.85f)
                 }
             }
         }
@@ -256,12 +257,12 @@ fun PlacementScreen(state: AppState, match: Match) {
     }
 }
 
-private fun DrawScope.drawFleetShip(ship: Ship, cell: Float, livery: br.com.navalbattle.design.Livery, alpha: Float) {
+private fun DrawScope.drawFleetShip(ship: Ship, cell: Float, skin: Skin, alpha: Float) {
     val vertical = ship.orientation == Orientation.VERTICAL
     val length = ship.type.size * cell
     val cx = if (vertical) ship.origin.x * cell + cell / 2f else ship.origin.x * cell + length / 2f
     val cy = if (vertical) ship.origin.y * cell + length / 2f else ship.origin.y * cell + cell / 2f
-    drawShip(ship.type, Offset(cx, cy), length, cell, vertical, livery, alpha)
+    drawShip(ship.type, Offset(cx, cy), length, cell, vertical, skin, alpha)
 }
 
 /** Gira visualmente em torno do próprio centro enquanto a animação corre, sem mover células. */
@@ -270,7 +271,7 @@ private fun DrawScope.drawRotatingShip(
     from: Orientation,
     progress: Float,
     cell: Float,
-    livery: br.com.navalbattle.design.Livery
+    skin: Skin
 ) {
     val vertical = from == Orientation.VERTICAL
     val length = ship.type.size * cell
@@ -279,7 +280,7 @@ private fun DrawScope.drawRotatingShip(
     val center = Offset(cx, cy)
     val sign = if (from == Orientation.HORIZONTAL) 1f else -1f
     rotate(sign * progress * 90f, center) {
-        drawShip(ship.type, center, length, cell, vertical, livery, 1f)
+        drawShip(ship.type, center, length, cell, vertical, skin, 1f)
     }
 }
 

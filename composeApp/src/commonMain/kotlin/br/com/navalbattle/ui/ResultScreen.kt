@@ -96,7 +96,7 @@ fun ResultScreen(state: AppState, match: Match) {
                 Gap(6)
                 BoardView(
                     board = match.playerBoard,
-                    livery = state.livery,
+                    skin = state.skin,
                     showShips = true,
                     sweep = false,
                     markTint = commanderColor(Side.PLAYER),
