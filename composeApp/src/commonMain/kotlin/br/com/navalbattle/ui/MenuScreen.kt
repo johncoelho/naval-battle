@@ -3,6 +3,7 @@ package br.com.navalbattle.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,9 +39,24 @@ fun MenuScreen(state: AppState) {
             .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.systemBars)
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             HudLabel("CMD. COMANDANTE", Naval.inkSoft)
-            HudLabel("◆ 1.240", Naval.amberStrong)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                HudLabel(
+                    if (state.musicOn) "TRILHA ON" else "TRILHA OFF",
+                    if (state.musicOn) Naval.greenBright else Naval.muted,
+                    Modifier
+                        .border(1.dp, Naval.line)
+                        .clickable { state.musicOn = !state.musicOn }
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                )
+                Spacer(Modifier.width(12.dp))
+                HudLabel("◆ 1.240", Naval.amberStrong)
+            }
         }
 
         Spacer(Modifier.height(22.dp))
