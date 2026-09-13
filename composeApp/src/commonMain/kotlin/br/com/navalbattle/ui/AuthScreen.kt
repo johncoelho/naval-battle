@@ -57,7 +57,7 @@ fun AuthScreen(state: AppState) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        ScreenTopBar("CONTA DO COMANDANTE", if (state.profile.signedIn) "CONECTADO" else "LOCAL")
+        ScreenTopBar("CONTA", if (state.profile.signedIn) "CONECTADO" else "LOCAL")
 
         Column(
             Modifier

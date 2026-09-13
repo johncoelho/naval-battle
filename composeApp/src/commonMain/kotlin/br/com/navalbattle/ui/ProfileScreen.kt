@@ -53,7 +53,7 @@ fun ProfileScreen(state: AppState) {
                 .windowInsetsPadding(WindowInsets.systemBars)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            ScreenTopBar("PERFIL DO COMANDANTE", "◆ ${profile.credits}")
+            ScreenTopBar("PERFIL", "◆ ${profile.credits}")
             Gap(14)
 
             Column(
