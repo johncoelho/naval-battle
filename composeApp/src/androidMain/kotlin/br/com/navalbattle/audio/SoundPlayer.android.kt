@@ -32,7 +32,9 @@ actual class SoundPlayer actual constructor() {
         Sfx.LAUNCH to listOf(load(R.raw.sfx_launch)),
         Sfx.MISS to listOf(load(R.raw.sfx_miss1), load(R.raw.sfx_miss2), load(R.raw.sfx_miss3)),
         Sfx.HIT to listOf(load(R.raw.sfx_hit)),
-        Sfx.SUNK to listOf(load(R.raw.sfx_sunk))
+        Sfx.SUNK to listOf(load(R.raw.sfx_sunk)),
+        Sfx.ALARM to listOf(load(R.raw.sfx_alarm)),
+        Sfx.ALARM_CRITICAL to listOf(load(R.raw.sfx_alarm_critical))
     )
 
     actual fun play(sfx: Sfx) {
@@ -40,12 +42,18 @@ actual class SoundPlayer actual constructor() {
         val id = ids[Random.nextInt(ids.size)]
         val volume = when (sfx) {
             Sfx.SUNK -> 1f
+            Sfx.ALARM_CRITICAL -> 1f
             Sfx.HIT -> 0.95f
+            Sfx.ALARM -> 0.9f
             Sfx.MISS -> 0.7f
             Sfx.LAUNCH -> 0.55f
         }
-        // pequena variação de afinação para dois disparos nunca soarem idênticos
-        val rate = 0.94f + Random.nextFloat() * 0.12f
+        // alarmes precisam soar sempre iguais para serem reconhecíveis; o resto varia de afinação
+        val rate = if (sfx == Sfx.ALARM || sfx == Sfx.ALARM_CRITICAL) {
+            1f
+        } else {
+            0.94f + Random.nextFloat() * 0.12f
+        }
         pool.play(id, volume, volume, 1, 0, rate)
     }
 
