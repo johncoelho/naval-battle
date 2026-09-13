@@ -36,7 +36,7 @@ object Naval {
 
     /** Identidade de cada comandante no modo local — legível sobre o verde do radar. */
     val commanderOne = Color(0xFF48C9F0)
-    val commanderTwo = Color(0xFFF06AC2)
+    val commanderTwo = Color(0xFF3ED598)
 }
 
 /**
