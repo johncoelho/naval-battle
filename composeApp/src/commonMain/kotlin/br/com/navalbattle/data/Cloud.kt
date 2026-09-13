@@ -60,6 +60,9 @@ sealed class CloudResult<out T> {
 expect class CloudApi() {
     suspend fun signUp(email: String, password: String, username: String): CloudResult<Session>
     suspend fun signIn(email: String, password: String): CloudResult<Session>
+
+    /** Troca o token de identidade do Google (ver [GoogleAuth]) por uma sessão do jogo. */
+    suspend fun signInWithGoogle(idToken: String): CloudResult<Session>
     suspend fun refresh(refreshToken: String): CloudResult<Session>
     suspend fun loadProfile(session: Session): CloudResult<CloudProfile?>
     suspend fun saveProfile(session: Session, profile: CloudProfile): CloudResult<Unit>
