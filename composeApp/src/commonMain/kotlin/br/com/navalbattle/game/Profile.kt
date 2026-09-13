@@ -72,10 +72,16 @@ class Profile(private val prefs: Prefs) {
     var bestStreak by mutableStateOf(prefs.getInt(K_BEST_STREAK, 0))
         private set
 
-    /** Librés já conquistadas, além da que vem inclusa. */
+    /** Camuflagens já conquistadas, além das que vêm inclusas. */
     var owned by mutableStateOf(prefs.getString(K_OWNED, "std,br").split(",").filter { it.isNotBlank() }.toSet())
         private set
     var equipped by mutableStateOf(prefs.getString(K_EQUIPPED, "br"))
+        private set
+
+    /** Linhas de casco já conquistadas. A padrão vem com o jogo. */
+    var ownedFleets by mutableStateOf(prefs.getString(K_FLEETS, "std").split(",").filter { it.isNotBlank() }.toSet())
+        private set
+    var equippedFleet by mutableStateOf(prefs.getString(K_FLEET, "std"))
         private set
 
     val rank: Rank get() = Rank.of(xp)
@@ -103,7 +109,9 @@ class Profile(private val prefs: Prefs) {
 
     fun owns(liveryId: String): Boolean = liveryId in owned
 
-    /** Compra com créditos de jogo. Devolve falso quando não há saldo. */
+    fun ownsFleet(fleetId: String): Boolean = fleetId in ownedFleets
+
+    /** Compra uma camuflagem com créditos de jogo. Falso quando não há saldo. */
     fun buy(liveryId: String, price: Int): Boolean {
         if (owns(liveryId)) return true
         if (credits < price) return false
@@ -114,10 +122,27 @@ class Profile(private val prefs: Prefs) {
         return true
     }
 
+    /** Compra uma linha de casco com créditos de jogo. */
+    fun buyFleet(fleetId: String, price: Int): Boolean {
+        if (ownsFleet(fleetId)) return true
+        if (credits < price) return false
+        credits -= price
+        ownedFleets = ownedFleets + fleetId
+        prefs.putInt(K_CREDITS, credits)
+        prefs.putString(K_FLEETS, ownedFleets.joinToString(","))
+        return true
+    }
+
     fun equip(liveryId: String) {
         if (!owns(liveryId)) return
         equipped = liveryId
         prefs.putString(K_EQUIPPED, liveryId)
+    }
+
+    fun equipFleet(fleetId: String) {
+        if (!ownsFleet(fleetId)) return
+        equippedFleet = fleetId
+        prefs.putString(K_FLEET, fleetId)
     }
 
     /**
@@ -167,6 +192,8 @@ class Profile(private val prefs: Prefs) {
         streak = 0; bestStreak = 0
         owned = setOf("std", "br")
         equipped = "br"
+        ownedFleets = setOf("std")
+        equippedFleet = "std"
     }
 
     private companion object {
@@ -183,5 +210,7 @@ class Profile(private val prefs: Prefs) {
         const val K_BEST_STREAK = "best_streak"
         const val K_OWNED = "owned"
         const val K_EQUIPPED = "equipped"
+        const val K_FLEETS = "fleets"
+        const val K_FLEET = "fleet"
     }
 }
