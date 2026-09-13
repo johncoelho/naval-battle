@@ -94,6 +94,8 @@ A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
 - **Regra de fusão:** ao entrar, se a nuvem tiver mais XP ela desce; senão, o aparelho sobe.
   Nunca se perde o maior progresso.
 - A sessão se renova sozinha quando o token vence (401 → refresh → repete a chamada).
+- **Trocar senha** (logado, pede a senha atual) e **esqueci minha senha** (manda link
+  por e-mail) na tela de Conta.
 - Sem rede ou sem conta, o jogo roda inteiro offline.
 
 Fica **só no aparelho**: tokens de sessão, preferência de trilha e o andamento da partida.

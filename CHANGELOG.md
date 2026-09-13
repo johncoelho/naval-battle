@@ -9,6 +9,26 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.8.2] — 2026-09-13 · Trocar e recuperar senha
+
+### Adicionado
+- **Trocar senha**, dentro da tela de Conta, para quem já está logado: pede a senha
+  atual, a nova e a confirmação. A senha atual é usada para reautenticar no Supabase
+  Auth antes de aceitar a troca — ninguém troca a senha de uma sessão esquecida aberta
+  no aparelho sem saber a senha de verdade.
+- **Esqueci minha senha**, na tela de login: manda o e-mail de recuperação padrão do
+  Supabase Auth (`/auth/v1/recover`) para o endereço digitado.
+- `CloudApi.updatePassword` (PUT `/auth/v1/user`) e `CloudApi.sendPasswordReset`
+  (POST `/auth/v1/recover`), com as mesmas mensagens de erro legíveis do resto do
+  cliente — senha curta, senha igual à atual, limite de tentativas.
+
+### Nota de projeto
+Não existe forma de recuperar ou visualizar uma senha existente — nem o app, nem o
+painel do Supabase leem a senha original, só o hash dela. Trocar e recuperar são os
+dois únicos caminhos, e é exatamente o que esta versão entrega.
+
+---
+
 ## [0.8.1] — 2026-09-13 · Landing page e carta maior
 
 ### Adicionado
