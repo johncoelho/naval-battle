@@ -44,7 +44,7 @@ fun MenuScreen(state: AppState) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            HudLabel("CMD. COMANDANTE", Naval.inkSoft)
+            HudLabel(state.profile.rank.label.uppercase(), Naval.inkSoft)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HudLabel(
                     if (state.musicOn) "TRILHA ON" else "TRILHA OFF",
@@ -55,7 +55,7 @@ fun MenuScreen(state: AppState) {
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 )
                 Spacer(Modifier.width(12.dp))
-                HudLabel("◆ 1.240", Naval.amberStrong)
+                HudLabel("◆ ${state.profile.credits}", Naval.amberStrong)
             }
         }
 
@@ -63,7 +63,7 @@ fun MenuScreen(state: AppState) {
         Text("DEQUE DE", style = NavalType.display, color = Naval.ink)
         Text("COMANDO", style = NavalType.display, color = Naval.amberStrong)
         Spacer(Modifier.height(4.dp))
-        HudLabel("COMANDANTE · ELO 1742")
+        HudLabel("${state.profile.name.uppercase()} · ${state.profile.xp} XP")
 
         Spacer(Modifier.height(20.dp))
         FleetPreview(state)
@@ -88,9 +88,9 @@ fun MenuScreen(state: AppState) {
             PrimaryButton("Partida rápida", "vs. IA") { state.newMatch(Opponent.AI) }
             SecondaryButton("Dois jogadores", "no mesmo aparelho") { state.newMatch(Opponent.LOCAL) }
             SecondaryButton("Estaleiro", state.livery.name) { state.screen = Screen.SHIPYARD }
+            SecondaryButton("Perfil", state.profile.rank.label) { state.screen = Screen.PROFILE }
             SecondaryButton("Ranqueada", "em breve", enabled = false) {}
             SecondaryButton("Convidar amigo", "em breve", enabled = false) {}
-            SecondaryButton("Perto de mim", "em breve", enabled = false) {}
         }
 
         Spacer(Modifier.weight(1f))
@@ -99,9 +99,17 @@ fun MenuScreen(state: AppState) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             HudLabel("DEQUE", Naval.amberStrong)
-            HudLabel("ESTALEIRO")
-            HudLabel("LOJA")
-            HudLabel("PERFIL")
+            HudLabel(
+                "ESTALEIRO",
+                Naval.muted,
+                Modifier.clickable { state.screen = Screen.SHIPYARD }
+            )
+            HudLabel(
+                "PERFIL",
+                Naval.muted,
+                Modifier.clickable { state.screen = Screen.PROFILE }
+            )
+            HudLabel("LOJA · EM BREVE")
         }
     }
 }

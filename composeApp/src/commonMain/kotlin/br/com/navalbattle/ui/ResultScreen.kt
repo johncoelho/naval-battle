@@ -19,12 +19,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.game.Award
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.ShipClass
@@ -35,6 +41,21 @@ fun ResultScreen(state: AppState, match: Match) {
     val victory = match.winner == Side.PLAYER
     val local = match.opponent == Opponent.LOCAL
     val winnerSide = match.winner ?: Side.PLAYER
+
+    // a carreira só conta partidas contra a IA: no local os dois usam o mesmo perfil.
+    // fica num efeito para creditar uma única vez, e não a cada recomposição
+    var award by remember(match) { mutableStateOf<Award?>(null) }
+    LaunchedEffect(match) {
+        if (!local) {
+            award = state.profile.registerMatch(
+                victory = victory,
+                shotsFired = match.playerShots,
+                hitsLanded = match.playerHits,
+                shipsSunk = ShipClass.fleet.size - match.enemyBoard.remainingShips().size,
+                turns = match.turnCount
+            )
+        }
+    }
 
     Column(
         Modifier
@@ -127,24 +148,41 @@ fun ResultScreen(state: AppState, match: Match) {
                     "${match.playerBoard.remainingShips().size} / ${ShipClass.fleet.size}"
                 )
 
-                Gap(24)
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(Naval.surface2)
-                        .border(1.dp, Naval.line)
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    HudLabel("ELO", Naval.muted)
-                    Text(
-                        if (victory) "1742 → 1766  (+24)" else "1742 → 1723  (−19)",
-                        style = NavalType.mono,
-                        color = if (victory) Naval.greenBright else Naval.danger
-                    )
+                award?.let { a ->
+                    Gap(24)
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .background(Naval.surface2)
+                            .border(1.dp, if (a.rankUp != null) Naval.amber else Naval.line)
+                            .padding(14.dp)
+                    ) {
+                        HudLabel("CARREIRA", Naval.muted)
+                        Gap(8)
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("+${a.xp} XP", style = NavalType.title, color = Naval.greenBright)
+                            Text("◆ +${a.credits}", style = NavalType.title, color = Naval.amberStrong)
+                        }
+                        Gap(8)
+                        HudLabel(
+                            "${state.profile.rank.label.uppercase()} · ${state.profile.xp} XP · SALDO ◆ ${state.profile.credits}",
+                            Naval.inkSoft
+                        )
+                        a.rankUp?.let { r ->
+                            Gap(8)
+                            Text(
+                                "PROMOVIDO A ${r.label.uppercase()}",
+                                style = NavalType.mono,
+                                color = Naval.amberStrong
+                            )
+                        }
+                    }
+                    Gap(6)
+                    HudLabel("CRÉDITOS VALEM NOVAS FROTAS NO ESTALEIRO", Naval.muted)
                 }
-                Gap(6)
-                HudLabel("SIMULADO — RANQUEADA ONLINE ENTRA NA PRÓXIMA FASE", Naval.muted)
             }
             Gap(16)
         }
