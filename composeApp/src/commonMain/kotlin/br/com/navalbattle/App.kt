@@ -281,6 +281,34 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
     }
 
+    /**
+     * Troca a senha de quem já está logado. Reautentica com a senha atual antes —
+     * é o que impede alguém que ache o celular destravado de trocar a senha sem
+     * saber a de verdade — e só então chama a troca com o token confirmado.
+     */
+    suspend fun changePassword(currentPassword: String, newPassword: String): Pair<Boolean, String> {
+        val email = profile.accountEmail
+        if (email.isBlank()) return false to t(K.AUTH_SIGN_IN_TO_SYNC)
+
+        return when (val reauth = cloud.signIn(email, currentPassword)) {
+            is CloudResult.Fail -> false to reauth.message
+            is CloudResult.Ok -> {
+                profile.rememberSession(reauth.value)
+                when (val r = cloud.updatePassword(reauth.value, newPassword)) {
+                    is CloudResult.Ok -> true to t(K.AUTH_PASSWORD_CHANGED)
+                    is CloudResult.Fail -> false to r.message
+                }
+            }
+        }
+    }
+
+    /** "Esqueci minha senha": manda o link de recuperação para o e-mail informado. */
+    suspend fun forgotPassword(email: String): Pair<Boolean, String> =
+        when (val r = cloud.sendPasswordReset(email)) {
+            is CloudResult.Ok -> true to t(K.AUTH_RESET_SENT)
+            is CloudResult.Fail -> false to r.message
+        }
+
     /** Devolve a mensagem da fusão, ou nulo quando nem isso foi possível. */
     private suspend fun mergeWithCloud(): String? =
         when (val remote = authed { session -> cloud.loadProfile(session) }) {
