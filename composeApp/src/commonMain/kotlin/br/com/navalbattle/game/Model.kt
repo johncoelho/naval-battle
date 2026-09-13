@@ -8,7 +8,11 @@ enum class GameMode(val label: String, val description: String) {
 }
 
 /** Contra quem se joga: a IA do aparelho ou outra pessoa no mesmo celular. */
-enum class Opponent { AI, LOCAL }
+/**
+ * Contra quem se joga: a IA do aparelho, outra pessoa no mesmo celular, ou outro
+ * aparelho na mesma rede sem fio.
+ */
+enum class Opponent { AI, LOCAL, LAN }
 
 enum class Ability(
     val code: String,

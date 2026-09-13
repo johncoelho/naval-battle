@@ -26,11 +26,22 @@ data class Impact(val coord: Coord, val tone: Tone, val id: Long, val sunkShip: 
 class Match(
     val mode: GameMode,
     val opponent: Opponent = Opponent.AI,
+    /**
+     * Que lado este aparelho comanda. Só muda em rede: quem hospeda joga como PLAYER e
+     * abre a partida, quem entra joga como ENEMY. Os dois aparelhos rodam a mesma
+     * partida, e a resolução do tiro é idêntica dos dois lados.
+     */
+    val mySide: Side = Side.PLAYER,
     private val random: Random = Random.Default
 ) {
 
     val playerBoard = Board()
     val enemyBoard = Board()
+
+    /** Em rede, cada aparelho só posiciona a própria frota e espera a do adversário. */
+    private val remote: Boolean get() = opponent == Opponent.LAN
+    var fleetsReady by mutableStateOf(0)
+        private set
 
     fun board(side: Side): Board = if (side == Side.PLAYER) playerBoard else enemyBoard
 
@@ -90,6 +101,8 @@ class Match(
     init {
         playerBoard.randomize(random)
         enemyBoard.randomize(random)
+        // em rede cada aparelho posiciona só a própria frota
+        if (remote) placingSide = mySide
     }
 
     fun setName(side: Side, name: String) {
@@ -99,7 +112,7 @@ class Match(
 
     fun sideName(side: Side): String = when (opponent) {
         Opponent.AI -> if (side == Side.PLAYER) "Você" else "Inimigo"
-        Opponent.LOCAL ->
+        Opponent.LOCAL, Opponent.LAN ->
             if (side == Side.PLAYER) nameOne.ifBlank { "Comandante 1" }
             else nameTwo.ifBlank { "Comandante 2" }
     }
@@ -118,11 +131,42 @@ class Match(
      */
     fun confirmPlacement() {
         if (!placementReady()) return
-        if (opponent == Opponent.LOCAL && placingSide == Side.PLAYER) {
-            placingSide = Side.ENEMY
-        } else {
-            startBattle()
+        when {
+            // em rede a batalha só abre quando as duas frotas estiverem a bordo
+            remote -> markFleetReady()
+            opponent == Opponent.LOCAL && placingSide == Side.PLAYER -> placingSide = Side.ENEMY
+            else -> startBattle()
         }
+    }
+
+    /** Uma frota ficou pronta; com as duas, a batalha começa nos dois aparelhos. */
+    private fun markFleetReady() {
+        fleetsReady += 1
+        if (fleetsReady >= 2) startBattle()
+    }
+
+    /**
+     * Recebe a frota do adversário pela rede e a coloca no tabuleiro dele. Os dois
+     * aparelhos passam a ter a mesma partida e resolvem cada tiro igual.
+     */
+    fun applyRemoteFleet(ships: List<Ship>) {
+        if (!remote) return
+        val board = board(mySide.other())
+        board.clear()
+        ships.forEach { board.place(it) }
+        markFleetReady()
+    }
+
+    /** Coordenada sorteada para o disparo automático — quem escolhe é o dono do turno. */
+    fun pickTarget(): Coord? {
+        val target = board(turnOwner.other())
+        val open = mutableListOf<Coord>()
+        for (y in 0 until BOARD_SIZE) for (x in 0 until BOARD_SIZE) {
+            val c = Coord(x, y)
+            val mark = target.marks[c]
+            if (mark != Mark.MISS && mark != Mark.HIT && mark != Mark.SUNK) open += c
+        }
+        return if (open.isEmpty()) null else open[random.nextInt(open.size)]
     }
 
     /** Botão voltar do modo local: devolve o posicionamento ao primeiro comandante. */
@@ -130,6 +174,12 @@ class Match(
         if (phase != Phase.PLACEMENT || placingSide != Side.ENEMY) return false
         placingSide = Side.PLAYER
         return true
+    }
+
+    /** O adversário deixou a partida: quem ficou leva a vitória. */
+    fun abandon(winnerSide: Side) {
+        if (phase == Phase.RESULT) return
+        finish(winnerSide)
     }
 
     private fun startBattle() {
@@ -154,6 +204,8 @@ class Match(
         if (phase != Phase.BATTLE) return false
         // contra a IA as habilidades só ficam ativas na vez do humano
         if (opponent == Opponent.AI && turnOwner != Side.PLAYER) return false
+        // em rede, só na sua vez e no seu lado
+        if (remote && turnOwner != mySide) return false
         val owner = ShipClass.fleet.firstOrNull { it.ability == ability } ?: return false
         val myBoard = board(turnOwner)
         val ship = myBoard.ships.firstOrNull { it.type == owner } ?: return false
