@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
@@ -87,7 +88,19 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     fun quitToMenu() {
-        if (match?.opponent == Opponent.LAN) closeLink()
+        // avisa o outro aparelho antes de fechar, para ele não ficar esperando a
+        // vez de alguém que já saiu — quem ficou leva a vitória na hora
+        if (match?.opponent == Opponent.LAN) {
+            link.send(Protocol.QUIT)
+            // send() escreve numa thread à parte; um respiro curto garante que o
+            // aviso saia no fio antes de fecharmos o socket embaixo dele
+            val scope = uiScope
+            if (scope != null) {
+                scope.launch { delay(200); closeLink() }
+            } else {
+                closeLink()
+            }
+        }
         match = null
         screen = Screen.MENU
     }
@@ -109,12 +122,17 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (scope == null) block() else scope.launch { block() }
     }
 
-    /** Anuncia a partida no Wi-Fi e espera alguém entrar. Quem hospeda joga primeiro. */
-    fun hostGame() {
+    /**
+     * Anuncia a partida no Wi-Fi e espera alguém entrar. Quem hospeda joga primeiro.
+     * [gameName] é só o rótulo que aparece na busca do outro aparelho — o nome do
+     * comandante em si viaja à parte, no aperto de mão inicial.
+     */
+    fun hostGame(gameName: String) {
         link.close()
         linkState = LinkState.HOSTING
+        val label = gameName.trim().take(24).ifBlank { t(K.LAN_DEFAULT_NAME, profile.displayName) }
         link.host(
-            name = profile.displayName,
+            name = label,
             onState = { s -> onMain { onLinkState(s, Side.PLAYER) } },
             onLine = { line -> onMain { onLine(line) } }
         )
