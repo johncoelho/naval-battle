@@ -107,6 +107,11 @@ enum class K(val pt: String, val en: String, val es: String) {
     ABILITY_DOUBLE_FULL("Barragem dupla", "Double barrage", "Doble andanada"),
     ABILITY_SMOKE_FULL("Cortina de fumaça", "Smoke screen", "Cortina de humo"),
     ABILITY_DIVE_FULL("Imersão", "Dive", "Inmersión"),
+    ABILITY_RADAR_DESC("Revela uma linha inteira", "Reveals a whole row", "Revela una fila entera"),
+    ABILITY_DOUBLE_DESC("Dois disparos no mesmo turno", "Two shots in the same turn", "Dos disparos en el mismo turno"),
+    ABILITY_SONAR_DESC("Varre um setor 3×3", "Scans a 3×3 sector", "Barre un sector 3×3"),
+    ABILITY_DIVE_DESC("Absorve o primeiro acerto, uma vez", "Absorbs the first hit, once", "Absorbe el primer impacto, una vez"),
+    ABILITY_SMOKE_DESC("Bloqueia a próxima varredura inimiga", "Blocks the enemy's next scan", "Bloquea el próximo barrido enemigo"),
 
     // ---------------------------------------------------------------- posicionamento
     PLACEMENT("Posicionamento", "Deployment", "Despliegue"),
@@ -135,6 +140,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     BATTLE_ABILITIES("Habilidades táticas", "Tactical abilities", "Habilidades tácticas"),
     BATTLE_ABILITY_HINT("Toque num ícone para usar, ou dispare direto no alvo", "Tap an icon to use one, or fire straight at the target", "Toca un icono para usarla, o dispara directo al objetivo"),
     BATTLE_ABILITY_AIM("%s: toque no alvo", "%s: tap the target", "%s: toca el objetivo"),
+    BATTLE_ABILITY_CHARGE("Cartucho avulso: %s em estoque", "Spare charge: %s in stock", "Cartucho suelto: %s en stock"),
     BATTLE_TURN_OF("Vez de %s", "%s's turn", "Turno de %s"),
     BATTLE_MEMORY("Sua memória de tiro na frota de %s", "Your firing record on %s's fleet", "Tu registro de disparos en la flota de %s"),
     BATTLE_PASSING("Passando para %s", "Passing to %s", "Pasando a %s"),
@@ -144,6 +150,17 @@ enum class K(val pt: String, val en: String, val es: String) {
     BATTLE_QUIT_EYEBROW("Abandonar operação", "Abort operation", "Abandonar operación"),
     BATTLE_QUIT_WARN("O progresso desta batalha será perdido", "This battle's progress will be lost", "El progreso de esta batalla se perderá"),
     BATTLE_KEEP_PLAYING("Continuar jogando", "Keep playing", "Seguir jugando"),
+    BATTLE_TAUNT_BUTTON("Provocar", "Taunt", "Provocar"),
+    BATTLE_TAUNT_EYEBROW("Rádio aberto", "Open channel", "Radio abierta"),
+    BATTLE_TAUNT_TITLE("Mandar mensagem", "Send a message", "Enviar mensaje"),
+
+    // ---------------------------------------------------------------- provocações (rede local)
+    TAUNT_FIRE("Fogo total!", "Open fire!", "¡Fuego total!"),
+    TAUNT_NICE_SHOT("Belo tiro!", "Nice shot!", "¡Buen tiro!"),
+    TAUNT_GG("Combate e tanto!", "Good game!", "¡Buena partida!"),
+    TAUNT_MERCY("Já pode desistir", "You can give up now", "Ya puedes rendirte"),
+    TAUNT_LUCKY("Sorte de principiante", "Beginner's luck", "Suerte de novato"),
+    TAUNT_INCOMING("Se prepara!", "Brace yourself!", "¡Prepárate!"),
 
     // ---------------------------------------------------------------- avisos de combate
     CALL_HIT("Acerto direto!", "Direct hit!", "¡Impacto directo!"),
@@ -193,6 +210,10 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_PROMOTED("Promovido a %s", "Promoted to %s", "Ascendido a %s"),
     RESULT_CREDITS_HINT("Créditos valem novas frotas no estaleiro", "Credits buy new fleets in the shipyard", "Los créditos compran nuevas flotas en el astillero"),
     RESULT_NEW_MATCH("Nova partida", "New match", "Nueva partida"),
+    RESULT_REMATCH("Revanche", "Rematch", "Revancha"),
+    RESULT_REMATCH_WAITING("Aguardando o adversário aceitar…", "Waiting for the opponent to accept…", "Esperando a que el adversario acepte…"),
+    RESULT_REMATCH_INVITE("%s quer uma revanche", "%s wants a rematch", "%s quiere la revancha"),
+    RESULT_REMATCH_LOST_LINK("A ligação com o adversário caiu", "The connection with the opponent dropped", "La conexión con el adversario se cayó"),
 
     // ---------------------------------------------------------------- estaleiro e loja
     SHIPYARD_HULL("Linha de casco", "Hull line", "Línea de casco"),
@@ -204,8 +225,12 @@ enum class K(val pt: String, val en: String, val es: String) {
     STORE_TITLE("Loja do arsenal", "Arsenal store", "Tienda del arsenal"),
     STORE_HULLS("Cascos", "Hulls", "Cascos"),
     STORE_CAMOS("Camuflagens", "Camouflages", "Camuflajes"),
+    STORE_ABILITIES("Habilidades", "Abilities", "Habilidades"),
     STORE_HULLS_SUB("Mudam a silhueta das cinco embarcações", "They change the silhouette of all five ships", "Cambian la silueta de las cinco naves"),
     STORE_CAMOS_SUB("Mudam a pintura e o padrão de camuflagem", "They change the paint and camouflage pattern", "Cambian la pintura y el patrón de camuflaje"),
+    STORE_ABILITIES_SUB("Cartucho avulso: usa a habilidade mesmo em recarga, uma vez, só no tático", "Single-use charge: fires the ability even on cooldown, once, tactical mode only", "Cartucho suelto: usa la habilidad aunque esté en recarga, una vez, solo en el táctico"),
+    STORE_ABILITY_OWNED("Em estoque: %s", "In stock: %s", "En stock: %s"),
+    STORE_ABILITY_BOUGHT("Cartucho de %s no estoque", "%s charge in stock", "Cartucho de %s en stock"),
     STORE_USE("Usar", "Use", "Usar"),
     STORE_IN_USE("Em uso", "In use", "En uso"),
     STORE_MISSING("Faltam ◆ %1 para a %2", "◆ %1 short for %2", "Faltan ◆ %1 para %2"),
