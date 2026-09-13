@@ -25,7 +25,7 @@ import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
 import br.com.navalbattle.design.FleetLine
-import br.com.navalbattle.design.Livery
+import br.com.navalbattle.design.Paint
 import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
@@ -36,6 +36,10 @@ import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Profile
+import br.com.navalbattle.i18n.I18n
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.Lang
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.game.Side
 import br.com.navalbattle.ui.AuthScreen
 import br.com.navalbattle.ui.LanScreen
@@ -59,7 +63,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** O visual em uso — linha de casco e camuflagem — vem do perfil gravado no aparelho. */
     val skin: Skin
-        get() = Skin(Livery.of(profile.equipped), FleetLine.of(profile.equippedFleet))
+        get() = Skin(Paint.of(profile.equipped), FleetLine.of(profile.equippedFleet))
 
     /** Quem deve pegar o aparelho para posicionar a própria frota. */
     var handoffSide by mutableStateOf(Side.PLAYER)
@@ -110,7 +114,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         link.close()
         linkState = LinkState.HOSTING
         link.host(
-            name = profile.name,
+            name = profile.displayName,
             onState = { s -> onMain { onLinkState(s, Side.PLAYER) } },
             onLine = { line -> onMain { onLine(line) } }
         )
@@ -145,9 +149,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         linkState = state
         if (state != LinkState.CONNECTED) return
         val m = Match(mode, Opponent.LAN, mySide = side)
-        m.setName(side, profile.name)
+        m.setName(side, profile.displayName)
         match = m
-        link.send(Protocol.hello(profile.name, mode.name))
+        link.send(Protocol.hello(profile.displayName, mode.name))
         screen = Screen.PLACEMENT
     }
 
@@ -207,7 +211,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 profile.rememberSession(r.value)
                 profile.rename(username)
                 cloud.saveProfile(r.value, profile.snapshot())
-                true to "Conta criada. A carreira já está na nuvem."
+                true to t(K.AUTH_CREATED)
             }
 
             is CloudResult.Fail -> false to r.message
@@ -221,7 +225,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         when (val r = cloud.signIn(email, password)) {
             is CloudResult.Ok -> {
                 profile.rememberSession(r.value)
-                val merged = mergeWithCloud() ?: "Conectado. Não consegui sincronizar agora."
+                val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
                 true to merged
             }
 
@@ -256,13 +260,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      */
     private suspend fun <T> authed(block: suspend (Session) -> CloudResult<T>): CloudResult<T> {
         val session = profile.currentSession()
-            ?: return CloudResult.Fail("Entre na conta para sincronizar.")
+            ?: return CloudResult.Fail(t(K.AUTH_SIGN_IN_TO_SYNC))
         val first = block(session)
         if (first !is CloudResult.Fail || !first.expired) return first
 
-        val renewed = renew() ?: return CloudResult.Fail(
-            "Sua sessão expirou. Entre de novo para sincronizar."
-        )
+        val renewed = renew() ?: return CloudResult.Fail(t(K.AUTH_EXPIRED))
         return block(renewed)
     }
 
@@ -286,10 +288,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 val cloudProfile = remote.value
                 if (cloudProfile != null && cloudProfile.xp > profile.xp) {
                     profile.adopt(cloudProfile)
-                    "Carreira da nuvem restaurada neste aparelho."
+                    t(K.AUTH_RESTORED)
                 } else {
                     authed { session -> cloud.saveProfile(session, profile.snapshot()) }
-                    "Carreira deste aparelho enviada para a nuvem."
+                    t(K.AUTH_UPLOADED)
                 }
             }
 
@@ -302,6 +304,8 @@ fun App() {
     val profile = remember { Profile(Prefs()) }
     val cloud = remember { CloudApi() }
     val state = remember { AppState(profile, cloud) }
+    // idioma escolhido pelo comandante, aplicado antes de a primeira tela desenhar
+    remember(profile.langCode) { I18n.lang = Lang.of(profile.langCode); profile.langCode }
     val scope = rememberCoroutineScope()
     state.uiScope = scope
     val music = remember { MusicPlayer() }
