@@ -2,9 +2,27 @@ package br.com.navalbattle.design
 
 import androidx.compose.ui.graphics.Color
 
+/** Desenho aplicado sobre o casco, recortado no contorno da embarcação. */
+enum class Camo {
+    /** Pintura lisa, só as três cores da libré. */
+    LISA,
+
+    /** Faixas diagonais de alto contraste, o dazzle da Primeira Guerra. */
+    DAZZLE,
+
+    /** Manchas angulares, camuflagem de estilhaço. */
+    ESTILHACO,
+
+    /** Faixas horizontais claras e escuras, disfarce de linha d'água. */
+    LISTRAS,
+
+    /** Retículo fino, padrão digital moderno. */
+    DIGITAL
+}
+
 /**
- * Uma libré repinta a frota inteira com três tokens: casco, convés e detalhe.
- * É o que torna barato produzir frotas nacionais como item de estaleiro.
+ * Uma libré repinta a frota inteira com três tokens de cor mais um padrão de
+ * camuflagem. É o que torna barato produzir pinturas novas como item de loja.
  */
 data class Livery(
     val id: String,
@@ -14,7 +32,8 @@ data class Livery(
     val trim: Color,
     val dark: Color,
     /** Preço em créditos ganhos em combate. Zero para as que já vêm com o jogo. */
-    val price: Int
+    val price: Int,
+    val camo: Camo = Camo.LISA
 ) {
     val priceLabel: String get() = if (price == 0) "INCLUSA" else "◆ $price"
 
@@ -66,16 +85,31 @@ data class Livery(
             "dzl", "Dazzle 1918",
             hull = Color(0xFF2A3138), deck = Color(0xFFB9C3CB),
             trim = Color(0xFF10151A), dark = Color(0xFF141A1F),
-            price = 1000
+            price = 1000, camo = Camo.DAZZLE
+        )
+        val SPLINTER = Livery(
+            "spl", "Estilhaço Báltico",
+            hull = Color(0xFF3B4A52), deck = Color(0xFF6E828C),
+            trim = Color(0xFFDCE6EC), dark = Color(0xFF20292E),
+            price = 1100, camo = Camo.ESTILHACO
+        )
+        val CORSAIR = Livery(
+            "cor", "Corsária",
+            hull = Color(0xFF2A1F2E), deck = Color(0xFF4A3654),
+            trim = Color(0xFFE8C25B), dark = Color(0xFF17111A),
+            price = 1200, camo = Camo.LISTRAS
         )
         val STEALTH = Livery(
             "slt", "Furtiva",
             hull = Color(0xFF121412), deck = Color(0xFF1F231F),
             trim = Color(0xFF5F8F4A), dark = Color(0xFF0A0C0A),
-            price = 1400
+            price = 1400, camo = Camo.DIGITAL
         )
 
-        val all = listOf(STANDARD, BRAZIL, JAPAN, USA, UK, PORTUGAL, ARCTIC, DAZZLE, STEALTH)
+        val all = listOf(
+            STANDARD, BRAZIL, JAPAN, USA, UK, PORTUGAL,
+            ARCTIC, DAZZLE, SPLINTER, CORSAIR, STEALTH
+        )
 
         fun of(id: String): Livery = all.firstOrNull { it.id == id } ?: BRAZIL
     }

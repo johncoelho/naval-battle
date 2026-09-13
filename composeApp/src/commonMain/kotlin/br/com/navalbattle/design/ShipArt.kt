@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.withTransform
 import br.com.navalbattle.game.ShipClass
 
@@ -18,16 +19,21 @@ fun DrawScope.drawShip(
     lengthPx: Float,
     thicknessPx: Float,
     vertical: Boolean,
-    livery: Livery,
+    skin: Skin,
     alpha: Float = 1f
 ) {
+    val livery = skin.livery
+    val line = skin.fleet
     val vbW = type.size * 50f
     val vbH = 50f
     withTransform({
         if (vertical) rotate(90f, center)
         translate(center.x - lengthPx / 2f, center.y - thicknessPx / 2f)
         scale(lengthPx / vbW, thicknessPx / vbH, pivot = Offset.Zero)
+        // a boca da linha de construção afina ou alarga o casco em torno da quilha
+        if (line.beam != 1f) scale(1f, line.beam, pivot = Offset(0f, 25f))
     }) {
+        drawProw(type, line, livery, alpha)
         when (type) {
             ShipClass.CARRIER -> drawCarrier(livery, alpha)
             ShipClass.BATTLESHIP -> drawBattleship(livery, alpha)
@@ -35,12 +41,208 @@ fun DrawScope.drawShip(
             ShipClass.SUBMARINE -> drawSubmarine(livery, alpha)
             ShipClass.DESTROYER -> drawDestroyer(livery, alpha)
         }
+        if (type != ShipClass.SUBMARINE) {
+            drawFunnels(type, line, livery, alpha)
+            drawTower(type, line, livery, alpha)
+        }
     }
+}
+
+/** Ponta da proa: fica atrás do casco, prolongando a linha da embarcação. */
+private fun DrawScope.drawProw(type: ShipClass, line: FleetLine, l: Livery, a: Float) {
+    if (line.prow == Prow.PADRAO) return
+    val bow = bowX(type)
+    val half = hullHalf(type)
+    when (line.prow) {
+        Prow.CLIPPER -> {
+            val p = Path().apply {
+                moveTo(bow - 6f, 25f - half * 0.75f)
+                lineTo(bow + half * 0.95f, 25f)
+                lineTo(bow - 6f, 25f + half * 0.75f)
+                close()
+            }
+            drawPath(p, l.hull, alpha = a)
+            drawPath(p, l.dark, alpha = a, style = Stroke(1.2f))
+        }
+
+        Prow.BULBOSA -> {
+            drawCircle(l.hull, radius = half * 0.55f, center = Offset(bow + half * 0.2f, 25f), alpha = a)
+            drawCircle(l.dark, radius = half * 0.55f, center = Offset(bow + half * 0.2f, 25f), alpha = a * 0.9f, style = Stroke(1.2f))
+        }
+
+        Prow.FACETADA -> {
+            val p = Path().apply {
+                moveTo(bow - 10f, 25f - half)
+                lineTo(bow + half * 0.7f, 25f - half * 0.22f)
+                lineTo(bow + half * 0.7f, 25f + half * 0.22f)
+                lineTo(bow - 10f, 25f + half)
+                close()
+            }
+            drawPath(p, l.hull, alpha = a)
+            drawPath(p, l.dark, alpha = a, style = Stroke(1.2f))
+            // quinas do casco de baixa assinatura
+            drawLine(l.dark.copy(alpha = 0.75f), Offset(sternX(type) + 4f, 25f - half * 0.45f), Offset(bow - 6f, 25f - half * 0.2f), 1.1f, alpha = a)
+            drawLine(l.dark.copy(alpha = 0.75f), Offset(sternX(type) + 4f, 25f + half * 0.45f), Offset(bow - 6f, 25f + half * 0.2f), 1.1f, alpha = a)
+        }
+
+        Prow.PADRAO -> Unit
+    }
+}
+
+/** Chaminés inclinadas, logo atrás do meio do navio. */
+private fun DrawScope.drawFunnels(type: ShipClass, line: FleetLine, l: Livery, a: Float) {
+    if (line.funnels == 0) return
+    val bow = bowX(type)
+    val half = hullHalf(type)
+    val w = half * 0.34f
+    val h = half * 0.62f
+    for (i in 0 until line.funnels) {
+        val x = bow * (0.36f + i * 0.10f)
+        box(x, 25f - h / 2f, w, h, l.dark, a)
+        box(x + w * 0.18f, 25f - h / 2f, w * 0.3f, h * 0.28f, l.trim, a * 0.8f)
+    }
+}
+
+/** Superestrutura característica da linha, desenhada sobre o convés. */
+private fun DrawScope.drawTower(type: ShipClass, line: FleetLine, l: Livery, a: Float) {
+    if (line.tower == Tower.PADRAO) return
+    val bow = bowX(type)
+    val half = hullHalf(type)
+    val cx = bow * 0.55f
+    when (line.tower) {
+        Tower.PAGODE -> {
+            // torre em pagode: caixas empilhadas afinando para cima
+            for (i in 0 until 3) {
+                val w = half * (1.05f - i * 0.26f)
+                val h = half * (0.34f - i * 0.06f)
+                box(cx - w / 2f, 25f - half * (0.30f + i * 0.34f), w, h, l.dark, a)
+            }
+            box(cx - half * 0.06f, 25f - half * 1.5f, half * 0.12f, half * 0.42f, l.trim, a)
+        }
+
+        Tower.BLOCO -> {
+            val w = half * 1.5f
+            box(cx - w / 2f, 25f - half * 0.62f, w, half * 1.24f, l.dark, a)
+            box(cx - w / 2f + half * 0.16f, 25f - half * 0.36f, w - half * 0.32f, half * 0.72f, l.deck, a * 0.9f)
+            // mastro em treliça
+            drawLine(l.trim, Offset(cx - half * 0.3f, 25f - half * 0.62f), Offset(cx + half * 0.3f, 25f + half * 0.62f), 1f, alpha = a * 0.8f)
+            drawLine(l.trim, Offset(cx + half * 0.3f, 25f - half * 0.62f), Offset(cx - half * 0.3f, 25f + half * 0.62f), 1f, alpha = a * 0.8f)
+        }
+
+        Tower.FACETADA -> {
+            val p = Path().apply {
+                moveTo(cx - half * 0.8f, 25f - half * 0.52f)
+                lineTo(cx + half * 0.55f, 25f - half * 0.30f)
+                lineTo(cx + half * 0.55f, 25f + half * 0.30f)
+                lineTo(cx - half * 0.8f, 25f + half * 0.52f)
+                close()
+            }
+            drawPath(p, l.dark, alpha = a)
+            drawPath(p, l.trim.copy(alpha = 0.5f), alpha = a, style = Stroke(1f))
+        }
+
+        Tower.PADRAO -> Unit
+    }
+}
+
+private fun bowX(type: ShipClass): Float = when (type) {
+    ShipClass.CARRIER -> 247f
+    ShipClass.BATTLESHIP -> 198f
+    ShipClass.CRUISER -> 148f
+    ShipClass.SUBMARINE -> 146f
+    ShipClass.DESTROYER -> 98.5f
+}
+
+private fun sternX(type: ShipClass): Float = when (type) {
+    ShipClass.CARRIER -> 10f
+    ShipClass.BATTLESHIP -> 8f
+    ShipClass.CRUISER -> 7f
+    ShipClass.SUBMARINE -> 9f
+    ShipClass.DESTROYER -> 6f
+}
+
+private fun hullHalf(type: ShipClass): Float = when (type) {
+    ShipClass.CARRIER -> 15f
+    ShipClass.BATTLESHIP -> 14f
+    ShipClass.CRUISER -> 12.5f
+    ShipClass.SUBMARINE -> 11f
+    ShipClass.DESTROYER -> 11f
 }
 
 private fun DrawScope.hull(path: Path, livery: Livery, alpha: Float, stroke: Float = 1.4f) {
     drawPath(path, livery.hull, alpha = alpha)
+    if (livery.camo != Camo.LISA) {
+        clipPath(path) { drawCamo(livery, alpha) }
+    }
     drawPath(path, livery.dark, alpha = alpha, style = Stroke(width = stroke))
+}
+
+/** Padrão de camuflagem, sempre recortado no contorno do casco. */
+private fun DrawScope.drawCamo(l: Livery, a: Float) {
+    val w = size.width
+    when (l.camo) {
+        Camo.LISA -> Unit
+
+        Camo.DAZZLE -> {
+            var x = -60f
+            var i = 0
+            while (x < w + 60f) {
+                val slant = if (i % 2 == 0) 26f else -26f
+                val band = if (i % 2 == 0) l.deck else l.dark
+                val p = Path().apply {
+                    moveTo(x, 0f)
+                    lineTo(x + 13f, 0f)
+                    lineTo(x + 13f + slant, 50f)
+                    lineTo(x + slant, 50f)
+                    close()
+                }
+                drawPath(p, band, alpha = a * 0.55f)
+                x += 26f
+                i++
+            }
+        }
+
+        Camo.ESTILHACO -> {
+            var x = 0f
+            var i = 0
+            while (x < w) {
+                val up = i % 2 == 0
+                val p = Path().apply {
+                    moveTo(x, if (up) 0f else 50f)
+                    lineTo(x + 34f, if (up) 14f else 36f)
+                    lineTo(x + 60f, if (up) 0f else 50f)
+                    lineTo(x + 60f, if (up) 22f else 28f)
+                    lineTo(x, if (up) 26f else 24f)
+                    close()
+                }
+                drawPath(p, if (up) l.dark else l.deck, alpha = a * 0.5f)
+                x += 52f
+                i++
+            }
+        }
+
+        Camo.LISTRAS -> {
+            drawRect(l.dark, topLeft = Offset(0f, 0f), size = Size(w, 12f), alpha = a * 0.55f)
+            drawRect(l.deck, topLeft = Offset(0f, 20f), size = Size(w, 6f), alpha = a * 0.45f)
+            drawRect(l.dark, topLeft = Offset(0f, 38f), size = Size(w, 12f), alpha = a * 0.55f)
+        }
+
+        Camo.DIGITAL -> {
+            var x = 0f
+            while (x < w) {
+                var y = 0f
+                var j = 0
+                while (y < 50f) {
+                    if (((x / 7f).toInt() + j) % 3 == 0) {
+                        drawRect(l.dark, topLeft = Offset(x, y), size = Size(7f, 6f), alpha = a * 0.45f)
+                    }
+                    y += 6f
+                    j++
+                }
+                x += 7f
+            }
+        }
+    }
 }
 
 private fun DrawScope.box(
