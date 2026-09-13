@@ -61,6 +61,9 @@ fun BoardView(
     impact: Impact? = null,
     /** Cor do dono desta frota: pinta as marcas para saber de quem é o navio atingido. */
     markTint: Color? = null,
+    /** Segunda frota desenhada na mesma carta (modo local): um mapa só para os dois. */
+    overlay: Board? = null,
+    overlayTint: Color? = null,
     onCellTap: (Coord) -> Unit = {}
 ) {
     val transition = rememberInfiniteTransition(label = "radar")
@@ -175,6 +178,22 @@ fun BoardView(
         board.marks.forEach { (coord, mark) ->
             val topLeft = Offset(coord.x * cell, coord.y * cell)
             drawMark(mark, topLeft, cell, markTint)
+        }
+
+        // a segunda frota divide a mesma carta: quando as duas foram atingidas na
+        // mesma coordenada, a de baixo entra menor no canto para nenhuma sumir
+        overlay?.marks?.forEach { (coord, mark) ->
+            val shared = board.marks.containsKey(coord)
+            if (shared) {
+                drawMark(
+                    mark,
+                    Offset(coord.x * cell + cell / 2f, coord.y * cell + cell / 2f),
+                    cell / 2f,
+                    overlayTint
+                )
+            } else {
+                drawMark(mark, Offset(coord.x * cell, coord.y * cell), cell, overlayTint)
+            }
         }
 
         // pré-visualização do posicionamento

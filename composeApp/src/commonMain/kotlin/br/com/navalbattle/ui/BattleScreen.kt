@@ -39,7 +39,6 @@ import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.GameMode
-import br.com.navalbattle.game.Impact
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
@@ -148,24 +147,25 @@ fun BattleScreen(state: AppState, match: Match) {
                     myTurn -> "SEU TURNO · AGUARDANDO COORDENADA"
                     else -> "AGUARDE"
                 },
-                if (local) commanderColor(viewSide) else Naval.muted,
+                // a cor do texto é a mesma das marcas que este ataque vai deixar
+                if (local) commanderColor(viewSide.other()) else Naval.muted,
                 Modifier.fillMaxWidth().padding(top = 2.dp)
             )
 
             Gap(10)
             if (local) {
-                // os dois mapas lado a lado, sempre na tela: nada some ao revezar
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
-                        FleetPanel(
-                            state = state,
-                            match = match,
-                            side = side,
-                            impact = if (side == Side.PLAYER) enemyImpact else playerImpact,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
+                // uma carta só para os dois: cada marca sai na cor da frota atingida
+                BoardView(
+                    board = match.playerBoard,
+                    livery = state.livery,
+                    showShips = false,
+                    interactive = myTurn,
+                    impact = playerImpact ?: enemyImpact,
+                    markTint = commanderColor(Side.PLAYER),
+                    overlay = match.enemyBoard,
+                    overlayTint = commanderColor(Side.ENEMY),
+                    modifier = Modifier.fillMaxWidth()
+                ) { coord -> match.act(coord) }
             } else {
                 BoardView(
                     board = match.enemyBoard,
@@ -191,7 +191,9 @@ fun BattleScreen(state: AppState, match: Match) {
 
             Spacer(Modifier.weight(1f))
 
-            if (!local) {
+            if (local) {
+                Scoreboard(match)
+            } else {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         Modifier
@@ -239,55 +241,50 @@ fun BattleScreen(state: AppState, match: Match) {
 }
 
 /**
- * Um dos dois mapas do modo local: a frota de [side] com os tiros que levou,
- * pintados na cor do dono para se saber de quem é o navio atingido.
+ * Placar do modo local. A cor de cada comandante é a mesma que pinta os danos da
+ * frota dele na carta, então dá para ler o mapa sem legenda extra.
  */
 @Composable
-private fun FleetPanel(
-    state: AppState,
-    match: Match,
-    side: Side,
-    impact: Impact?,
-    modifier: Modifier = Modifier
-) {
-    val color = commanderColor(side)
-    val board = match.board(side)
-    val underAttack = match.phase == Phase.BATTLE && match.turnOwner == side.other()
-    val afloat = board.remainingShips().size
-
-    Column(modifier) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(9.dp).background(color))
-            GapW(6)
-            Text(
-                match.sideName(side).uppercase(),
-                style = NavalType.monoSmall,
-                color = color,
-                maxLines = 1
-            )
-        }
-        Gap(4)
-        BoardView(
-            board = board,
-            livery = state.livery,
-            showShips = false,
-            interactive = underAttack,
-            sweep = underAttack,
-            impact = impact,
-            markTint = color,
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(if (underAttack) 2.dp else 1.dp, if (underAttack) color else Naval.line)
-        ) { coord -> match.act(coord) }
-        Gap(4)
-        Text(
-            "$afloat/${ShipClass.fleet.size} À TONA",
-            style = NavalType.monoSmall,
-            color = if (afloat <= 1) Naval.danger else Naval.inkSoft
-        )
-        HudLabel("PRECISÃO ${match.accuracyOf(side)}%", Naval.muted)
-        if (board.smokeActive) {
-            HudLabel("CORTINA ATIVA", Naval.greenBright)
+private fun Scoreboard(match: Match) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
+            val color = commanderColor(side)
+            val playing = match.phase == Phase.BATTLE && match.turnOwner == side
+            val afloat = match.board(side).remainingShips().size
+            Column(
+                Modifier
+                    .weight(1f)
+                    .background(if (playing) Naval.surface3 else Naval.surface2)
+                    .border(1.dp, if (playing) color else Naval.line)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(9.dp).background(color))
+                    GapW(6)
+                    Text(
+                        match.sideName(side).uppercase(),
+                        style = NavalType.monoSmall,
+                        color = color,
+                        maxLines = 1
+                    )
+                }
+                Gap(6)
+                Text(
+                    "$afloat / ${ShipClass.fleet.size}",
+                    style = NavalType.title,
+                    color = when {
+                        afloat <= 1 -> Naval.danger
+                        afloat <= 2 -> Naval.amberStrong
+                        else -> Naval.ink
+                    }
+                )
+                HudLabel("NAVIOS À TONA", Naval.muted)
+                Gap(6)
+                HudLabel("PRECISÃO ${match.accuracyOf(side)}%", Naval.muted)
+                if (match.board(side).smokeActive) {
+                    HudLabel("CORTINA ATIVA", Naval.greenBright)
+                }
+            }
         }
     }
 }
