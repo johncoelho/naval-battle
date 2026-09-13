@@ -100,7 +100,10 @@ fun BattleScreen(state: AppState, match: Match) {
         }
     }
 
-    LaunchedEffect(match.turnOwner, match.turnCount, match.phase, viewSide) {
+    // quem acerta joga de novo (regra clássica da batalha naval), então o relógio do
+    // turno reinicia a cada tiro — não só quando a vez muda de dono — daí a chave em
+    // lastImpactId
+    LaunchedEffect(match.turnOwner, match.turnCount, match.phase, viewSide, match.lastImpactId) {
         if (match.phase == Phase.BATTLE && myTurn) {
             secondsLeft = TURN_SECONDS
             while (secondsLeft > 0) {
@@ -112,11 +115,14 @@ fun BattleScreen(state: AppState, match: Match) {
         }
     }
 
-    // só contra a IA existe turno automático do adversário
+    // só contra a IA existe turno automático do adversário; continua atirando
+    // enquanto for acertando, do mesmo jeito que o humano
     LaunchedEffect(match.turnOwner, match.phase) {
         if (!local && !lan && match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
-            delay(1500)
-            match.enemyTurn()
+            while (match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
+                delay(1500)
+                match.enemyTurn()
+            }
         }
     }
 
