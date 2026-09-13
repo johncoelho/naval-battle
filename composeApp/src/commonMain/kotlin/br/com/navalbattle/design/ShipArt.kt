@@ -44,7 +44,7 @@ fun DrawScope.drawShip(
     skin: Skin,
     alpha: Float = 1f
 ) {
-    val livery = skin.livery
+    val paint = skin.paint
     val line = skin.fleet
     val vbW = type.size * 50f
     val vbH = 50f
@@ -55,23 +55,23 @@ fun DrawScope.drawShip(
         // a boca da linha de construção afina ou alarga o casco em torno da quilha
         if (line.beam != 1f) scale(1f, line.beam, pivot = Offset(0f, 25f))
     }) {
-        drawProw(type, line, livery, alpha)
+        drawProw(type, line, paint, alpha)
         when (type) {
-            ShipClass.CARRIER -> drawCarrier(livery, alpha)
-            ShipClass.BATTLESHIP -> drawBattleship(livery, alpha)
-            ShipClass.CRUISER -> drawCruiser(livery, alpha)
-            ShipClass.SUBMARINE -> drawSubmarine(livery, alpha)
-            ShipClass.DESTROYER -> drawDestroyer(livery, alpha)
+            ShipClass.CARRIER -> drawCarrier(paint, alpha)
+            ShipClass.BATTLESHIP -> drawBattleship(paint, alpha)
+            ShipClass.CRUISER -> drawCruiser(paint, alpha)
+            ShipClass.SUBMARINE -> drawSubmarine(paint, alpha)
+            ShipClass.DESTROYER -> drawDestroyer(paint, alpha)
         }
         if (type != ShipClass.SUBMARINE) {
-            drawFunnels(type, line, livery, alpha)
-            drawTower(type, line, livery, alpha)
+            drawFunnels(type, line, paint, alpha)
+            drawTower(type, line, paint, alpha)
         }
     }
 }
 
 /** Ponta da proa: fica atrás do casco, prolongando a linha da embarcação. */
-private fun DrawScope.drawProw(type: ShipClass, line: FleetLine, l: Livery, a: Float) {
+private fun DrawScope.drawProw(type: ShipClass, line: FleetLine, l: Paint, a: Float) {
     if (line.prow == Prow.PADRAO) return
     val bow = bowX(type)
     val half = hullHalf(type)
@@ -112,7 +112,7 @@ private fun DrawScope.drawProw(type: ShipClass, line: FleetLine, l: Livery, a: F
 }
 
 /** Chaminés inclinadas, logo atrás do meio do navio. */
-private fun DrawScope.drawFunnels(type: ShipClass, line: FleetLine, l: Livery, a: Float) {
+private fun DrawScope.drawFunnels(type: ShipClass, line: FleetLine, l: Paint, a: Float) {
     if (line.funnels == 0) return
     val bow = bowX(type)
     val half = hullHalf(type)
@@ -126,7 +126,7 @@ private fun DrawScope.drawFunnels(type: ShipClass, line: FleetLine, l: Livery, a
 }
 
 /** Superestrutura característica da linha, desenhada sobre o convés. */
-private fun DrawScope.drawTower(type: ShipClass, line: FleetLine, l: Livery, a: Float) {
+private fun DrawScope.drawTower(type: ShipClass, line: FleetLine, l: Paint, a: Float) {
     if (line.tower == Tower.PADRAO) return
     val bow = bowX(type)
     val half = hullHalf(type)
@@ -195,7 +195,7 @@ private fun hullHalf(type: ShipClass): Float = when (type) {
  * Casco com volume: sombra projetada na água, gradiente de bordo a bordo, camuflagem
  * recortada no contorno e um fio de luz na amurada iluminada.
  */
-private fun DrawScope.hull(path: Path, livery: Livery, alpha: Float, stroke: Float = 1.4f) {
+private fun DrawScope.hull(path: Path, paint: Paint, alpha: Float, stroke: Float = 1.4f) {
     // sombra na água, deslocada no sentido contrário à luz
     translate(-LIGHT_DX * 2.4f, -LIGHT_DY * 2.4f) {
         drawPath(path, Color.Black.copy(alpha = 0.28f * alpha))
@@ -204,15 +204,15 @@ private fun DrawScope.hull(path: Path, livery: Livery, alpha: Float, stroke: Flo
     drawPath(
         path = path,
         brush = Brush.verticalGradient(
-            0.00f to livery.hull.lit(0.30f),
-            0.28f to livery.hull.lit(0.08f),
-            0.62f to livery.hull,
-            1.00f to livery.hull.shaded(0.34f)
+            0.00f to paint.hull.lit(0.30f),
+            0.28f to paint.hull.lit(0.08f),
+            0.62f to paint.hull,
+            1.00f to paint.hull.shaded(0.34f)
         ),
         alpha = alpha
     )
-    if (livery.camo != Camo.LISA) {
-        clipPath(path) { drawCamo(livery, alpha) }
+    if (paint.camo != Camo.LISA) {
+        clipPath(path) { drawCamo(paint, alpha) }
     }
     // amurada iluminada: um traço claro só na borda que recebe a luz
     clipPath(path) {
@@ -225,7 +225,7 @@ private fun DrawScope.hull(path: Path, livery: Livery, alpha: Float, stroke: Flo
             style = Stroke(width = stroke * 2.2f)
         )
     }
-    drawPath(path, livery.dark.shaded(0.2f), alpha = alpha, style = Stroke(width = stroke))
+    drawPath(path, paint.dark.shaded(0.2f), alpha = alpha, style = Stroke(width = stroke))
 }
 
 /**
@@ -266,7 +266,7 @@ private fun DrawScope.deckBlock(
 }
 
 /** Padrão de camuflagem, sempre recortado no contorno do casco. */
-private fun DrawScope.drawCamo(l: Livery, a: Float) {
+private fun DrawScope.drawCamo(l: Paint, a: Float) {
     val w = size.width
     when (l.camo) {
         Camo.LISA -> Unit
@@ -340,7 +340,7 @@ private fun DrawScope.box(
 
 // ---------------------------------------------------------------- carrier
 
-private fun DrawScope.drawCarrier(l: Livery, a: Float) {
+private fun DrawScope.drawCarrier(l: Paint, a: Float) {
     val h = Path().apply {
         moveTo(10f, 25f)
         cubicTo(10f, 15f, 17f, 10f, 27f, 10f)
@@ -380,7 +380,7 @@ private fun DrawScope.drawCarrier(l: Livery, a: Float) {
 
 // ------------------------------------------------------------ battleship
 
-private fun DrawScope.drawBattleship(l: Livery, a: Float) {
+private fun DrawScope.drawBattleship(l: Paint, a: Float) {
     val h = Path().apply {
         moveTo(8f, 25f)
         cubicTo(8f, 16f, 14f, 11f, 23f, 11f)
@@ -415,7 +415,7 @@ private fun DrawScope.drawBattleship(l: Livery, a: Float) {
 
 // ---------------------------------------------------------------- cruiser
 
-private fun DrawScope.drawCruiser(l: Livery, a: Float) {
+private fun DrawScope.drawCruiser(l: Paint, a: Float) {
     val h = Path().apply {
         moveTo(7f, 25f)
         cubicTo(7f, 17f, 12f, 12.5f, 21f, 12.5f)
@@ -449,7 +449,7 @@ private fun DrawScope.drawCruiser(l: Livery, a: Float) {
 
 // -------------------------------------------------------------- submarine
 
-private fun DrawScope.drawSubmarine(l: Livery, a: Float) {
+private fun DrawScope.drawSubmarine(l: Paint, a: Float) {
     val h = Path().apply {
         moveTo(9f, 25f)
         cubicTo(9f, 18.5f, 19f, 14f, 40f, 14f)
@@ -482,7 +482,7 @@ private fun DrawScope.drawSubmarine(l: Livery, a: Float) {
 
 // -------------------------------------------------------------- destroyer
 
-private fun DrawScope.drawDestroyer(l: Livery, a: Float) {
+private fun DrawScope.drawDestroyer(l: Paint, a: Float) {
     val h = Path().apply {
         moveTo(6f, 25f)
         cubicTo(6f, 18f, 10f, 14f, 18f, 14f)
@@ -516,7 +516,7 @@ private fun DrawScope.drawDestroyer(l: Livery, a: Float) {
 private fun DrawScope.turret(
     cx: Float, cy: Float, r: Float,
     bx: Float, by: Float, bw: Float, bh: Float,
-    l: Livery, a: Float
+    l: Paint, a: Float
 ) {
     // canos
     drawRect(

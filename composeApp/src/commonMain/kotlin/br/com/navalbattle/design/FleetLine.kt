@@ -1,5 +1,8 @@
 package br.com.navalbattle.design
 
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
+
 /** Formato da proa — o traço que mais muda a silhueta vista de cima. */
 enum class Prow { PADRAO, CLIPPER, BULBOSA, FACETADA }
 
@@ -13,8 +16,8 @@ enum class Tower { PADRAO, PAGODE, BLOCO, FACETADA }
  */
 data class FleetLine(
     val id: String,
-    val name: String,
-    val description: String,
+    val key: K,
+    val descriptionKey: K,
     val price: Int,
     /** Multiplicador da boca: abaixo de 1 afina o casco, acima alarga. */
     val beam: Float,
@@ -23,27 +26,25 @@ data class FleetLine(
     /** Chaminés inclinadas no convés, marca das frotas clássicas. */
     val funnels: Int
 ) {
-    val priceLabel: String get() = if (price == 0) "INCLUSA" else "◆ $price"
+    val name: String get() = t(key)
+    val description: String get() = t(descriptionKey)
+    val priceLabel: String get() = if (price == 0) t(K.STORE_INCLUDED) else "◆ $price"
 
     companion object {
         val STANDARD = FleetLine(
-            "std", "Linha Padrão",
-            "Cascos de série, equilibrados em boca e proa.",
+            "std", K.FLEET_STD, K.FLEET_STD_SUB,
             price = 0, beam = 1f, prow = Prow.PADRAO, tower = Tower.PADRAO, funnels = 0
         )
         val IMPERIAL = FleetLine(
-            "imp", "Linha Imperial",
-            "Cascos estreitos, proa clipper e mastro em pagode.",
+            "imp", K.FLEET_IMP, K.FLEET_IMP_SUB,
             price = 900, beam = 0.88f, prow = Prow.CLIPPER, tower = Tower.PAGODE, funnels = 2
         )
         val ATLANTIC = FleetLine(
-            "atl", "Linha Atlântica",
-            "Cascos largos, proa bulbosa e superestrutura em bloco.",
+            "atl", K.FLEET_ATL, K.FLEET_ATL_SUB,
             price = 900, beam = 1.12f, prow = Prow.BULBOSA, tower = Tower.BLOCO, funnels = 1
         )
         val GHOST = FleetLine(
-            "gho", "Linha Fantasma",
-            "Cascos facetados de baixa assinatura, sem chaminés.",
+            "gho", K.FLEET_GHO, K.FLEET_GHO_SUB,
             price = 1800, beam = 0.94f, prow = Prow.FACETADA, tower = Tower.FACETADA, funnels = 0
         )
 
@@ -57,8 +58,8 @@ data class FleetLine(
  * O visual completo da frota: a linha de casco mais a camuflagem. Anda junto por
  * toda a interface porque as duas coisas são desenhadas na mesma passada.
  */
-data class Skin(val livery: Livery, val fleet: FleetLine) {
+data class Skin(val paint: Paint, val fleet: FleetLine) {
     companion object {
-        val DEFAULT = Skin(Livery.BRAZIL, FleetLine.STANDARD)
+        val DEFAULT = Skin(Paint.BRAZIL, FleetLine.STANDARD)
     }
 }
