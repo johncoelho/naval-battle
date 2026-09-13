@@ -8,6 +8,7 @@ import java.io.BufferedReader
 import java.io.PrintWriter
 import java.net.ServerSocket
 import java.net.Socket
+import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
 private const val SERVICE_TYPE = "_navalbattle._tcp."
@@ -26,6 +27,18 @@ actual class LanLink actual constructor() {
     private var server: ServerSocket? = null
     private var socket: Socket? = null
     private var writer: PrintWriter? = null
+    private var writerThread: Thread? = null
+    /**
+     * Fila de saída, com uma única thread escrevendo em ordem. Antes, cada [send]
+     * abria a própria thread para escrever — sem nenhuma garantia de que a primeira
+     * chamada terminasse antes da segunda. Numa habilidade normal isso quase nunca
+     * dava problema (só uma linha por vez), mas usar uma habilidade manda duas linhas
+     * em sequência (`ABIL` armando o alvo, `ACT` com a coordenada); se a ordem
+     * invertesse na rede, o aparelho que recebia aplicava um tiro comum em vez do
+     * efeito da habilidade, e os dois lados passavam a discordar sobre de quem era a
+     * vez dali em diante — exatamente o travamento relatado no tático em rede.
+     */
+    private val outbox = LinkedBlockingQueue<String>()
     private var registration: NsdManager.RegistrationListener? = null
     private var discovery: NsdManager.DiscoveryListener? = null
     private var alive = true
@@ -34,6 +47,7 @@ actual class LanLink actual constructor() {
 
     actual fun host(name: String, onState: (LinkState) -> Unit, onLine: (String) -> Unit) {
         alive = true
+        outbox.clear()
         onState(LinkState.HOSTING)
         thread(name = "naval-host") {
             runCatching {
@@ -101,6 +115,7 @@ actual class LanLink actual constructor() {
 
     actual fun join(game: LanGame, onState: (LinkState) -> Unit, onLine: (String) -> Unit) {
         alive = true
+        outbox.clear()
         onState(LinkState.CONNECTING)
         thread(name = "naval-join") {
             runCatching {
@@ -116,7 +131,18 @@ actual class LanLink actual constructor() {
 
     /** Lê linha a linha até a conexão cair. Roda na thread da conexão. */
     private fun pump(client: Socket, onLine: (String) -> Unit, onState: (LinkState) -> Unit) {
-        writer = PrintWriter(client.getOutputStream(), true)
+        val out = PrintWriter(client.getOutputStream(), true)
+        writer = out
+        writerThread = thread(name = "naval-writer") {
+            while (alive) {
+                val line = try {
+                    outbox.take()
+                } catch (e: InterruptedException) {
+                    break
+                }
+                runCatching { out.println(line) }
+            }
+        }
         val reader: BufferedReader = client.getInputStream().bufferedReader()
         while (alive) {
             val line = reader.readLine() ?: break
@@ -125,13 +151,16 @@ actual class LanLink actual constructor() {
         if (alive) onState(LinkState.FAILED)
     }
 
+    /** Só enfileira — quem escreve de verdade é a única thread nascida em [pump]. */
     actual fun send(line: String) {
-        val out = writer ?: return
-        thread(name = "naval-send") { runCatching { out.println(line) } }
+        outbox.offer(line)
     }
 
     actual fun close() {
         alive = false
+        writerThread?.interrupt()
+        writerThread = null
+        outbox.clear()
         runCatching { registration?.let { nsd.unregisterService(it) } }
         runCatching { discovery?.let { nsd.stopServiceDiscovery(it) } }
         registration = null
