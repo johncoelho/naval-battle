@@ -84,11 +84,19 @@ estiver em teste.
 
 ## Login com Google — configuração do lado de fora do código
 
+> **Já configurado** (2026-09-13): projeto **AIGAMESFACTORY** no Google Cloud, app
+> "Naval Battle" com tela de consentimento externa em modo de teste (e-mail
+> `joncqs@gmail.com` cadastrado como testador). Dois clientes OAuth criados —
+> **Naval Battle - Web (Supabase)** e **Naval Battle - Android** (pacote
+> `br.com.navalbattle`, SHA-1 da chave de depuração do repositório). O provedor Google
+> está **ativado** no Supabase com os dois Client IDs (separados por vírgula) e o Client
+> Secret do cliente Web, e `GoogleAuthConfig.WEB_CLIENT_ID` já tem o valor certo. O passo
+> a passo abaixo fica registrado para o dia em que for preciso trocar de projeto, girar
+> a chave de depuração (novo SHA-1) ou publicar o app (sair do modo de teste).
+
 O botão "Entrar com o Google" só aparece quando `GoogleAuthConfig.WEB_CLIENT_ID`
 (em `composeApp/src/commonMain/kotlin/br/com/navalbattle/data/GoogleAuth.kt`) não está
-em branco. Chegar até esse valor exige mexer em dois painéis que **só o dono da conta
-consegue acessar** — John faz essa parte, depois manda o Client ID final para entrar no
-código.
+em branco.
 
 ### 1. Google Cloud Console
 
