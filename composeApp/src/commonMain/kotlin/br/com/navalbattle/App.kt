@@ -23,11 +23,12 @@ import br.com.navalbattle.ui.NamesScreen
 import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ResultScreen
 import br.com.navalbattle.ui.ShipyardScreen
+import br.com.navalbattle.ui.SplashScreen
 
-enum class Screen { MENU, SHIPYARD, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
+enum class Screen { SPLASH, MENU, SHIPYARD, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
 
 class AppState {
-    var screen by mutableStateOf(Screen.MENU)
+    var screen by mutableStateOf(Screen.SPLASH)
     var mode by mutableStateOf(GameMode.TACTICAL)
     var livery by mutableStateOf(Livery.BRAZIL)
     var match by mutableStateOf<Match?>(null)
@@ -63,6 +64,7 @@ fun App() {
     NavalTheme {
         Box(Modifier.fillMaxSize().background(Naval.bg)) {
             when (state.screen) {
+                Screen.SPLASH -> SplashScreen(state)
                 Screen.MENU -> MenuScreen(state)
                 Screen.SHIPYARD -> ShipyardScreen(state)
                 Screen.NAMES -> state.match?.let { NamesScreen(state, it) }
