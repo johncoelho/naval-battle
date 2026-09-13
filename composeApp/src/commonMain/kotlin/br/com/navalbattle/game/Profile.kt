@@ -3,7 +3,9 @@ package br.com.navalbattle.game
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.Prefs
+import br.com.navalbattle.data.Session
 
 /** Patente do comandante. A carreira sobe por XP ganho em combate. */
 enum class Rank(val label: String, val xp: Int) {
@@ -83,6 +85,97 @@ class Profile(private val prefs: Prefs) {
         private set
     var equippedFleet by mutableStateOf(prefs.getString(K_FLEET, "std"))
         private set
+
+    // ---------------- conta na nuvem ----------------
+
+    var accountEmail by mutableStateOf(prefs.getString(K_EMAIL, ""))
+        private set
+    var accountId by mutableStateOf(prefs.getString(K_UID, ""))
+        private set
+    private var accessToken = prefs.getString(K_TOKEN, "")
+    private var refreshToken = prefs.getString(K_REFRESH, "")
+
+    val signedIn: Boolean get() = accountId.isNotBlank()
+
+    fun rememberSession(session: Session) {
+        accountId = session.userId
+        accountEmail = session.email
+        accessToken = session.accessToken
+        refreshToken = session.refreshToken
+        prefs.putString(K_UID, accountId)
+        prefs.putString(K_EMAIL, accountEmail)
+        prefs.putString(K_TOKEN, accessToken)
+        prefs.putString(K_REFRESH, refreshToken)
+        if (name.isBlank() || name == "Comandante") rename(session.username)
+    }
+
+    fun currentSession(): Session? {
+        if (!signedIn) return null
+        return Session(accountId, accountEmail, name, accessToken, refreshToken)
+    }
+
+    fun signOut() {
+        accountId = ""; accountEmail = ""; accessToken = ""; refreshToken = ""
+        prefs.putString(K_UID, ""); prefs.putString(K_EMAIL, "")
+        prefs.putString(K_TOKEN, ""); prefs.putString(K_REFRESH, "")
+    }
+
+    /** A carreira como ela vai para a nuvem. */
+    fun snapshot(): CloudProfile = CloudProfile(
+        username = name,
+        insignia = insignia.id,
+        xp = xp,
+        credits = credits,
+        matches = matches,
+        wins = wins,
+        shots = shots,
+        hits = hits,
+        sunk = sunk,
+        streak = streak,
+        bestStreak = bestStreak,
+        owned = owned.joinToString(","),
+        equipped = equipped,
+        fleets = ownedFleets.joinToString(","),
+        fleet = equippedFleet
+    )
+
+    /** Adota a carreira que veio da nuvem e grava tudo no aparelho. */
+    fun adopt(remote: CloudProfile) {
+        name = remote.username.ifBlank { name }
+        insignia = Insignia.of(remote.insignia)
+        xp = remote.xp
+        credits = remote.credits
+        matches = remote.matches
+        wins = remote.wins
+        shots = remote.shots
+        hits = remote.hits
+        sunk = remote.sunk
+        streak = remote.streak
+        bestStreak = remote.bestStreak
+        owned = remote.owned.split(",").filter { it.isNotBlank() }.toSet().ifEmpty { setOf("std", "br") }
+        equipped = remote.equipped.ifBlank { "br" }
+        ownedFleets = remote.fleets.split(",").filter { it.isNotBlank() }.toSet().ifEmpty { setOf("std") }
+        equippedFleet = remote.fleet.ifBlank { "std" }
+        persistAll()
+    }
+
+    private fun persistAll() {
+        prefs.putString(K_NAME, name)
+        prefs.putString(K_INSIGNIA, insignia.id)
+        prefs.putInt(K_XP, xp)
+        prefs.putInt(K_CREDITS, credits)
+        prefs.putInt(K_MATCHES, matches)
+        prefs.putInt(K_WINS, wins)
+        prefs.putInt(K_SHOTS, shots)
+        prefs.putInt(K_HITS, hits)
+        prefs.putInt(K_SUNK, sunk)
+        prefs.putInt(K_STREAK, streak)
+        prefs.putInt(K_BEST_STREAK, bestStreak)
+        prefs.putString(K_OWNED, owned.joinToString(","))
+        prefs.putString(K_EQUIPPED, equipped)
+        prefs.putString(K_FLEETS, ownedFleets.joinToString(","))
+        prefs.putString(K_FLEET, equippedFleet)
+    }
 
     val rank: Rank get() = Rank.of(xp)
     val losses: Int get() = matches - wins
@@ -212,5 +305,9 @@ class Profile(private val prefs: Prefs) {
         const val K_EQUIPPED = "equipped"
         const val K_FLEETS = "fleets"
         const val K_FLEET = "fleet"
+        const val K_UID = "uid"
+        const val K_EMAIL = "email"
+        const val K_TOKEN = "token"
+        const val K_REFRESH = "refresh"
     }
 }
