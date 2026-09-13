@@ -171,6 +171,12 @@ fun BoardView(
             board.ships.forEach { ship ->
                 val sunk = board.isSunk(ship)
                 drawFleetShip(ship, cell, livery, if (sunk) 0.35f else 1f)
+                markTint?.let { drawShipOutline(ship, cell, it) }
+            }
+            overlay?.ships?.forEach { ship ->
+                val sunk = overlay.isSunk(ship)
+                drawFleetShip(ship, cell, livery, if (sunk) 0.35f else 1f)
+                overlayTint?.let { drawShipOutline(ship, cell, it) }
             }
         }
 
@@ -586,6 +592,18 @@ private fun DrawScope.drawFleetShip(ship: Ship, cell: Float, livery: Livery, alp
         livery = livery,
         alpha = alpha
     )
+}
+
+/** Contorno na cor do comandante — diz de quem é cada navio na carta final. */
+private fun DrawScope.drawShipOutline(ship: Ship, cell: Float, color: Color) {
+    ship.cells.forEach { c ->
+        drawRect(
+            color.copy(alpha = 0.7f),
+            topLeft = Offset(c.x * cell, c.y * cell),
+            size = Size(cell, cell),
+            style = Stroke(1.2f)
+        )
+    }
 }
 
 private fun DrawScope.drawMark(mark: Mark, topLeft: Offset, cell: Float, tint: Color?) {

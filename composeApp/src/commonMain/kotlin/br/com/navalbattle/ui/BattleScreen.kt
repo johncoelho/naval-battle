@@ -63,16 +63,27 @@ fun BattleScreen(state: AppState, match: Match) {
     val local = match.opponent == Opponent.LOCAL
     var confirmQuit by remember { mutableStateOf(false) }
 
-    // no modo local os dois tabuleiros ficam sempre na tela, cada um na cor do seu dono;
-    // contra a IA a tela é sempre a do humano
-    val viewSide = if (local) match.turnOwner else Side.PLAYER
-    val myTurn = match.phase == Phase.BATTLE && (local || match.turnOwner == Side.PLAYER)
+    // no modo local cada comandante enxerga só a própria memória de tiros: a carta
+    // exibida é sempre a da frota que ele ataca. Contra a IA a tela é sempre a do humano.
+    var localView by remember { mutableStateOf(Side.PLAYER) }
+    val viewSide = if (local) localView else Side.PLAYER
+    val myTurn = match.phase == Phase.BATTLE && match.turnOwner == viewSide
 
-    // só o disparo mais recente anima — as marcas antigas ficam paradas nos mapas
+    // só o disparo mais recente anima — as marcas antigas ficam paradas na carta
     val playerImpact = match.playerImpact?.takeIf { it.id == match.lastImpactId }
     val enemyImpact = match.enemyImpact?.takeIf { it.id == match.lastImpactId }
+    val myImpact = if (viewSide == Side.PLAYER) playerImpact else enemyImpact
 
-    LaunchedEffect(match.turnOwner, match.turnCount, match.phase) {
+    // a carta só troca de dono depois que a jogada termina de tocar
+    LaunchedEffect(match.turnOwner, match.phase) {
+        if (local && match.phase == Phase.BATTLE && match.turnOwner != localView) {
+            val tone = (if (localView == Side.PLAYER) match.playerImpact else match.enemyImpact)?.tone
+            delay(if (tone == Tone.SUNK) 3400L else 1700L)
+            if (match.phase == Phase.BATTLE) localView = match.turnOwner
+        }
+    }
+
+    LaunchedEffect(match.turnOwner, match.turnCount, match.phase, viewSide) {
         if (match.phase == Phase.BATTLE && myTurn) {
             secondsLeft = TURN_SECONDS
             while (secondsLeft > 0) {
@@ -143,27 +154,26 @@ fun BattleScreen(state: AppState, match: Match) {
             )
             HudLabel(
                 when {
-                    local -> "ATAQUE A FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
+                    local && myTurn -> "SUA MEMÓRIA DE TIRO NA FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
+                    local -> "PASSANDO PARA ${match.sideName(match.turnOwner).uppercase()}"
                     myTurn -> "SEU TURNO · AGUARDANDO COORDENADA"
                     else -> "AGUARDE"
                 },
-                // a cor do texto é a mesma das marcas que este ataque vai deixar
+                // a cor é sempre a da frota alvo, a mesma das marcas na carta
                 if (local) commanderColor(viewSide.other()) else Naval.muted,
                 Modifier.fillMaxWidth().padding(top = 2.dp)
             )
 
             Gap(10)
             if (local) {
-                // uma carta só para os dois: cada marca sai na cor da frota atingida
+                // cada comandante vê só os próprios tiros: a carta da frota que ele ataca
                 BoardView(
-                    board = match.playerBoard,
+                    board = match.board(viewSide.other()),
                     livery = state.livery,
                     showShips = false,
                     interactive = myTurn,
-                    impact = playerImpact ?: enemyImpact,
-                    markTint = commanderColor(Side.PLAYER),
-                    overlay = match.enemyBoard,
-                    overlayTint = commanderColor(Side.ENEMY),
+                    impact = myImpact,
+                    markTint = commanderColor(viewSide.other()),
                     modifier = Modifier.fillMaxWidth()
                 ) { coord -> match.act(coord) }
             } else {
