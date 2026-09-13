@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -39,10 +40,20 @@ import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.drawShip
+import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.ShipClass
 import kotlinx.coroutines.launch
 
-private enum class Aisle(val key: K) { FLEETS(K.STORE_HULLS), CAMOS(K.STORE_CAMOS) }
+private enum class Aisle(val key: K) { FLEETS(K.STORE_HULLS), CAMOS(K.STORE_CAMOS), ABILITIES(K.STORE_ABILITIES) }
+
+/** Preço do cartucho avulso de cada habilidade — mais caro quanto mais decisivo o efeito. */
+private fun abilityPrice(ability: Ability): Int = when (ability) {
+    Ability.DOUBLE_BARRAGE -> 100
+    Ability.AIR_RECON -> 80
+    Ability.SONAR_PING -> 60
+    Ability.SMOKE -> 50
+    Ability.DIVE -> 0
+}
 
 /**
  * Loja do jogo. Tudo é pago com os créditos ganhos em combate — dinheiro de verdade
@@ -78,7 +89,11 @@ fun StoreScreen(state: AppState) {
         }
         Gap(6)
         HudLabel(
-            if (aisle == Aisle.FLEETS) t(K.STORE_HULLS_SUB) else t(K.STORE_CAMOS_SUB),
+            when (aisle) {
+                Aisle.FLEETS -> t(K.STORE_HULLS_SUB)
+                Aisle.CAMOS -> t(K.STORE_CAMOS_SUB)
+                Aisle.ABILITIES -> t(K.STORE_ABILITIES_SUB)
+            },
             Naval.muted
         )
 
@@ -89,7 +104,24 @@ fun StoreScreen(state: AppState) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            if (aisle == Aisle.FLEETS) {
+            if (aisle == Aisle.ABILITIES) {
+                Ability.entries.filter { it.active }.forEach { ability ->
+                    AbilityStoreRow(
+                        ability = ability,
+                        owned = profile.chargesOf(ability),
+                        price = abilityPrice(ability),
+                        credits = profile.credits,
+                        onBuy = {
+                            if (profile.buyAbilityCharge(ability, abilityPrice(ability))) {
+                                sync()
+                                notice = t(K.STORE_ABILITY_BOUGHT, ability.label)
+                            } else {
+                                notice = t(K.STORE_MISSING, abilityPrice(ability) - profile.credits, ability.label)
+                            }
+                        }
+                    )
+                }
+            } else if (aisle == Aisle.FLEETS) {
                 FleetLine.all.forEach { line ->
                     StoreRow(
                         title = line.name,
@@ -156,6 +188,55 @@ fun StoreScreen(state: AppState) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SecondaryButton(t(K.BACK), modifier = Modifier.weight(1f)) { state.screen = Screen.MENU }
             SecondaryButton(t(K.MENU_SHIPYARD), modifier = Modifier.weight(1f)) { state.screen = Screen.SHIPYARD }
+        }
+    }
+}
+
+/**
+ * Cartucho avulso de habilidade: não tem "equipar", só "comprar mais um" — o estoque
+ * atual aparece na descrição em vez de virar um selo de "conquistada".
+ */
+@Composable
+private fun AbilityStoreRow(ability: Ability, owned: Int, price: Int, credits: Int, onBuy: () -> Unit) {
+    val affordable = credits >= price
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Naval.surface)
+            .border(1.dp, Naval.line)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier
+                .background(Naval.surface2)
+                .border(1.dp, Naval.line)
+                .padding(12.dp)
+        ) {
+            Text(ability.icon, style = NavalType.title)
+        }
+        Spacer(Modifier.width(10.dp))
+        Column(Modifier.weight(1f)) {
+            Text(ability.label.uppercase(), style = NavalType.mono, color = Naval.ink)
+            Spacer(Modifier.height(3.dp))
+            HudLabel(ability.description, Naval.muted)
+            if (owned > 0) {
+                Spacer(Modifier.height(3.dp))
+                HudLabel(t(K.STORE_ABILITY_OWNED, owned.toString()), Naval.amberStrong)
+            }
+        }
+        Spacer(Modifier.width(10.dp))
+        Box(
+            Modifier
+                .border(1.dp, if (affordable) Naval.amber else Naval.lineSoft)
+                .clickable(enabled = affordable, onClick = onBuy)
+                .padding(horizontal = 14.dp, vertical = 9.dp)
+        ) {
+            Text(
+                "◆ $price",
+                style = NavalType.monoSmall,
+                color = if (affordable) Naval.amberStrong else Naval.muted
+            )
         }
     }
 }

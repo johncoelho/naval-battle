@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
+import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -193,9 +194,40 @@ fun ResultScreen(state: AppState, match: Match) {
         }
 
         Gap(12)
-        PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
+        if (match.opponent == Opponent.LAN) {
+            RematchSection(state, match)
+        } else {
+            PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
+        }
         Gap(8)
         SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
+    }
+}
+
+/**
+ * Revanche em rede: reaproveita a mesma ligação em vez de criar uma partida do zero —
+ * os dois lados precisam tocar no botão antes de a partida recomeçar, senão um dos
+ * dois ficaria parado numa tela de posicionamento vazia esperando o outro.
+ */
+@Composable
+private fun RematchSection(state: AppState, match: Match) {
+    when {
+        state.linkState != LinkState.CONNECTED ->
+            HudLabel(t(K.RESULT_REMATCH_LOST_LINK), Naval.danger)
+
+        state.rematchRequestedByMe ->
+            PrimaryButton(t(K.RESULT_REMATCH_WAITING), enabled = false) {}
+
+        else -> {
+            if (state.rematchRequestedByOpponent) {
+                HudLabel(
+                    t(K.RESULT_REMATCH_INVITE, match.sideName(match.mySide.other())),
+                    Naval.amberStrong
+                )
+                Gap(8)
+            }
+            PrimaryButton(t(K.RESULT_REMATCH)) { state.requestRematch() }
+        }
     }
 }
 

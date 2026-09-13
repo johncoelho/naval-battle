@@ -1,5 +1,9 @@
 package br.com.navalbattle.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,6 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -49,6 +54,7 @@ import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.ShipClass
 import br.com.navalbattle.game.Side
+import br.com.navalbattle.game.Taunt
 import br.com.navalbattle.game.Tone
 import kotlinx.coroutines.delay
 
@@ -72,6 +78,7 @@ fun BattleScreen(state: AppState, match: Match) {
     // local (mesmo aparelho, tela compartilhada) esconde a frota e reveza a visão.
     val solo = !local
     var confirmQuit by remember { mutableStateOf(false) }
+    var showTaunts by remember { mutableStateOf(false) }
 
     // no modo local cada comandante enxerga só a própria memória de tiros: a carta
     // exibida é sempre a da frota que ele ataca. Em rede e contra a IA, cada aparelho
@@ -161,6 +168,17 @@ fun BattleScreen(state: AppState, match: Match) {
                     "${t(K.TURN)} ${match.turnCount.toString().padStart(2, '0')}",
                     Modifier.weight(1f)
                 )
+                if (lan) {
+                    GapW(8)
+                    HudLabel(
+                        "💬",
+                        Naval.inkSoft,
+                        Modifier
+                            .border(1.dp, Naval.line)
+                            .clickable { showTaunts = true }
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
                 GapW(10)
                 HudLabel(
                     t(K.QUIT),
@@ -224,20 +242,47 @@ fun BattleScreen(state: AppState, match: Match) {
                 CalloutBanner(match.callout)
             }
 
-            if (match.mode == GameMode.TACTICAL) {
-                AbilityBar(match) { ability ->
-                    if (lan) state.useAbilityShared(ability) else match.selectAbility(ability)
+            // no modo local as habilidades ficam sozinhas, acima do placar — não há
+            // painel de frota própria ali para dividir a faixa com elas
+            if (match.mode == GameMode.TACTICAL && local) {
+                AbilityColumn(state, match, Modifier.fillMaxWidth()) { ability, ignoreCooldown ->
+                    match.selectAbility(ability, ignoreCooldown)
                 }
             }
 
-            if (local) {
-                Spacer(Modifier.weight(1f))
-                Scoreboard(match)
-            } else {
-                // IA e rede mostram a própria frota inteira, do jeito que o single
-                // player sempre mostrou — inclusive em rede, onde ninguém mais vê esta tela
-                OwnFleetPanel(state, match, viewSide, incomingImpact)
+            when {
+                local -> {
+                    Spacer(Modifier.weight(1f))
+                    Scoreboard(match)
+                }
+                // tático contra a IA ou em rede: frota própria à esquerda, habilidades
+                // à direita, lado a lado — as duas coisas cabem na mesma faixa
+                match.mode == GameMode.TACTICAL -> {
+                    Row(
+                        Modifier.fillMaxWidth().weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OwnFleetPanel(state, match, viewSide, incomingImpact, Modifier.weight(1.1f))
+                        AbilityColumn(state, match, Modifier.weight(1f)) { ability, ignoreCooldown ->
+                            if (lan) state.useAbilityShared(ability, ignoreCooldown)
+                            else match.selectAbility(ability, ignoreCooldown)
+                        }
+                    }
+                }
+                // clássico contra a IA ou em rede: só a frota própria, tela cheia
+                else -> OwnFleetPanel(state, match, viewSide, incomingImpact, Modifier.weight(1f))
             }
+        }
+
+        if (lan) {
+            TauntBubble(
+                match.lastTaunt,
+                senderLabel = { side -> if (side == match.mySide) t(K.YOU) else match.sideName(side) },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(top = 64.dp)
+            )
         }
 
         if (confirmQuit) {
@@ -246,57 +291,71 @@ fun BattleScreen(state: AppState, match: Match) {
                 onQuit = { state.quitToMenu() }
             )
         }
+
+        if (showTaunts) {
+            TauntOverlay(
+                onPick = { code -> state.sendTaunt(code); showTaunts = false },
+                onClose = { showTaunts = false }
+            )
+        }
     }
 }
 
 /**
- * Frota própria em tela cheia, como no modo solo: ocupa toda a faixa livre da
- * metade de baixo, sempre quadrada. Usada contra a IA e na rede — nos dois casos
- * ninguém mais está olhando para este aparelho.
- *
- * Extensão de [ColumnScope] de propósito: é o que dá acesso ao `Modifier.weight`
- * que estica o mapa até preencher o que sobrou da coluna que a chama.
+ * Frota própria, sempre quadrada e do tamanho do que sobra na faixa que o chamador
+ * reservou. Usada contra a IA e na rede — nos dois casos ninguém mais está olhando
+ * para este aparelho. Recebe o [modifier] pronto (já com o peso da faixa) em vez de
+ * exigir um `ColumnScope` do chamador, porque no tático ela divide espaço com
+ * [AbilityColumn] dentro de uma `Row`, e no clássico ocupa a coluna inteira sozinha.
  */
 @Composable
-private fun ColumnScope.OwnFleetPanel(state: AppState, match: Match, viewSide: Side, incomingImpact: Impact?) {
+private fun OwnFleetPanel(
+    state: AppState,
+    match: Match,
+    viewSide: Side,
+    incomingImpact: Impact?,
+    modifier: Modifier = Modifier
+) {
     val board = match.board(viewSide)
     val afloat = board.remainingShips().size
-    Gap(6)
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
-        Text(
-            "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}" +
-                " · ${t(K.ACCURACY)} ${match.accuracyOf(viewSide)}%",
-            style = NavalType.mono,
-            color = if (afloat <= 2) Naval.danger else Naval.greenBright
-        )
-    }
-    if (board.smokeActive) {
-        HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
-    }
-    Gap(6)
-    BoxWithConstraints(
-        Modifier
-            .fillMaxWidth()
-            .weight(1f)
-            .padding(bottom = 4.dp),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        // quadrada, do tamanho do que sobrou — larga no clássico, um pouco menor no
-        // tático, onde a barra de habilidades ocupa parte da faixa
-        val side = if (maxWidth < maxHeight) maxWidth else maxHeight
-        BoardView(
-            board = board,
-            skin = state.skin,
-            showShips = true,
-            sweep = false,
-            impact = incomingImpact,
-            modifier = Modifier.size(side)
-        )
+    Column(modifier) {
+        Gap(6)
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
+            Text(
+                "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}" +
+                    " · ${t(K.ACCURACY)} ${match.accuracyOf(viewSide)}%",
+                style = NavalType.mono,
+                color = if (afloat <= 2) Naval.danger else Naval.greenBright
+            )
+        }
+        if (board.smokeActive) {
+            HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
+        }
+        Gap(6)
+        BoxWithConstraints(
+            Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(bottom = 4.dp),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            // quadrada, do tamanho do que sobrou — larga no clássico, mais estreita
+            // no tático, onde ela divide a faixa com as habilidades
+            val side = if (maxWidth < maxHeight) maxWidth else maxHeight
+            BoardView(
+                board = board,
+                skin = state.skin,
+                showShips = true,
+                sweep = false,
+                impact = incomingImpact,
+                modifier = Modifier.size(side)
+            )
+        }
     }
 }
 
@@ -401,32 +460,169 @@ private suspend fun playShot(
     }
 }
 
+/**
+ * Ícone + descrição de efeito para cada habilidade, uma por linha — em vez do código
+ * curto de antes, que exigia já saber o que "REC" ou "SNR" queriam dizer. Rola por
+ * conta própria: numa tela baixa (celular dobrável aberto na horizontal, tablet em
+ * paisagem) ela encolhe pelo peso que o chamador reservou em vez de cortar a última
+ * habilidade da lista.
+ */
 @Composable
-private fun AbilityBar(match: Match, onUse: (Ability) -> Unit) {
+private fun AbilityColumn(
+    state: AppState,
+    match: Match,
+    modifier: Modifier = Modifier,
+    onUse: (Ability, Boolean) -> Unit
+) {
     val abilities = listOf(
         Ability.SONAR_PING,
         Ability.AIR_RECON,
         Ability.DOUBLE_BARRAGE,
         Ability.SMOKE
     )
-    Column {
+    Column(modifier.verticalScroll(rememberScrollState())) {
         HudLabel(t(K.BATTLE_ABILITIES))
-        Gap(6)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            abilities.forEach { ability ->
+        Gap(8)
+        abilities.forEach { ability ->
+            val ready = match.abilityAvailable(ability)
+            val charges = state.profile.chargesOf(ability)
+            // cartucho só entra em jogo quando a recarga é o único motivo bloqueando
+            val usingCharge = !ready && charges > 0 && match.abilityAvailable(ability, ignoreCooldown = true)
+            Row(
+                Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 AbilityButton(
-                    code = ability.code,
+                    code = ability.icon,
                     name = ability.shortName,
-                    enabled = match.abilityAvailable(ability),
+                    enabled = ready || usingCharge,
                     selected = match.pendingAbility == ability,
                     cooldown = match.abilityCooldown(ability)
-                ) { onUse(ability) }
+                ) {
+                    if (usingCharge) state.profile.consumeCharge(ability)
+                    onUse(ability, usingCharge)
+                }
+                GapW(8)
+                Column(Modifier.weight(1f)) {
+                    Text(ability.description, style = NavalType.monoSmall, color = Naval.muted)
+                    if (charges > 0) {
+                        HudLabel(
+                            t(K.BATTLE_ABILITY_CHARGE, charges.toString()),
+                            if (usingCharge) Naval.amberStrong else Naval.muted
+                        )
+                    }
+                }
             }
         }
-        Gap(6)
         val hint = match.pendingAbility?.let { t(K.BATTLE_ABILITY_AIM, it.label) }
             ?: t(K.BATTLE_ABILITY_HINT)
         HudLabel(hint, if (match.pendingAbility != null) Naval.amberStrong else Naval.muted)
+    }
+}
+
+private val TAUNT_EMOJIS = listOf("🔥", "💥", "😈", "😅", "🎯", "🏳️")
+private val TAUNT_PHRASES = listOf(
+    "FIRE" to K.TAUNT_FIRE,
+    "NICE" to K.TAUNT_NICE_SHOT,
+    "GG" to K.TAUNT_GG,
+    "MERCY" to K.TAUNT_MERCY,
+    "LUCKY" to K.TAUNT_LUCKY,
+    "INCOMING" to K.TAUNT_INCOMING
+)
+
+/** Emoji chega pronto (é o próprio glifo); grito de guerra chega como código e traduz aqui. */
+private fun tauntText(code: String): String =
+    TAUNT_PHRASES.firstOrNull { it.first == code }?.let { t(it.second) } ?: code
+
+/** Escolha de emoji ou grito de guerra para mandar ao outro aparelho, em rede local. */
+@Composable
+private fun TauntOverlay(onPick: (String) -> Unit, onClose: () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Naval.bg.copy(alpha = 0.94f))
+            .clickable(onClick = onClose)
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(24.dp)
+    ) {
+        Column(
+            Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .clickable(enabled = false) {}
+        ) {
+            HudLabel(t(K.BATTLE_TAUNT_EYEBROW), Naval.muted)
+            Gap(8)
+            Text(t(K.BATTLE_TAUNT_TITLE).uppercase(), style = NavalType.display, color = Naval.ink)
+            Gap(18)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                TAUNT_EMOJIS.forEach { emoji ->
+                    Box(
+                        Modifier
+                            .size(48.dp)
+                            .background(Naval.surface2)
+                            .border(1.dp, Naval.line)
+                            .clickable { onPick(emoji) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(emoji, style = NavalType.title)
+                    }
+                }
+            }
+            Gap(18)
+            TAUNT_PHRASES.forEach { (code, key) ->
+                HudLabel(
+                    t(key),
+                    Naval.ink,
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Naval.surface2)
+                        .border(1.dp, Naval.line)
+                        .clickable { onPick(code) }
+                        .padding(vertical = 12.dp, horizontal = 14.dp)
+                )
+                Gap(6)
+            }
+        }
+    }
+}
+
+/** Bolha flutuante do que o outro comandante mandou — some sozinha depois de um tempo. */
+@Composable
+private fun TauntBubble(taunt: Taunt?, senderLabel: (Side) -> String, modifier: Modifier = Modifier) {
+    var visible by remember { mutableStateOf(false) }
+    var current by remember { mutableStateOf<Taunt?>(null) }
+
+    LaunchedEffect(taunt?.id) {
+        if (taunt != null) {
+            current = taunt
+            visible = true
+            delay(2600)
+            visible = false
+        }
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + slideInVertically { -it / 2 },
+        exit = fadeOut(),
+        modifier = modifier
+    ) {
+        val c = current
+        if (c != null) {
+            Row(
+                Modifier
+                    .background(Naval.bg.copy(alpha = 0.92f))
+                    .border(1.dp, Naval.amber)
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(tauntText(c.code), style = NavalType.title, color = Naval.amberStrong)
+                GapW(8)
+                HudLabel(senderLabel(c.from), Naval.muted)
+            }
+        }
     }
 }
 
