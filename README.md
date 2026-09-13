@@ -106,6 +106,9 @@ pontuação, a resolução passa para o lado do dono da frota.
 A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
 
 - Cadastro com e-mail, senha e nome de usuário; login abre sessão guardada localmente.
+- **Entrar com o Google**, sem senha nenhuma — cai na mesma carreira se o e-mail
+  já tiver conta. O botão só aparece depois da configuração externa (ver
+  [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código)).
 - Sincroniza ao entrar, na abertura do app, ao fim de cada partida, em cada compra e
   ao mudar nome ou insígnia.
 - **Regra de fusão:** ao entrar, se a nuvem tiver mais XP ela desce; senão, o aparelho sobe.
@@ -201,8 +204,9 @@ detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume n
 
 ## Roadmap
 
-- [ ] Login com Google (o esquema já está pronto para receber)
-- [ ] Ranqueada online com Supabase Realtime
+- [x] Login com Google — falta só a configuração externa (Google Cloud + Supabase),
+      ver [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código)
+- [ ] Convite de amigo e partida rápida pela internet (via Supabase Realtime)
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
 - [ ] Compras com pagamento real (Google Play Billing) vendendo créditos
 - [ ] Alvo iOS: escrever os `actual` de áudio, preferências e rede. O IPA instalável

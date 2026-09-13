@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.11.0] — 2026-09-13 · Login com Google
+
+### Adicionado
+- **"Entrar com o Google"** na tela de Conta, ao lado do cadastro por e-mail: pede a
+  credencial pelo Credential Manager do Android e troca o token de identidade por uma
+  sessão no Supabase (`CloudApi.signInWithGoogle`, `grant_type=id_token`). Cai na
+  mesma carreira de uma conta por e-mail com o mesmo endereço — o gatilho
+  `on_auth_user_created` já tratava login social desde o início.
+- Botão só aparece com `GoogleAuthConfig.WEB_CLIENT_ID` preenchido — depende de
+  configuração externa (Google Cloud Console + provedor Google no Supabase) que só
+  o dono da conta consegue fazer. Passo a passo completo, com os links exatos, em
+  [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código).
+- Novas dependências Android: `androidx.credentials` e
+  `com.google.android.libraries.identity.googleid`, só para esse fluxo.
+
+### Notas
+- "Convidar um amigo para jogar online" (fora da rede local) ainda não está nesta
+  versão — depende de um canal de verdade pela internet (a ideia é usar o Supabase
+  Realtime, reaproveitando o mesmo protocolo que já roda na rede local), que é o
+  próximo passo depois do login funcionar de ponta a ponta.
+
 ## [0.10.1] — 2026-09-13 · Corrige travamento do tático em rede
 
 ### Corrigido

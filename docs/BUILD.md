@@ -9,6 +9,10 @@ Como uma versão nova do Naval Battle sai daqui e chega ao celular.
 3. Commitar na `main`.
 4. O GitHub Actions compila e publica sozinho.
 5. Baixar o APK e testar no aparelho.
+6. **Conferir a [landing page](https://johncoelho.github.io/naval-battle/)** — abrir e checar
+   que a data/tamanho da última compilação bateram com o build que acabou de sair (ver
+   [Landing page](#landing-page)). É uma checagem real, não uma suposição de que "deve
+   estar automático".
 
 ## Compilação local
 
@@ -78,6 +82,57 @@ Para recriar a base do zero em outro projeto: rodar [`supabase/schema.sql`](../s
 no SQL Editor e desligar *Confirm email* em Authentication → Sign In / Providers enquanto
 estiver em teste.
 
+## Login com Google — configuração do lado de fora do código
+
+O botão "Entrar com o Google" só aparece quando `GoogleAuthConfig.WEB_CLIENT_ID`
+(em `composeApp/src/commonMain/kotlin/br/com/navalbattle/data/GoogleAuth.kt`) não está
+em branco. Chegar até esse valor exige mexer em dois painéis que **só o dono da conta
+consegue acessar** — John faz essa parte, depois manda o Client ID final para entrar no
+código.
+
+### 1. Google Cloud Console
+
+1. Abrir **[console.cloud.google.com](https://console.cloud.google.com/)** e escolher ou
+   criar um projeto (pode ser o mesmo já usado para outra coisa, ou um novo chamado
+   "Naval Battle").
+2. **Tela de consentimento OAuth** —
+   **[console.cloud.google.com/apis/credentials/consent](https://console.cloud.google.com/apis/credentials/consent)**:
+   tipo de usuário "Externo", nome do app, e-mail de suporte. Pode ficar em modo de teste
+   (adicionando o próprio e-mail como testador) enquanto o jogo não sai da fase de teste.
+3. **Criar credenciais** —
+   **[console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)**
+   → "Create Credentials" → "OAuth client ID". Precisa de **dois** clientes:
+   - **Web application** — nome livre (ex.: "Naval Battle · Supabase"). Em
+     *Authorized redirect URIs* adicionar exatamente:
+     `https://cwtslesnthbenxswdcbv.supabase.co/auth/v1/callback`.
+     Depois de criar, copiar o **Client ID** e o **Client Secret** — os dois vão para o
+     Supabase no passo seguinte. **O Client ID desse cliente Web é o valor que também
+     entra em `GoogleAuthConfig.WEB_CLIENT_ID`** (o app pede a credencial ao Google
+     citando esse ID, para o token de identidade sair com a audiência que o Supabase
+     espera).
+   - **Android** — *Package name*: `br.com.navalbattle`. *SHA-1 certificate fingerprint*:
+     o da chave de depuração fixa do repositório. Para obter, rodar (com o JDK instalado,
+     não precisa do Gradle funcionando):
+     ```bash
+     keytool -list -v -keystore keystore/naval-debug.keystore -alias navalbattle -storepass navalbattle -keypass navalbattle
+     ```
+     e copiar a linha `SHA1:`. Esse cliente não tem Client Secret — só destrava a caixa
+     de seleção de conta para quem instalar o APK assinado com essa chave.
+
+### 2. Painel do Supabase
+
+Em **[supabase.com/dashboard/project/cwtslesnthbenxswdcbv/auth/providers](https://supabase.com/dashboard/project/cwtslesnthbenxswdcbv/auth/providers)**,
+achar **Google** na lista de provedores, ativar, e colar ali o **Client ID** e o
+**Client Secret** do cliente **Web** criado no passo anterior. Salvar.
+
+### 3. De volta ao código
+
+Só falta uma linha: mandar o **Client ID do cliente Web** (não o Android) para entrar em
+`GoogleAuthConfig.WEB_CLIENT_ID`. O trigger `on_auth_user_created` do
+[`supabase/schema.sql`](../supabase/schema.sql) já cria a carreira automaticamente também
+para quem entra pelo Google — é o mesmo mecanismo que já funciona para o cadastro por
+e-mail, sem mudança nenhuma na base.
+
 ## Landing page
 
 `site/index.html` é publicada pelo GitHub Pages através do workflow `.github/workflows/pages.yml`,
@@ -88,7 +143,15 @@ Endereço: **https://johncoelho.github.io/naval-battle/**
 
 O botão de download aponta para a release rolante:
 `releases/download/latest/naval-battle-debug.apk`. Como o build de APK recria essa release a
-cada push na `main`, o link nunca precisa ser atualizado.
+cada push na `main`, **o endereço do link nunca precisa ser editado** — o arquivo por trás
+dele é que troca sozinho. O rodapé da página também busca data e tamanho do APK atual na
+API do GitHub ao carregar, então esse texto também se atualiza sozinho.
+
+Mesmo assim, **a cada APK novo o site é aberto e conferido de verdade** (passo 6 do
+[caminho curto](#o-caminho-curto)) — a API do GitHub pode estar com limite de chamadas
+esgotado no momento em que alguém abre a página, e nesse caso ela cai no texto genérico de
+reserva em vez da data real. Uma checagem rápida evita entregar um APK sem saber se a
+vitrine dele está mostrando a informação certa.
 
 ## Regra dos artefatos
 
