@@ -106,12 +106,21 @@ actual class CloudApi actual constructor() {
 
     // ------------------------------------------------------------------ HTTP
 
+    /** Sessão vencida: quem chamou renova o token e repete. */
+    private class SessionExpired : Exception("Sessão expirada.")
+
     private suspend fun <T> call(block: suspend () -> CloudResult<T>): CloudResult<T> =
         withContext(Dispatchers.IO) {
             if (!SupabaseConfig.isConfigured) {
                 return@withContext CloudResult.Fail("Servidor do jogo ainda não configurado.")
             }
-            runCatching { block() }.getOrElse { e -> CloudResult.Fail(readable(e)) }
+            runCatching { block() }.getOrElse { e ->
+                if (e is SessionExpired) {
+                    CloudResult.Fail(e.message.orEmpty(), expired = true)
+                } else {
+                    CloudResult.Fail(readable(e))
+                }
+            }
         }
 
     private fun readable(e: Throwable): String {
@@ -162,6 +171,8 @@ actual class CloudApi actual constructor() {
         val code = conn.responseCode
         val stream = if (code in 200..299) conn.inputStream else conn.errorStream
         val text = stream?.bufferedReader()?.use(BufferedReader::readText).orEmpty()
+        // o token do Supabase vive uma hora; 401 aqui quer dizer "renove e tente de novo"
+        if (code == 401 && "Invalid login credentials" !in text) throw SessionExpired()
         if (code !in 200..299) {
             val message = runCatching {
                 val o = JSONObject(text)
