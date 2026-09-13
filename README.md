@@ -60,5 +60,5 @@ gravações em **domínio público** do Wikimedia Commons, cortadas, filtradas e
 
 - `sfx_hit.wav` — [Explosion-LS100155.ogg](https://commons.wikimedia.org/wiki/File:Explosion-LS100155.ogg) (Fg2, domínio público)
 - `sfx_sunk.wav` — [Explosion 10.ogg](https://commons.wikimedia.org/wiki/File:Explosion_10.ogg) (tcpp, domínio público) em camadas com o anterior e com a água
-- `sfx_miss.wav` — [Bathtub water splashes.ogg](https://commons.wikimedia.org/wiki/File:Bathtub_water_splashes.ogg) (domínio público)
+- `sfx_miss1/2/3.wav` — três quebras de onda diferentes de [Ocean Waves on a Tropical Beach.ogg](https://commons.wikimedia.org/wiki/File:Ocean_Waves_on_a_Tropical_Beach.ogg) (CC0), sorteadas em jogo para o tiro na água não enjoar
 - `sfx_launch.wav` — cauda de "Explosion 10.ogg" invertida, formando o assobio do projétil chegando
