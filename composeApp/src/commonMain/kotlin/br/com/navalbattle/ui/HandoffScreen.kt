@@ -88,7 +88,13 @@ fun HandoffScreen(state: AppState, match: Match) {
         PrimaryButton("Estou com o aparelho") {
             state.screen = Screen.PLACEMENT
         }
-        Gap(10)
+        Gap(8)
+        SecondaryButton("Voltar") {
+            // devolve o posicionamento a quem acabou de confirmar
+            match.backPlacement()
+            state.screen = Screen.PLACEMENT
+        }
+        Gap(8)
         SecondaryButton("Encerrar partida") { state.quitToMenu() }
         Gap(10)
         HudLabel("PREPARAÇÃO", Naval.muted)

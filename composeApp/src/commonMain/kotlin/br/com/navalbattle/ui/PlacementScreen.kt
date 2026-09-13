@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -48,6 +49,7 @@ import br.com.navalbattle.game.Orientation
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.Ship
 import br.com.navalbattle.game.ShipClass
+import br.com.navalbattle.game.Side
 import kotlinx.coroutines.launch
 
 private const val DRAG_SLOP_PX = 14f
@@ -219,8 +221,13 @@ fun PlacementScreen(state: AppState, match: Match) {
                 match.randomizePlacingFleet()
                 error = null
             }
-            SecondaryButton("Encerrar", modifier = Modifier.weight(1f)) {
-                state.quitToMenu()
+            SecondaryButton("Voltar", modifier = Modifier.weight(1f)) {
+                when {
+                    // no local, volta para o posicionamento do primeiro comandante
+                    match.backPlacement() -> state.handoffToPlacement(Side.PLAYER)
+                    match.opponent == Opponent.LOCAL -> state.screen = Screen.NAMES
+                    else -> state.quitToMenu()
+                }
             }
         }
         Gap(8)
@@ -237,6 +244,15 @@ fun PlacementScreen(state: AppState, match: Match) {
                 state.screen = Screen.BATTLE
             }
         }
+        Gap(8)
+        HudLabel(
+            "ENCERRAR PARTIDA",
+            Naval.danger,
+            Modifier
+                .fillMaxWidth()
+                .clickable { state.quitToMenu() }
+                .padding(vertical = 6.dp)
+        )
     }
 }
 

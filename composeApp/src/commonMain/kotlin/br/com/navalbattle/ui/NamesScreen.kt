@@ -35,8 +35,8 @@ import br.com.navalbattle.game.Side
 /** Cada comandante escolhe seu nome antes da partida local. */
 @Composable
 fun NamesScreen(state: AppState, match: Match) {
-    var one by remember { mutableStateOf("") }
-    var two by remember { mutableStateOf("") }
+    var one by remember { mutableStateOf(match.nameOne) }
+    var two by remember { mutableStateOf(match.nameTwo) }
 
     Column(
         Modifier

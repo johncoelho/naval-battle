@@ -59,6 +59,8 @@ fun BoardView(
     preview: Ship? = null,
     previewValid: Boolean = true,
     impact: Impact? = null,
+    /** Cor do dono desta frota: pinta as marcas para saber de quem é o navio atingido. */
+    markTint: Color? = null,
     onCellTap: (Coord) -> Unit = {}
 ) {
     val transition = rememberInfiniteTransition(label = "radar")
@@ -172,7 +174,7 @@ fun BoardView(
         // marcações
         board.marks.forEach { (coord, mark) ->
             val topLeft = Offset(coord.x * cell, coord.y * cell)
-            drawMark(mark, topLeft, cell)
+            drawMark(mark, topLeft, cell, markTint)
         }
 
         // pré-visualização do posicionamento
@@ -567,33 +569,34 @@ private fun DrawScope.drawFleetShip(ship: Ship, cell: Float, livery: Livery, alp
     )
 }
 
-private fun DrawScope.drawMark(mark: Mark, topLeft: Offset, cell: Float) {
+private fun DrawScope.drawMark(mark: Mark, topLeft: Offset, cell: Float, tint: Color?) {
     val center = Offset(topLeft.x + cell / 2f, topLeft.y + cell / 2f)
+    val hitColor = tint ?: Naval.danger
     when (mark) {
         Mark.MISS -> drawCircle(
-            Naval.inkSoft.copy(alpha = 0.45f),
+            (tint ?: Naval.inkSoft).copy(alpha = 0.45f),
             radius = cell * 0.17f,
             center = center,
             style = Stroke(1.5f)
         )
 
         Mark.HIT -> {
-            drawRect(Naval.danger.copy(alpha = 0.32f), topLeft = topLeft, size = Size(cell, cell))
-            drawRect(Naval.danger, topLeft = topLeft, size = Size(cell, cell), style = Stroke(1f))
-            drawCircle(Naval.amberStrong, radius = cell * 0.16f, center = center)
+            drawRect(hitColor.copy(alpha = 0.32f), topLeft = topLeft, size = Size(cell, cell))
+            drawRect(hitColor, topLeft = topLeft, size = Size(cell, cell), style = Stroke(1f))
+            drawCircle(tint ?: Naval.amberStrong, radius = cell * 0.16f, center = center)
         }
 
         Mark.SUNK -> {
-            drawRect(Naval.danger.copy(alpha = 0.16f), topLeft = topLeft, size = Size(cell, cell))
+            drawRect(hitColor.copy(alpha = if (tint != null) 0.42f else 0.16f), topLeft = topLeft, size = Size(cell, cell))
             val pad = cell * 0.28f
             drawLine(
-                Naval.danger,
+                hitColor,
                 Offset(topLeft.x + pad, topLeft.y + pad),
                 Offset(topLeft.x + cell - pad, topLeft.y + cell - pad),
                 2f
             )
             drawLine(
-                Naval.danger,
+                hitColor,
                 Offset(topLeft.x + cell - pad, topLeft.y + pad),
                 Offset(topLeft.x + pad, topLeft.y + cell - pad),
                 2f
