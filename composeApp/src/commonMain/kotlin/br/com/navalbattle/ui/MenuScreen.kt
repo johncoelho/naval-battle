@@ -87,6 +87,7 @@ fun MenuScreen(state: AppState) {
         Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
             PrimaryButton("Partida rápida", "vs. IA") { state.newMatch(Opponent.AI) }
             SecondaryButton("Dois jogadores", "no mesmo aparelho") { state.newMatch(Opponent.LOCAL) }
+            SecondaryButton("Rede local", "outro celular no mesmo Wi-Fi") { state.screen = Screen.LAN }
             SecondaryButton("Estaleiro", state.skin.livery.name) { state.screen = Screen.SHIPYARD }
             SecondaryButton("Loja do arsenal", "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
             SecondaryButton("Perfil", state.profile.rank.label) { state.screen = Screen.PROFILE }

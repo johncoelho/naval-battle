@@ -61,12 +61,18 @@ fun BattleScreen(state: AppState, match: Match) {
     DisposableEffect(Unit) { onDispose { sound.release() } }
 
     val local = match.opponent == Opponent.LOCAL
+    val lan = match.opponent == Opponent.LAN
     var confirmQuit by remember { mutableStateOf(false) }
 
     // no modo local cada comandante enxerga só a própria memória de tiros: a carta
-    // exibida é sempre a da frota que ele ataca. Contra a IA a tela é sempre a do humano.
+    // exibida é sempre a da frota que ele ataca. Em rede, cada aparelho comanda o seu
+    // lado. Contra a IA a tela é sempre a do humano.
     var localView by remember { mutableStateOf(Side.PLAYER) }
-    val viewSide = if (local) localView else Side.PLAYER
+    val viewSide = when {
+        local -> localView
+        lan -> match.mySide
+        else -> Side.PLAYER
+    }
     val myTurn = match.phase == Phase.BATTLE && match.turnOwner == viewSide
 
     // só o disparo mais recente anima — as marcas antigas ficam paradas na carta
@@ -90,13 +96,14 @@ fun BattleScreen(state: AppState, match: Match) {
                 delay(1000)
                 secondsLeft--
             }
-            match.fireRandom()
+            // em rede, quem escolhe a coordenada é o dono do turno, e ela viaja
+            if (lan) match.pickTarget()?.let { state.fireShared(it) } else match.fireRandom()
         }
     }
 
     // só contra a IA existe turno automático do adversário
     LaunchedEffect(match.turnOwner, match.phase) {
-        if (!local && match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
+        if (!local && !lan && match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
             delay(1500)
             match.enemyTurn()
         }
@@ -154,18 +161,21 @@ fun BattleScreen(state: AppState, match: Match) {
             )
             HudLabel(
                 when {
+                    lan && match.phase == Phase.PLACEMENT -> "AGUARDANDO A FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
+                    lan && myTurn -> "SEU TURNO · ATAQUE A FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
+                    lan -> "VEZ DE ${match.sideName(match.turnOwner).uppercase()}"
                     local && myTurn -> "SUA MEMÓRIA DE TIRO NA FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
                     local -> "PASSANDO PARA ${match.sideName(match.turnOwner).uppercase()}"
                     myTurn -> "SEU TURNO · AGUARDANDO COORDENADA"
                     else -> "AGUARDE"
                 },
                 // a cor é sempre a da frota alvo, a mesma das marcas na carta
-                if (local) commanderColor(viewSide.other()) else Naval.muted,
+                if (local || lan) commanderColor(viewSide.other()) else Naval.muted,
                 Modifier.fillMaxWidth().padding(top = 2.dp)
             )
 
             Gap(10)
-            if (local) {
+            if (local || lan) {
                 // cada comandante vê só os próprios tiros: a carta da frota que ele ataca
                 BoardView(
                     board = match.board(viewSide.other()),
@@ -175,7 +185,7 @@ fun BattleScreen(state: AppState, match: Match) {
                     impact = myImpact,
                     markTint = commanderColor(viewSide.other()),
                     modifier = Modifier.fillMaxWidth()
-                ) { coord -> match.act(coord) }
+                ) { coord -> if (lan) state.fireShared(coord) else match.act(coord) }
             } else {
                 BoardView(
                     board = match.enemyBoard,
@@ -196,12 +206,14 @@ fun BattleScreen(state: AppState, match: Match) {
             }
 
             if (match.mode == GameMode.TACTICAL) {
-                AbilityBar(match)
+                AbilityBar(match) { ability ->
+                    if (lan) state.useAbilityShared(ability) else match.selectAbility(ability)
+                }
             }
 
             Spacer(Modifier.weight(1f))
 
-            if (local) {
+            if (local || lan) {
                 Scoreboard(match)
             } else {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -352,7 +364,7 @@ private suspend fun playShot(
 }
 
 @Composable
-private fun AbilityBar(match: Match) {
+private fun AbilityBar(match: Match, onUse: (Ability) -> Unit) {
     val abilities = listOf(
         Ability.SONAR_PING,
         Ability.AIR_RECON,
@@ -370,7 +382,7 @@ private fun AbilityBar(match: Match) {
                     enabled = match.abilityAvailable(ability),
                     selected = match.pendingAbility == ability,
                     cooldown = match.abilityCooldown(ability)
-                ) { match.selectAbility(ability) }
+                ) { onUse(ability) }
             }
         }
         Gap(6)

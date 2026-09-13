@@ -39,14 +39,15 @@ import br.com.navalbattle.game.Side
 @Composable
 fun ResultScreen(state: AppState, match: Match) {
     val victory = match.winner == Side.PLAYER
-    val local = match.opponent == Opponent.LOCAL
+    // partida entre pessoas (mesmo aparelho ou rede) mostra os dois comandantes
+    val local = match.opponent != Opponent.AI
     val winnerSide = match.winner ?: Side.PLAYER
 
     // a carreira só conta partidas contra a IA: no local os dois usam o mesmo perfil.
     // fica num efeito para creditar uma única vez, e não a cada recomposição
     var award by remember(match) { mutableStateOf<Award?>(null) }
     LaunchedEffect(match) {
-        if (!local) {
+        if (match.opponent == Opponent.AI) {
             award = state.profile.registerMatch(
                 victory = victory,
                 shotsFired = match.playerShots,

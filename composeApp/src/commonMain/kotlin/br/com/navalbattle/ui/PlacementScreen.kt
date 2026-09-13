@@ -224,6 +224,8 @@ fun PlacementScreen(state: AppState, match: Match) {
             }
             SecondaryButton("Voltar", modifier = Modifier.weight(1f)) {
                 when {
+                    // em rede, voltar desfaz a ligação com o outro aparelho
+                    match.opponent == Opponent.LAN -> state.quitToMenu()
                     // no local, volta para o posicionamento do primeiro comandante
                     match.backPlacement() -> state.handoffToPlacement(Side.PLAYER)
                     match.opponent == Opponent.LOCAL -> state.screen = Screen.NAMES
@@ -237,12 +239,15 @@ fun PlacementScreen(state: AppState, match: Match) {
             enabled = board.ships.size == ShipClass.fleet.size
         ) {
             match.confirmPlacement()
-            // no modo local ainda falta o segundo comandante posicionar a frota dele;
-            // a partir daí a batalha inteira corre na mesma tela
-            if (match.phase == Phase.PLACEMENT) {
-                state.handoffToPlacement(match.placingSide)
-            } else {
-                state.screen = Screen.BATTLE
+            when {
+                // em rede: manda a frota e vai esperar a do adversário na tela de batalha
+                match.opponent == Opponent.LAN -> {
+                    state.sendFleet()
+                    state.screen = Screen.BATTLE
+                }
+                // no local ainda falta o segundo comandante posicionar a frota dele
+                match.phase == Phase.PLACEMENT -> state.handoffToPlacement(match.placingSide)
+                else -> state.screen = Screen.BATTLE
             }
         }
         Gap(8)
