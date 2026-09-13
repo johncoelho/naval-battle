@@ -33,7 +33,7 @@ Código-fonte da verdade: `design/Theme.kt`, `design/Paint.kt`, `design/FleetLin
 | `green` / `greenBright` | `#5F8F4A` / `#8ED17A` | radar, sonar, confirmação |
 | `amber` / `amberStrong` / `amberInk` | `#E6AC3F` / `#FFC95C` / `#1E1402` | ação, destaque, texto sobre âmbar |
 | `danger` | `#E05A35` | dano, perda, encerrar |
-| `commanderOne` / `commanderTwo` | `#48C9F0` / `#F06AC2` | identidade dos dois comandantes no modo local |
+| `commanderOne` / `commanderTwo` | `#48C9F0` / `#3ED598` | identidade dos dois comandantes no modo local |
 
 **Regra das cores de comandante:** ciano e magenta existem para distinguir pessoas, não
 estados. Nunca use uma delas para "sucesso" ou "erro", e nunca use verde/âmbar/vermelho
