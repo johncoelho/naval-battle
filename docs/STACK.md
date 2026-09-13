@@ -36,6 +36,9 @@ Consequências práticas dessa escolha, todas deliberadas:
 - **Tipografia**: famílias do sistema, com peso e espaçamento fazendo o trabalho.
 - **Rede**: `HttpURLConnection` + `org.json`, no `androidMain`. São cinco chamadas REST
   ao Supabase; uma biblioteca inteira para isso não se paga.
+- **Rede local**: NSD e sockets do próprio Android, em vez do Nearby Connections — que
+  exigiria Google Play Services, permissão de localização e só falaria com Android. O
+  mDNS do NSD é o mesmo do Bonjour, então o iOS entra depois sem trocar de protocolo.
 - **Persistência**: `SharedPreferences` por trás de um `expect class Prefs`.
 
 Antes de somar uma dependência, a pergunta é: quanto de APK e de acoplamento ela custa,
@@ -56,6 +59,7 @@ Três pares `expect/actual` isolam a plataforma:
 | `MusicPlayer` | trilha em laço | `MediaPlayer` com `isLooping` |
 | `Prefs` | chave-valor da carreira | `SharedPreferences` |
 | `CloudApi` | conta e sincronização | `HttpURLConnection` + `org.json` |
+| `LanLink` | partida na rede local | `NsdManager` (mDNS) + `ServerSocket`/`Socket` |
 
 **Portar para iOS é escrever esses quatro `actual`.** Nenhuma tela, nenhuma regra de jogo
 precisa mudar. Manter essa propriedade é a razão de existir da separação: código de
