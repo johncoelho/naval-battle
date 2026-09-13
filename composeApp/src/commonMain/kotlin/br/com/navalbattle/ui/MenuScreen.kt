@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.GameMode
@@ -47,7 +49,7 @@ fun MenuScreen(state: AppState) {
             HudLabel(state.profile.rank.label.uppercase(), Naval.inkSoft)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HudLabel(
-                    if (state.musicOn) "TRILHA ON" else "TRILHA OFF",
+                    if (state.musicOn) t(K.MENU_MUSIC_ON) else t(K.MENU_MUSIC_OFF),
                     if (state.musicOn) Naval.greenBright else Naval.muted,
                     Modifier
                         .border(1.dp, Naval.line)
@@ -60,16 +62,16 @@ fun MenuScreen(state: AppState) {
         }
 
         Spacer(Modifier.height(22.dp))
-        Text("DEQUE DE", style = NavalType.display, color = Naval.ink)
-        Text("COMANDO", style = NavalType.display, color = Naval.amberStrong)
+        Text(t(K.MENU_TITLE_1).uppercase(), style = NavalType.display, color = Naval.ink)
+        Text(t(K.MENU_TITLE_2).uppercase(), style = NavalType.display, color = Naval.amberStrong)
         Spacer(Modifier.height(4.dp))
-        HudLabel("${state.profile.name.uppercase()} · ${state.profile.xp} XP")
+        HudLabel("${state.profile.displayName.uppercase()} · ${state.profile.xp} XP")
 
         Spacer(Modifier.height(20.dp))
         FleetPreview(state)
 
         Spacer(Modifier.height(20.dp))
-        HudLabel("MODO DE COMBATE")
+        HudLabel(t(K.MENU_MODE))
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             GameMode.entries.forEach { mode ->
@@ -85,17 +87,17 @@ fun MenuScreen(state: AppState) {
 
         Spacer(Modifier.height(20.dp))
         Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            PrimaryButton("Partida rápida", "vs. IA") { state.newMatch(Opponent.AI) }
-            SecondaryButton("Dois jogadores", "no mesmo aparelho") { state.newMatch(Opponent.LOCAL) }
-            SecondaryButton("Rede local", "outro celular no mesmo Wi-Fi") { state.screen = Screen.LAN }
-            SecondaryButton("Estaleiro", state.skin.livery.name) { state.screen = Screen.SHIPYARD }
-            SecondaryButton("Loja do arsenal", "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
-            SecondaryButton("Perfil", state.profile.rank.label) { state.screen = Screen.PROFILE }
+            PrimaryButton(t(K.MENU_QUICK), t(K.MENU_QUICK_SUB)) { state.newMatch(Opponent.AI) }
+            SecondaryButton(t(K.MENU_LOCAL), t(K.MENU_LOCAL_SUB)) { state.newMatch(Opponent.LOCAL) }
+            SecondaryButton(t(K.MENU_LAN), t(K.MENU_LAN_SUB)) { state.screen = Screen.LAN }
+            SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name) { state.screen = Screen.SHIPYARD }
+            SecondaryButton(t(K.MENU_STORE), "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
+            SecondaryButton(t(K.MENU_PROFILE), state.profile.rank.label) { state.screen = Screen.PROFILE }
             SecondaryButton(
-                if (state.profile.signedIn) "Conta" else "Criar conta",
-                if (state.profile.signedIn) state.profile.accountEmail else "salvar na nuvem"
+                if (state.profile.signedIn) t(K.MENU_ACCOUNT) else t(K.MENU_CREATE_ACCOUNT),
+                if (state.profile.signedIn) state.profile.accountEmail else t(K.MENU_ACCOUNT_SUB)
             ) { state.screen = Screen.AUTH }
-            SecondaryButton("Ranqueada", "em breve", enabled = false) {}
+            SecondaryButton(t(K.MENU_RANKED), t(K.MENU_SOON), enabled = false) {}
         }
 
         Spacer(Modifier.weight(1f))
@@ -103,19 +105,19 @@ fun MenuScreen(state: AppState) {
             Modifier.fillMaxWidth().padding(top = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            HudLabel("DEQUE", Naval.amberStrong)
+            HudLabel(t(K.MENU_TAB_DECK), Naval.amberStrong)
             HudLabel(
-                "ESTALEIRO",
+                t(K.MENU_SHIPYARD),
                 Naval.muted,
                 Modifier.clickable { state.screen = Screen.SHIPYARD }
             )
             HudLabel(
-                "PERFIL",
+                t(K.MENU_PROFILE),
                 Naval.muted,
                 Modifier.clickable { state.screen = Screen.PROFILE }
             )
             HudLabel(
-                "LOJA",
+                t(K.MENU_TAB_STORE),
                 Naval.muted,
                 Modifier.clickable { state.screen = Screen.STORE }
             )
@@ -150,7 +152,7 @@ private fun FleetPreview(state: AppState) {
             )
         }
         Spacer(Modifier.height(8.dp))
-        HudLabel("${state.skin.fleet.name.uppercase()} · ${state.skin.livery.name.uppercase()}")
+        HudLabel("${state.skin.fleet.name.uppercase()} · ${state.skin.paint.name.uppercase()}")
     }
 }
 

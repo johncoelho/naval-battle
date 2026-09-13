@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Side
@@ -45,28 +47,28 @@ fun NamesScreen(state: AppState, match: Match) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        ScreenTopBar("DOIS JOGADORES", match.mode.label.uppercase())
+        ScreenTopBar(t(K.MENU_LOCAL), match.mode.label.uppercase())
         Gap(24)
 
-        Text("QUEM ESTÁ NO", style = NavalType.display, color = Naval.ink)
-        Text("COMANDO?", style = NavalType.display, color = Naval.amberStrong)
+        Text(t(K.NAMES_TITLE_1).uppercase(), style = NavalType.display, color = Naval.ink)
+        Text(t(K.NAMES_TITLE_2).uppercase(), style = NavalType.display, color = Naval.amberStrong)
         Gap(6)
-        HudLabel("O PLACAR DA BATALHA USA ESSES NOMES")
+        HudLabel(t(K.NAMES_SUB))
 
         Gap(28)
-        NameField("Comandante 1", one) { one = it }
+        NameField(t(K.NAMES_ONE), one) { one = it }
         Gap(14)
-        NameField("Comandante 2", two) { two = it }
+        NameField(t(K.NAMES_TWO), two) { two = it }
 
         Spacer(Modifier.weight(1f))
 
-        PrimaryButton("Começar") {
+        PrimaryButton(t(K.START)) {
             match.setName(Side.PLAYER, one)
             match.setName(Side.ENEMY, two)
             state.screen = Screen.PLACEMENT
         }
         Gap(8)
-        SecondaryButton("Voltar") { state.quitToMenu() }
+        SecondaryButton(t(K.BACK)) { state.quitToMenu() }
     }
 }
 

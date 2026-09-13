@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import kotlin.math.sin
 
@@ -43,13 +45,7 @@ import kotlin.math.sin
 private const val SPLASH_MS = 3600
 
 /** Jargão de praxe enquanto a frota se prepara. */
-private val LOADING_LINES = listOf(
-    "Abastecendo a frota",
-    "Carregando os canhões",
-    "Calibrando o sonar",
-    "Traçando a carta náutica",
-    "Içando âncora"
-)
+private val LOADING_LINES = listOf(K.LOAD_1, K.LOAD_2, K.LOAD_3, K.LOAD_4, K.LOAD_5)
 
 /** Contatos que a varredura acende antes do nome entrar. */
 private val BLIPS = listOf(
@@ -64,20 +60,20 @@ private val BLIPS = listOf(
  */
 @Composable
 fun SplashScreen(state: AppState) {
-    val t = remember { Animatable(0f) }
+    val anim = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
-        t.animateTo(1f, tween(SPLASH_MS, easing = LinearEasing))
+        anim.animateTo(1f, tween(SPLASH_MS, easing = LinearEasing))
         state.screen = Screen.MENU
     }
 
-    val p = t.value
+    val p = anim.value
     val gridAlpha = ((p - 0.03f) / 0.14f).coerceIn(0f, 1f)
     val stampAt = 0.50f
     val stamp = ((p - stampAt) / 0.12f).coerceIn(0f, 1f)
     val flash = if (p < stampAt || p > stampAt + 0.09f) 0f
     else sin((p - stampAt) / 0.09f * 3.1416f) * 0.45f
-    val line = LOADING_LINES[(p * LOADING_LINES.size).toInt().coerceIn(0, LOADING_LINES.lastIndex)]
+    val line = t(LOADING_LINES[(p * LOADING_LINES.size).toInt().coerceIn(0, LOADING_LINES.lastIndex)])
 
     Box(
         Modifier
@@ -185,7 +181,7 @@ fun SplashScreen(state: AppState) {
             Spacer(Modifier.height(10.dp))
             Box(Modifier.width(72.dp).height(2.dp).background(Naval.amber))
             Spacer(Modifier.height(8.dp))
-            HudLabel("COMANDO DE FROTA", Naval.inkSoft)
+            HudLabel(t(K.SPLASH_TAG), Naval.inkSoft)
         }
 
         // barra de carregamento com o jargão de bordo

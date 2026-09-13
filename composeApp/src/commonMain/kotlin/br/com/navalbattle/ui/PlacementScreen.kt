@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.BOARD_SIZE
@@ -82,9 +84,9 @@ fun PlacementScreen(state: AppState, match: Match) {
     ) {
         ScreenTopBar(
             if (match.opponent == Opponent.LOCAL) {
-                "POSICIONAMENTO · ${match.sideName(match.placingSide).uppercase()}"
+                "${t(K.PLACEMENT)} · ${match.sideName(match.placingSide).uppercase()}"
             } else {
-                "POSICIONAMENTO"
+                t(K.PLACEMENT)
             },
             match.mode.label.uppercase()
         )
@@ -130,7 +132,7 @@ fun PlacementScreen(state: AppState, match: Match) {
                                     board.place(Ship(ship.type, origin, ship.orientation))
                                     error = null
                                 } else {
-                                    error = "Posição inválida"
+                                    error = t(K.PLACEMENT_INVALID)
                                 }
                             } else if (d != null) {
                                 // toque sem arrasto: gira o navio no lugar
@@ -155,7 +157,7 @@ fun PlacementScreen(state: AppState, match: Match) {
                                         rotatingType = null
                                     }
                                 } else {
-                                    error = "Sem espaço para girar aqui"
+                                    error = t(K.PLACEMENT_NO_ROOM)
                                 }
                             }
                             drag = null
@@ -204,7 +206,7 @@ fun PlacementScreen(state: AppState, match: Match) {
 
         Gap(10)
         HudLabel(
-            error ?: "Toque no navio para girar · arraste para reposicionar",
+            error ?: t(K.PLACEMENT_HINT),
             if (error != null) Naval.danger else Naval.muted
         )
 
@@ -218,11 +220,11 @@ fun PlacementScreen(state: AppState, match: Match) {
         Spacer(Modifier.weight(1f))
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SecondaryButton("Aleatório", modifier = Modifier.weight(1f)) {
+            SecondaryButton(t(K.RANDOM), modifier = Modifier.weight(1f)) {
                 match.randomizePlacingFleet()
                 error = null
             }
-            SecondaryButton("Voltar", modifier = Modifier.weight(1f)) {
+            SecondaryButton(t(K.BACK), modifier = Modifier.weight(1f)) {
                 when {
                     // em rede, voltar desfaz a ligação com o outro aparelho
                     match.opponent == Opponent.LAN -> state.quitToMenu()
@@ -235,7 +237,7 @@ fun PlacementScreen(state: AppState, match: Match) {
         }
         Gap(8)
         PrimaryButton(
-            "Confirmar",
+            t(K.CONFIRM),
             enabled = board.ships.size == ShipClass.fleet.size
         ) {
             match.confirmPlacement()
@@ -252,7 +254,7 @@ fun PlacementScreen(state: AppState, match: Match) {
         }
         Gap(8)
         HudLabel(
-            "ENCERRAR PARTIDA",
+            t(K.QUIT_MATCH),
             Naval.danger,
             Modifier
                 .fillMaxWidth()

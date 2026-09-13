@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.Match
@@ -45,7 +47,7 @@ fun HandoffScreen(state: AppState, match: Match) {
     ) {
         Spacer(Modifier.weight(1f))
 
-        HudLabel("PASSE O APARELHO", Naval.muted)
+        HudLabel(t(K.HANDOFF_PASS), Naval.muted)
         Gap(10)
         Text(
             name.uppercase(),
@@ -55,7 +57,7 @@ fun HandoffScreen(state: AppState, match: Match) {
         )
         Gap(6)
         Text(
-            "Posicione a sua frota",
+            t(K.HANDOFF_PLACE),
             style = NavalType.body,
             color = Naval.inkSoft,
             textAlign = TextAlign.Center
@@ -81,22 +83,22 @@ fun HandoffScreen(state: AppState, match: Match) {
         }
 
         Gap(22)
-        HudLabel("O OUTRO COMANDANTE NÃO DEVE VER A TELA", Naval.muted)
+        HudLabel(t(K.HANDOFF_HIDE), Naval.muted)
 
         Spacer(Modifier.weight(1f))
 
-        PrimaryButton("Estou com o aparelho") {
+        PrimaryButton(t(K.HANDOFF_HAVE_IT)) {
             state.screen = Screen.PLACEMENT
         }
         Gap(8)
-        SecondaryButton("Voltar") {
+        SecondaryButton(t(K.BACK)) {
             // devolve o posicionamento a quem acabou de confirmar
             match.backPlacement()
             state.screen = Screen.PLACEMENT
         }
         Gap(8)
-        SecondaryButton("Encerrar partida") { state.quitToMenu() }
+        SecondaryButton(t(K.QUIT_MATCH)) { state.quitToMenu() }
         Gap(10)
-        HudLabel("PREPARAÇÃO", Naval.muted)
+        HudLabel(t(K.HANDOFF_PREP), Naval.muted)
     }
 }
