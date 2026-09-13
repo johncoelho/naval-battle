@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.ShipClass
+import kotlinx.coroutines.launch
 
 private enum class Aisle(val label: String) { FLEETS("Cascos"), CAMOS("Camuflagens") }
 
@@ -49,6 +51,10 @@ fun StoreScreen(state: AppState) {
     val profile = state.profile
     var aisle by remember { mutableStateOf(Aisle.FLEETS) }
     var notice by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    // toda compra sobe para a conta, quando existe uma conectada
+    fun sync() = scope.launch { state.pushQuietly() }
 
     Column(
         Modifier
@@ -98,6 +104,7 @@ fun StoreScreen(state: AppState) {
                         onBuy = {
                             if (profile.buyFleet(line.id, line.price)) {
                                 profile.equipFleet(line.id)
+                                sync()
                                 notice = "${line.name} entrou em serviço"
                             } else {
                                 notice = "Faltam ◆ ${line.price - profile.credits} para a ${line.name}"
@@ -105,6 +112,7 @@ fun StoreScreen(state: AppState) {
                         },
                         onEquip = {
                             profile.equipFleet(line.id)
+                            sync()
                             notice = "${line.name} entrou em serviço"
                         }
                     )
@@ -122,6 +130,7 @@ fun StoreScreen(state: AppState) {
                         onBuy = {
                             if (profile.buy(livery.id, livery.price)) {
                                 profile.equip(livery.id)
+                                sync()
                                 notice = "${livery.name} aplicada na frota"
                             } else {
                                 notice = "Faltam ◆ ${livery.price - profile.credits} para a ${livery.name}"
@@ -129,6 +138,7 @@ fun StoreScreen(state: AppState) {
                         },
                         onEquip = {
                             profile.equip(livery.id)
+                            sync()
                             notice = "${livery.name} aplicada na frota"
                         }
                     )

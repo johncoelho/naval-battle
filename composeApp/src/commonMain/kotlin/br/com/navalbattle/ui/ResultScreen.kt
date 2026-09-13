@@ -54,6 +54,8 @@ fun ResultScreen(state: AppState, match: Match) {
                 shipsSunk = ShipClass.fleet.size - match.enemyBoard.remainingShips().size,
                 turns = match.turnCount
             )
+            // com conta conectada a carreira sobe sozinha depois de cada partida
+            state.pushQuietly()
         }
     }
 

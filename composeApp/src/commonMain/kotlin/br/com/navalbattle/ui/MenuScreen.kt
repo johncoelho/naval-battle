@@ -90,6 +90,10 @@ fun MenuScreen(state: AppState) {
             SecondaryButton("Estaleiro", state.skin.livery.name) { state.screen = Screen.SHIPYARD }
             SecondaryButton("Loja do arsenal", "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
             SecondaryButton("Perfil", state.profile.rank.label) { state.screen = Screen.PROFILE }
+            SecondaryButton(
+                if (state.profile.signedIn) "Conta" else "Criar conta",
+                if (state.profile.signedIn) state.profile.accountEmail else "salvar na nuvem"
+            ) { state.screen = Screen.AUTH }
             SecondaryButton("Ranqueada", "em breve", enabled = false) {}
         }
 

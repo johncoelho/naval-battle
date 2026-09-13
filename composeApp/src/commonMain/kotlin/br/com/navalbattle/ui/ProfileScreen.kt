@@ -84,6 +84,31 @@ fun ProfileScreen(state: AppState) {
                 Gap(12)
                 RankBar(profile.xp, profile.rankProgress)
 
+                Gap(16)
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Naval.surface2)
+                        .border(1.dp, if (profile.signedIn) Naval.green else Naval.line)
+                        .clickable { state.screen = Screen.AUTH }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        HudLabel(
+                            if (profile.signedIn) "CONTA CONECTADA" else "SEM CONTA",
+                            if (profile.signedIn) Naval.greenBright else Naval.amberStrong
+                        )
+                        Gap(4)
+                        HudLabel(
+                            if (profile.signedIn) profile.accountEmail.uppercase()
+                            else "CRIE UMA PARA GUARDAR A CARREIRA NA NUVEM",
+                            Naval.muted
+                        )
+                    }
+                    HudLabel(if (profile.signedIn) "GERIR" else "CRIAR", Naval.inkSoft)
+                }
+
                 Gap(22)
                 HudLabel("NOME DE GUERRA")
                 Gap(6)
