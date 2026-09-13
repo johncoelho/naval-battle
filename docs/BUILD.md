@@ -78,6 +78,18 @@ Para recriar a base do zero em outro projeto: rodar [`supabase/schema.sql`](../s
 no SQL Editor e desligar *Confirm email* em Authentication → Sign In / Providers enquanto
 estiver em teste.
 
+## Landing page
+
+`site/index.html` é publicada pelo GitHub Pages através do workflow `.github/workflows/pages.yml`,
+que roda a cada mudança em `site/` (e sob demanda). A origem do Pages está configurada como
+**GitHub Actions** nas configurações do repositório.
+
+Endereço: **https://johncoelho.github.io/naval-battle/**
+
+O botão de download aponta para a release rolante:
+`releases/download/latest/naval-battle-debug.apk`. Como o build de APK recria essa release a
+cada push na `main`, o link nunca precisa ser atualizado.
+
 ## Regra dos artefatos
 
 **Toda versão compilada atualiza a documentação no mesmo ciclo, antes da entrega do APK:**
@@ -89,6 +101,7 @@ estiver em teste.
 | `docs/BUILD.md` | quando mudar build, assinatura, CI ou entrega |
 | `docs/STACK.md` | quando mudar versão de ferramenta, dependência ou convenção |
 | `docs/DESIGN_SYSTEM.md` | quando mudar token, tipografia, arte ou padrão de interface |
+| `site/index.html` | quando entrar recurso que valha aparecer na apresentação do jogo |
 
 O commit de documentação anda junto com o de código — não depois, não "quando der".
 O objetivo é que o histórico do versionamento sirva para resgatar o que foi decidido,
