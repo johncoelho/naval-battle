@@ -24,6 +24,12 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            // login com o Google via Credential Manager — precisa do Client ID
+            // "Web application" cadastrado em GoogleAuthConfig e do provedor Google
+            // ligado no Supabase (ver docs/BUILD.md)
+            implementation(libs.androidx.credentials)
+            implementation(libs.androidx.credentials.play.services)
+            implementation(libs.google.id)
         }
     }
 }
