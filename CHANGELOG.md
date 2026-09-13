@@ -9,6 +9,38 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.9.0] — 2026-09-13 · Rede local com a cara do single player
+
+Depois do primeiro teste real em dois aparelhos: a experiência da rede local vira
+idêntica à de jogar contra a IA, e ganha nome próprio.
+
+### Adicionado
+- **Nome da partida** ao criar um jogo em rede: o campo aparece antes do botão
+  "Criar partida" e é isso que aparece na busca do outro aparelho — não mais o nome
+  do comandante. Em branco, cai num nome padrão ("Partida de <comandante>").
+- **Aviso de saída em rede**: ao encerrar a partida, o aparelho manda `QUIT` para o
+  outro antes de fechar a ligação, e quem ficou leva a vitória na hora, sem esperar
+  a vez de alguém que já saiu.
+
+### Corrigido
+- **A tela de batalha em rede tratava os dois jogadores como se estivessem no mesmo
+  aparelho** — frota escondida, revezamento de visão, placar dos dois lados na mesma
+  tela. Como cada um está no seu próprio celular, sem ver a tela do outro, isso só
+  atrapalhava. Agora a rede usa exatamente a interface do modo solo: tabuleiro alvo
+  grande, frota própria sempre visível ocupando a metade de baixo, alarme de bordo
+  quando é atingido. O modo "mesmo aparelho" (hot-seat) continua com sua interface
+  própria, que existe justamente para esconder a frota de quem está do lado.
+- **O alarme de bordo soava para o lado errado** para quem entra numa partida em
+  rede (não hospeda): o som de "minha frota foi atingida" e o de "eu acertei o tiro"
+  estavam trocados nesse caso, porque o gatilho comparava o lado absoluto do tiro
+  (`PLAYER`/`ENEMY`) em vez de compará-lo com o lado que aquele aparelho realmente
+  comanda. Corrigido para comparar contra `match.mySide`.
+- Corrigida uma corrida entre mandar o `QUIT` e fechar o socket: o envio acontece
+  numa linha à parte, e fechar a ligação imediatamente podia derrubar a conexão
+  antes do aviso sair. Agora há um respiro curto entre as duas coisas.
+
+---
+
 ## [0.8.2] — 2026-09-13 · Trocar e recuperar senha
 
 ### Adicionado

@@ -41,9 +41,11 @@ Documentação complementar: [processo de build](docs/BUILD.md) · [stack e conv
   em sigilo (com tela de passagem entre os dois) e a batalha corre toda numa tela só.
   Cada um enxerga apenas a **própria memória de tiro**; ao fim, a carta se revela inteira,
   com as duas frotas e todos os tiros, cada um na cor do seu dono.
-- **Rede local** — dois celulares no mesmo Wi-Fi. Um cria a partida, o outro encontra pelo
-  nome e entra; cada um posiciona a própria frota no seu aparelho e a batalha corre nos dois
-  ao mesmo tempo. Não passa por servidor: funciona sem internet.
+- **Rede local** — dois celulares no mesmo Wi-Fi. Um dá um nome à partida e a cria, o
+  outro encontra esse nome na busca e entra; cada um posiciona a própria frota no seu
+  aparelho. A partir daí a tela é igual à do modo solo: tabuleiro alvo, frota própria
+  sempre visível, alarme quando é atingido — cada aparelho é o único que vê a própria
+  tela. Não passa por servidor: funciona sem internet.
 - **Ranqueada online** — planejada, ainda não implementada.
 
 ### Carreira
