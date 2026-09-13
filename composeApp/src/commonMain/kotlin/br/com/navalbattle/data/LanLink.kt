@@ -38,6 +38,8 @@ object Protocol {
     const val ACT = "ACT"
     const val ABILITY = "ABIL"
     const val QUIT = "QUIT"
+    const val REMATCH = "REMATCH"
+    const val TAUNT = "TAUNT"
 
     fun hello(name: String, mode: String) = "$HELLO|$name|$mode"
 
@@ -46,7 +48,11 @@ object Protocol {
 
     fun act(x: Int, y: Int) = "$ACT|$x|$y"
 
-    fun ability(code: String) = "$ABILITY|$code"
+    /** [charge] viaja junto: se o cartucho avulso liberou o uso, o outro lado precisa saber. */
+    fun ability(code: String, charge: Boolean) = "$ABILITY|$code|${if (charge) "1" else "0"}"
+
+    /** [code] é sempre de um catálogo fixo (emoji ou grito pré-definido) — nunca texto livre. */
+    fun taunt(code: String) = "$TAUNT|$code"
 
     fun parts(line: String): List<String> = line.split("|")
 }
