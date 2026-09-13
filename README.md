@@ -22,7 +22,10 @@ Documentação complementar: [processo de build](docs/BUILD.md) · [stack e conv
 
 ### Modos de combate
 
-- **Clássico** — um tiro por turno, sem habilidades. A batalha naval de sempre.
+Regra de turno igual nos dois modos, a clássica da batalha naval: **acertou, atira de novo**;
+só passa a vez para o adversário no primeiro erro.
+
+- **Clássico** — sem habilidades. A batalha naval de sempre.
 - **Tático** — cada classe de navio concede uma habilidade, com recarga própria:
 
 | Classe | Tamanho | Habilidade | Efeito |

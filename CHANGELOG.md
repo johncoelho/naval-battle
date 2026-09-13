@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.9.1] — 2026-09-13 · Acertou, joga de novo
+
+Regra clássica da batalha naval que faltava: quem acerta continua atirando, em vez de
+passar a vez a cada tiro. Vale para os dois modos e todas as formas de jogar — IA, mesmo
+aparelho e rede local, já que a resolução do tiro é idêntica nos três.
+
+### Alterado
+- `Match.act()` só passa o turno quando o tiro erra; acerto ou afundamento mantêm o
+  mesmo atacante na jogada seguinte. A barragem dupla do Encouraçado continua garantindo
+  o segundo tiro mesmo se o primeiro errar — ela soma à regra, não a substitui.
+- Turno automático da IA (`BattleScreen`) passou a repetir o disparo enquanto for
+  acertando, no mesmo ritmo de antes, em vez de atirar só uma vez por vez de posse da vez.
+- O cronômetro de turno do jogador reinicia a cada tiro (não só quando a vez muda de
+  dono), senão o disparo automático por tempo esgotado dispararia cedo demais numa
+  sequência de acertos.
+- Textos do modo Clássico, no jogo e na landing page, trocam "um tiro por turno" pela
+  regra nova.
+
 ## [0.9.0] — 2026-09-13 · Rede local com a cara do single player
 
 Depois do primeiro teste real em dois aparelhos: a experiência da rede local vira
