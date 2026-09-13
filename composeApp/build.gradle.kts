@@ -43,7 +43,24 @@ android {
         versionName = "0.1.0"
     }
 
+    /**
+     * Chave de depuração fixa, versionada no repositório. Sem ela cada build do CI
+     * assina o APK com uma chave nova, o Android recusa a instalação por cima e o
+     * comandante perde o progresso ao desinstalar para atualizar.
+     */
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("keystore/naval-debug.keystore")
+            storePassword = "navalbattle"
+            keyAlias = "navalbattle"
+            keyPassword = "navalbattle"
+        }
+    }
+
     buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         getByName("release") {
             isMinifyEnabled = false
         }
