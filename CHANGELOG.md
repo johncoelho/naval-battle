@@ -9,6 +9,43 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.10.0] — 2026-09-13 · Revanche, provocações e tático repaginado
+
+### Adicionado
+- **Revanche em rede** — `Protocol.REMATCH`: cada lado pede pelo botão na tela de
+  resultado; quando os dois pedem, a mesma ligação TCP recomeça a partida do zero
+  (nova frota, nova posição) sem passar de novo por hospedar/procurar. Se a ligação
+  cair enquanto se espera o outro lado, a tela avisa em vez de deixar o botão vivo.
+- **Provocações em rede** — `Protocol.TAUNT`: ícone de rádio na barra da batalha abre
+  um mural com seis emojis e seis gritos de guerra pré-definidos (traduzidos nos três
+  idiomas); a escolha aparece como uma bolha por cima da tela de quem recebe, e some
+  sozinha. Decoração pura — não participa da lógica da partida.
+- **Ícone + descrição em cada habilidade tática** (`Ability.icon`/`.description`):
+  em vez do código de duas ou três letras, cada botão mostra um glifo e o efeito por
+  extenso ao lado, nos três idiomas.
+- **Cartucho avulso de habilidade na Loja do Arsenal**: cada habilidade ativa tem um
+  preço em créditos; comprar guarda um cartucho no estoque do aparelho (não viaja
+  para a nuvem, como a trilha e o idioma). Na próxima partida tática, o cartucho
+  libera o botão mesmo com a habilidade em recarga — some ao ser usado, o cooldown
+  normal continua contando à parte. `Ability.abilityAvailable`/`selectAbility` ganham
+  o parâmetro `ignoreCooldown`, e `Protocol.ability` passa a levar essa informação
+  para o outro aparelho em rede, senão os dois lados divergiam sobre se o efeito
+  realmente aconteceu.
+
+### Alterado
+- **Modo padrão volta a ser Clássico** — o Tático continua disponível, só deixou de
+  vir pré-selecionado.
+- **Layout do tático contra a IA e em rede**: o mapa da própria frota fica à esquerda
+  e a coluna de habilidades à direita, lado a lado, em vez de empilhados — a barra de
+  habilidades ganhou rolagem própria para não cortar a última linha em telas baixas
+  (dobrável aberto na horizontal, tablet em paisagem).
+- **Cor do segundo comandante** no modo local trocou de rosa para verde
+  (`commanderTwo` `#F06AC2` → `#3ED598`), para não repetir o rosa em nenhum lugar da
+  interface.
+- `OwnFleetPanel` deixou de depender de receiver `ColumnScope`: agora recebe o
+  `Modifier` pronto do chamador, o que permitiu dividir espaço com a coluna de
+  habilidades dentro de uma `Row`.
+
 ## [0.9.1] — 2026-09-13 · Acertou, joga de novo
 
 Regra clássica da batalha naval que faltava: quem acerta continua atirando, em vez de

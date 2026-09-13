@@ -25,16 +25,23 @@ Documentação complementar: [processo de build](docs/BUILD.md) · [stack e conv
 Regra de turno igual nos dois modos, a clássica da batalha naval: **acertou, atira de novo**;
 só passa a vez para o adversário no primeiro erro.
 
-- **Clássico** — sem habilidades. A batalha naval de sempre.
-- **Tático** — cada classe de navio concede uma habilidade, com recarga própria:
+- **Clássico** (padrão) — sem habilidades. A batalha naval de sempre.
+- **Tático** — cada classe de navio concede uma habilidade, com recarga própria. Na
+  batalha o ícone de cada uma vem com a descrição do efeito ao lado, para não depender
+  de decorar sigla — e a barra fica ao lado do mapa da própria frota, não empilhada
+  em cima dele:
 
-| Classe | Tamanho | Habilidade | Efeito |
-|---|---|---|---|
-| Porta-aviões | 5 | Reconhecimento aéreo (`REC`) | Revela uma linha inteira |
-| Encouraçado | 4 | Barragem dupla (`2X`) | Dois disparos no mesmo turno |
-| Cruzador | 3 | Ping de sonar (`SNR`) | Varre um setor 3×3 |
-| Submarino | 3 | Imersão (`IMR`) | Absorve o primeiro acerto, uma vez |
-| Destróier | 2 | Cortina de fumaça (`FUM`) | Bloqueia a próxima varredura inimiga |
+| Classe | Tamanho | Habilidade | Ícone | Efeito |
+|---|---|---|---|---|
+| Porta-aviões | 5 | Reconhecimento aéreo | 📡 | Revela uma linha inteira |
+| Encouraçado | 4 | Barragem dupla | 💥 | Dois disparos no mesmo turno |
+| Cruzador | 3 | Ping de sonar | 📶 | Varre um setor 3×3 |
+| Submarino | 3 | Imersão | 🫧 | Absorve o primeiro acerto, uma vez |
+| Destróier | 2 | Cortina de fumaça | 💨 | Bloqueia a próxima varredura inimiga |
+
+Cada habilidade também tem um **cartucho avulso** na Loja do Arsenal: comprado com
+créditos, fica guardado no aparelho e libera um uso mesmo com a habilidade em recarga
+na próxima partida tática — some ao ser usado, a recarga normal segue igual.
 
 ### Formas de jogar
 
@@ -49,6 +56,11 @@ só passa a vez para o adversário no primeiro erro.
   aparelho. A partir daí a tela é igual à do modo solo: tabuleiro alvo, frota própria
   sempre visível, alarme quando é atingido — cada aparelho é o único que vê a própria
   tela. Não passa por servidor: funciona sem internet.
+  - **Revanche** — ao fim da partida, cada lado toca em "Revanche"; quando os dois
+    tocam, a batalha recomeça na mesma ligação, sem precisar criar ou procurar de novo.
+  - **Provocações** — um ícone de rádio na barra superior abre um mural de emojis e
+    gritos de guerra prontos ("Fogo total!", "Belo tiro!", ...) para mandar ao outro
+    aparelho durante a partida; aparecem como uma bolha na tela de quem recebe.
 - **Ranqueada online** — planejada, ainda não implementada.
 
 ### Carreira
