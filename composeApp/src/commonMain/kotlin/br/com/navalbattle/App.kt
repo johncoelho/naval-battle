@@ -19,6 +19,8 @@ import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.CloudResult
+import br.com.navalbattle.data.GoogleAuth
+import br.com.navalbattle.data.GoogleAuthResult
 import br.com.navalbattle.data.LanGame
 import br.com.navalbattle.data.LanLink
 import br.com.navalbattle.data.LinkState
@@ -298,6 +300,28 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
             is CloudResult.Fail -> false to r.message
         }
+
+    private val googleAuth = GoogleAuth()
+
+    /**
+     * Entra com a conta Google: pede a credencial ao sistema e troca o token de
+     * identidade por uma sessão no Supabase. Mesmo gatilho de fusão de carreira do
+     * login por e-mail — se o comandante já tinha conta pelo e-mail do Google, cai
+     * na mesma carreira (ver `supabase/schema.sql`, `on_auth_user_created`).
+     */
+    suspend fun signInWithGoogle(): Pair<Boolean, String> = when (val g = googleAuth.signIn()) {
+        is GoogleAuthResult.Cancelled -> false to ""
+        is GoogleAuthResult.Fail -> false to g.message
+        is GoogleAuthResult.Ok -> when (val r = cloud.signInWithGoogle(g.idToken)) {
+            is CloudResult.Ok -> {
+                profile.rememberSession(r.value)
+                val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
+                true to merged
+            }
+
+            is CloudResult.Fail -> false to r.message
+        }
+    }
 
     /** Sincroniza sob demanda, pelo botão da tela de conta. */
     suspend fun syncNow(): Boolean {
