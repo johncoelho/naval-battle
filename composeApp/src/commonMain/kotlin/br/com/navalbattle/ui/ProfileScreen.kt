@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,12 +40,17 @@ import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawInsignia
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.game.Rank
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(state: AppState) {
     val profile = state.profile
     var name by remember { mutableStateOf(profile.name) }
     var confirmReset by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // mudou identidade: sobe para a conta, se houver uma conectada
+    fun sync() = scope.launch { state.pushQuietly() }
 
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -135,7 +141,7 @@ fun ProfileScreen(state: AppState) {
                         if (name.trim() != profile.name) Naval.amberStrong else Naval.muted,
                         Modifier
                             .border(1.dp, Naval.line)
-                            .clickable { profile.rename(name); name = profile.name }
+                            .clickable { profile.rename(name); name = profile.name; sync() }
                             .padding(horizontal = 14.dp, vertical = 13.dp)
                     )
                 }
@@ -155,7 +161,7 @@ fun ProfileScreen(state: AppState) {
                                 .height(54.dp)
                                 .background(if (chosen) Naval.surface3 else Naval.surface)
                                 .border(1.dp, if (chosen) Naval.amber else Naval.line)
-                                .clickable { profile.chooseInsignia(option) },
+                                .clickable { profile.chooseInsignia(option); sync() },
                             contentAlignment = Alignment.Center
                         ) {
                             Canvas(Modifier.size(38.dp)) {
