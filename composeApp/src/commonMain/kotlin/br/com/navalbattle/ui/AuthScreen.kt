@@ -2,6 +2,7 @@ package br.com.navalbattle.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,8 @@ import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.SupabaseConfig
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import kotlinx.coroutines.launch
 
@@ -49,6 +52,8 @@ fun AuthScreen(state: AppState) {
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var failed by remember { mutableStateOf(false) }
+    var showForgot by remember { mutableStateOf(false) }
+    var showChangePassword by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     Column(
@@ -57,7 +62,7 @@ fun AuthScreen(state: AppState) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        ScreenTopBar("CONTA", if (state.profile.signedIn) "CONECTADO" else "LOCAL")
+        ScreenTopBar(t(K.AUTH_TITLE), if (state.profile.signedIn) t(K.AUTH_CONNECTED) else t(K.AUTH_LOCAL))
 
         Column(
             Modifier
@@ -65,11 +70,11 @@ fun AuthScreen(state: AppState) {
                 .verticalScroll(rememberScrollState())
         ) {
             Gap(18)
-            Text("SUA CARREIRA", style = NavalType.display, color = Naval.ink)
-            Text("EM QUALQUER MAR", style = NavalType.display, color = Naval.amberStrong)
+            Text(t(K.AUTH_HEAD_1).uppercase(), style = NavalType.display, color = Naval.ink)
+            Text(t(K.AUTH_HEAD_2).uppercase(), style = NavalType.display, color = Naval.amberStrong)
             Gap(8)
             HudLabel(
-                "PATENTE, CRÉDITOS E FROTAS GUARDADOS NA BASE DO JOGO",
+                t(K.AUTH_SUB),
                 Naval.muted
             )
 
@@ -82,50 +87,97 @@ fun AuthScreen(state: AppState) {
                         .border(1.dp, Naval.green)
                         .padding(14.dp)
                 ) {
-                    HudLabel("CONECTADO COMO", Naval.muted)
+                    HudLabel(t(K.AUTH_CONNECTED_AS), Naval.muted)
                     Gap(6)
                     Text(state.profile.accountEmail, style = NavalType.mono, color = Naval.ink)
                     Gap(4)
-                    HudLabel("${state.profile.name.uppercase()} · ${state.profile.rank.label.uppercase()}", Naval.inkSoft)
+                    HudLabel("${state.profile.displayName.uppercase()} · ${state.profile.rank.label.uppercase()}", Naval.inkSoft)
                 }
                 Gap(14)
-                PrimaryButton("Sincronizar agora", enabled = !busy) {
-                    busy = true; failed = false; message = "Sincronizando…"
+                PrimaryButton(t(K.AUTH_SYNC_NOW), enabled = !busy) {
+                    busy = true; failed = false; message = t(K.AUTH_SYNCING)
                     scope.launch {
                         val ok = state.syncNow()
                         busy = false; failed = !ok
-                        message = if (ok) "Carreira sincronizada." else "Não consegui sincronizar agora."
+                        message = if (ok) t(K.AUTH_SYNCED) else t(K.AUTH_SYNC_FAIL)
                     }
                 }
                 Gap(8)
-                SecondaryButton("Sair da conta") {
+                SecondaryButton(t(K.AUTH_CHANGE_PASSWORD)) {
+                    showChangePassword = !showChangePassword
+                    message = null
+                }
+                if (showChangePassword) {
+                    Gap(10)
+                    ChangePasswordCard(
+                        onSubmit = { current, new ->
+                            busy = true; failed = false; message = null
+                            scope.launch {
+                                val result = state.changePassword(current, new)
+                                busy = false
+                                failed = !result.first
+                                message = result.second
+                                if (result.first) showChangePassword = false
+                            }
+                        },
+                        onCancel = { showChangePassword = false; message = null },
+                        busy = busy
+                    )
+                }
+                Gap(8)
+                SecondaryButton(t(K.AUTH_SIGN_OUT)) {
                     state.profile.signOut()
-                    message = "Sessão encerrada. A carreira continua neste aparelho."
+                    message = t(K.AUTH_SIGNED_OUT)
                 }
             } else {
                 Gap(20)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ModeChip("Criar conta", creating, Modifier.weight(1f)) { creating = true; message = null }
-                    ModeChip("Entrar", !creating, Modifier.weight(1f)) { creating = false; message = null }
+                    ModeChip(t(K.MENU_CREATE_ACCOUNT), creating, Modifier.weight(1f)) { creating = true; message = null }
+                    ModeChip(t(K.AUTH_SIGN_IN), !creating, Modifier.weight(1f)) { creating = false; message = null }
                 }
 
                 Gap(18)
                 if (creating) {
-                    Field("Nome de usuário", username, KeyboardType.Text, false) { username = it.take(18) }
+                    Field(t(K.AUTH_USERNAME), username, KeyboardType.Text, false) { username = it.take(18) }
                     Gap(12)
                 }
-                Field("E-mail", email, KeyboardType.Email, false) { email = it.trim().take(120) }
+                Field(t(K.AUTH_EMAIL), email, KeyboardType.Email, false) { email = it.trim().take(120) }
                 Gap(12)
-                Field("Senha", password, KeyboardType.Password, true) { password = it.take(64) }
+                Field(t(K.AUTH_PASSWORD), password, KeyboardType.Password, true) { password = it.take(64) }
                 Gap(6)
-                HudLabel("MÍNIMO DE 6 CARACTERES", Naval.muted)
+                if (creating) {
+                    HudLabel(t(K.AUTH_MIN_CHARS), Naval.muted)
+                } else {
+                    HudLabel(
+                        t(K.AUTH_FORGOT),
+                        Naval.amberStrong,
+                        Modifier.clickable { showForgot = !showForgot; message = null }
+                    )
+                }
+
+                if (showForgot && !creating) {
+                    Gap(14)
+                    ForgotPasswordCard(
+                        email = email,
+                        busy = busy,
+                        onSend = {
+                            busy = true; failed = false; message = null
+                            scope.launch {
+                                val result = state.forgotPassword(email)
+                                busy = false
+                                failed = !result.first
+                                message = result.second
+                            }
+                        }
+                    )
+                }
 
                 Gap(20)
                 PrimaryButton(
-                    if (creating) "Criar conta" else "Entrar",
+                    if (creating) t(K.MENU_CREATE_ACCOUNT) else t(K.AUTH_SIGN_IN),
                     enabled = !busy && email.isNotBlank() && password.length >= 6 &&
                         (!creating || username.isNotBlank()),
-                    subtitle = if (busy) "aguarde" else null
+                    subtitle = if (busy) t(K.AUTH_WAIT) else null
                 ) {
                     busy = true; failed = false; message = null
                     scope.launch {
@@ -156,23 +208,91 @@ fun AuthScreen(state: AppState) {
                         .border(1.dp, Naval.line)
                         .padding(14.dp)
                 ) {
-                    HudLabel("SERVIDOR AINDA NÃO LIGADO", Naval.amberStrong)
+                    HudLabel(t(K.AUTH_NO_SERVER), Naval.amberStrong)
                     Gap(6)
-                    HudLabel(
-                        "A CARREIRA ESTÁ SENDO GRAVADA NESTE APARELHO. QUANDO A BASE ENTRAR, " +
-                            "ELA SOBE PARA A CONTA SEM PERDER NADA.",
-                        Naval.muted
-                    )
+                    HudLabel(t(K.AUTH_NO_SERVER_SUB), Naval.muted)
                 }
             }
 
             Gap(18)
-            HudLabel("O LOGIN COM GOOGLE USA O MESMO E-MAIL E CAI NA MESMA CONTA", Naval.muted)
+            HudLabel(t(K.AUTH_GOOGLE_HINT), Naval.muted)
             Gap(16)
         }
 
         Gap(8)
-        SecondaryButton("Voltar ao deque") { state.screen = Screen.MENU }
+        SecondaryButton(t(K.BACK_TO_DECK)) { state.screen = Screen.MENU }
+    }
+}
+
+/** Formulário de "esqueci minha senha": um e-mail, um botão, sem senha nenhuma envolvida. */
+@Composable
+private fun ForgotPasswordCard(email: String, busy: Boolean, onSend: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Naval.surface2)
+            .border(1.dp, Naval.line)
+            .padding(14.dp)
+    ) {
+        HudLabel(t(K.AUTH_RESET_TITLE), Naval.amberStrong)
+        Gap(6)
+        HudLabel(t(K.AUTH_RESET_HINT), Naval.muted)
+        Gap(12)
+        PrimaryButton(t(K.AUTH_RESET_SEND), enabled = !busy && email.isNotBlank(), onClick = onSend)
+    }
+}
+
+/**
+ * Trocar senha exige a senha atual — reautenticamos com ela antes de aceitar a
+ * troca, para ninguém trocar a senha de uma sessão esquecida aberta no aparelho.
+ */
+@Composable
+private fun ChangePasswordCard(
+    onSubmit: (current: String, new: String) -> Unit,
+    onCancel: () -> Unit,
+    busy: Boolean
+) {
+    var current by remember { mutableStateOf("") }
+    var new by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf<String?>(null) }
+
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Naval.surface2)
+            .border(1.dp, Naval.line)
+            .padding(14.dp)
+    ) {
+        HudLabel(t(K.AUTH_CHANGE_PASSWORD), Naval.amberStrong)
+        Gap(12)
+        Field(t(K.AUTH_CURRENT_PASSWORD), current, KeyboardType.Password, true) { current = it.take(64) }
+        Gap(10)
+        Field(t(K.AUTH_NEW_PASSWORD), new, KeyboardType.Password, true) { new = it.take(64) }
+        Gap(10)
+        Field(t(K.AUTH_CONFIRM_PASSWORD), confirm, KeyboardType.Password, true) { confirm = it.take(64) }
+        Gap(6)
+        HudLabel(t(K.AUTH_MIN_CHARS), Naval.muted)
+        localError?.let {
+            Gap(8)
+            HudLabel(it, Naval.danger)
+        }
+        Gap(14)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SecondaryButton(t(K.AUTH_CANCEL), modifier = Modifier.weight(1f), enabled = !busy, onClick = onCancel)
+            PrimaryButton(
+                t(K.SAVE),
+                modifier = Modifier.weight(1f),
+                enabled = !busy && current.isNotBlank() && new.length >= 6 && confirm.isNotBlank()
+            ) {
+                if (new != confirm) {
+                    localError = t(K.AUTH_PASSWORD_MISMATCH)
+                } else {
+                    localError = null
+                    onSubmit(current, new)
+                }
+            }
+        }
     }
 }
 
