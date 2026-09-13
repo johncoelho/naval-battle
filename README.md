@@ -8,6 +8,7 @@ comando naval noturno. Todo o jogo é desenhado em Canvas: não há uma única i
 | **Plataforma** | Android 8.0+ (minSdk 26), portável para iOS |
 | **Stack** | Kotlin Multiplatform · Compose Multiplatform |
 | **Base** | Supabase (Auth + Postgres com RLS) |
+| **Idiomas** | Português (BR), inglês, espanhol |
 | **Pacote** | `br.com.navalbattle` |
 | **APK de teste** | [release `latest`](https://github.com/johncoelho/naval-battle/releases/tag/latest) |
 
@@ -64,6 +65,11 @@ Dois eixos independentes, ambos comprados com créditos:
 - **Camuflagem** — muda a pintura e o padrão recortado no casco: lisa, dazzle, estilhaço,
   faixas de linha d'água e retículo digital. Onze pinturas, duas inclusas.
 
+### Idiomas
+
+Português do Brasil, inglês e espanhol, trocáveis no Perfil e aplicados na hora. Todo o
+texto vive em `i18n/Strings.kt`, com as três versões de cada frase na mesma linha.
+
 A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado.
 
 ### Como a rede local funciona
@@ -101,7 +107,8 @@ composeApp/src/
   commonMain/kotlin/br/com/navalbattle/
     App.kt        estado global, roteador de telas, fusão com a nuvem
     game/         motor: modelo, tabuleiro, IA, partida, carreira
-    design/       tokens, tipografia, librés, linhas de casco, arte vetorial
+    design/       tokens, tipografia, pinturas, linhas de casco, arte vetorial
+    i18n/         dicionário dos três idiomas
     ui/           telas e componentes
     data/         armazenamento local e cliente da nuvem (expect)
   androidMain/    Activity, manifesto, recursos, e os actual de áudio/dados

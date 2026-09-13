@@ -9,6 +9,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.8.0] — 2026-09-13 · Três idiomas e vocabulário mais claro
+
+### Adicionado
+- **Português do Brasil, inglês e espanhol.** Um dicionário único (`i18n/Strings.kt`) guarda
+  as três versões de cada frase lado a lado — juntas de propósito, porque é o que impede
+  uma tradução de ficar para trás quando o texto muda. São 250 chaves cobrindo telas,
+  avisos de combate, patentes, insígnias, classes de navio, pinturas e cascos.
+- **Seletor de idioma no Perfil.** A troca vale na hora, sem reiniciar, e fica gravada
+  no aparelho.
+
+### Alterado
+- **"Libré" virou "pintura".** O termo técnico do esquema de pintura de uma frota não
+  dizia nada para quem joga. Na tela o jogo já falava *camuflagem*; agora o código
+  acompanha: a classe `Livery` passou a se chamar `Paint`, e a documentação idem.
+- Nome do comandante em branco agora exibe o título traduzido em vez do texto fixo
+  "Comandante", o que também corrige o nome anunciado na rede local.
+
+---
+
 ## [0.7.0] — 2026-09-13 · Rede local e embarcações com volume
 
 Dois celulares no mesmo Wi-Fi passam a jogar um contra o outro, sem servidor.
