@@ -112,6 +112,8 @@
   .fleetrow{display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;
             letter-spacing:.16em;color:var(--muted)}
   .fleetrow b{color:var(--greenBright);font-weight:500}
+  /* a carta da própria frota ocupa o que sobra, como no jogo */
+  .screen .board:last-child{aspect-ratio:auto;flex:1;min-height:0}
 
   /* ---------------------------------------------------------- seções */
   section{padding:72px 0;border-bottom:1px solid var(--lineSoft)}
