@@ -33,6 +33,10 @@ object Naval {
     val amberStrong = Color(0xFFFFC95C)
     val amberInk = Color(0xFF1E1402)
     val danger = Color(0xFFE05A35)
+
+    /** Identidade de cada comandante no modo local — legível sobre o verde do radar. */
+    val commanderOne = Color(0xFF48C9F0)
+    val commanderTwo = Color(0xFFF06AC2)
 }
 
 /**
