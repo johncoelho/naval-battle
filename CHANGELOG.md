@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.10.1] — 2026-09-13 · Corrige travamento do tático em rede
+
+### Corrigido
+- **Rede local perdia o dono da vez ao usar habilidades** (relatado sobretudo no
+  tático): `LanLink.android.kt` abria uma thread nova a cada `send()`, sem nenhuma
+  garantia de ordem entre chamadas. Usar reconhecimento aéreo ou sonar manda duas
+  linhas em sequência — `ABIL` armando a habilidade, depois `ACT` com a coordenada —
+  e se a segunda chegasse antes da primeira no outro aparelho, ele aplicava um tiro
+  comum em vez do efeito da habilidade. Dali em diante os dois lados discordavam
+  sobre de quem era a vez, e a partida travava para os dois.
+- A mesma corrida também podia embaralhar uma sequência de **tiros consecutivos**
+  (a regra "acertou, joga de novo" da v0.9.1 tornou isso bem mais comum, já que
+  agora um jogador dispara várias vezes seguidas sem passar a vez).
+- Correção: uma única thread escritora, nascida junto com a conexão, drena uma fila
+  (`LinkedBlockingQueue`) em ordem estrita — `send()` só enfileira. Mesmo tiro ou
+  habilidade disparados em sequência rápida agora chegam na ordem certa.
+
 ## [0.10.0] — 2026-09-13 · Revanche, provocações e tático repaginado
 
 ### Adicionado
