@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Award
 import br.com.navalbattle.game.Match
@@ -66,7 +68,7 @@ fun ResultScreen(state: AppState, match: Match) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        ScreenTopBar("RELATÓRIO DE COMBATE", match.mode.label.uppercase())
+        ScreenTopBar(t(K.RESULT_TITLE), match.mode.label.uppercase())
         Gap(16)
 
         Column(
@@ -76,7 +78,7 @@ fun ResultScreen(state: AppState, match: Match) {
         ) {
             Text(
                 if (local) match.sideName(winnerSide).uppercase()
-                else if (victory) "VITÓRIA" else "DERROTA",
+                else if (victory) t(K.RESULT_VICTORY).uppercase() else t(K.RESULT_DEFEAT).uppercase(),
                 style = NavalType.display,
                 color = if (local) commanderColor(winnerSide)
                 else if (victory) Naval.amberStrong else Naval.danger
@@ -84,9 +86,9 @@ fun ResultScreen(state: AppState, match: Match) {
             Gap(4)
             HudLabel(
                 when {
-                    local -> "VENCEU A BATALHA"
-                    victory -> "FROTA INIMIGA NEUTRALIZADA"
-                    else -> "NOSSA FROTA FOI DESTRUÍDA"
+                    local -> t(K.RESULT_WON_BATTLE)
+                    victory -> t(K.CALL_VICTORY)
+                    else -> t(K.CALL_DEFEAT_SUB)
                 },
                 Naval.inkSoft
             )
@@ -95,7 +97,7 @@ fun ResultScreen(state: AppState, match: Match) {
             if (local) {
                 // encerrada a partida as duas frotas se revelam: onde estavam os navios
                 // e todos os tiros que cada uma levou, na cor do seu dono
-                HudLabel("CARTA DA BATALHA")
+                HudLabel(t(K.RESULT_CHART))
                 Gap(6)
                 BoardView(
                     board = match.playerBoard,
@@ -117,7 +119,7 @@ fun ResultScreen(state: AppState, match: Match) {
                             Box(Modifier.size(9.dp).background(commanderColor(side)))
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                "FROTA DE ${match.sideName(side).uppercase()}",
+                                t(K.RESULT_FLEET_OF, match.sideName(side)).uppercase(),
                                 style = NavalType.monoSmall,
                                 color = commanderColor(side)
                             )
@@ -129,25 +131,25 @@ fun ResultScreen(state: AppState, match: Match) {
                 listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
                     HudLabel(match.sideName(side).uppercase(), commanderColor(side))
                     StatRow(
-                        "TIROS / ACERTOS · PRECISÃO",
+                        t(K.RESULT_SHOTS_HITS),
                         "${if (side == Side.PLAYER) match.playerShots else match.enemyShots}" +
                             " / ${if (side == Side.PLAYER) match.playerHits else match.enemyHits}" +
                             " · ${match.accuracyOf(side)}%"
                     )
                     StatRow(
-                        "NAVIOS RESTANTES",
+                        t(K.RESULT_SHIPS_LEFT),
                         "${match.board(side).remainingShips().size} / ${ShipClass.fleet.size}"
                     )
                     Gap(8)
                 }
-                StatRow("TURNOS", match.turnCount.toString())
+                StatRow(t(K.TURNS), match.turnCount.toString())
             } else {
-                StatRow("TIROS DISPARADOS", match.playerShots.toString())
-                StatRow("ACERTOS", match.playerHits.toString())
-                StatRow("PRECISÃO", "${match.accuracy}%")
-                StatRow("TURNOS", match.turnCount.toString())
+                StatRow(t(K.RESULT_SHOTS_FIRED), match.playerShots.toString())
+                StatRow(t(K.RESULT_HITS), match.playerHits.toString())
+                StatRow(t(K.ACCURACY), "${match.accuracy}%")
+                StatRow(t(K.TURNS), match.turnCount.toString())
                 StatRow(
-                    "NAVIOS RESTANTES",
+                    t(K.RESULT_SHIPS_LEFT),
                     "${match.playerBoard.remainingShips().size} / ${ShipClass.fleet.size}"
                 )
 
@@ -160,7 +162,7 @@ fun ResultScreen(state: AppState, match: Match) {
                             .border(1.dp, if (a.rankUp != null) Naval.amber else Naval.line)
                             .padding(14.dp)
                     ) {
-                        HudLabel("CARREIRA", Naval.muted)
+                        HudLabel(t(K.RESULT_CAREER), Naval.muted)
                         Gap(8)
                         Row(
                             Modifier.fillMaxWidth(),
@@ -177,23 +179,23 @@ fun ResultScreen(state: AppState, match: Match) {
                         a.rankUp?.let { r ->
                             Gap(8)
                             Text(
-                                "PROMOVIDO A ${r.label.uppercase()}",
+                                t(K.RESULT_PROMOTED, r.label).uppercase(),
                                 style = NavalType.mono,
                                 color = Naval.amberStrong
                             )
                         }
                     }
                     Gap(6)
-                    HudLabel("CRÉDITOS VALEM NOVAS FROTAS NO ESTALEIRO", Naval.muted)
+                    HudLabel(t(K.RESULT_CREDITS_HINT), Naval.muted)
                 }
             }
             Gap(16)
         }
 
         Gap(12)
-        PrimaryButton("Nova partida") { state.newMatch(match.opponent) }
+        PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
         Gap(8)
-        SecondaryButton("Deque de comando") { state.quitToMenu() }
+        SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
     }
 }
 

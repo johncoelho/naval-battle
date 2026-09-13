@@ -36,10 +36,14 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawInsignia
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.game.Rank
+import br.com.navalbattle.i18n.I18n
+import br.com.navalbattle.i18n.Lang
 import kotlinx.coroutines.launch
 
 @Composable
@@ -59,7 +63,7 @@ fun ProfileScreen(state: AppState) {
                 .windowInsetsPadding(WindowInsets.systemBars)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            ScreenTopBar("PERFIL", "◆ ${profile.credits}")
+            ScreenTopBar(t(K.PROFILE_TITLE), "◆ ${profile.credits}")
             Gap(14)
 
             Column(
@@ -81,7 +85,7 @@ fun ProfileScreen(state: AppState) {
                     Column(Modifier.weight(1f)) {
                         Text(profile.rank.label.uppercase(), style = NavalType.title, color = Naval.amberStrong)
                         Gap(2)
-                        Text(profile.name, style = NavalType.body, color = Naval.ink)
+                        Text(profile.displayName, style = NavalType.body, color = Naval.ink)
                         Gap(6)
                         HudLabel("${profile.xp} XP", Naval.muted)
                     }
@@ -102,21 +106,21 @@ fun ProfileScreen(state: AppState) {
                 ) {
                     Column(Modifier.weight(1f)) {
                         HudLabel(
-                            if (profile.signedIn) "CONTA CONECTADA" else "SEM CONTA",
+                            if (profile.signedIn) t(K.AUTH_ACCOUNT_ON) else t(K.AUTH_NO_ACCOUNT),
                             if (profile.signedIn) Naval.greenBright else Naval.amberStrong
                         )
                         Gap(4)
                         HudLabel(
                             if (profile.signedIn) profile.accountEmail.uppercase()
-                            else "CRIE UMA PARA GUARDAR A CARREIRA NA NUVEM",
+                            else t(K.AUTH_CREATE_HINT),
                             Naval.muted
                         )
                     }
-                    HudLabel(if (profile.signedIn) "GERIR" else "CRIAR", Naval.inkSoft)
+                    HudLabel(if (profile.signedIn) t(K.AUTH_MANAGE) else t(K.AUTH_CREATE), Naval.inkSoft)
                 }
 
                 Gap(22)
-                HudLabel("NOME DE GUERRA")
+                HudLabel(t(K.PROFILE_NAME))
                 Gap(6)
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Box(
@@ -137,7 +141,7 @@ fun ProfileScreen(state: AppState) {
                     }
                     Spacer(Modifier.width(8.dp))
                     HudLabel(
-                        "SALVAR",
+                        t(K.SAVE),
                         if (name.trim() != profile.name) Naval.amberStrong else Naval.muted,
                         Modifier
                             .border(1.dp, Naval.line)
@@ -147,7 +151,7 @@ fun ProfileScreen(state: AppState) {
                 }
 
                 Gap(22)
-                HudLabel("INSÍGNIA")
+                HudLabel(t(K.PROFILE_INSIGNIA))
                 Gap(8)
                 Row(
                     Modifier.fillMaxWidth(),
@@ -179,36 +183,52 @@ fun ProfileScreen(state: AppState) {
                 HudLabel(profile.insignia.label.uppercase(), Naval.muted)
 
                 Gap(22)
-                HudLabel("FOLHA DE SERVIÇO")
+                HudLabel(t(K.PROFILE_LANGUAGE))
                 Gap(8)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    BigStat("PARTIDAS", profile.matches.toString(), Modifier.weight(1f))
-                    BigStat("VITÓRIAS", profile.wins.toString(), Modifier.weight(1f), Naval.greenBright)
-                    BigStat("DERROTAS", profile.losses.toString(), Modifier.weight(1f), Naval.danger)
+                    Lang.entries.forEach { option ->
+                        ModeChip(
+                            label = option.label,
+                            selected = I18n.lang == option,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            I18n.lang = option
+                            profile.setLang(option.code)
+                        }
+                    }
+                }
+
+                Gap(22)
+                HudLabel(t(K.PROFILE_RECORD))
+                Gap(8)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BigStat(t(K.PROFILE_MATCHES), profile.matches.toString(), Modifier.weight(1f))
+                    BigStat(t(K.PROFILE_WINS), profile.wins.toString(), Modifier.weight(1f), Naval.greenBright)
+                    BigStat(t(K.PROFILE_LOSSES), profile.losses.toString(), Modifier.weight(1f), Naval.danger)
                 }
                 Gap(10)
-                StatLine("APROVEITAMENTO", "${profile.winRate}%")
-                StatLine("PRECISÃO DE TIRO", "${profile.accuracy}%")
-                StatLine("TIROS / ACERTOS", "${profile.shots} / ${profile.hits}")
-                StatLine("NAVIOS AFUNDADOS", profile.sunk.toString())
-                StatLine("SEQUÊNCIA ATUAL", "${profile.streak} vitórias")
-                StatLine("MELHOR SEQUÊNCIA", "${profile.bestStreak} vitórias")
-                StatLine("CASCOS NO ESTALEIRO", profile.ownedFleets.size.toString())
-                StatLine("CAMUFLAGENS", profile.owned.size.toString())
+                StatLine(t(K.PROFILE_WINRATE), "${profile.winRate}%")
+                StatLine(t(K.PROFILE_SHOT_ACC), "${profile.accuracy}%")
+                StatLine(t(K.PROFILE_SHOTS_HITS), "${profile.shots} / ${profile.hits}")
+                StatLine(t(K.PROFILE_SUNK), profile.sunk.toString())
+                StatLine(t(K.PROFILE_STREAK), "${profile.streak} ${t(K.PROFILE_WINS_SUFFIX)}")
+                StatLine(t(K.PROFILE_BEST_STREAK), "${profile.bestStreak} ${t(K.PROFILE_WINS_SUFFIX)}")
+                StatLine(t(K.PROFILE_HULLS_OWNED), profile.ownedFleets.size.toString())
+                StatLine(t(K.PROFILE_CAMOS_OWNED), profile.owned.size.toString())
 
                 Gap(18)
-                HudLabel("PRÓXIMAS PATENTES", Naval.muted)
+                HudLabel(t(K.PROFILE_NEXT_RANKS), Naval.muted)
                 Gap(6)
                 Rank.entries.filter { it.xp > profile.xp }.take(3).forEach { r ->
                     StatLine(r.label.uppercase(), "${r.xp - profile.xp} XP")
                 }
                 if (Rank.next(profile.xp) == null) {
-                    HudLabel("PATENTE MÁXIMA ALCANÇADA", Naval.amberStrong)
+                    HudLabel(t(K.PROFILE_MAX_RANK), Naval.amberStrong)
                 }
 
                 Gap(20)
                 HudLabel(
-                    "ZERAR CARREIRA",
+                    t(K.PROFILE_RESET),
                     Naval.danger,
                     Modifier
                         .fillMaxWidth()
@@ -220,7 +240,7 @@ fun ProfileScreen(state: AppState) {
             }
 
             Gap(10)
-            PrimaryButton("Voltar ao deque") { state.screen = Screen.MENU }
+            PrimaryButton(t(K.BACK_TO_DECK)) { state.screen = Screen.MENU }
         }
 
         if (confirmReset) {
@@ -234,15 +254,15 @@ fun ProfileScreen(state: AppState) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(Modifier.fillMaxWidth()) {
-                    HudLabel("BAIXA DEFINITIVA", Naval.muted)
+                    HudLabel(t(K.PROFILE_RESET_EYEBROW), Naval.muted)
                     Gap(8)
-                    Text("ZERAR A CARREIRA?", style = NavalType.display, color = Naval.ink)
+                    Text(t(K.PROFILE_RESET_TITLE).uppercase(), style = NavalType.display, color = Naval.ink)
                     Gap(6)
-                    HudLabel("PATENTE, CRÉDITOS, ESTATÍSTICAS E FROTAS VOLTAM AO INÍCIO", Naval.muted)
+                    HudLabel(t(K.PROFILE_RESET_WARN), Naval.muted)
                     Gap(22)
-                    PrimaryButton("Manter carreira") { confirmReset = false }
+                    PrimaryButton(t(K.PROFILE_RESET_KEEP)) { confirmReset = false }
                     Gap(8)
-                    SecondaryButton("Zerar tudo") {
+                    SecondaryButton(t(K.PROFILE_RESET_DO)) {
                         profile.reset()
                         name = profile.name
                         confirmReset = false
@@ -273,7 +293,7 @@ private fun RankBar(xp: Int, progress: Float) {
         }
         Gap(6)
         HudLabel(
-            if (next == null) "CARREIRA COMPLETA" else "FALTAM ${next.xp - xp} XP PARA ${next.label.uppercase()}",
+            if (next == null) t(K.PROFILE_CAREER_DONE) else t(K.PROFILE_XP_TO, next.xp - xp, next.label).uppercase(),
             Naval.muted
         )
     }

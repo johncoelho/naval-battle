@@ -36,6 +36,8 @@ import br.com.navalbattle.Screen
 import br.com.navalbattle.audio.Sfx
 import br.com.navalbattle.audio.SoundPlayer
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.GameMode
@@ -136,13 +138,14 @@ fun BattleScreen(state: AppState, match: Match) {
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 ScreenTopBar(
-                    if (local) "VEZ DE ${match.sideName(viewSide).uppercase()}" else "ALVO INIMIGO",
-                    "TURNO ${match.turnCount.toString().padStart(2, '0')}",
+                    if (local || lan) t(K.BATTLE_TURN_OF, match.sideName(viewSide)).uppercase()
+                    else t(K.BATTLE_ENEMY_TARGET),
+                    "${t(K.TURN)} ${match.turnCount.toString().padStart(2, '0')}",
                     Modifier.weight(1f)
                 )
                 GapW(10)
                 HudLabel(
-                    "ENCERRAR",
+                    t(K.QUIT),
                     Naval.danger,
                     Modifier
                         .border(1.dp, Naval.line)
@@ -161,13 +164,14 @@ fun BattleScreen(state: AppState, match: Match) {
             )
             HudLabel(
                 when {
-                    lan && match.phase == Phase.PLACEMENT -> "AGUARDANDO A FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
-                    lan && myTurn -> "SEU TURNO · ATAQUE A FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
-                    lan -> "VEZ DE ${match.sideName(match.turnOwner).uppercase()}"
-                    local && myTurn -> "SUA MEMÓRIA DE TIRO NA FROTA DE ${match.sideName(viewSide.other()).uppercase()}"
-                    local -> "PASSANDO PARA ${match.sideName(match.turnOwner).uppercase()}"
-                    myTurn -> "SEU TURNO · AGUARDANDO COORDENADA"
-                    else -> "AGUARDE"
+                    lan && match.phase == Phase.PLACEMENT ->
+                        t(K.BATTLE_WAITING_FLEET, match.sideName(viewSide.other())).uppercase()
+                    lan && myTurn -> t(K.BATTLE_ATTACK_FLEET, match.sideName(viewSide.other())).uppercase()
+                    lan -> t(K.BATTLE_TURN_OF, match.sideName(match.turnOwner)).uppercase()
+                    local && myTurn -> t(K.BATTLE_MEMORY, match.sideName(viewSide.other())).uppercase()
+                    local -> t(K.BATTLE_PASSING, match.sideName(match.turnOwner)).uppercase()
+                    myTurn -> t(K.BATTLE_YOUR_TURN)
+                    else -> t(K.WAIT)
                 },
                 // a cor é sempre a da frota alvo, a mesma das marcas na carta
                 if (local || lan) commanderColor(viewSide.other()) else Naval.muted,
@@ -234,19 +238,19 @@ fun BattleScreen(state: AppState, match: Match) {
                     }
                     GapW(14)
                     Column {
-                        HudLabel("SUA FROTA", Naval.inkSoft)
+                        HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
                         Gap(4)
                         val afloat = match.playerBoard.remainingShips().size
                         Text(
-                            "$afloat / ${ShipClass.fleet.size} À TONA",
+                            "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}",
                             style = NavalType.mono,
                             color = if (afloat <= 2) Naval.danger else Naval.greenBright
                         )
                         Gap(6)
-                        HudLabel("PRECISÃO ${match.accuracyOf(Side.PLAYER)}%")
+                        HudLabel("${t(K.ACCURACY)} ${match.accuracyOf(Side.PLAYER)}%")
                         if (match.playerBoard.smokeActive) {
                             Gap(4)
-                            HudLabel("CORTINA ATIVA", Naval.greenBright)
+                            HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
                         }
                     }
                 }
@@ -300,11 +304,11 @@ private fun Scoreboard(match: Match) {
                         else -> Naval.ink
                     }
                 )
-                HudLabel("NAVIOS À TONA", Naval.muted)
+                HudLabel(t(K.SHIPS_AFLOAT), Naval.muted)
                 Gap(6)
-                HudLabel("PRECISÃO ${match.accuracyOf(side)}%", Naval.muted)
+                HudLabel("${t(K.ACCURACY)} ${match.accuracyOf(side)}%", Naval.muted)
                 if (match.board(side).smokeActive) {
-                    HudLabel("CORTINA ATIVA", Naval.greenBright)
+                    HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
                 }
             }
         }
@@ -324,15 +328,15 @@ private fun QuitOverlay(onKeep: () -> Unit, onQuit: () -> Unit) {
         contentAlignment = Alignment.Center
     ) {
         Column(Modifier.fillMaxWidth()) {
-            HudLabel("ABANDONAR OPERAÇÃO", Naval.muted)
+            HudLabel(t(K.BATTLE_QUIT_EYEBROW), Naval.muted)
             Gap(8)
-            Text("ENCERRAR A PARTIDA?", style = NavalType.display, color = Naval.ink)
+            Text(t(K.BATTLE_QUIT_TITLE).uppercase(), style = NavalType.display, color = Naval.ink)
             Gap(6)
-            HudLabel("O PROGRESSO DESTA BATALHA SERÁ PERDIDO", Naval.muted)
+            HudLabel(t(K.BATTLE_QUIT_WARN), Naval.muted)
             Gap(22)
-            PrimaryButton("Continuar jogando") { onKeep() }
+            PrimaryButton(t(K.BATTLE_KEEP_PLAYING)) { onKeep() }
             Gap(8)
-            SecondaryButton("Encerrar partida") { onQuit() }
+            SecondaryButton(t(K.QUIT_MATCH)) { onQuit() }
         }
     }
 }
@@ -372,13 +376,13 @@ private fun AbilityBar(match: Match, onUse: (Ability) -> Unit) {
         Ability.SMOKE
     )
     Column {
-        HudLabel("HABILIDADES TÁTICAS")
+        HudLabel(t(K.BATTLE_ABILITIES))
         Gap(6)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             abilities.forEach { ability ->
                 AbilityButton(
                     code = ability.code,
-                    name = ability.shortName(),
+                    name = ability.shortName,
                     enabled = match.abilityAvailable(ability),
                     selected = match.pendingAbility == ability,
                     cooldown = match.abilityCooldown(ability)
@@ -386,8 +390,8 @@ private fun AbilityBar(match: Match, onUse: (Ability) -> Unit) {
             }
         }
         Gap(6)
-        val hint = match.pendingAbility?.let { "${it.label}: toque no alvo" }
-            ?: "Toque num ícone para usar, ou dispare direto no alvo"
+        val hint = match.pendingAbility?.let { t(K.BATTLE_ABILITY_AIM, it.label) }
+            ?: t(K.BATTLE_ABILITY_HINT)
         HudLabel(hint, if (match.pendingAbility != null) Naval.amberStrong else Naval.muted)
     }
 }
@@ -396,14 +400,6 @@ private fun formatTime(seconds: Int): String {
     val m = seconds / 60
     val s = seconds % 60
     return "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
-}
-
-private fun Ability.shortName(): String = when (this) {
-    Ability.SONAR_PING -> "Sonar"
-    Ability.AIR_RECON -> "Radar"
-    Ability.DOUBLE_BARRAGE -> "2x Tiro"
-    Ability.SMOKE -> "Fumaça"
-    Ability.DIVE -> "Imersão"
 }
 
 private fun Tone.toSfx(): Sfx = when (this) {

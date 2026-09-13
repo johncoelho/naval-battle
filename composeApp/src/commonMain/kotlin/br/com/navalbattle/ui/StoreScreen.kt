@@ -32,15 +32,17 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.design.FleetLine
-import br.com.navalbattle.design.Livery
+import br.com.navalbattle.design.Paint
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.ShipClass
 import kotlinx.coroutines.launch
 
-private enum class Aisle(val label: String) { FLEETS("Cascos"), CAMOS("Camuflagens") }
+private enum class Aisle(val key: K) { FLEETS(K.STORE_HULLS), CAMOS(K.STORE_CAMOS) }
 
 /**
  * Loja do jogo. Tudo é pago com os créditos ganhos em combate — dinheiro de verdade
@@ -62,13 +64,13 @@ fun StoreScreen(state: AppState) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        ScreenTopBar("LOJA DO ARSENAL", "◆ ${profile.credits}")
+        ScreenTopBar(t(K.STORE_TITLE), "◆ ${profile.credits}")
         Gap(12)
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Aisle.entries.forEach { option ->
                 ModeChip(
-                    label = option.label,
+                    label = t(option.key),
                     selected = aisle == option,
                     modifier = Modifier.weight(1f)
                 ) { aisle = option; notice = null }
@@ -76,11 +78,7 @@ fun StoreScreen(state: AppState) {
         }
         Gap(6)
         HudLabel(
-            if (aisle == Aisle.FLEETS) {
-                "MUDAM A SILHUETA DAS CINCO EMBARCAÇÕES"
-            } else {
-                "MUDAM A PINTURA E O PADRÃO DE CAMUFLAGEM"
-            },
+            if (aisle == Aisle.FLEETS) t(K.STORE_HULLS_SUB) else t(K.STORE_CAMOS_SUB),
             Naval.muted
         )
 
@@ -100,52 +98,52 @@ fun StoreScreen(state: AppState) {
                         owned = profile.ownsFleet(line.id),
                         equipped = profile.equippedFleet == line.id,
                         credits = profile.credits,
-                        preview = Skin(state.skin.livery, line),
+                        preview = Skin(state.skin.paint, line),
                         onBuy = {
                             if (profile.buyFleet(line.id, line.price)) {
                                 profile.equipFleet(line.id)
                                 sync()
-                                notice = "${line.name} entrou em serviço"
+                                notice = t(K.STORE_COMMISSIONED, line.name)
                             } else {
-                                notice = "Faltam ◆ ${line.price - profile.credits} para a ${line.name}"
+                                notice = t(K.STORE_MISSING, line.price - profile.credits, line.name)
                             }
                         },
                         onEquip = {
                             profile.equipFleet(line.id)
                             sync()
-                            notice = "${line.name} entrou em serviço"
+                            notice = t(K.STORE_COMMISSIONED, line.name)
                         }
                     )
                 }
             } else {
-                Livery.all.forEach { livery ->
+                Paint.all.forEach { paint ->
                     StoreRow(
-                        title = livery.name,
-                        subtitle = camoLabel(livery),
-                        price = livery.price,
-                        owned = profile.owns(livery.id),
-                        equipped = profile.equipped == livery.id,
+                        title = paint.name,
+                        subtitle = camoLabel(paint),
+                        price = paint.price,
+                        owned = profile.owns(paint.id),
+                        equipped = profile.equipped == paint.id,
                         credits = profile.credits,
-                        preview = Skin(livery, state.skin.fleet),
+                        preview = Skin(paint, state.skin.fleet),
                         onBuy = {
-                            if (profile.buy(livery.id, livery.price)) {
-                                profile.equip(livery.id)
+                            if (profile.buy(paint.id, paint.price)) {
+                                profile.equip(paint.id)
                                 sync()
-                                notice = "${livery.name} aplicada na frota"
+                                notice = t(K.STORE_PAINTED, paint.name)
                             } else {
-                                notice = "Faltam ◆ ${livery.price - profile.credits} para a ${livery.name}"
+                                notice = t(K.STORE_MISSING, paint.price - profile.credits, paint.name)
                             }
                         },
                         onEquip = {
-                            profile.equip(livery.id)
+                            profile.equip(paint.id)
                             sync()
-                            notice = "${livery.name} aplicada na frota"
+                            notice = t(K.STORE_PAINTED, paint.name)
                         }
                     )
                 }
             }
             Gap(4)
-            HudLabel("CRÉDITOS SE GANHAM EM COMBATE · PAGAMENTO REAL ENTRA NA PUBLICAÇÃO", Naval.muted)
+            HudLabel(t(K.STORE_CREDITS_HINT), Naval.muted)
             Gap(8)
         }
 
@@ -156,19 +154,21 @@ fun StoreScreen(state: AppState) {
 
         Gap(10)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SecondaryButton("Voltar", modifier = Modifier.weight(1f)) { state.screen = Screen.MENU }
-            SecondaryButton("Estaleiro", modifier = Modifier.weight(1f)) { state.screen = Screen.SHIPYARD }
+            SecondaryButton(t(K.BACK), modifier = Modifier.weight(1f)) { state.screen = Screen.MENU }
+            SecondaryButton(t(K.MENU_SHIPYARD), modifier = Modifier.weight(1f)) { state.screen = Screen.SHIPYARD }
         }
     }
 }
 
-private fun camoLabel(livery: Livery): String = when (livery.camo) {
-    br.com.navalbattle.design.Camo.LISA -> "Pintura lisa"
-    br.com.navalbattle.design.Camo.DAZZLE -> "Faixas dazzle de alto contraste"
-    br.com.navalbattle.design.Camo.ESTILHACO -> "Manchas angulares de estilhaço"
-    br.com.navalbattle.design.Camo.LISTRAS -> "Faixas de linha d'água"
-    br.com.navalbattle.design.Camo.DIGITAL -> "Retículo digital moderno"
-}
+private fun camoLabel(paint: Paint): String = t(
+    when (paint.camo) {
+        br.com.navalbattle.design.Camo.LISA -> K.CAMO_PLAIN
+        br.com.navalbattle.design.Camo.DAZZLE -> K.CAMO_DAZZLE
+        br.com.navalbattle.design.Camo.ESTILHACO -> K.CAMO_SPLINTER
+        br.com.navalbattle.design.Camo.LISTRAS -> K.CAMO_STRIPES
+        br.com.navalbattle.design.Camo.DIGITAL -> K.CAMO_DIGITAL
+    }
+)
 
 @Composable
 private fun StoreRow(
@@ -233,8 +233,8 @@ private fun StoreRow(
             ) {
                 Text(
                     when {
-                        equipped -> "EM USO"
-                        owned -> "USAR"
+                        equipped -> t(K.STORE_IN_USE).uppercase()
+                        owned -> t(K.STORE_USE).uppercase()
                         else -> "◆ $price"
                     },
                     style = NavalType.monoSmall,
