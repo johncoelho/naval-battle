@@ -176,7 +176,10 @@ actual class CloudApi actual constructor() {
             "Authorization" to ("Bearer " + (token ?: SupabaseConfig.ANON_KEY))
         )
         prefer?.let { headers["Prefer"] = it }
-        req.setAllHTTPHeaderFields(headers)
+        // NSDictionary não é tipado do lado Objective-C, então o binding pede
+        // Map<Any?, *> em vez do Map<String, String> concreto que temos.
+        @Suppress("UNCHECKED_CAST")
+        req.setAllHTTPHeaderFields(headers as Map<Any?, *>)
         if (body != null) {
             req.setHTTPBody(NSJSONSerialization.dataWithJSONObject(body, 0uL, null))
         }
