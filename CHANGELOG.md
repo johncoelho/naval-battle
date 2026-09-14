@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.12.1] — 2026-09-14 · iOS: build verde de verdade
+
+### Corrigido
+- `Cloud.ios.kt` não compilava: o build anterior (0.12.0) foi enviado sem confirmação
+  de CI. Corrigidos, um a um, guiados só pelo erro do compilador (sem toolchain local):
+  import wildcard de `platform.Foundation` (membros de categoria Objective-C como
+  `HTTPMethod`/`HTTPBody`/`allHTTPHeaderFields` precisam da extensão importada, não só
+  da classe), `setHTTPMethod`/`setHTTPBody`/`setAllHTTPHeaderFields` chamados como
+  função (não como propriedade), `dataTaskWithRequest` com lambda posicional (o
+  completion handler não aceita nome de parâmetro nesse binding), cast de
+  `Map<String, String>` para `Map<Any?, *>` em `setAllHTTPHeaderFields`, unwrap do
+  `NSURL(string:)` (inicializador que pode falhar) e conversão de texto para `NSData`
+  via bytes UTF-8 pinados em vez de `NSString.dataUsingEncoding`.
+- `.github/workflows/ios.yml` execução #10: **primeiro build verde**, compilando os
+  dois alvos (`iosSimulatorArm64` e `iosArm64`) sem erro. Detalhes de cada pegadinha
+  em [docs/BUILD.md](docs/BUILD.md#ios--em-andamento).
+
 ## [0.12.0] — 2026-09-13 · Primeiro compile para iOS
 
 ### Adicionado
