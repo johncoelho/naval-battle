@@ -168,53 +168,49 @@ actual class CloudApi actual constructor() {
         token: String?,
         prefer: String?
     ): Any? = suspendCancellableCoroutine { cont ->
-        // NSURL(string:) é um inicializador que pode falhar (URL malformada) — o binding do
-        // Kotlin/Native expõe isso como retorno nulo. Sem o "!!" aqui, o req abaixo fica com
-        // tipo de erro e TODO acesso a propriedade dele (mesmo os certos) vira "Unresolved
-        // reference" em cascata — foi exatamente isso que quebrou a rodada anterior.
         val url = NSURL(string = SupabaseConfig.URL.trimEnd('/') + path)!!
         val req = NSMutableURLRequest(uRL = url)
-        req.HTTPMethod = method
+        // HTTPMethod/HTTPBody só têm getter na classe base NSURLRequest; quem "escreve"
+        // é um método de categoria em NSMutableURLRequest (setHTTPMethod:, etc), não uma
+        // propriedade — por isso são chamados como função, não como atribuição.
+        req.setHTTPMethod(method)
         val headers = mutableMapOf(
             "apikey" to SupabaseConfig.ANON_KEY,
             "Content-Type" to "application/json",
             "Authorization" to ("Bearer " + (token ?: SupabaseConfig.ANON_KEY))
         )
         prefer?.let { headers["Prefer"] = it }
-        req.allHTTPHeaderFields = headers
+        req.setAllHTTPHeaderFields(headers)
         if (body != null) {
-            req.HTTPBody = NSJSONSerialization.dataWithJSONObject(body, 0uL, null)
+            req.setHTTPBody(NSJSONSerialization.dataWithJSONObject(body, 0uL, null))
         }
 
-        // nomeado explicitamente: sem isso o Kotlin às vezes prende na sobrecarga de
-        // um parâmetro só (sem callback) e reclama que a lambda à direita "sobra"
-        val task = NSURLSession.sharedSession.dataTaskWithRequest(
-            request = req,
-            completionHandler = { data, response, error ->
-                if (error != null) {
-                    cont.resumeWithException(Exception(error.localizedDescription))
-                    return@dataTaskWithRequest
-                }
-                val http = response as? NSHTTPURLResponse
-                val code = http?.statusCode?.toInt() ?: 0
-                val text = data?.let { NSString.create(data = it, encoding = NSUTF8StringEncoding) as String? }.orEmpty()
-
-                if (code == 401 && "Invalid login credentials" !in text) {
-                    cont.resumeWithException(SessionExpired())
-                    return@dataTaskWithRequest
-                }
-                if (code !in 200..299) {
-                    val message = runCatching {
-                        val parsed = parseJson(text) as? Map<*, *>
-                        (parsed?.get("msg") ?: parsed?.get("error_description")
-                            ?: parsed?.get("message") ?: parsed?.get("error")) as? String
-                    }.getOrNull().orEmpty()
-                    cont.resumeWithException(Exception(message.ifBlank { "HTTP $code" }))
-                    return@dataTaskWithRequest
-                }
-                cont.resume(if (text.isBlank()) null else parseJson(text))
+        // Lambda posicional (sem nomear o parâmetro do completion handler): o binding do
+        // Kotlin/Native não preserva "completionHandler" como nome de parâmetro utilizável.
+        val task = NSURLSession.sharedSession.dataTaskWithRequest(req) { data, response, error ->
+            if (error != null) {
+                cont.resumeWithException(Exception(error.localizedDescription))
+                return@dataTaskWithRequest
             }
-        )
+            val http = response as? NSHTTPURLResponse
+            val code = http?.statusCode?.toInt() ?: 0
+            val text = data?.let { NSString.create(data = it, encoding = NSUTF8StringEncoding) as String? }.orEmpty()
+
+            if (code == 401 && "Invalid login credentials" !in text) {
+                cont.resumeWithException(SessionExpired())
+                return@dataTaskWithRequest
+            }
+            if (code !in 200..299) {
+                val message = runCatching {
+                    val parsed = parseJson(text) as? Map<*, *>
+                    (parsed?.get("msg") ?: parsed?.get("error_description")
+                        ?: parsed?.get("message") ?: parsed?.get("error")) as? String
+                }.getOrNull().orEmpty()
+                cont.resumeWithException(Exception(message.ifBlank { "HTTP $code" }))
+                return@dataTaskWithRequest
+            }
+            cont.resume(if (text.isBlank()) null else parseJson(text))
+        }
         cont.invokeOnCancellation { task.cancel() }
         task.resume()
     }
