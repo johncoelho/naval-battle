@@ -14,6 +14,18 @@ kotlin {
         }
     }
 
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        // "ComposeApp" é o nome do framework que o projeto Xcode (iosApp/) importa
+        iosTarget.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
