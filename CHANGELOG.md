@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.11.2] — 2026-09-13 · Login com Google liberado para todo mundo
+
+### Adicionado
+- **Página de privacidade** ([site/privacy.html](site/privacy.html), publicada em
+  `johncoelho.github.io/naval-battle/privacy.html`): o que o jogo guarda com e sem
+  conta, o que o login do Google devolve, e como pedir a exclusão dos dados.
+
+### Configurado
+- App "Naval Battle" **publicado em produção** no Google Auth Platform (saiu do modo
+  de teste) — a página de privacidade era o único requisito que faltava. Qualquer conta
+  Google agora consegue entrar, não só os e-mails cadastrados como testador.
+
 ## [0.11.1] — 2026-09-13 · Google configurado de ponta a ponta
 
 ### Configurado
