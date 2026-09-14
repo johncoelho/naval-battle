@@ -46,8 +46,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --yes --cleanup-tag || true
-          gh release create latest naval-battle-debug.apk \
+          # cria a release só se não existir — nunca apaga: o workflow do iOS publica o
+          # .ipa na mesma release "latest", em paralelo, e um "delete" aqui destruiria
+          # esse asset se terminasse depois. "upload --clobber" troca só o nosso arquivo.
+          gh release view latest >/dev/null 2>&1 || gh release create latest \
             --title "Naval Battle — build de teste" \
-            --notes "APK de teste (debug, assinado com chave de depuração). Baixe no Android e instale permitindo 'fontes desconhecidas'. Build do commit ${{ github.sha }}." \
+            --notes "Builds de teste para Android (APK, debug) e iOS (.ipa, sem assinatura). Ver docs/BUILD.md para instalar cada um." \
             --prerelease
+          gh release upload latest naval-battle-debug.apk --clobber

@@ -12,6 +12,9 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -66,3 +69,16 @@ jobs:
           name: NavalBattle-ipa-sem-assinatura
           path: NavalBattle.ipa
           retention-days: 30
+
+      - name: Publica o .ipa na release rolante "latest"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # mesma release "latest" do APK (android.yml) — cria só se não existir, nunca
+          # apaga, porque os dois workflows disparam em paralelo no mesmo push; "upload
+          # --clobber" troca só o nosso arquivo, sem mexer no asset do outro
+          gh release view latest >/dev/null 2>&1 || gh release create latest \
+            --title "Naval Battle — build de teste" \
+            --notes "Builds de teste para Android (APK, debug) e iOS (.ipa, sem assinatura). Ver docs/BUILD.md para instalar cada um." \
+            --prerelease
+          gh release upload latest NavalBattle.ipa --clobber
