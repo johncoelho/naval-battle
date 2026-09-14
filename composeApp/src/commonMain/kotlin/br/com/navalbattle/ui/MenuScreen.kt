@@ -90,6 +90,7 @@ fun MenuScreen(state: AppState) {
             PrimaryButton(t(K.MENU_QUICK), t(K.MENU_QUICK_SUB)) { state.newMatch(Opponent.AI) }
             SecondaryButton(t(K.MENU_LOCAL), t(K.MENU_LOCAL_SUB)) { state.newMatch(Opponent.LOCAL) }
             SecondaryButton(t(K.MENU_LAN), t(K.MENU_LAN_SUB)) { state.screen = Screen.LAN }
+            SecondaryButton(t(K.MENU_ONLINE), t(K.MENU_ONLINE_SUB)) { state.screen = Screen.ONLINE }
             SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name) { state.screen = Screen.SHIPYARD }
             SecondaryButton(t(K.MENU_STORE), "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
             SecondaryButton(t(K.MENU_PROFILE), state.profile.rank.label) { state.screen = Screen.PROFILE }

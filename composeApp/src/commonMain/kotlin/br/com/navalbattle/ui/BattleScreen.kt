@@ -51,6 +51,7 @@ import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Impact
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
+import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.ShipClass
 import br.com.navalbattle.game.Side
@@ -72,7 +73,10 @@ fun BattleScreen(state: AppState, match: Match) {
     DisposableEffect(Unit) { onDispose { sound.release() } }
 
     val local = match.opponent == Opponent.LOCAL
-    val lan = match.opponent == Opponent.LAN
+    // "lan" no nome por herança do modo local — hoje cobre LAN e Online, os dois
+    // "cada aparelho a própria tela" que trocam jogada por mensagem em vez de
+    // mexer direto no Match do outro lado
+    val lan = match.opponent.isNetwork()
     // aparelhos separados (IA ou rede) mostram a experiência cheia de single player:
     // frota própria sempre visível, alarme de bordo, tabuleiro alvo grande. Só o modo
     // local (mesmo aparelho, tela compartilhada) esconde a frota e reveza a visão.

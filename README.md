@@ -61,7 +61,15 @@ na próxima partida tática — some ao ser usado, a recarga normal segue igual.
   - **Provocações** — um ícone de rádio na barra superior abre um mural de emojis e
     gritos de guerra prontos ("Fogo total!", "Belo tiro!", ...) para mandar ao outro
     aparelho durante a partida; aparecem como uma bolha na tela de quem recebe.
-- **Ranqueada online** — planejada, ainda não implementada.
+- **Online (internet)** — sala de amigo (código curto pra compartilhar por fora do
+  jogo) ou partida rápida (o jogo emparelha com quem estiver procurando também). Exige
+  conta conectada. Mesmo protocolo de jogadas do modo rede local, só que trafegando
+  pela REST do Supabase em vez de socket — cada lado grava a própria jogada e consulta
+  por novidades a cada 1-2 segundos, sem precisar dos dois na mesma rede.
+  - **Amigos** — pedido de amizade por nome de comandante, aceitar/recusar, lista
+    salva na conta; convidar um amigo da lista abre uma sala do mesmo jeito que criar
+    uma manualmente.
+- **Ranqueada** — pontuação valendo de verdade, planejada, ainda não implementada.
 
 ### Carreira
 
@@ -100,6 +108,17 @@ mecanismo do Bonjour, o que deixa o caminho pronto para o iOS.
 Como cada aparelho conhece a frota do outro para resolver os tiros, um cliente adulterado
 poderia espiar. É aceitável entre amigos na mesma rede; quando houver ranqueada valendo
 pontuação, a resolução passa para o lado do dono da frota.
+
+### Como o modo Online funciona
+
+Mesmo protocolo de texto do modo rede local (`data/Protocol.kt`), o transporte é que muda:
+em vez de socket TCP, cada jogada vira uma linha na tabela `online_messages` do Supabase, e
+cada lado consulta por linhas novas a cada 1-2 segundos (`data/OnlineLink.kt`, puro
+`commonMain` — não precisa de código por plataforma, porque só reaproveita o `CloudApi` que
+já fala com o Supabase). Sala de amigo e partida rápida vivem em `online_matches`; quem
+cria sempre joga primeiro. Amizades (`friendships`) e a busca de comandante por nome
+(`search_commander`) são independentes da sala — servem para montar a lista e convidar
+depois. Detalhe do schema em [supabase/online.sql](supabase/online.sql).
 
 ### Conta e sincronização
 

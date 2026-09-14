@@ -19,11 +19,14 @@ import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.CloudResult
+import br.com.navalbattle.data.CommanderHit
+import br.com.navalbattle.data.Friendship
 import br.com.navalbattle.data.GoogleAuth
 import br.com.navalbattle.data.GoogleAuthResult
 import br.com.navalbattle.data.LanGame
 import br.com.navalbattle.data.LanLink
 import br.com.navalbattle.data.LinkState
+import br.com.navalbattle.data.OnlineLink
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
@@ -38,6 +41,7 @@ import br.com.navalbattle.game.FleetCodec
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
+import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Profile
 import br.com.navalbattle.i18n.I18n
 import br.com.navalbattle.i18n.K
@@ -50,6 +54,7 @@ import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
 import br.com.navalbattle.ui.MenuScreen
 import br.com.navalbattle.ui.NamesScreen
+import br.com.navalbattle.ui.OnlineScreen
 import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ProfileScreen
 import br.com.navalbattle.ui.ResultScreen
@@ -57,7 +62,7 @@ import br.com.navalbattle.ui.ShipyardScreen
 import br.com.navalbattle.ui.StoreScreen
 import br.com.navalbattle.ui.SplashScreen
 
-enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, AUTH, LAN, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
+enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, AUTH, LAN, ONLINE, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
@@ -92,16 +97,26 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     fun quitToMenu() {
         // avisa o outro aparelho antes de fechar, para ele não ficar esperando a
         // vez de alguém que já saiu — quem ficou leva a vitória na hora
-        if (match?.opponent == Opponent.LAN) {
-            link.send(Protocol.QUIT)
-            // send() escreve numa thread à parte; um respiro curto garante que o
-            // aviso saia no fio antes de fecharmos o socket embaixo dele
-            val scope = uiScope
-            if (scope != null) {
-                scope.launch { delay(200); closeLink() }
-            } else {
-                closeLink()
+        when (match?.opponent) {
+            Opponent.LAN -> {
+                link.send(Protocol.QUIT)
+                // send() escreve numa thread à parte; um respiro curto garante que o
+                // aviso saia no fio antes de fecharmos o socket embaixo dele
+                val scope = uiScope
+                if (scope != null) {
+                    scope.launch { delay(200); closeLink() }
+                } else {
+                    closeLink()
+                }
             }
+
+            Opponent.ONLINE -> {
+                onlineLink.send(Protocol.QUIT)
+                onlineLink.finish("abandoned")
+                closeOnline()
+            }
+
+            else -> Unit
         }
         match = null
         screen = Screen.MENU
@@ -188,7 +203,129 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         screen = Screen.PLACEMENT
     }
 
-    /** Uma linha chegou do outro aparelho. */
+    // ---------------- partida online (internet) ----------------
+
+    var onlineLinkState by mutableStateOf(LinkState.IDLE)
+        private set
+
+    /** Código da sala de amigo, para mostrar na tela enquanto espera alguém entrar. */
+    var onlineCode by mutableStateOf<String?>(null)
+        private set
+
+    var friendResults by mutableStateOf<List<CommanderHit>>(emptyList())
+        private set
+    var friendships by mutableStateOf<List<Friendship>>(emptyList())
+        private set
+
+    private val onlineLink: OnlineLink by lazy { OnlineLink(cloud, uiScope!!) }
+
+    /** Cria uma sala de amigo — quem cria sempre joga primeiro. */
+    fun createOnlineRoom() {
+        val session = profile.currentSession() ?: return
+        onlineLink.close()
+        onlineCode = null
+        onlineLink.createRoom(
+            session = session,
+            mode = mode.name,
+            onState = { s, side -> onMain { onOnlineState(s, side) } },
+            onCode = { code -> onMain { onlineCode = code } },
+            onLine = { line -> onMain { onLine(line) } }
+        )
+    }
+
+    /** Procura uma partida rápida aberta; se não achar, fica esperando a própria. */
+    fun startQuickMatchOnline() {
+        val session = profile.currentSession() ?: return
+        onlineLink.close()
+        onlineCode = null
+        onlineLink.quickMatch(
+            session = session,
+            mode = mode.name,
+            onState = { s, side -> onMain { onOnlineState(s, side) } },
+            onLine = { line -> onMain { onLine(line) } }
+        )
+    }
+
+    /** Entra numa sala de amigo pelo código que ele compartilhou por fora do jogo. */
+    fun joinOnlineByCode(code: String) {
+        val session = profile.currentSession() ?: return
+        onlineLink.close()
+        onlineLink.joinByCode(
+            session = session,
+            code = code,
+            onState = { s, side -> onMain { onOnlineState(s, side) } },
+            onLine = { line -> onMain { onLine(line) } }
+        )
+    }
+
+    fun closeOnline() {
+        onlineLink.close()
+        onlineLinkState = LinkState.IDLE
+        onlineCode = null
+        rematchRequestedByMe = false
+        rematchRequestedByOpponent = false
+    }
+
+    private fun onOnlineState(state: LinkState, side: Side) {
+        onlineLinkState = state
+        if (state != LinkState.CONNECTED) return
+        startOnlineMatch(side)
+    }
+
+    private fun startOnlineMatch(side: Side) {
+        val m = Match(mode, Opponent.ONLINE, mySide = side)
+        m.setName(side, profile.displayName)
+        match = m
+        onlineLink.send(Protocol.hello(profile.displayName, mode.name))
+        screen = Screen.PLACEMENT
+    }
+
+    /** Procura comandantes pelo início do nome, para mandar pedido de amizade. */
+    suspend fun searchCommander(query: String) {
+        if (query.isBlank()) {
+            friendResults = emptyList()
+            return
+        }
+        val session = profile.currentSession() ?: return
+        val r = cloud.searchCommander(session, query)
+        friendResults = (r as? CloudResult.Ok)?.value.orEmpty()
+    }
+
+    suspend fun sendFriendRequest(hit: CommanderHit) {
+        val session = profile.currentSession() ?: return
+        cloud.sendFriendRequest(session, hit.id, profile.displayName, hit.username)
+        refreshFriendships()
+    }
+
+    suspend fun respondFriendRequest(friendship: Friendship, accept: Boolean) {
+        val session = profile.currentSession() ?: return
+        cloud.respondFriendRequest(session, friendship.id, accept)
+        refreshFriendships()
+    }
+
+    suspend fun removeFriendship(friendship: Friendship) {
+        val session = profile.currentSession() ?: return
+        cloud.removeFriendship(session, friendship.id)
+        refreshFriendships()
+    }
+
+    suspend fun refreshFriendships() {
+        val session = profile.currentSession() ?: return
+        val r = cloud.listFriendships(session)
+        friendships = (r as? CloudResult.Ok)?.value.orEmpty()
+    }
+
+    // ---------------- ações compartilhadas entre LAN e online ----------------
+
+    private fun sendToOpponent(line: String) {
+        when (match?.opponent) {
+            Opponent.LAN -> link.send(line)
+            Opponent.ONLINE -> onlineLink.send(line)
+            else -> Unit
+        }
+    }
+
+    /** Uma linha chegou do outro aparelho — mesmo protocolo para LAN e online. */
     private fun onLine(line: String) {
         val m = match ?: return
         val parts = Protocol.parts(line)
@@ -217,7 +354,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
             Protocol.QUIT -> {
                 m.abandon(m.mySide)
-                closeLink()
+                if (m.opponent == Opponent.LAN) closeLink() else closeOnline()
             }
         }
     }
@@ -225,28 +362,28 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Dispara e conta ao adversário — os dois aparelhos resolvem o mesmo tiro. */
     fun fireShared(coord: Coord) {
         val m = match ?: return
-        if (m.opponent == Opponent.LAN) link.send(Protocol.act(coord.x, coord.y))
+        if (m.opponent.isNetwork()) sendToOpponent(Protocol.act(coord.x, coord.y))
         m.act(coord)
     }
 
     fun useAbilityShared(ability: Ability, ignoreCooldown: Boolean = false) {
         val m = match ?: return
-        if (m.opponent == Opponent.LAN) link.send(Protocol.ability(ability.code, ignoreCooldown))
+        if (m.opponent.isNetwork()) sendToOpponent(Protocol.ability(ability.code, ignoreCooldown))
         m.selectAbility(ability, ignoreCooldown)
     }
 
     /** Manda a própria frota assim que ela é confirmada. */
     fun sendFleet() {
         val m = match ?: return
-        if (m.opponent != Opponent.LAN) return
-        link.send(Protocol.fleet(FleetCodec.encode(m.board(m.mySide).ships)))
+        if (!m.opponent.isNetwork()) return
+        sendToOpponent(Protocol.fleet(FleetCodec.encode(m.board(m.mySide).ships)))
     }
 
     /** Emoji ou grito de guerra: decoração pura, não passa pela lógica da partida. */
     fun sendTaunt(code: String) {
         val m = match ?: return
-        if (m.opponent != Opponent.LAN) return
-        link.send(Protocol.taunt(code))
+        if (!m.opponent.isNetwork()) return
+        sendToOpponent(Protocol.taunt(code))
         m.sendTaunt(m.mySide, code)
     }
 
@@ -257,9 +394,14 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      */
     fun requestRematch() {
         val m = match ?: return
-        if (m.opponent != Opponent.LAN || linkState != LinkState.CONNECTED) return
+        val connected = when (m.opponent) {
+            Opponent.LAN -> linkState == LinkState.CONNECTED
+            Opponent.ONLINE -> onlineLinkState == LinkState.CONNECTED
+            else -> false
+        }
+        if (!connected) return
         rematchRequestedByMe = true
-        link.send(Protocol.REMATCH)
+        sendToOpponent(Protocol.REMATCH)
         maybeStartRematch()
     }
 
@@ -268,7 +410,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val old = match ?: return
         rematchRequestedByMe = false
         rematchRequestedByOpponent = false
-        startLanMatch(old.mySide)
+        when (old.opponent) {
+            Opponent.LAN -> startLanMatch(old.mySide)
+            Opponent.ONLINE -> startOnlineMatch(old.mySide)
+            else -> Unit
+        }
     }
 
     // ---------------- conta e sincronização ----------------
@@ -453,6 +599,7 @@ fun App() {
                 Screen.PROFILE -> ProfileScreen(state)
                 Screen.AUTH -> AuthScreen(state)
                 Screen.LAN -> LanScreen(state)
+                Screen.ONLINE -> OnlineScreen(state)
                 Screen.NAMES -> state.match?.let { NamesScreen(state, it) }
                 Screen.PLACEMENT -> state.match?.let { PlacementScreen(state, it) }
                 Screen.HANDOFF -> state.match?.let { HandoffScreen(state, it) }

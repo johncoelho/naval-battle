@@ -124,6 +124,184 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
+    // ------------------------------------------------------------------ modo online
+
+    actual suspend fun createOnlineMatch(
+        session: Session,
+        mode: String,
+        quick: Boolean,
+        inviteCode: String?,
+        hostName: String
+    ): CloudResult<OnlineMatch> = call {
+        val body = JSONObject()
+            .put("host_id", session.userId)
+            .put("host_name", hostName)
+            .put("mode", mode)
+            .put("is_quick_match", quick)
+            .put("invite_code", inviteCode)
+        val json = post(
+            "/rest/v1/online_matches",
+            body,
+            token = session.accessToken,
+            prefer = "return=representation"
+        )
+        val row = JSONArray(json).getJSONObject(0)
+        CloudResult.Ok(matchOf(row))
+    }
+
+    actual suspend fun findQuickMatch(session: Session, mode: String): CloudResult<OnlineMatch?> = call {
+        val json = get(
+            "/rest/v1/online_matches?status=eq.waiting&is_quick_match=is.true" +
+                "&mode=eq.$mode&host_id=neq.${session.userId}&order=created_at.asc&limit=1",
+            session.accessToken
+        )
+        val arr = JSONArray(json)
+        CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
+    }
+
+    actual suspend fun findMatchByCode(session: Session, code: String): CloudResult<OnlineMatch?> = call {
+        val json = get(
+            "/rest/v1/online_matches?invite_code=eq.$code&status=eq.waiting&limit=1",
+            session.accessToken
+        )
+        val arr = JSONArray(json)
+        CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
+    }
+
+    actual suspend fun joinOnlineMatch(
+        session: Session,
+        matchId: String,
+        guestName: String
+    ): CloudResult<OnlineMatch?> = call {
+        // via função (ver online.sql): HttpURLConnection não manda PATCH, e a
+        // condição "guest_id ainda nulo" dentro da função é a trava contra dois
+        // convidados entrando na mesma sala ao mesmo tempo
+        val body = JSONObject()
+            .put("p_match_id", matchId)
+            .put("p_guest_name", guestName)
+        val json = post("/rest/v1/rpc/join_online_match", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
+    }
+
+    actual suspend fun getOnlineMatch(session: Session, matchId: String): CloudResult<OnlineMatch?> = call {
+        val json = get("/rest/v1/online_matches?id=eq.$matchId&limit=1", session.accessToken)
+        val arr = JSONArray(json)
+        CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
+    }
+
+    actual suspend fun closeOnlineMatch(session: Session, matchId: String, status: String): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_match_id", matchId).put("p_status", status)
+        post("/rest/v1/rpc/close_online_match", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun sendOnlineMessage(session: Session, matchId: String, body: String): CloudResult<Unit> = call {
+        val json = JSONObject()
+            .put("match_id", matchId)
+            .put("sender_id", session.userId)
+            .put("body", body)
+        post("/rest/v1/online_messages", json, token = session.accessToken, prefer = "return=minimal")
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun pollOnlineMessages(
+        session: Session,
+        matchId: String,
+        afterId: Long
+    ): CloudResult<List<OnlineMessage>> = call {
+        val json = get(
+            "/rest/v1/online_messages?match_id=eq.$matchId&id=gt.$afterId&order=id.asc" +
+                "&select=id,sender_id,body",
+            session.accessToken
+        )
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            OnlineMessage(id = o.getLong("id"), senderId = o.getString("sender_id"), body = o.getString("body"))
+        }
+        CloudResult.Ok(list)
+    }
+
+    // ------------------------------------------------------------------ amigos
+
+    actual suspend fun searchCommander(session: Session, query: String): CloudResult<List<CommanderHit>> = call {
+        val body = JSONObject().put("query", query)
+        val json = post("/rest/v1/rpc/search_commander", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            CommanderHit(id = o.getString("id"), username = o.getString("username"))
+        }
+        CloudResult.Ok(list)
+    }
+
+    actual suspend fun sendFriendRequest(
+        session: Session,
+        addresseeId: String,
+        myUsername: String,
+        theirUsername: String
+    ): CloudResult<Unit> = call {
+        val body = JSONObject()
+            .put("requester_id", session.userId)
+            .put("addressee_id", addresseeId)
+            .put("requester_username", myUsername)
+            .put("addressee_username", theirUsername)
+        post("/rest/v1/friendships", body, token = session.accessToken, prefer = "return=minimal")
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun respondFriendRequest(
+        session: Session,
+        friendshipId: String,
+        accept: Boolean
+    ): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_friendship_id", friendshipId).put("p_accept", accept)
+        post("/rest/v1/rpc/respond_friend_request", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun removeFriendship(session: Session, friendshipId: String): CloudResult<Unit> = call {
+        delete("/rest/v1/friendships?id=eq.$friendshipId", session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun listFriendships(session: Session): CloudResult<List<Friendship>> = call {
+        val json = get(
+            "/rest/v1/friendships?or=(requester_id.eq.${session.userId},addressee_id.eq.${session.userId})",
+            session.accessToken
+        )
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).map { i -> friendshipOf(arr.getJSONObject(i)) }
+        CloudResult.Ok(list)
+    }
+
+    // optString devolve "" tanto para campo ausente quanto para JSON null — para os
+    // campos que fazem diferença (nulo é "ninguém entrou ainda"), checa com isNull
+    private fun JSONObject.stringOrNull(key: String): String? =
+        if (isNull(key)) null else optString(key).ifBlank { null }
+
+    private fun matchOf(o: JSONObject): OnlineMatch = OnlineMatch(
+        id = o.getString("id"),
+        hostId = o.getString("host_id"),
+        guestId = o.stringOrNull("guest_id"),
+        hostName = o.optString("host_name"),
+        guestName = o.stringOrNull("guest_name"),
+        mode = o.optString("mode", "CLASSIC"),
+        status = o.optString("status", "waiting"),
+        isQuickMatch = o.optBoolean("is_quick_match", false),
+        inviteCode = o.stringOrNull("invite_code")
+    )
+
+    private fun friendshipOf(o: JSONObject): Friendship = Friendship(
+        id = o.getString("id"),
+        requesterId = o.getString("requester_id"),
+        addresseeId = o.getString("addressee_id"),
+        requesterUsername = o.optString("requester_username"),
+        addresseeUsername = o.optString("addressee_username"),
+        status = o.optString("status", "pending")
+    )
+
     // ------------------------------------------------------------------ HTTP
 
     /** Sessão vencida: quem chamou renova o token e repete. */
@@ -172,6 +350,8 @@ actual class CloudApi actual constructor() {
     }
 
     private fun get(path: String, token: String): String = read(open(path, "GET", token, null))
+
+    private fun delete(path: String, token: String): String = read(open(path, "DELETE", token, null))
 
     private fun put(path: String, body: JSONObject, token: String): String {
         val conn = open(path, "PUT", token, null)

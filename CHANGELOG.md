@@ -9,6 +9,34 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.13.0] — 2026-09-14 · Modo Online (sala de amigo, partida rápida, amigos)
+
+### Adicionado
+- **Modo Online**, novo botão no menu: sala de amigo (código curto de 5 caracteres
+  pra compartilhar por fora do jogo) e partida rápida (o jogo emparelha com quem
+  também estiver procurando). Exige conta conectada.
+- Reaproveita o protocolo de texto do modo rede local (`HELLO|`, `FLEET|`, `ACT|x|y`,
+  `ABIL|code|charge`) sobre um transporte novo: `data/OnlineLink.kt`, puro
+  `commonMain`, publica/consulta jogadas via REST do Supabase em vez de socket —
+  não precisou de nenhum código específico de plataforma.
+- **Amigos**: busca de comandante por nome, pedido de amizade, aceitar/recusar,
+  lista salva na conta; convidar um amigo da lista abre uma sala.
+- `supabase/online.sql`: tabelas `online_matches`, `online_messages`, `friendships`,
+  função `search_commander` (busca seguindo RLS) e três funções RPC
+  (`join_online_match`, `close_online_match`, `respond_friend_request`) — usadas
+  no lugar de PATCH porque `HttpURLConnection` (cliente Android) não manda esse
+  método.
+- 13 métodos novos em `CloudApi` (contrato + Android + iOS), cobrindo salas,
+  jogadas e amigos.
+- `Opponent.ONLINE` e a extensão `isNetwork()` (`LAN` ou `ONLINE`), que passam a
+  reger os fluxos de posicionamento, revanche e abandono de partida em rede —
+  antes só cobriam LAN.
+
+### Nota de projeto
+Convite de amigo direto (notificação de "fulano te chamou pra jogar") ainda não
+existe — o convite de dentro da lista de amigos hoje abre uma sala normal, e quem
+convida ainda precisa mandar o código por fora do jogo. Ficou como próximo passo.
+
 ## [0.12.1] — 2026-09-14 · iOS: build verde de verdade
 
 ### Corrigido

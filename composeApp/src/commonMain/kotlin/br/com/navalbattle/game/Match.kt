@@ -44,7 +44,7 @@ class Match(
     val enemyBoard = Board()
 
     /** Em rede, cada aparelho só posiciona a própria frota e espera a do adversário. */
-    private val remote: Boolean get() = opponent == Opponent.LAN
+    private val remote: Boolean get() = opponent == Opponent.LAN || opponent == Opponent.ONLINE
     var fleetsReady by mutableStateOf(0)
         private set
 
@@ -125,7 +125,7 @@ class Match(
 
     fun sideName(side: Side): String = when (opponent) {
         Opponent.AI -> if (side == Side.PLAYER) t(K.YOU) else t(K.ENEMY)
-        Opponent.LOCAL, Opponent.LAN ->
+        Opponent.LOCAL, Opponent.LAN, Opponent.ONLINE ->
             if (side == Side.PLAYER) nameOne.ifBlank { t(K.NAMES_ONE) }
             else nameTwo.ifBlank { t(K.NAMES_TWO) }
     }

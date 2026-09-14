@@ -15,10 +15,14 @@ enum class GameMode(val key: K, val descriptionKey: K) {
 }
 
 /**
- * Contra quem se joga: a IA do aparelho, outra pessoa no mesmo celular, ou outro
- * aparelho na mesma rede sem fio.
+ * Contra quem se joga: a IA do aparelho, outra pessoa no mesmo celular, outro
+ * aparelho na mesma rede sem fio, ou alguém pela internet (sala de amigo ou
+ * partida rápida via [br.com.navalbattle.data.OnlineLink]).
  */
-enum class Opponent { AI, LOCAL, LAN }
+enum class Opponent { AI, LOCAL, LAN, ONLINE }
+
+/** LAN e ONLINE são os dois "dois aparelhos, cada um a própria tela" — mesmo fluxo de UI. */
+fun Opponent.isNetwork(): Boolean = this == Opponent.LAN || this == Opponent.ONLINE
 
 enum class Ability(
     val code: String,

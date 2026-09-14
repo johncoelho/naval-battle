@@ -36,6 +36,7 @@ import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Award
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
+import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.ShipClass
 import br.com.navalbattle.game.Side
 
@@ -194,7 +195,7 @@ fun ResultScreen(state: AppState, match: Match) {
         }
 
         Gap(12)
-        if (match.opponent == Opponent.LAN) {
+        if (match.opponent.isNetwork()) {
             RematchSection(state, match)
         } else {
             PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }

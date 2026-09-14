@@ -48,6 +48,7 @@ import br.com.navalbattle.game.Board
 import br.com.navalbattle.game.Coord
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
+import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Orientation
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.Ship
@@ -227,7 +228,7 @@ fun PlacementScreen(state: AppState, match: Match) {
             SecondaryButton(t(K.BACK), modifier = Modifier.weight(1f)) {
                 when {
                     // em rede, voltar desfaz a ligação com o outro aparelho
-                    match.opponent == Opponent.LAN -> state.quitToMenu()
+                    match.opponent.isNetwork() -> state.quitToMenu()
                     // no local, volta para o posicionamento do primeiro comandante
                     match.backPlacement() -> state.handoffToPlacement(Side.PLAYER)
                     match.opponent == Opponent.LOCAL -> state.screen = Screen.NAMES
@@ -243,7 +244,7 @@ fun PlacementScreen(state: AppState, match: Match) {
             match.confirmPlacement()
             when {
                 // em rede: manda a frota e vai esperar a do adversário na tela de batalha
-                match.opponent == Opponent.LAN -> {
+                match.opponent.isNetwork() -> {
                     state.sendFleet()
                     state.screen = Screen.BATTLE
                 }
