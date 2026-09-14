@@ -27,8 +27,10 @@ Toda versão nova passa pelo catálogo `libs.versions.toml`. Nada de número sol
 
 ## Dependências — a regra é não ter
 
-O APK tem **uma** dependência além do Compose: `activity-compose`. Nada de imagem, nada
-de fonte externa, nada de biblioteca de rede, nada de serialização.
+O APK tem `activity-compose` e, só para o login com Google, o Credential Manager
+(`androidx.credentials` + `androidx.credentials.play.services` + `google-id` — ver
+docs/BUILD.md). Fora isso, nada de imagem, nada de fonte externa, nada de biblioteca de
+rede, nada de serialização.
 
 Consequências práticas dessa escolha, todas deliberadas:
 
@@ -49,21 +51,26 @@ e quanto código próprio ela realmente elimina?
 ```
 commonMain/   tudo — motor, telas, estado, contratos expect
 androidMain/  só o que é do Android: Activity, manifesto, recursos e os actual
+iosMain/      só o que é do iOS: os actual (parte deles, ver abaixo)
 ```
 
-Três pares `expect/actual` isolam a plataforma:
+Seis pares `expect/actual` isolam a plataforma:
 
-| Contrato | `commonMain` | `androidMain` |
-|---|---|---|
-| `SoundPlayer` | efeitos de combate | `SoundPool` + `R.raw` |
-| `MusicPlayer` | trilha em laço | `MediaPlayer` com `isLooping` |
-| `Prefs` | chave-valor da carreira | `SharedPreferences` |
-| `CloudApi` | conta e sincronização | `HttpURLConnection` + `org.json` |
-| `LanLink` | partida na rede local | `NsdManager` (mDNS) + `ServerSocket`/`Socket` |
+| Contrato | `commonMain` | `androidMain` | `iosMain` |
+|---|---|---|---|
+| `SoundPlayer` | efeitos de combate | `SoundPool` + `R.raw` | mudo (pendente) |
+| `MusicPlayer` | trilha em laço | `MediaPlayer` com `isLooping` | mudo (pendente) |
+| `Prefs` | chave-valor da carreira | `SharedPreferences` | `NSUserDefaults` |
+| `CloudApi` | conta e sincronização | `HttpURLConnection` + `org.json` | `NSURLSession` |
+| `GoogleAuth` | pede a conta ao sistema | Credential Manager | sempre falha (pendente) |
+| `LanLink` | partida na rede local | `NsdManager` (mDNS) + `ServerSocket`/`Socket` | sempre falha (pendente) |
 
-**Portar para iOS é escrever esses quatro `actual`.** Nenhuma tela, nenhuma regra de jogo
-precisa mudar. Manter essa propriedade é a razão de existir da separação: código de
-plataforma que vaza para `commonMain` é dívida imediata.
+**A separação já provou o valor dela**: portar para iOS foi escrever `actual` novos, sem
+tocar em nenhuma tela ou regra de jogo em `commonMain`. `Prefs` e `CloudApi` têm
+implementação de verdade; `SoundPlayer`, `MusicPlayer`, `GoogleAuth` e `LanLink` compilam
+mas ainda não fazem nada no iOS — completar esses quatro é o que falta para paridade
+total (ver [docs/BUILD.md](BUILD.md#ios--em-andamento)). Código de plataforma que vaza
+para `commonMain` continua sendo dívida imediata.
 
 ## Arquitetura do estado
 

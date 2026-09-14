@@ -144,6 +144,38 @@ Só falta uma linha: mandar o **Client ID do cliente Web** (não o Android) para
 para quem entra pelo Google — é o mesmo mecanismo que já funciona para o cadastro por
 e-mail, sem mudança nenhuma na base.
 
+## iOS — em andamento
+
+O alvo iOS foi adicionado ao `composeApp/build.gradle.kts` (`iosX64`, `iosArm64`,
+`iosSimulatorArm64`) e o `.github/workflows/ios.yml` compila o framework Kotlin/Native
+a cada push, num runner `macos-latest` — é a única forma de validar isso sem um Mac à
+mão, então esse workflow verde é a fonte de verdade de que o multiplataforma ainda
+compila para iOS.
+
+**O que já tem `actual` de verdade para iOS** (`composeApp/src/iosMain`):
+- `Prefs` — via `NSUserDefaults`.
+- `CloudApi` — via `NSURLSession`, mesma lógica do cliente Android (`Cloud.android.kt`),
+  só a chamada HTTP muda.
+
+**O que está de propósito só como pendência** (compila, mas não faz nada ainda):
+- `SoundPlayer` / `MusicPlayer` — mudos. Faltam os efeitos e a trilha empacotados no
+  bundle do app (os `.wav` já existem em `androidMain/res/raw`; as duas faixas de
+  música estão em `.ogg`, que o `AVAudioPlayer` não lê — precisam virar `.m4a`/`.caf`
+  antes de ir para o iOS) e a troca do `SoundPool`/`MediaPlayer` do Android por
+  `AVAudioPlayer`.
+- `GoogleAuth` — sempre devolve falha. Precisa do SDK GoogleSignIn-iOS (Swift Package
+  Manager) e de uma `UIViewController` para apresentar a tela de conta, no lugar do
+  `ActivityHolder` do Android.
+- `LanLink` — qualquer hospedar/procurar/entrar falha na hora. Precisa de
+  `NetService`/`NetServiceBrowser` (Bonjour, o mesmo mDNS que o NSD do Android já usa
+  de propósito, pensando nisso) para anunciar/descobrir, e `Network.framework` ou
+  sockets BSD para a conversa TCP linha a linha.
+
+**Ainda não existe projeto Xcode no repositório** (`iosApp/`) — sem ele não dá para
+rodar o jogo de verdade num simulador ou aparelho, só provar que o Kotlin compila.
+Criar esse projeto (e depois assinar para um iPhone físico) é o próximo passo, e exige
+uma conta Apple Developer para distribuir além do simulador.
+
 ## Landing page
 
 `site/index.html` é publicada pelo GitHub Pages através do workflow `.github/workflows/pages.yml`,
