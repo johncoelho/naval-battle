@@ -175,7 +175,7 @@
 
   <div class="wrap herobody">
     <div>
-      <p class="eyebrow">Batalha naval tática · Android</p>
+      <p class="eyebrow">Batalha naval tática · Android · iOS (beta)</p>
       <h1>NAVAL<br><span>BATTLE</span></h1>
       <p class="lede" style="margin-top:18px">
         Um centro de comando naval no seu bolso. Radar varrendo a carta, míssil cruzando a
@@ -193,9 +193,9 @@
       <div class="cta">
         <a class="btn btn-primary" id="download"
            href="https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk">
-          ↓ Baixar o APK
+          ↓ Baixar para Android
         </a>
-        <a class="btn btn-ghost" href="#jogo">Ver o jogo</a>
+        <a class="btn btn-ghost" href="#baixar">↓ Baixar para iPhone</a>
       </div>
       <p class="meta" id="release-meta">Versão de teste · sempre a última compilação</p>
     </div>
@@ -341,33 +341,64 @@
   <div class="wrap">
     <div class="sechead">
       <h2>Baixar</h2>
-      <p>O botão aponta sempre para a compilação mais recente — a cada versão nova, o mesmo
-         link passa a servir o APK atualizado.</p>
+      <p>Os dois links apontam sempre para a compilação mais recente — a cada versão nova,
+         o mesmo endereço passa a servir o build atualizado.</p>
     </div>
 
-    <div class="cta">
-      <a class="btn btn-primary"
-         href="https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk">
-        ↓ Baixar o APK
-      </a>
+    <div class="grid">
+      <div class="install">
+        <h3>Android</h3>
+        <div class="cta" style="margin:14px 0">
+          <a class="btn btn-primary"
+             href="https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk">
+            ↓ Baixar o APK
+          </a>
+        </div>
+        <p class="meta" id="release-meta-android">Carregando dados da última versão…</p>
+        <ol>
+          <li>Baixe o APK no próprio celular.</li>
+          <li>Abra o arquivo e permita a instalação de <b style="color:var(--ink)">fontes desconhecidas</b>
+              para o aplicativo que estiver abrindo (navegador ou gerenciador de arquivos).</li>
+          <li>Instale por cima da versão anterior — o progresso é preservado.</li>
+        </ol>
+        <p style="margin:14px 0 0;font-size:13.5px;color:var(--muted)">
+          Android 8.0 ou superior. Versão de teste, assinada com chave de depuração; a
+          publicação na Play Store vem depois.
+        </p>
+      </div>
+
+      <div class="install">
+        <h3>iPhone (iOS)</h3>
+        <div class="cta" style="margin:14px 0">
+          <a class="btn btn-primary"
+             href="https://github.com/johncoelho/naval-battle/releases/download/latest/NavalBattle.ipa">
+            ↓ Baixar o .ipa
+          </a>
+        </div>
+        <p class="meta" id="release-meta-ios">Carregando dados da última versão…</p>
+        <ol>
+          <li>Baixe o <code>.ipa</code> num computador (Windows, Mac ou Linux — o iPhone
+              sozinho não instala esse arquivo).</li>
+          <li>Instale o <a href="https://sideloadly.io/" target="_blank" rel="noopener">Sideloadly</a>
+              (grátis) nesse computador.</li>
+          <li>Conecte o iPhone por cabo, abra o Sideloadly, arraste o <code>.ipa</code> nele
+              e entre com um Apple ID (grátis — não precisa de conta paga de desenvolvedor).</li>
+          <li>No iPhone: <b style="color:var(--ink)">Ajustes → Geral → VPN e Gerenciamento
+              de Dispositivo</b> → toque no seu Apple ID e confie no certificado.</li>
+        </ol>
+        <p style="margin:14px 0 0;font-size:13.5px;color:var(--muted)">
+          Versão de teste, sem assinatura oficial da Apple. O certificado grátis do
+          Sideloadly dura só <b style="color:var(--inkSoft)">7 dias</b> — depois disso o
+          app para de abrir; repita o passo 3 com o mesmo arquivo (ou um mais novo) para
+          renovar.
+        </p>
+      </div>
+    </div>
+
+    <div class="cta" style="margin-top:22px">
       <a class="btn btn-ghost" href="https://github.com/johncoelho/naval-battle/blob/main/CHANGELOG.md">
         O que mudou
       </a>
-    </div>
-    <p class="meta" id="release-meta-2">Carregando dados da última versão…</p>
-
-    <div class="install">
-      <h3 style="margin:0">Como instalar</h3>
-      <ol>
-        <li>Baixe o APK no próprio celular.</li>
-        <li>Abra o arquivo e permita a instalação de <b style="color:var(--ink)">fontes desconhecidas</b>
-            para o aplicativo que estiver abrindo (navegador ou gerenciador de arquivos).</li>
-        <li>Instale por cima da versão anterior — o progresso é preservado.</li>
-      </ol>
-      <p style="margin:14px 0 0;font-size:13.5px;color:var(--muted)">
-        Android 8.0 ou superior. Esta é uma versão de teste, assinada com chave de depuração;
-        a publicação na Play Store vem depois.
-      </p>
     </div>
   </div>
 </section>
@@ -377,7 +408,7 @@
     <div>
       <div class="foothead">Naval Battle</div>
       <p style="margin:0">Batalha naval tática feita em Kotlin Multiplatform e Compose.
-         Android hoje, iOS no horizonte.</p>
+         Android e iOS, os dois em build de teste.</p>
     </div>
     <div>
       <div class="foothead">Projeto</div>
@@ -398,23 +429,31 @@
 </footer>
 
 <script>
-  // mostra data e tamanho da última compilação, direto da release rolante
+  // mostra data e tamanho da última compilação, direto da release rolante —
+  // uma release só, com os dois arquivos (APK do android.yml, .ipa do ios.yml)
   (async () => {
-    const alvos = [document.getElementById('release-meta'), document.getElementById('release-meta-2')];
+    const androidAlvos = [document.getElementById('release-meta'), document.getElementById('release-meta-android')];
+    const iosAlvos = [document.getElementById('release-meta-ios')];
+    const todos = androidAlvos.concat(iosAlvos);
     try {
       const r = await fetch('https://api.github.com/repos/johncoelho/naval-battle/releases/tags/latest');
       if (!r.ok) throw new Error('sem resposta');
       const data = await r.json();
-      const apk = (data.assets || []).find(a => a.name.endsWith('.apk'));
       const quando = new Date(data.published_at).toLocaleDateString('pt-BR', {
         day: '2-digit', month: 'long', year: 'numeric'
       });
-      const mb = apk ? (apk.size / 1048576).toFixed(1) + ' MB' : '';
-      const baixados = apk && apk.download_count ? ' · ' + apk.download_count + ' downloads' : '';
-      alvos.forEach(el => { if (el) el.innerHTML =
-        'Última compilação: <b>' + quando + '</b>' + (mb ? ' · <b>' + mb + '</b>' : '') + baixados; });
+      const apk = (data.assets || []).find(a => a.name.endsWith('.apk'));
+      const ipa = (data.assets || []).find(a => a.name.endsWith('.ipa'));
+      const detalhe = (asset) => {
+        if (!asset) return '';
+        const mb = (asset.size / 1048576).toFixed(1) + ' MB';
+        const baixados = asset.download_count ? ' · ' + asset.download_count + ' downloads' : '';
+        return ' · <b>' + mb + '</b>' + baixados;
+      };
+      androidAlvos.forEach(el => { if (el) el.innerHTML = 'Última compilação: <b>' + quando + '</b>' + detalhe(apk); });
+      iosAlvos.forEach(el => { if (el) el.innerHTML = 'Última compilação: <b>' + quando + '</b>' + detalhe(ipa); });
     } catch (e) {
-      alvos.forEach(el => { if (el) el.textContent = 'Versão de teste · sempre a última compilação'; });
+      todos.forEach(el => { if (el) el.textContent = 'Versão de teste · sempre a última compilação'; });
     }
   })();
 </script>
