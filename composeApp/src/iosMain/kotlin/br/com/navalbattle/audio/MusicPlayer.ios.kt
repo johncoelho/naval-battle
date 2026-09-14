@@ -71,6 +71,7 @@ actual class MusicPlayer actual constructor() {
     }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 private fun ByteArray.toNSData(): NSData {
     if (isEmpty()) return NSData()
     return usePinned { pinned -> NSData.create(bytes = pinned.addressOf(0), length = size.toULong()) }
