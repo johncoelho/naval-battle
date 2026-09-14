@@ -205,10 +205,39 @@ compila para iOS.
   de propósito, pensando nisso) para anunciar/descobrir, e `Network.framework` ou
   sockets BSD para a conversa TCP linha a linha.
 
-**Ainda não existe projeto Xcode no repositório** (`iosApp/`) — sem ele não dá para
-rodar o jogo de verdade num simulador ou aparelho, só provar que o Kotlin compila.
-Criar esse projeto (e depois assinar para um iPhone físico) é o próximo passo, e exige
-uma conta Apple Developer para distribuir além do simulador.
+### O projeto Xcode e o `.ipa` sem assinatura
+
+`iosApp/iosApp.xcodeproj` existe e é escrito à mão — sem Mac para gerar pelo assistente
+do Xcode, o `project.pbxproj` foi montado seguindo o padrão do template oficial do
+Kotlin Multiplatform (mesmos nomes de configuração, mesma fase de script que roda
+`./gradlew :composeApp:embedAndSignAppleFrameworkForXcode` para compilar e embutir o
+framework Kotlin antes de compilar o Swift).
+
+`.github/workflows/ios.yml` compila com `xcodebuild -sdk iphoneos ... CODE_SIGNING_ALLOWED=NO`
+e empacota `Payload/iosApp.app` num `.ipa` **sem assinatura nenhuma**, subido como
+artefato do run. Isso é proposital: sem conta paga no Apple Developer Program, não dá
+para assinar no CI. Quem assina de verdade é o **Sideloadly** (ou AltStore), na hora de
+instalar — os dois rodam no Windows, usam um Apple ID grátis (com senha de app
+específica, por causa do 2FA) e geram um certificado de desenvolvimento na hora. A
+única ressalva desse caminho: o certificado grátis dura **7 dias** — depois disso o
+app para de abrir e precisa reinstalar o `.ipa` pelo Sideloadly de novo (rápido, não
+precisa gerar nada novo aqui).
+
+**Passo a passo para instalar no iPhone (sem custo):**
+1. Baixar o `.ipa` mais recente: aba **Actions** do repositório → último run de
+   *Build iOS framework* → artefato `NavalBattle-ipa-sem-assinatura`.
+2. Instalar o [Sideloadly](https://sideloadly.io/) no Windows.
+3. Conectar o iPhone por cabo, abrir o Sideloadly, arrastar o `.ipa`, entrar com o
+   Apple ID (grátis) quando pedir.
+4. No iPhone: **Ajustes → Geral → VPN e Gerenciamento de Dispositivo** → confiar no
+   certificado do desenvolvedor (o próprio Apple ID usado).
+5. Depois de 7 dias, se o app parar de abrir, repetir o passo 3 com o mesmo `.ipa`
+   (ou um mais novo, se tiver saído).
+
+Quando (e se) uma conta paga do Apple Developer Program entrar em cena, o
+`ios.yml` passa a assinar de verdade no CI (certificado + perfil de provisionamento
+como *secrets* do GitHub) e o `.ipa` já sai instalável sem Sideloadly — troca de
+método, não de projeto.
 
 ## Landing page
 
