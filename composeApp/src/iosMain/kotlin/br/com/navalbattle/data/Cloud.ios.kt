@@ -1,7 +1,10 @@
 package br.com.navalbattle.data
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.suspendCancellableCoroutine
+import platform.Foundation.NSData
 import platform.Foundation.NSHTTPURLResponse
 import platform.Foundation.NSJSONSerialization
 import platform.Foundation.NSMutableURLRequest
@@ -165,12 +168,13 @@ actual class CloudApi actual constructor() {
         token: String?,
         prefer: String?
     ): Any? = suspendCancellableCoroutine { cont ->
-        val url = NSURL(string = SupabaseConfig.URL.trimEnd('/') + path)
+        // NSURL(string:) é um inicializador que pode falhar (URL malformada) — o binding do
+        // Kotlin/Native expõe isso como retorno nulo. Sem o "!!" aqui, o req abaixo fica com
+        // tipo de erro e TODO acesso a propriedade dele (mesmo os certos) vira "Unresolved
+        // reference" em cascata — foi exatamente isso que quebrou a rodada anterior.
+        val url = NSURL(string = SupabaseConfig.URL.trimEnd('/') + path)!!
         val req = NSMutableURLRequest(uRL = url)
-        req.hTTPMethod = method
-        // uma atribuição só, em vez de um setValue(forHTTPHeaderField:) por cabeçalho —
-        // o nome exato desse método no binding do Kotlin/Native é incerto sem compilador
-        // à mão, e essa propriedade não tem sigla no começo para dar dúvida de grafia
+        req.HTTPMethod = method
         val headers = mutableMapOf(
             "apikey" to SupabaseConfig.ANON_KEY,
             "Content-Type" to "application/json",
@@ -179,7 +183,7 @@ actual class CloudApi actual constructor() {
         prefer?.let { headers["Prefer"] = it }
         req.allHTTPHeaderFields = headers
         if (body != null) {
-            req.hTTPBody = NSJSONSerialization.dataWithJSONObject(body, 0uL, null)
+            req.HTTPBody = NSJSONSerialization.dataWithJSONObject(body, 0uL, null)
         }
 
         // nomeado explicitamente: sem isso o Kotlin às vezes prende na sobrecarga de
@@ -216,8 +220,18 @@ actual class CloudApi actual constructor() {
     }
 
     private fun parseJson(text: String): Any? {
-        val data = NSString.create(string = text).dataUsingEncoding(NSUTF8StringEncoding) ?: return null
-        return NSJSONSerialization.JSONObjectWithData(data, 0uL, null)
+        return NSJSONSerialization.JSONObjectWithData(stringToData(text), 0uL, null)
+    }
+
+    // Evita o vaivém incerto de NSString.dataUsingEncoding no binding do Kotlin/Native —
+    // aqui a conversão passa pelos bytes UTF-8 puros, que não dependem de nenhum
+    // método específico de NSString existir com o nome exato esperado.
+    private fun stringToData(text: String): NSData {
+        val bytes = text.encodeToByteArray()
+        if (bytes.isEmpty()) return NSData()
+        return bytes.usePinned { pinned ->
+            NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
+        }
     }
 
     private fun sessionOf(raw: Any?, fallbackName: String): Session? {
