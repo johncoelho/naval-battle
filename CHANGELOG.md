@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.14.1] — 2026-09-14 · Landing page: botão de download para iOS
+
+### Adicionado
+- `site/index.html`: seção **Baixar** agora tem dois cartões lado a lado — Android
+  (como já era) e iPhone (novo), cada um com botão próprio e passo a passo de
+  instalação. O do iPhone documenta o caminho sem conta paga: Sideloadly + Apple ID
+  grátis, recertificando a cada 7 dias.
+- `.github/workflows/ios.yml` passa a publicar o `.ipa` na mesma release rolante
+  `latest` que o `android.yml` já usa para o APK — link fixo
+  (`releases/download/latest/NavalBattle.ipa`) que a cada build vira o mais recente.
+
+### Corrigido
+- Os dois workflows de build agora só **criam** a release `latest` se ela não existir
+  e sempre fazem `gh release upload --clobber` no próprio arquivo, em vez de apagar e
+  recriar a release inteira — `android.yml` fazia isso, e rodando em paralelo com o
+  `ios.yml` (mesmo push) um apagaria o asset do outro por engano.
+
 ## [0.14.0] — 2026-09-14 · Projeto Xcode e .ipa instalável (sem assinatura)
 
 ### Adicionado
