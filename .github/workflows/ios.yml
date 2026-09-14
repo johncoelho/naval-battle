@@ -1,10 +1,11 @@
 name: Build iOS framework
 
-# Compila só o lado Kotlin/Native para iOS (o framework que um app Xcode importaria).
-# Ainda não existe projeto Xcode no repositório — este workflow é o que garante que o
-# multiplataforma continua compilando para iOS a cada push, sem depender de ninguém
-# rodar isso num Mac. Ver docs/BUILD.md, seção iOS, para o que falta para virar um app
-# de verdade (projeto Xcode, áudio empacotado, rede local via Bonjour, Google Sign-In).
+# Compila o app iOS de ponta a ponta: o framework Kotlin/Native e o projeto Xcode
+# (iosApp/) que o embala, produzindo um .ipa sem assinatura como artefato do run —
+# ainda sem conta de desenvolvedor paga, o .ipa é assinado na hora da instalação pelo
+# Sideloadly (ou AltStore), com Apple ID grátis (certificado válido por 7 dias). Ver
+# docs/BUILD.md, seção iOS, para o que falta para virar um app com paridade total
+# (login com Google e rede local no iOS ainda dependem de configuração fora do CI).
 
 on:
   push:
@@ -26,9 +27,32 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Compila o framework para simulador (arm64) e dispositivo (arm64)
+      - name: Compila o app para iPhone (arm64) sem assinatura
         run: |
-          ./gradlew \
-            :composeApp:linkDebugFrameworkIosSimulatorArm64 \
-            :composeApp:linkDebugFrameworkIosArm64 \
-            --console=plain --stacktrace
+          xcodebuild \
+            -project iosApp/iosApp.xcodeproj \
+            -target iosApp \
+            -configuration Debug \
+            -sdk iphoneos \
+            -derivedDataPath build/DerivedData \
+            -arch arm64 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            build
+
+      - name: Empacota o .ipa (Payload/iosApp.app)
+        run: |
+          set -e
+          APP_PATH="build/DerivedData/Build/Products/Debug-iphoneos/iosApp.app"
+          mkdir -p build/Payload
+          cp -r "$APP_PATH" build/Payload/
+          cd build && zip -qr ../NavalBattle.ipa Payload
+
+      - name: Sobe o .ipa como artefato do run
+        uses: actions/upload-artifact@v4
+        with:
+          name: NavalBattle-ipa-sem-assinatura
+          path: NavalBattle.ipa
+          retention-days: 30
