@@ -9,6 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.12.0] — 2026-09-13 · Primeiro compile para iOS
+
+### Adicionado
+- Alvos `iosX64`, `iosArm64` e `iosSimulatorArm64` em `composeApp/build.gradle.kts`,
+  com o framework nomeado `ComposeApp` (o que um projeto Xcode importaria).
+- `.github/workflows/ios.yml`: compila o framework Kotlin/Native num runner
+  `macos-latest` a cada push — sem Mac à mão, é a única forma de saber se o
+  multiplataforma continua compilando para iOS.
+- `composeApp/src/iosMain`: `MainViewController.kt` (ponto de entrada via
+  `ComposeUIViewController`), `Prefs.ios.kt` (via `NSUserDefaults`) e `Cloud.ios.kt`
+  (via `NSURLSession`, mesma lógica do cliente Android) — os dois primeiros `actual`
+  de verdade do alvo iOS.
+- `SoundPlayer.ios.kt`, `MusicPlayer.ios.kt`, `GoogleAuth.ios.kt`, `LanLink.ios.kt`:
+  compilam, mas ficam mudos/desativados de propósito por enquanto — áudio, rede local
+  e login com Google no iOS ficam para uma etapa seguinte. Detalhes do que falta em
+  cada um em [docs/BUILD.md](docs/BUILD.md#ios--em-andamento).
+
+### Nota de projeto
+Ainda não existe projeto Xcode no repositório — este build prova que o código Kotlin
+compila para iOS, não que o jogo já roda num simulador ou iPhone. Isso e a assinatura
+para dispositivo físico (precisa de conta Apple Developer) são os próximos passos.
+
 ## [0.11.2] — 2026-09-13 · Login com Google liberado para todo mundo
 
 ### Adicionado

@@ -135,6 +135,7 @@ composeApp/src/
     ui/           telas e componentes
     data/         armazenamento local e cliente da nuvem (expect)
   androidMain/    Activity, manifesto, recursos, e os actual de áudio/dados
+  iosMain/        actual de preferências e nuvem — áudio, rede e Google ainda pendentes
 supabase/schema.sql   tabela profiles, RLS, gatilhos e placar
 site/index.html       landing page publicada no GitHub Pages
 keystore/             chave de depuração fixa (ver docs/BUILD.md)
@@ -209,5 +210,8 @@ detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume n
 - [ ] Convite de amigo e partida rápida pela internet (via Supabase Realtime)
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
 - [ ] Compras com pagamento real (Google Play Billing) vendendo créditos
-- [ ] Alvo iOS: escrever os `actual` de áudio, preferências e rede. O IPA instalável
-      depende ainda de conta paga no Apple Developer para assinar
+- [~] Alvo iOS: preferências e nuvem já têm `actual` de verdade; áudio, rede local e
+      login com Google ainda são pendências (mudos/desativados por enquanto, para o
+      resto do jogo compilar). Falta o projeto Xcode em si — ver
+      [docs/BUILD.md](docs/BUILD.md#ios--em-andamento). O IPA instalável num iPhone de
+      verdade ainda depende de conta paga no Apple Developer para assinar
