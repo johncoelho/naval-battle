@@ -4,15 +4,11 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.suspendCancellableCoroutine
-import platform.Foundation.NSData
-import platform.Foundation.NSHTTPURLResponse
-import platform.Foundation.NSJSONSerialization
-import platform.Foundation.NSMutableURLRequest
-import platform.Foundation.NSString
-import platform.Foundation.NSURL
-import platform.Foundation.NSURLSession
-import platform.Foundation.NSUTF8StringEncoding
-import platform.Foundation.create
+// wildcard de propósito: várias propriedades/métodos de NSMutableURLRequest (HTTPMethod,
+// HTTPBody, allHTTPHeaderFields) vêm de uma categoria Objective-C e o Kotlin/Native os
+// expõe como extensão de nível de pacote — importar a classe sozinha não é suficiente,
+// cada extensão precisa aparecer no import (foi isso que quebrou as três rodadas antes).
+import platform.Foundation.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
