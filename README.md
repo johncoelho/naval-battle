@@ -237,7 +237,8 @@ detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume n
 - [ ] Compras com pagamento real (Google Play Billing) vendendo créditos
 - [~] Alvo iOS: preferências, nuvem, modo Online e áudio já têm `actual` de verdade;
       rede local e login com Google ainda são pendências (mudos/desativados por
-      enquanto, para o resto do jogo compilar) — os dois dependem de um projeto Xcode
-      de verdade, que ainda não existe — ver [docs/BUILD.md](docs/BUILD.md#ios--em-andamento).
-      O IPA instalável num iPhone de verdade ainda depende de conta paga no Apple
-      Developer para assinar
+      enquanto, para o resto do jogo compilar) — ver [docs/BUILD.md](docs/BUILD.md#ios--em-andamento).
+      Projeto Xcode criado — `.ipa` **sem assinatura** sai como artefato de todo build
+      (ver [docs/BUILD.md](docs/BUILD.md#o-projeto-xcode-e-o-ipa-sem-assinatura) para
+      instalar via Sideloadly sem pagar Apple Developer Program; assinatura de
+      verdade no CI fica para quando/se uma conta paga entrar em cena)

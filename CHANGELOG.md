@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.14.0] — 2026-09-14 · Projeto Xcode e .ipa instalável (sem assinatura)
+
+### Adicionado
+- `iosApp/iosApp.xcodeproj` — projeto Xcode escrito à mão (sem Mac disponível para o
+  assistente gerar), seguindo o padrão do template do Kotlin Multiplatform: uma fase
+  de script compila e embute o framework Kotlin (`embedAndSignAppleFrameworkForXcode`)
+  antes de compilar `iOSApp.swift`, que abre a `UIViewController` do Compose
+  (`MainViewControllerKt.MainViewController()`).
+- `.github/workflows/ios.yml` agora compila com `xcodebuild -sdk iphoneos` (em vez de
+  só `linkDebugFramework...`) e empacota `Payload/iosApp.app` num `.ipa` **sem
+  assinatura**, subido como artefato do run (`NavalBattle-ipa-sem-assinatura`).
+- Documentado em [docs/BUILD.md](docs/BUILD.md#o-projeto-xcode-e-o-ipa-sem-assinatura)
+  o passo a passo para instalar esse `.ipa` num iPhone sem pagar Apple Developer
+  Program: Sideloadly (Windows) + Apple ID grátis, recertificando a cada 7 dias.
+
+### Nota de projeto
+Sem conta paga, não dá para assinar no CI — por isso o `.ipa` sai sem assinatura de
+propósito, e quem assina é o Sideloadly na hora de instalar. Login com Google e rede
+local no iOS continuam pendentes; agora que o `Info.plist` existe, o login com Google
+via `ASWebAuthenticationSession` deixou de estar bloqueado por essa dependência.
+
 ## [0.13.1] — 2026-09-14 · iOS: áudio de verdade
 
 ### Adicionado
