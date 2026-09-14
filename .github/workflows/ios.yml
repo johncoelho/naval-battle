@@ -34,18 +34,18 @@ jobs:
             -target iosApp \
             -configuration Debug \
             -sdk iphoneos \
-            -derivedDataPath build/DerivedData \
             -arch arm64 \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
+            BUILD_DIR=build/Products \
             build
 
       - name: Empacota o .ipa (Payload/iosApp.app)
         run: |
           set -e
-          APP_PATH="build/DerivedData/Build/Products/Debug-iphoneos/iosApp.app"
+          APP_PATH="build/Products/Debug-iphoneos/iosApp.app"
           mkdir -p build/Payload
           cp -r "$APP_PATH" build/Payload/
           cd build && zip -qr ../NavalBattle.ipa Payload
