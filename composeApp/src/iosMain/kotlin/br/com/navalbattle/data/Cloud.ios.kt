@@ -167,45 +167,56 @@ actual class CloudApi actual constructor() {
     ): Any? = suspendCancellableCoroutine { cont ->
         val url = NSURL(string = SupabaseConfig.URL.trimEnd('/') + path)
         val req = NSMutableURLRequest(uRL = url)
-        req.HTTPMethod = method
-        req.setValue(SupabaseConfig.ANON_KEY, forHTTPHeaderField = "apikey")
-        req.setValue("application/json", forHTTPHeaderField = "Content-Type")
-        req.setValue("Bearer " + (token ?: SupabaseConfig.ANON_KEY), forHTTPHeaderField = "Authorization")
-        prefer?.let { req.setValue(it, forHTTPHeaderField = "Prefer") }
+        req.hTTPMethod = method
+        // uma atribuição só, em vez de um setValue(forHTTPHeaderField:) por cabeçalho —
+        // o nome exato desse método no binding do Kotlin/Native é incerto sem compilador
+        // à mão, e essa propriedade não tem sigla no começo para dar dúvida de grafia
+        val headers = mutableMapOf(
+            "apikey" to SupabaseConfig.ANON_KEY,
+            "Content-Type" to "application/json",
+            "Authorization" to ("Bearer " + (token ?: SupabaseConfig.ANON_KEY))
+        )
+        prefer?.let { headers["Prefer"] = it }
+        req.allHTTPHeaderFields = headers
         if (body != null) {
-            req.HTTPBody = NSJSONSerialization.dataWithJSONObject(body, 0uL, null)
+            req.hTTPBody = NSJSONSerialization.dataWithJSONObject(body, 0uL, null)
         }
 
-        val task = NSURLSession.sharedSession.dataTaskWithRequest(req) { data, response, error ->
-            if (error != null) {
-                cont.resumeWithException(Exception(error.localizedDescription))
-                return@dataTaskWithRequest
-            }
-            val http = response as? NSHTTPURLResponse
-            val code = http?.statusCode?.toInt() ?: 0
-            val text = data?.let { NSString.create(data = it, encoding = NSUTF8StringEncoding) as String? }.orEmpty()
+        // nomeado explicitamente: sem isso o Kotlin às vezes prende na sobrecarga de
+        // um parâmetro só (sem callback) e reclama que a lambda à direita "sobra"
+        val task = NSURLSession.sharedSession.dataTaskWithRequest(
+            request = req,
+            completionHandler = { data, response, error ->
+                if (error != null) {
+                    cont.resumeWithException(Exception(error.localizedDescription))
+                    return@dataTaskWithRequest
+                }
+                val http = response as? NSHTTPURLResponse
+                val code = http?.statusCode?.toInt() ?: 0
+                val text = data?.let { NSString.create(data = it, encoding = NSUTF8StringEncoding) as String? }.orEmpty()
 
-            if (code == 401 && "Invalid login credentials" !in text) {
-                cont.resumeWithException(SessionExpired())
-                return@dataTaskWithRequest
+                if (code == 401 && "Invalid login credentials" !in text) {
+                    cont.resumeWithException(SessionExpired())
+                    return@dataTaskWithRequest
+                }
+                if (code !in 200..299) {
+                    val message = runCatching {
+                        val parsed = parseJson(text) as? Map<*, *>
+                        (parsed?.get("msg") ?: parsed?.get("error_description")
+                            ?: parsed?.get("message") ?: parsed?.get("error")) as? String
+                    }.getOrNull().orEmpty()
+                    cont.resumeWithException(Exception(message.ifBlank { "HTTP $code" }))
+                    return@dataTaskWithRequest
+                }
+                cont.resume(if (text.isBlank()) null else parseJson(text))
             }
-            if (code !in 200..299) {
-                val message = runCatching {
-                    val parsed = parseJson(text) as? Map<*, *>
-                    (parsed?.get("msg") ?: parsed?.get("error_description")
-                        ?: parsed?.get("message") ?: parsed?.get("error")) as? String
-                }.getOrNull().orEmpty()
-                cont.resumeWithException(Exception(message.ifBlank { "HTTP $code" }))
-                return@dataTaskWithRequest
-            }
-            cont.resume(if (text.isBlank()) null else parseJson(text))
-        }
+        )
         cont.invokeOnCancellation { task.cancel() }
         task.resume()
     }
 
     private fun parseJson(text: String): Any? {
-        val data = (text as NSString).dataUsingEncoding(NSUTF8StringEncoding) ?: return null
+        val data = NSString.create(string = text).dataUsingEncoding(NSUTF8StringEncoding) ?: return null
         return NSJSONSerialization.JSONObjectWithData(data, 0uL, null)
     }
 
