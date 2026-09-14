@@ -152,6 +152,33 @@ a cada push, num runner `macos-latest` — é a única forma de validar isso sem
 mão, então esse workflow verde é a fonte de verdade de que o multiplataforma ainda
 compila para iOS.
 
+> **Primeiro build verde em 2026-09-14** (execução #10 do `ios.yml`), depois de várias
+> rodadas de correção guiadas só pelo erro do compilador na CI (sem toolchain local para
+> testar). As lições ficam registradas aqui porque a próxima pessoa mexendo em
+> `Cloud.ios.kt`, ou em qualquer chamada nova a `NSURLSession`/`NSMutableURLRequest`, vai
+> tropeçar nas mesmas pegadinhas do binding Objective-C do Kotlin/Native:
+> - **Import específico não basta** — vários membros de `NSMutableURLRequest`
+>   (`HTTPMethod`, `HTTPBody`, `allHTTPHeaderFields`) e do `NSError` (`localizedDescription`)
+>   vêm de categorias Objective-C, e o Kotlin/Native os expõe como extensão de nível de
+>   pacote. Importar só a classe (`import platform.Foundation.NSMutableURLRequest`) não
+>   traz essas extensões — dava "Unresolved reference" mesmo com o nome certo. A saída foi
+>   trocar a lista de imports específicos por `import platform.Foundation.*`.
+> - **HTTPMethod/HTTPBody são funções, não propriedades** — `setHTTPMethod(_:)` etc.
+>   viram `req.setHTTPMethod(valor)`, não `req.HTTPMethod = valor` (o getter mora na classe
+>   base `NSURLRequest`, o "setter" é um método de categoria separado no
+>   `NSMutableURLRequest`, e o Kotlin não funde os dois numa `var`).
+> - **`dataTaskWithRequest` não aceita nomear o parâmetro do completion handler** — usar
+>   lambda posicional (`dataTaskWithRequest(req) { data, response, error -> ... }`), não
+>   `dataTaskWithRequest(request = req, completionHandler = { ... })`.
+> - **`NSDictionary` não é tipado** — `setAllHTTPHeaderFields` pede `Map<Any?, *>`, então
+>   um `Map<String, String>` precisa de cast (`as Map<Any?, *>`) na chamada.
+> - **`NSURL(string = ...)` pode falhar** — é um inicializador que pode devolver nulo
+>   (URL malformada); sem `!!` (ou tratamento), o restante do código que depende dessa
+>   URL fica frágil.
+> - **Texto para `NSData` sem depender de `NSString`** — converter `String` para `NSData`
+>   via `encodeToByteArray()` + `usePinned { NSData.create(bytes = ..., length = ...) }`
+>   evita todo o vaivém incerto de `NSString.dataUsingEncoding`.
+
 **O que já tem `actual` de verdade para iOS** (`composeApp/src/iosMain`):
 - `Prefs` — via `NSUserDefaults`.
 - `CloudApi` — via `NSURLSession`, mesma lógica do cliente Android (`Cloud.android.kt`),
