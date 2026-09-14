@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Naval Battle — política de privacidade</title>
+<meta name="description" content="O que o Naval Battle guarda, onde guarda, e o que nunca sai do aparelho.">
+<meta name="theme-color" content="#080B07">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+  :root{
+    --bg:#080B07; --surface:#101509; --surface2:#161C10; --surface3:#1F2717;
+    --line:#2B3520; --lineSoft:#1B2214;
+    --ink:#EFF2E4; --inkSoft:#B4C0A4; --muted:#6B7760;
+    --green:#5F8F4A; --greenBright:#8ED17A;
+    --amber:#E6AC3F; --amberStrong:#FFC95C;
+    --sans:'Chakra Petch',system-ui,-apple-system,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    background-image:radial-gradient(1200px 700px at 50% -15%,#0d1a0f 0%,var(--bg) 60%);
+  }
+  a{color:var(--amberStrong)}
+  .wrap{max-width:760px;margin:0 auto;padding:56px 20px 80px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin:0 0 10px}
+  h1{font-size:clamp(28px,5vw,40px);line-height:1.1;margin:0 0 28px;font-weight:700}
+  h2{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--amberStrong);margin:36px 0 12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+  p,li{color:var(--inkSoft);line-height:1.65;font-size:15px}
+  ul{padding-left:20px;margin:0}
+  li{margin-bottom:8px}
+  .card{background:var(--surface2);border:1px solid var(--line);padding:16px 18px;margin:18px 0}
+  .back{display:inline-block;margin-top:40px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  code{font-family:var(--mono);background:var(--surface3);padding:1px 5px;font-size:13px;color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Naval Battle · privacidade</p>
+  <h1>O que este jogo guarda de você</h1>
+
+  <div class="card">
+    <p style="margin:0"><strong>Resumo:</strong> sem conta, o jogo não manda nada para
+    fora do aparelho. Com conta (e-mail ou Google), guardamos só o necessário para a
+    carreira acompanhar você em outro celular — nome de guerra, patente, créditos e
+    estatísticas de partida. Nada de anúncio, nada de rastreamento de terceiros, nada de
+    venda de dados.</p>
+  </div>
+
+  <h2>Sem conta</h2>
+  <p>A carreira (patente, créditos, navios afundados, camuflagens) fica só no aparelho,
+  em preferências locais do Android. Nada disso viaja para nenhum servidor.</p>
+
+  <h2>Com conta</h2>
+  <p>Criar conta por e-mail ou entrar com o Google guarda, no banco do projeto
+  (Supabase, hospedado na União Europeia/EUA conforme a região do provedor):</p>
+  <ul>
+    <li>E-mail e, quando aplicável, o identificador da conta Google usado para autenticar;</li>
+    <li>Nome de guerra escolhido e insígnia;</li>
+    <li>Patente, XP, créditos e estatísticas de partidas (vitórias, tiros, acertos,
+      navios afundados, sequências);</li>
+    <li>Camuflagens e linhas de casco já conquistadas.</li>
+  </ul>
+  <p>Isso serve só para a carreira acompanhar o comandante em qualquer aparelho onde
+  ele entrar. Nenhuma dessas informações é vendida, compartilhada com anunciantes ou
+  usada para qualquer coisa fora do próprio jogo.</p>
+
+  <h2>Login com Google</h2>
+  <p>Ao entrar com o Google, o app recebe do Google apenas nome, e-mail e foto de perfil
+  básicos (os escopos padrão de identidade) — o suficiente para abrir a conta do jogo.
+  O Naval Battle não pede acesso a nenhum outro dado da sua conta Google (contatos,
+  arquivos, agenda etc.).</p>
+
+  <h2>Rede local e provocações</h2>
+  <p>Partidas em rede local (Wi-Fi) conversam direto entre os dois aparelhos, sem passar
+  por servidor nenhum — nome da partida, jogadas e as provocações (emoji/grito de
+  guerra) trafegam só entre os dois celulares na mesma rede.</p>
+
+  <h2>Excluir seus dados</h2>
+  <p>Peça a remoção da conta e da carreira associada escrevendo para
+  <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>. Apagamos a linha da carreira e
+  a conta de autenticação.</p>
+
+  <h2>Contato</h2>
+  <p>Dúvidas sobre esta política: <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>.</p>
+
+  <a class="back" href="./">← Voltar para o Naval Battle</a>
+</div>
+</body>
+</html>
