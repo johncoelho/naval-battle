@@ -39,13 +39,23 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
-            BUILD_DIR=build/Products \
+            BUILD_DIR="$(pwd)/build/Products" \
             build
 
       - name: Empacota o .ipa (Payload/iosApp.app)
         run: |
           set -e
-          APP_PATH="build/Products/Debug-iphoneos/iosApp.app"
+          # caminho absoluto no BUILD_DIR acima devia bastar, mas um caminho relativo
+          # de BUILD_DIR já se mostrou resolvido pelo xcodebuild relativo ao próprio
+          # .xcodeproj em vez do diretório de onde foi chamado — o find aqui é rede de
+          # segurança para não gastar outra rodada inteira de CI só por causa disso
+          APP_PATH=$(find . -name "iosApp.app" -type d | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "iosApp.app não encontrado — build de fora deste diretório:"
+            find . -iname "*.app" -maxdepth 6
+            exit 1
+          fi
+          echo "Encontrado em: $APP_PATH"
           mkdir -p build/Payload
           cp -r "$APP_PATH" build/Payload/
           cd build && zip -qr ../NavalBattle.ipa Payload
