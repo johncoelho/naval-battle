@@ -58,19 +58,21 @@ Seis pares `expect/actual` isolam a plataforma:
 
 | Contrato | `commonMain` | `androidMain` | `iosMain` |
 |---|---|---|---|
-| `SoundPlayer` | efeitos de combate | `SoundPool` + `R.raw` | mudo (pendente) |
-| `MusicPlayer` | trilha em laço | `MediaPlayer` com `isLooping` | mudo (pendente) |
+| `SoundPlayer` | efeitos de combate | `SoundPool` + `R.raw` | `AVAudioPlayer` + Compose Resources |
+| `MusicPlayer` | trilha em laço | `MediaPlayer` com `isLooping` | `AVAudioPlayer` + Compose Resources |
 | `Prefs` | chave-valor da carreira | `SharedPreferences` | `NSUserDefaults` |
 | `CloudApi` | conta e sincronização | `HttpURLConnection` + `org.json` | `NSURLSession` |
 | `GoogleAuth` | pede a conta ao sistema | Credential Manager | sempre falha (pendente) |
 | `LanLink` | partida na rede local | `NsdManager` (mDNS) + `ServerSocket`/`Socket` | sempre falha (pendente) |
 
 **A separação já provou o valor dela**: portar para iOS foi escrever `actual` novos, sem
-tocar em nenhuma tela ou regra de jogo em `commonMain`. `Prefs` e `CloudApi` têm
-implementação de verdade; `SoundPlayer`, `MusicPlayer`, `GoogleAuth` e `LanLink` compilam
-mas ainda não fazem nada no iOS — completar esses quatro é o que falta para paridade
-total (ver [docs/BUILD.md](BUILD.md#ios--em-andamento)). Código de plataforma que vaza
-para `commonMain` continua sendo dívida imediata.
+tocar em nenhuma tela ou regra de jogo em `commonMain`. `Prefs`, `CloudApi`,
+`SoundPlayer` e `MusicPlayer` têm implementação de verdade; `GoogleAuth` e `LanLink`
+compilam mas ainda não fazem nada no iOS — os dois dependem de um projeto Xcode de
+verdade para terminar (`Info.plist` para o retorno do login com Google;
+`NetService`/`Network.framework` funcionam sem ele, mas ainda não foram escritos) — ver
+[docs/BUILD.md](BUILD.md#ios--em-andamento). Código de plataforma que vaza para
+`commonMain` continua sendo dívida imediata.
 
 ## Arquitetura do estado
 

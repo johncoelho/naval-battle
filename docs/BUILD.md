@@ -183,16 +183,23 @@ compila para iOS.
 - `Prefs` — via `NSUserDefaults`.
 - `CloudApi` — via `NSURLSession`, mesma lógica do cliente Android (`Cloud.android.kt`),
   só a chamada HTTP muda.
+- `SoundPlayer` / `MusicPlayer` — via `AVAudioPlayer`, um tocador por efeito/faixa,
+  carregado em segundo plano e reaproveitado a cada `play()`. Os `.wav` dos efeitos são
+  os mesmos do Android; as duas faixas de música foram convertidas de `.ogg` para
+  `.m4a` (`ffmpeg -i x.ogg -c:a aac -b:a 160k x.m4a`) porque o `AVAudioPlayer` não lê
+  Ogg Vorbis. Todos os arquivos vivem em `commonMain/composeResources/files` e são lidos
+  via `Res.readBytes(...)` (biblioteca `compose.components.resources`,
+  `packageOfResClass` fixado em `br.com.navalbattle.generated.resources` porque o
+  projeto não define `group` nenhum, e o padrão `{group}.{module}...` viraria um pacote
+  começando com ponto). `AVAudioPlayer(data = ..., error = null)` é um inicializador que
+  pode devolver nulo — a chamada é tratada com `?.let { ... }`, mesmo cuidado do
+  `NSURL(string = ...)` acima.
 
 **O que está de propósito só como pendência** (compila, mas não faz nada ainda):
-- `SoundPlayer` / `MusicPlayer` — mudos. Faltam os efeitos e a trilha empacotados no
-  bundle do app (os `.wav` já existem em `androidMain/res/raw`; as duas faixas de
-  música estão em `.ogg`, que o `AVAudioPlayer` não lê — precisam virar `.m4a`/`.caf`
-  antes de ir para o iOS) e a troca do `SoundPool`/`MediaPlayer` do Android por
-  `AVAudioPlayer`.
-- `GoogleAuth` — sempre devolve falha. Precisa do SDK GoogleSignIn-iOS (Swift Package
-  Manager) e de uma `UIViewController` para apresentar a tela de conta, no lugar do
-  `ActivityHolder` do Android.
+- `GoogleAuth` — sempre devolve falha. `ASWebAuthenticationSession` (a via sem SDK
+  externo) precisa de um esquema de URL de retorno registrado no `Info.plist` — que só
+  existe dentro de um projeto Xcode de verdade, ainda inexistente. Alternativa com SDK:
+  GoogleSignIn-iOS via Swift Package Manager, mesma pendência do projeto Xcode.
 - `LanLink` — qualquer hospedar/procurar/entrar falha na hora. Precisa de
   `NetService`/`NetServiceBrowser` (Bonjour, o mesmo mDNS que o NSD do Android já usa
   de propósito, pensando nisso) para anunciar/descobrir, e `Network.framework` ou

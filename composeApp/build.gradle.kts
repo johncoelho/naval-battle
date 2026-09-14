@@ -32,6 +32,9 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            // efeitos e trilha empacotados uma vez só (composeResources/files) e lidos
+            // dos dois lados — no iOS é o que falta pra áudio de verdade existir
+            implementation(compose.components.resources)
         }
         androidMain.dependencies {
             implementation(compose.preview)
@@ -44,6 +47,12 @@ kotlin {
             implementation(libs.google.id)
         }
     }
+}
+
+compose.resources {
+    // nome fixo, em vez do padrão {group}.{module}.generated.resources — o
+    // projeto não define "group" nenhum, e um pacote começando com ponto quebraria
+    packageOfResClass = "br.com.navalbattle.generated.resources"
 }
 
 android {

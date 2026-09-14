@@ -9,6 +9,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.13.1] — 2026-09-14 · iOS: áudio de verdade
+
+### Adicionado
+- `SoundPlayer.ios.kt` e `MusicPlayer.ios.kt` deixam de ser mudos: tocam via
+  `AVAudioPlayer`, um tocador por efeito/faixa carregado em segundo plano.
+- Biblioteca `compose.components.resources` adicionada ao `commonMain`; os áudios
+  (efeitos `.wav`, trilha convertida de `.ogg` para `.m4a` via ffmpeg) vivem em
+  `commonMain/composeResources/files` e são lidos via `Res.readBytes(...)` — os dois
+  lados (Android e iOS) passam a usar a mesma fonte de arquivo.
+- `packageOfResClass` fixado em `br.com.navalbattle.generated.resources`: o projeto
+  não define `group` nenhum, e o padrão `{group}.{module}.generated.resources` viraria
+  um pacote começando com ponto.
+
+### Nota de projeto
+`SoundPlayer.android.kt`/`MusicPlayer.android.kt` continuam como estavam (SoundPool/
+MediaPlayer + `R.raw`) — não foram tocados, para não arriscar uma regressão em algo
+que já funciona; os `.wav`/`.ogg` originais continuam em `androidMain/res/raw`
+paralelamente aos arquivos novos em `composeResources`.
+
 ## [0.13.0] — 2026-09-14 · Modo Online (sala de amigo, partida rápida, amigos)
 
 ### Adicionado

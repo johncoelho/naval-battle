@@ -153,9 +153,12 @@ composeApp/src/
     i18n/         dicionário dos três idiomas
     ui/           telas e componentes
     data/         armazenamento local e cliente da nuvem (expect)
+    composeResources/files/  efeitos e trilha, lidos pelos dois lados via Res.readBytes
   androidMain/    Activity, manifesto, recursos, e os actual de áudio/dados
-  iosMain/        actual de preferências e nuvem — áudio, rede e Google ainda pendentes
+  iosMain/        actual de preferências, nuvem, modo Online e áudio — rede e Google
+                  ainda pendentes (dependem do projeto Xcode, que ainda não existe)
 supabase/schema.sql   tabela profiles, RLS, gatilhos e placar
+supabase/online.sql   salas, jogadas e amizades do modo Online
 site/index.html       landing page publicada no GitHub Pages
 keystore/             chave de depuração fixa (ver docs/BUILD.md)
 docs/                 build, stack e design system
@@ -226,11 +229,15 @@ detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume n
 
 - [x] Login com Google — configurado de ponta a ponta (Google Cloud + Supabase),
       ver [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código)
-- [ ] Convite de amigo e partida rápida pela internet (via Supabase Realtime)
+- [x] Convite de amigo e partida rápida pela internet — modo Online via REST do
+      Supabase (sala de amigo com código, partida rápida, lista de amigos)
+- [ ] Convite direto de amigo com notificação ("fulano te chamou pra jogar") — hoje
+      só abre uma sala normal, o código ainda viaja por fora do jogo
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
 - [ ] Compras com pagamento real (Google Play Billing) vendendo créditos
-- [~] Alvo iOS: preferências e nuvem já têm `actual` de verdade; áudio, rede local e
-      login com Google ainda são pendências (mudos/desativados por enquanto, para o
-      resto do jogo compilar). Falta o projeto Xcode em si — ver
-      [docs/BUILD.md](docs/BUILD.md#ios--em-andamento). O IPA instalável num iPhone de
-      verdade ainda depende de conta paga no Apple Developer para assinar
+- [~] Alvo iOS: preferências, nuvem, modo Online e áudio já têm `actual` de verdade;
+      rede local e login com Google ainda são pendências (mudos/desativados por
+      enquanto, para o resto do jogo compilar) — os dois dependem de um projeto Xcode
+      de verdade, que ainda não existe — ver [docs/BUILD.md](docs/BUILD.md#ios--em-andamento).
+      O IPA instalável num iPhone de verdade ainda depende de conta paga no Apple
+      Developer para assinar
