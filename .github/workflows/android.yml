@@ -54,3 +54,32 @@ jobs:
             --notes "Builds de teste para Android (APK, debug) e iOS (.ipa, sem assinatura). Ver docs/BUILD.md para instalar cada um." \
             --prerelease
           gh release upload latest naval-battle-debug.apk --clobber
+
+      - name: Decodifica a keystore de release
+        id: release_keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/naval-release.keystore"
+          echo "has_keystore=true" >> "$GITHUB_OUTPUT"
+
+      # Gera o .aab assinado com a chave de release, para envio manual à Play
+      # Console — não é publicado na release pública "latest" (essa é só para
+      # instalação direta de teste via APK/IPA, não para o pacote da loja).
+      - name: Compila o Android App Bundle assinado
+        if: steps.release_keystore.outputs.has_keystore == 'true'
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/naval-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew :composeApp:bundleRelease --console=plain --stacktrace
+
+      - name: Sobe o .aab de release como artefato do run
+        if: steps.release_keystore.outputs.has_keystore == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: naval-battle-release-aab
+          path: composeApp/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
