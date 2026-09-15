@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.15.0] — 2026-09-15 · Assinatura de release + assets da Play Store
+
+### Adicionado
+- `assets/store/`: ícone (512×512), gráfico de destaque (1024×500) e capturas de tela
+  reais (com dados de conta redigidos) para a ficha do Naval Battle Classic na Play
+  Console.
+- `composeApp/build.gradle.kts`: `signingConfigs` de release lendo `ANDROID_KEYSTORE_PATH`
+  e credenciais de variáveis de ambiente — sem elas o build de release segue sem
+  assinatura, nada quebra localmente.
+- `.github/workflows/android.yml`: decodifica a keystore de release de um secret e gera
+  `:composeApp:bundleRelease` (`.aab` assinado) como artefato do run, separado da release
+  pública "latest" usada para instalação direta.
+- `docs/BUILD.md`: seção "Chave de release" com a lista de secrets esperados e o que fazer
+  se a keystore for perdida.
+
+### Configurado (fora do repositório)
+- Play Console: ficha da loja (nome, descrições, ícone, gráfico de destaque, screenshots),
+  categoria "Board", classificação indicativa (questionário IARC), público-alvo (13+),
+  e a declaração de segurança de dados (Data safety — coleta de e-mail e ID de usuário via
+  login opcional, sem compartilhamento com terceiros).
+
 ## [0.14.1] — 2026-09-14 · Landing page: botão de download para iOS
 
 ### Adicionado

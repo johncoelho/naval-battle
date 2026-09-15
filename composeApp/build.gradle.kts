@@ -82,6 +82,20 @@ android {
             keyAlias = "navalbattle"
             keyPassword = "navalbattle"
         }
+        // Chave de release: nunca versionada. O CI decodifica o keystore de um
+        // secret em ANDROID_KEYSTORE_PATH antes do build; localmente, sem essas
+        // variáveis de ambiente, o bloco abaixo não roda e o build de release
+        // simplesmente fica sem assinatura (assembleRelease ainda funciona para
+        // inspecionar o APK, só não é instalável nem publicável).
+        val releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+        if (releaseKeystorePath != null) {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -90,6 +104,9 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = false
+            if (signingConfigs.findByName("release") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

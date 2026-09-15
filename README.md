@@ -242,3 +242,9 @@ detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume n
       (ver [docs/BUILD.md](docs/BUILD.md#o-projeto-xcode-e-o-ipa-sem-assinatura) para
       instalar via Sideloadly sem pagar Apple Developer Program; assinatura de
       verdade no CI fica para quando/se uma conta paga entrar em cena)
+- [~] Publicação na Play Store: ficha da loja, classificação indicativa, público-alvo e
+      segurança de dados já preenchidos na Play Console; `.aab` de release assinado sai
+      do CI quando os secrets de keystore estão configurados (ver
+      [docs/BUILD.md](docs/BUILD.md#chave-de-release-upload-key-da-play-store)) — falta
+      rodar o teste fechado obrigatório (12+ testers por 14 dias) antes de pedir acesso
+      à produção

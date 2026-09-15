@@ -63,6 +63,33 @@ Com a chave fixa, cada APK novo instala por cima como atualização e os dados p
 Se um dia a chave precisar ser trocada, todo mundo que tem o jogo instalado terá que
 desinstalar uma vez. Trocar sem necessidade é quebrar a base instalada.
 
+### Chave de release (upload key da Play Store)
+
+Ao contrário da chave de depuração, a **chave de release não é versionada** — ela vive só
+como *secrets* do repositório no GitHub (`Settings → Secrets and variables → Actions`):
+
+| Secret | Conteúdo |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | o arquivo `.keystore` inteiro, codificado em base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | senha do keystore |
+| `ANDROID_KEY_ALIAS` | apelido da chave dentro do keystore |
+| `ANDROID_KEY_PASSWORD` | senha da chave |
+
+`android.yml` decodifica o secret num arquivo temporário do runner e exporta as quatro
+variáveis de ambiente que `composeApp/build.gradle.kts` lê (`ANDROID_KEYSTORE_PATH` e as
+três acima) antes de rodar `:composeApp:bundleRelease`. Sem esses secrets configurados, o
+passo é pulado — o CI segue gerando só o APK de depuração normalmente.
+
+O `.aab` assinado sai como artefato do run (`naval-battle-release-aab`), não na release
+pública "latest": ele é o pacote que sobe manualmente na Play Console, não algo para
+instalação direta.
+
+**Se a keystore de release for perdida**, não tem como recriar a mesma chave — mas com o
+app já matriculado no *Play App Signing*, dá para pedir ao suporte do Google Play para
+resetar a chave de upload (prova de propriedade da conta). Perder a chave *antes* de
+matricular no Play App Signing é mais grave: guarde o arquivo `.keystore` e as senhas em
+um cofre de senhas, nunca só no disco de uma máquina.
+
 ## Entrega ao testador
 
 O APK é enviado diretamente ao celular como arquivo. O link bruto do GitHub deu problema
