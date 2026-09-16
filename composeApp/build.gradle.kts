@@ -63,7 +63,10 @@ android {
     sourceSets["main"].res.srcDirs("src/androidMain/res")
 
     defaultConfig {
-        applicationId = "br.com.navalbattle"
+        // id publicado na Play Console (registrado como "Naval Battle Classic" /
+        // AI Games Factory) — diferente do namespace interno do código, que
+        // continua br.com.navalbattle; não precisa bater com o pacote Kotlin
+        applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
         versionCode = 1
