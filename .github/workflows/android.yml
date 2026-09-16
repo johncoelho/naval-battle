@@ -68,36 +68,6 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/naval-release.keystore"
           echo "has_keystore=true" >> "$GITHUB_OUTPUT"
 
-      # TEMPORARIO: diagnostica os 4 secrets sem nunca imprimir o valor deles —
-      # so hash do arquivo (nao reversivel) e tamanho das senhas em caracteres.
-      # Remover depois que a assinatura voltar a funcionar.
-      - name: Debug dos secrets da keystore (sem expor valores)
-        if: steps.release_keystore.outputs.has_keystore == 'true'
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          echo "sha256 do keystore decodificado:"
-          sha256sum "$RUNNER_TEMP/naval-release.keystore"
-          echo "esperado:   9ed9b46a579ac80235f25e8ea794c2dedf1c046f6d3a4afbdd26bd3ad947059"
-          echo "tamanho do arquivo (bytes):"
-          wc -c < "$RUNNER_TEMP/naval-release.keystore"
-          echo "esperado: 2834"
-          echo "tamanho de ANDROID_KEYSTORE_PASSWORD (chars): ${#ANDROID_KEYSTORE_PASSWORD} (esperado: 32)"
-          echo "tamanho de ANDROID_KEY_PASSWORD (chars): ${#ANDROID_KEY_PASSWORD} (esperado: 30)"
-          echo "ANDROID_KEY_ALIAS === navalbattle-release ? $([ "$ANDROID_KEY_ALIAS" = "navalbattle-release" ] && echo sim || echo NAO)"
-          echo ""
-          echo "--- teste 1: abrir o keystore so com a senha do arquivo ---"
-          keytool -list -storetype JKS -keystore "$RUNNER_TEMP/naval-release.keystore" -storepass "$ANDROID_KEYSTORE_PASSWORD" > /dev/null 2>keytool_store.log \
-            && echo "OK: ANDROID_KEYSTORE_PASSWORD abre o keystore" \
-            || (echo "FALHOU: ANDROID_KEYSTORE_PASSWORD esta errado"; cat keytool_store.log)
-          echo ""
-          echo "--- teste 2: ler a chave especifica com a senha da chave ---"
-          keytool -list -storetype JKS -keystore "$RUNNER_TEMP/naval-release.keystore" -storepass "$ANDROID_KEYSTORE_PASSWORD" -alias "$ANDROID_KEY_ALIAS" -keypass "$ANDROID_KEY_PASSWORD" > /dev/null 2>keytool_key.log \
-            && echo "OK: ANDROID_KEY_PASSWORD e ANDROID_KEY_ALIAS corretos" \
-            || (echo "FALHOU: ANDROID_KEY_PASSWORD ou ANDROID_KEY_ALIAS errado"; cat keytool_key.log)
-
       # Gera o .aab assinado com a chave de release, para envio manual à Play
       # Console — não é publicado na release pública "latest" (essa é só para
       # instalação direta de teste via APK/IPA, não para o pacote da loja).
