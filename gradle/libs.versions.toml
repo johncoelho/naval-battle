@@ -5,9 +5,9 @@ composeMultiplatform = "1.7.3"
 androidxActivityCompose = "1.9.3"
 androidxCredentials = "1.3.0"
 googleId = "1.1.1"
-androidCompileSdk = "35"
+androidCompileSdk = "36"
 androidMinSdk = "26"
-androidTargetSdk = "35"
+androidTargetSdk = "36"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
