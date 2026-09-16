@@ -94,6 +94,10 @@ android {
                 storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("ANDROID_KEY_ALIAS")
                 keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                // sem isso o AGP assume JKS por padrão; o keystore gerado (JDK 17,
+                // keytool sem -storetype) é PKCS12, e a leitura como JKS falha com
+                // um erro de padding que parece senha errada mas não é
+                storeType = "PKCS12"
             }
         }
     }
