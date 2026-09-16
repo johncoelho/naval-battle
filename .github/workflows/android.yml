@@ -24,8 +24,10 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           # o pacote legado "tools" foi removido do repositório da Google; o
-          # default da action ainda tenta instalá-lo e quebra o sdkmanager
-          packages: platform-tools
+          # default da action ainda tenta instalá-lo e quebra o sdkmanager.
+          # platforms;android-36 e build-tools;36.0.0 garantem o compileSdk/
+          # targetSdk 36 mesmo se a imagem do runner ainda não trouxer pronto
+          packages: platform-tools platforms;android-36 build-tools;36.0.0
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
