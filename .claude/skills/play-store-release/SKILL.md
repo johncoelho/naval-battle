@@ -27,6 +27,14 @@ changes still needs this. Play Console gives NO build-time warning — it only r
 upload later with "version code has already been used", after a full CI build cycle has
 already run. See [[feedback-android-release-checklist]].
 
+**Also update the release notes in the SAME commit**, in
+`composeApp/src/main/play/release-notes/pt-BR/default.txt` — the Gradle Play Publisher plugin
+picks this file up automatically and ships it as the "What's new" text on every automatic
+publish, so testers can see what changed without asking. Plain text, ~2-4 short lines,
+user-facing language (what changed for them, not implementation detail), under 500 chars
+(Play Store limit). This is mandatory per the user's standing instruction — a release with no
+release notes update is an incomplete release, not just a style nit.
+
 ## 2. Signing config sanity (only if touching signing/build.gradle.kts)
 
 - `signingConfigs.create("release")` needs `storeType = "PKCS12"` explicitly (AGP defaults to

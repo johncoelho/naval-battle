@@ -1,0 +1,2 @@
+Correção: login com o Google não funcionava depois da publicação na loja — agora funciona.
+Adicionado: número da versão instalada aparece na tela de Conta, pra você conferir se a atualização já chegou.
