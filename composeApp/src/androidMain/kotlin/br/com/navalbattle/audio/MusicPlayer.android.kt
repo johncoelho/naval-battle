@@ -10,12 +10,14 @@ actual class MusicPlayer actual constructor() {
     private var current: Music? = null
 
     private fun resOf(track: Music) = when (track) {
-        Music.THEME -> R.raw.music_theme
+        Music.THEME_1 -> R.raw.music_theme
+        Music.THEME_2 -> R.raw.music_theme_2
+        Music.THEME_3 -> R.raw.music_theme_3
         Music.BATTLE -> R.raw.music_battle
     }
 
     private fun volumeOf(track: Music) = when (track) {
-        Music.THEME -> 0.55f
+        Music.THEME_1, Music.THEME_2, Music.THEME_3 -> 0.55f
         // no combate a trilha recua para os tiros e alarmes ficarem à frente
         Music.BATTLE -> 0.34f
     }

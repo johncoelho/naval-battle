@@ -178,6 +178,19 @@ class Profile(private val prefs: Prefs) {
         prefs.putInt(K_MUSIC, if (on) 1 else 0)
     }
 
+    /**
+     * Roda a playlist do deque de comando: cada abertura do app toca a próxima faixa
+     * da lista, em ciclo — ["count] é o tamanho atual da playlist, que cresce aos
+     * poucos conforme mais músicas entram, sem perder a posição do rodízio. [count]
+     * é o tamanho atual da playlist.
+     */
+    fun rollThemeTrack(count: Int): Int {
+        if (count <= 0) return 0
+        val cursor = prefs.getInt(K_THEME_TRACK, 0)
+        prefs.putInt(K_THEME_TRACK, cursor + 1)
+        return cursor % count
+    }
+
     fun rememberSession(session: Session) {
         accountId = session.userId
         accountEmail = session.email
@@ -414,5 +427,6 @@ class Profile(private val prefs: Prefs) {
         const val K_LANG = "lang"
         const val K_AVATAR = "avatar"
         const val K_WELCOME_DONE = "welcome_done"
+        const val K_THEME_TRACK = "theme_track"
     }
 }

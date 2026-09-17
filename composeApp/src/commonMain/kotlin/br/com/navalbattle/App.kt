@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
+import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.CloudResult
 import br.com.navalbattle.data.CommanderHit
@@ -587,6 +588,9 @@ fun App() {
     val scope = rememberCoroutineScope()
     state.uiScope = scope
     val music = remember { MusicPlayer() }
+    // playlist do deque: uma faixa por abertura do app, em rodízio — fixada uma vez
+    // por sessão (remember), pra não trocar de música sozinha a cada recomposição
+    val theme = remember { THEME_PLAYLIST[profile.rollThemeTrack(THEME_PLAYLIST.size)] }
 
     // a trilha acompanha a tela: tema no deque, faixa de combate na batalha
     LaunchedEffect(state.screen, state.musicOn) {
@@ -594,7 +598,7 @@ fun App() {
         if (!state.musicOn) {
             music.stop()
         } else {
-            music.play(if (state.screen == Screen.BATTLE) Music.BATTLE else Music.THEME)
+            music.play(if (state.screen == Screen.BATTLE) Music.BATTLE else theme)
         }
     }
     DisposableEffect(Unit) { onDispose { music.release() } }

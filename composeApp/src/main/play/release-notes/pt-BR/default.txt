@@ -1,4 +1,5 @@
 Novo: tela de boas-vindas — entre na conta ou jogue como convidado.
 Novo: escolha um avatar temático de marinha; ele aparece no canto do menu e abre Perfil + Conta numa tela só.
 Novo: aviso dentro do jogo quando sai uma versão nova, com atalho pra atualizar.
+Novo: duas músicas inéditas entram no rodízio da trilha do menu.
 Sem login, o modo Online fica bloqueado (depende de conta).

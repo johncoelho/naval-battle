@@ -13,12 +13,14 @@ import platform.Foundation.NSData
 import platform.Foundation.create
 
 private fun Music.path(): String = "files/" + when (this) {
-    Music.THEME -> "music_theme.m4a"
+    Music.THEME_1 -> "music_theme.m4a"
+    Music.THEME_2 -> "music_theme_2.m4a"
+    Music.THEME_3 -> "music_theme_3.m4a"
     Music.BATTLE -> "music_battle.m4a"
 }
 
 private fun Music.volume(): Float = when (this) {
-    Music.THEME -> 0.55f
+    Music.THEME_1, Music.THEME_2, Music.THEME_3 -> 0.55f
     // no combate a trilha recua para os tiros e alarmes ficarem à frente
     Music.BATTLE -> 0.34f
 }

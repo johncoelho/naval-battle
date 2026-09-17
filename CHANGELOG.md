@@ -9,6 +9,40 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.17.0] — 2026-09-17 · Boas-vindas, avatar, Perfil+Conta e aviso de update
+
+### Adicionado
+- **Tela de boas-vindas** (`Screen.WELCOME`): na primeira abertura sem conta, pergunta
+  se o comandante quer entrar/criar conta ou jogar como convidado (sem nuvem, sem
+  amigos, sem online). `Profile.welcomeDone` evita que ela volte a aparecer depois
+  dessa escolha. Sem conta, o modo Online fica desativado no menu.
+- **Avatar** (`game/Profile.kt`, `design/AvatarArt.kt`): seis retratos vetoriais
+  temáticos de marinha (oficial, imediato e capitão, homem e mulher), no mesmo
+  estilo a traço da insígnia — nenhuma imagem no APK. Escolhido no Perfil, aparece
+  no canto superior do menu no lugar do texto de patente sozinho; tocar nele abre
+  a tela. Fica só neste aparelho, não sobe para a nuvem.
+- **Perfil e Conta viram uma tela só**: o conteúdo da antiga `AuthScreen` (entrar,
+  criar conta, Google, trocar senha, sincronizar) entra dentro de `ProfileScreen`
+  como `AccountSection` — só uma parada para tudo, sem tela separada.
+- **Versão do build no rodapé do menu**, além da tela de Perfil — mais um lugar pra
+  confirmar rápido se uma atualização publicada já chegou no aparelho.
+- **Aviso de atualização disponível** (`data/UpdateChecker.kt`, `expect`/`actual`):
+  usa a Play Core In-App Update API para saber se já existe uma versão mais nova na
+  faixa do comandante, sem precisar de servidor de push. Aparece como faixa no topo
+  do menu; tocar abre a ficha do jogo na loja. No-op no iOS por enquanto.
+- **Duas músicas novas geradas com IA** entram na playlist do deque de comando
+  (`Music.THEME_2`, `THEME_3`), ao lado da faixa original. Cada abertura do app toca
+  a próxima da lista, em rodízio (`Profile.rollThemeTrack`) — mais faixas vão
+  entrando aos poucos.
+
+### Nota de projeto
+As duas músicas novas são faixas completas (~3m30), não laços curtos como a
+original — aumentam bastante o tamanho do app. Se a playlist continuar crescendo
+com faixas desse tamanho, vale considerar cortar loops mais curtos ou baixar o
+bitrate nas próximas.
+
+---
+
 ## [0.16.1] — 2026-09-17 · Teste de ponta a ponta do publish automático
 
 ### Verificado
