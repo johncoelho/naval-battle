@@ -9,6 +9,34 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.16.0] — 2026-09-16 · Login com Google de volta na loja + publicação automática
+
+### Corrigido
+- **Login com Google não funcionava no app publicado** (escolher a conta não fazia nada,
+  sem mensagem de erro). Causa raiz: o Play Console usa Play App Signing e a chave de
+  assinatura tinha sido atualizada — o APK entregue aos aparelhos estava assinado com a
+  **chave anterior**, cujo SHA-1 não estava registrado como client OAuth Android. O Google
+  respondia `UNREGISTERED_ON_API_CONSOLE`, o Credential Manager traduzia isso para
+  `[16] Account reauth failed`, que chega no Kotlin como
+  `GetCredentialCancellationException` — e a tela tratava como "o comandante desistiu",
+  escondendo o erro. Resolvido registrando um client OAuth Android para **cada** chave de
+  assinatura (atual e anterior), sem precisar de build novo.
+- `GoogleAuth.android.kt`: `GetCredentialException.message` pode vir `""` (vazio, não nulo);
+  o `?:` não pegava esse caso e a tela silenciava o erro. Agora usa `takeIf { isNotBlank() }`
+  e cai no nome da exceção quando não há mensagem.
+
+### Adicionado
+- Versão do build visível na tela de conta (`v0.1.2 (4)`), lida do empacotamento nativo via
+  `appVersionLabel` (`expect`/`actual`): `BuildConfig` no Android, `NSBundle` no iOS. Serve
+  para confirmar em segundos se uma atualização publicada já chegou no aparelho.
+- `.github/workflows/android.yml` + plugin Gradle Play Publisher: o CI publica o `.aab`
+  assinado direto na faixa de testes fechados via Play Developer API (secret
+  `PLAY_SERVICE_ACCOUNT_JSON`), eliminando o download/upload manual a cada release.
+- `.claude/skills/play-store-release/SKILL.md`: checklist do pipeline Android → Play Console
+  com as armadilhas já encontradas (versionCode, PKCS12, chaves de assinatura, OAuth, logcat).
+
+---
+
 ## [0.15.0] — 2026-09-15 · Assinatura de release + assets da Play Store
 
 ### Adicionado
