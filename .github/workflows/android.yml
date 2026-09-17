@@ -89,3 +89,25 @@ jobs:
           name: naval-battle-release-aab
           path: composeApp/build/outputs/bundle/release/*.aab
           if-no-files-found: error
+
+      - name: Decodifica a service account da Play Console
+        id: play_service_account
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        if: env.PLAY_SERVICE_ACCOUNT_JSON != ''
+        run: |
+          echo "$PLAY_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/play-publisher-credentials.json"
+          echo "has_credentials=true" >> "$GITHUB_OUTPUT"
+
+      # Publica direto na faixa de testes fechados (track "alpha") via Play Developer
+      # API — elimina o passo manual de baixar o .aab e subir pelo navegador. Só roda
+      # se a keystore de release E a service account estiverem configuradas.
+      - name: Publica na Play Console (closed testing)
+        if: steps.release_keystore.outputs.has_keystore == 'true' && steps.play_service_account.outputs.has_credentials == 'true'
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/naval-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          PLAY_PUBLISHER_CREDENTIALS_PATH: ${{ runner.temp }}/play-publisher-credentials.json
+        run: ./gradlew :composeApp:publishBundle --console=plain --stacktrace
