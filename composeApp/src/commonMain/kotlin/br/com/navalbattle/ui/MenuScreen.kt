@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.systemBars
@@ -24,10 +25,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.data.appVersionLabel
+import br.com.navalbattle.data.openStoreListing
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.design.drawAvatar
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Opponent
@@ -41,12 +45,38 @@ fun MenuScreen(state: AppState) {
             .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.systemBars)
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
+        if (state.updateAvailable) {
+            HudLabel(
+                t(K.MENU_UPDATE_AVAILABLE),
+                Naval.amberInk,
+                Modifier
+                    .fillMaxWidth()
+                    .background(Naval.amber)
+                    .clickable { openStoreListing() }
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            )
+            Spacer(Modifier.height(10.dp))
+        }
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            HudLabel(state.profile.rank.label.uppercase(), Naval.inkSoft)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { state.screen = Screen.PROFILE }
+            ) {
+                Canvas(Modifier.size(30.dp)) {
+                    drawAvatar(
+                        avatar = state.profile.avatar,
+                        center = Offset(size.width / 2f, size.height / 2f),
+                        size = size.minDimension,
+                        color = Naval.amberStrong
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                HudLabel(state.profile.rank.label.uppercase(), Naval.inkSoft)
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HudLabel(
                     if (state.musicOn) t(K.MENU_MUSIC_ON) else t(K.MENU_MUSIC_OFF),
@@ -90,14 +120,17 @@ fun MenuScreen(state: AppState) {
             PrimaryButton(t(K.MENU_QUICK), t(K.MENU_QUICK_SUB)) { state.newMatch(Opponent.AI) }
             SecondaryButton(t(K.MENU_LOCAL), t(K.MENU_LOCAL_SUB)) { state.newMatch(Opponent.LOCAL) }
             SecondaryButton(t(K.MENU_LAN), t(K.MENU_LAN_SUB)) { state.screen = Screen.LAN }
-            SecondaryButton(t(K.MENU_ONLINE), t(K.MENU_ONLINE_SUB)) { state.screen = Screen.ONLINE }
+            SecondaryButton(
+                t(K.MENU_ONLINE),
+                if (state.profile.signedIn) t(K.MENU_ONLINE_SUB) else t(K.MENU_ONLINE_LOCKED),
+                enabled = state.profile.signedIn
+            ) { state.screen = Screen.ONLINE }
             SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name) { state.screen = Screen.SHIPYARD }
             SecondaryButton(t(K.MENU_STORE), "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
-            SecondaryButton(t(K.MENU_PROFILE), state.profile.rank.label) { state.screen = Screen.PROFILE }
             SecondaryButton(
-                if (state.profile.signedIn) t(K.MENU_ACCOUNT) else t(K.MENU_CREATE_ACCOUNT),
-                if (state.profile.signedIn) state.profile.accountEmail else t(K.MENU_ACCOUNT_SUB)
-            ) { state.screen = Screen.AUTH }
+                if (state.profile.signedIn) t(K.MENU_PROFILE) else t(K.MENU_CREATE_ACCOUNT),
+                if (state.profile.signedIn) state.profile.rank.label else t(K.MENU_ACCOUNT_SUB)
+            ) { state.screen = Screen.PROFILE }
             SecondaryButton(t(K.MENU_RANKED), t(K.MENU_SOON), enabled = false) {}
         }
 
@@ -122,6 +155,10 @@ fun MenuScreen(state: AppState) {
                 Naval.muted,
                 Modifier.clickable { state.screen = Screen.STORE }
             )
+        }
+        Spacer(Modifier.height(6.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            HudLabel("v$appVersionLabel", Naval.line)
         }
     }
 }

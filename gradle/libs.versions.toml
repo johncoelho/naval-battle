@@ -9,12 +9,14 @@ androidCompileSdk = "36"
 androidMinSdk = "26"
 androidTargetSdk = "36"
 playPublisher = "3.13.0"
+playAppUpdate = "2.1.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidxCredentials" }
 androidx-credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidxCredentials" }
 google-id = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleId" }
+play-app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "playAppUpdate" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

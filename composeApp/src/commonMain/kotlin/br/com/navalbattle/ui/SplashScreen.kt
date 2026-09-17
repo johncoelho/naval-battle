@@ -64,7 +64,7 @@ fun SplashScreen(state: AppState) {
 
     LaunchedEffect(Unit) {
         anim.animateTo(1f, tween(SPLASH_MS, easing = LinearEasing))
-        state.screen = Screen.MENU
+        state.afterSplash()
     }
 
     val p = anim.value
@@ -79,7 +79,7 @@ fun SplashScreen(state: AppState) {
         Modifier
             .fillMaxSize()
             .background(Naval.bg)
-            .pointerInput(Unit) { detectTapGestures { state.screen = Screen.MENU } }
+            .pointerInput(Unit) { detectTapGestures { state.afterSplash() } }
     ) {
         Canvas(Modifier.fillMaxSize()) {
             val center = Offset(size.width / 2f, size.height * 0.42f)

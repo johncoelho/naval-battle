@@ -46,6 +46,9 @@ kotlin {
             implementation(libs.androidx.credentials)
             implementation(libs.androidx.credentials.play.services)
             implementation(libs.google.id)
+            // avisa quando uma versão mais nova já está publicada na faixa de teste do
+            // comandante — mesma API que a própria Play Store usa, sem precisar de push
+            implementation(libs.play.app.update.ktx)
         }
     }
 }
@@ -76,8 +79,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 5
-        versionName = "0.1.3"
+        versionCode = 6
+        versionName = "0.2.0"
     }
 
     /**

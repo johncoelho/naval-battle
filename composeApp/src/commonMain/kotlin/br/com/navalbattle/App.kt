@@ -30,6 +30,8 @@ import br.com.navalbattle.data.OnlineLink
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
+import br.com.navalbattle.data.checkUpdateAvailable
+import br.com.navalbattle.data.openStoreListing
 import br.com.navalbattle.design.FleetLine
 import br.com.navalbattle.design.Paint
 import br.com.navalbattle.design.Skin
@@ -48,7 +50,6 @@ import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.Lang
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.game.Side
-import br.com.navalbattle.ui.AuthScreen
 import br.com.navalbattle.ui.LanScreen
 import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
@@ -61,8 +62,9 @@ import br.com.navalbattle.ui.ResultScreen
 import br.com.navalbattle.ui.ShipyardScreen
 import br.com.navalbattle.ui.StoreScreen
 import br.com.navalbattle.ui.SplashScreen
+import br.com.navalbattle.ui.WelcomeScreen
 
-enum class Screen { SPLASH, MENU, SHIPYARD, STORE, PROFILE, AUTH, LAN, ONLINE, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
+enum class Screen { SPLASH, WELCOME, MENU, SHIPYARD, STORE, PROFILE, LAN, ONLINE, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
@@ -78,6 +80,17 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Trilha ligada. Os efeitos de combate continuam tocando de qualquer jeito. */
     var musicOn by mutableStateOf(profile.musicOn)
+
+    /** Já existe uma versão mais nova publicada na faixa em que o comandante está. */
+    var updateAvailable by mutableStateOf(false)
+
+    /**
+     * Para onde ir depois da abertura: direto ao deque para quem já tem conta ou já
+     * escolheu jogar como convidado; senão, pergunta uma vez na tela de boas-vindas.
+     */
+    fun afterSplash() {
+        screen = if (profile.signedIn || profile.welcomeDone) Screen.MENU else Screen.WELCOME
+    }
 
     fun newMatch(opponent: Opponent) {
         match = Match(mode, opponent)
@@ -589,15 +602,18 @@ fun App() {
     // com conta conectada, a abertura já renova a sessão e busca o que há na nuvem
     LaunchedEffect(Unit) { state.resumeSession() }
 
+    // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push
+    LaunchedEffect(Unit) { state.updateAvailable = checkUpdateAvailable() }
+
     NavalTheme {
         Box(Modifier.fillMaxSize().background(Naval.bg)) {
             when (state.screen) {
                 Screen.SPLASH -> SplashScreen(state)
+                Screen.WELCOME -> WelcomeScreen(state)
                 Screen.MENU -> MenuScreen(state)
                 Screen.SHIPYARD -> ShipyardScreen(state)
                 Screen.STORE -> StoreScreen(state)
                 Screen.PROFILE -> ProfileScreen(state)
-                Screen.AUTH -> AuthScreen(state)
                 Screen.LAN -> LanScreen(state)
                 Screen.ONLINE -> OnlineScreen(state)
                 Screen.NAMES -> state.match?.let { NamesScreen(state, it) }

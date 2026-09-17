@@ -46,6 +46,22 @@ enum class Insignia(val id: String, val key: K) {
     }
 }
 
+/** Retrato do comandante, desenhado no Canvas — mostrado no topo do menu e do perfil. */
+enum class Avatar(val id: String, val key: K) {
+    OFFICER_M1("om1", K.AVATAR_OFFICER_M1),
+    OFFICER_F1("of1", K.AVATAR_OFFICER_F1),
+    OFFICER_M2("om2", K.AVATAR_OFFICER_M2),
+    OFFICER_F2("of2", K.AVATAR_OFFICER_F2),
+    CAPTAIN_M("cpm", K.AVATAR_CAPTAIN_M),
+    CAPTAIN_F("cpf", K.AVATAR_CAPTAIN_F);
+
+    val label: String get() = t(key)
+
+    companion object {
+        fun of(id: String): Avatar = entries.firstOrNull { it.id == id } ?: OFFICER_M1
+    }
+}
+
 /** Resultado de uma partida, do ponto de vista da carreira. */
 data class Award(val xp: Int, val credits: Int, val victory: Boolean, val rankUp: Rank?)
 
@@ -58,6 +74,8 @@ class Profile(private val prefs: Prefs) {
     var name by mutableStateOf(prefs.getString(K_NAME, ""))
         private set
     var insignia by mutableStateOf(Insignia.of(prefs.getString(K_INSIGNIA, Insignia.ANCHOR.id)))
+        private set
+    var avatar by mutableStateOf(Avatar.of(prefs.getString(K_AVATAR, Avatar.OFFICER_M1.id)))
         private set
 
     var xp by mutableStateOf(prefs.getInt(K_XP, 0))
@@ -138,6 +156,18 @@ class Profile(private val prefs: Prefs) {
     private var refreshToken = prefs.getString(K_REFRESH, "")
 
     val signedIn: Boolean get() = accountId.isNotBlank()
+
+    /**
+     * Marcado quando o comandante escolhe "jogar como convidado" na tela de boas-vindas —
+     * evita que essa tela volte a aparecer a cada abertura enquanto ele não criar conta.
+     */
+    var welcomeDone: Boolean by mutableStateOf(prefs.getInt(K_WELCOME_DONE, 0) == 1)
+        private set
+
+    fun markWelcomeDone() {
+        welcomeDone = true
+        prefs.putInt(K_WELCOME_DONE, 1)
+    }
 
     /** Preferência de trilha: fica no aparelho, não viaja para a nuvem. */
     var musicOn: Boolean = prefs.getInt(K_MUSIC, 1) == 1
@@ -263,6 +293,11 @@ class Profile(private val prefs: Prefs) {
         prefs.putString(K_INSIGNIA, value.id)
     }
 
+    fun chooseAvatar(value: Avatar) {
+        avatar = value
+        prefs.putString(K_AVATAR, value.id)
+    }
+
     fun owns(liveryId: String): Boolean = liveryId in owned
 
     fun ownsFleet(fleetId: String): Boolean = fleetId in ownedFleets
@@ -351,6 +386,7 @@ class Profile(private val prefs: Prefs) {
         ownedFleets = setOf("std")
         equippedFleet = "std"
         abilityCharges = emptyMap()
+        avatar = Avatar.OFFICER_M1
     }
 
     private companion object {
@@ -376,5 +412,7 @@ class Profile(private val prefs: Prefs) {
         const val K_REFRESH = "refresh"
         const val K_MUSIC = "music"
         const val K_LANG = "lang"
+        const val K_AVATAR = "avatar"
+        const val K_WELCOME_DONE = "welcome_done"
     }
 }

@@ -86,7 +86,7 @@ fun OnlineScreen(state: AppState) {
                 OnlinePanel(Naval.amber) {
                     HudLabel(t(K.ONLINE_SIGN_IN_REQUIRED), Naval.amberStrong)
                     Gap(10)
-                    PrimaryButton(t(K.ONLINE_SIGN_IN_GO)) { state.screen = Screen.AUTH }
+                    PrimaryButton(t(K.ONLINE_SIGN_IN_GO)) { state.screen = Screen.PROFILE }
                 }
                 Gap(16)
                 return@Column

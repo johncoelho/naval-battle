@@ -1,2 +1,4 @@
-Correção: login com o Google não funcionava depois da publicação na loja — agora funciona.
-Adicionado: número da versão instalada aparece na tela de Conta, pra você conferir se a atualização já chegou.
+Novo: tela de boas-vindas — entre na conta ou jogue como convidado.
+Novo: escolha um avatar temático de marinha; ele aparece no canto do menu e abre Perfil + Conta numa tela só.
+Novo: aviso dentro do jogo quando sai uma versão nova, com atalho pra atualizar.
+Sem login, o modo Online fica bloqueado (depende de conta).

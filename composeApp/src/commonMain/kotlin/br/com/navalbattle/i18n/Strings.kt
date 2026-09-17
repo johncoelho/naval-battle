@@ -75,6 +75,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     MENU_LAN_SUB("outro celular no mesmo Wi-Fi", "another phone on this Wi-Fi", "otro móvil en la misma Wi-Fi"),
     MENU_ONLINE("Online", "Online", "En línea"),
     MENU_ONLINE_SUB("amigo ou partida rápida", "friend or quick match", "amigo o partida rápida"),
+    MENU_ONLINE_LOCKED("entre na conta para liberar", "sign in to unlock", "entra en la cuenta para desbloquear"),
     MENU_SHIPYARD("Estaleiro", "Shipyard", "Astillero"),
     MENU_STORE("Loja do arsenal", "Arsenal store", "Tienda del arsenal"),
     MENU_PROFILE("Perfil", "Profile", "Perfil"),
@@ -88,6 +89,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     MENU_ACTIVE_FLEET("Frota ativa", "Active fleet", "Flota activa"),
     MENU_TAB_DECK("Deque", "Deck", "Cubierta"),
     MENU_TAB_STORE("Loja", "Store", "Tienda"),
+    MENU_UPDATE_AVAILABLE("Nova versão disponível — toque para atualizar", "New version available — tap to update", "Nueva versión disponible — toca para actualizar"),
 
     // ---------------------------------------------------------------- modos e classes
     MODE_CLASSIC("Clássico", "Classic", "Clásico"),
@@ -417,6 +419,23 @@ enum class K(val pt: String, val en: String, val es: String) {
     INSIGNIA_WHEEL("Timão", "Helm", "Timón"),
     INSIGNIA_WAVES("Vagas", "Waves", "Olas"),
     INSIGNIA_SKULL("Caveira", "Skull", "Calavera"),
+
+    // ---------------------------------------------------------------- avatares
+    AVATAR_OFFICER_M1("Oficial", "Officer", "Oficial"),
+    AVATAR_OFFICER_F1("Oficial", "Officer", "Oficial"),
+    AVATAR_OFFICER_M2("Imediato", "First Mate", "Primer Oficial"),
+    AVATAR_OFFICER_F2("Imediata", "First Mate", "Primer Oficial"),
+    AVATAR_CAPTAIN_M("Capitão", "Captain", "Capitán"),
+    AVATAR_CAPTAIN_F("Capitã", "Captain", "Capitana"),
+    PROFILE_AVATAR("Retrato", "Avatar", "Retrato"),
+
+    // ---------------------------------------------------------------- boas-vindas
+    WELCOME_TITLE_1("Bem-vindo a", "Welcome to", "Bienvenido a"),
+    WELCOME_TITLE_2("bordo", "the fleet", "bordo"),
+    WELCOME_SUB("Entre na conta para guardar patente, créditos e amigos na nuvem — ou jogue agora mesmo como convidado.", "Sign in to keep your rank, credits and friends in the cloud — or jump in right away as a guest.", "Entra en la cuenta para guardar rango, créditos y amigos en la nube — o juega ya mismo como invitado."),
+    WELCOME_LOGIN("Entrar ou criar conta", "Sign in or create account", "Entrar o crear cuenta"),
+    WELCOME_GUEST("Jogar como convidado", "Play as guest", "Jugar como invitado"),
+    WELCOME_GUEST_SUB("Sem nuvem, sem amigos, sem modo online", "No cloud, no friends, no online mode", "Sin nube, sin amigos, sin modo en línea"),
 
     // ---------------------------------------------------------------- librés e cascos
     PAINT_STD("Padrão Naval", "Navy Standard", "Estándar Naval"),

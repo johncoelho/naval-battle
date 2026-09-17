@@ -39,7 +39,7 @@ actual class GoogleAuth actual constructor() {
         } catch (e: GetCredentialException) {
             // e.message às vezes vem "" (vazio, não nulo) em vez de null — o "?:"
             // não pega esse caso, e a tela trata mensagem vazia como cancelamento
-            // silencioso (ver AuthScreen), escondendo o erro de verdade
+            // silencioso (ver AccountSection em ProfileScreen), escondendo o erro de verdade
             val detail = e.message?.takeIf { it.isNotBlank() }
             GoogleAuthResult.Fail(
                 if (detail != null) "Não consegui entrar com o Google: $detail"
