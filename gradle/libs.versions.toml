@@ -8,7 +8,7 @@ googleId = "1.1.1"
 androidCompileSdk = "36"
 androidMinSdk = "26"
 androidTargetSdk = "36"
-playPublisher = "4.1.1"
+playPublisher = "3.13.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
