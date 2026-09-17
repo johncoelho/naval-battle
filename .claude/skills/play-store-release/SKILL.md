@@ -111,6 +111,21 @@ matters for OAuth is the **App Signing key certificate**, never the local upload
 SHA-1. Get it from: Play Console → **Protected with Play → Play Store protection → Manage
 Play app signing → SHA-1 certificate fingerprint**.
 
+**CRITICAL — register EVERY app signing key, not just the current one.** The Play Console
+App signing page has a **"Previous app signing keys"** section (easy to miss — it sits between
+the current key and the upload key certificate, and its fingerprints are hidden behind a ⋮
+menu → "Copy SHA-1 certificate fingerprint"). If the app signing key was ever upgraded, the
+APK actually delivered to a device may be signed with the *previous* key. Registering only
+the current key's SHA-1 makes Google reject token minting with
+`status=UNREGISTERED_ON_API_CONSOLE`, which the Credential Manager surfaces to the app as
+error `[16] Account reauth failed` → delivered to Kotlin as
+`GetCredentialCancellationException` → the app treats it as "user cancelled" and shows
+**nothing at all**. This cost hours on 2026-09-16. Create one Android OAuth client per
+signing certificate (current + every previous one), all with the same package name.
+
+Also note the current key section shows both a **"Classical key"** and a **"Post-quantum
+cryptography key"** SHA-1 — OAuth wants the *Classical* one.
+
 If package name or signing cert ever changes:
 1. Register a new **Android**-type OAuth client in Google Cloud Console (Google Auth
    Platform → Clients → Create client) for the new (package, SHA-1) pair.
@@ -142,6 +157,11 @@ re-guessing config:
   ```
   Then have the user reproduce the bug, and grep the capture for the package name,
   `CredentialManager`, `Auth.Api.Credentials`, `AndroidRuntime`, `FATAL EXCEPTION`.
+- **Grep the logcat by timestamp window, not just by keyword.** The decisive line in the
+  2026-09-16 Google Sign-In bug (`This android application is not registered to use OAuth2.0`)
+  came from tag `Auth`, not from any tag containing "Google" or "Credential" — it was only
+  found by dumping every line in the 1.5s window right after the account picker closed:
+  `awk '/^09-16 21:05:0[1-4]\./' logcat.txt | grep -iE "auth|credential|error|fail"`.
 - **A Kotlin `catch` block can swallow a real error into a silent no-op.** E.g.
   `GetCredentialException.message` can be an empty string (`""`), not `null` — the `?:` elvis
   operator does NOT catch that, and downstream code checking `message.isBlank()` to detect
