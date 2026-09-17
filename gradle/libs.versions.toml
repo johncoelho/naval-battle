@@ -8,6 +8,7 @@ googleId = "1.1.1"
 androidCompileSdk = "36"
 androidMinSdk = "26"
 androidTargetSdk = "36"
+playPublisher = "3.11.1"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
@@ -20,3 +21,4 @@ androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+playPublisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }

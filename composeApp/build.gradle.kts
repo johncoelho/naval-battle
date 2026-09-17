@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.playPublisher)
 }
 
 kotlin {
@@ -121,4 +122,18 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+
+// Publica o .aab de release direto na faixa de testes fechados via Play Developer
+// API — sem isso, cada release precisava ser baixada e enviada manualmente pelo
+// navegador. O CI decodifica a service account de um secret em
+// PLAY_PUBLISHER_CREDENTIALS_PATH antes de rodar ":composeApp:publishBundle";
+// localmente, sem essa variável, o plugin fica configurado mas nenhuma task de
+// publish roda (build normal não é afetado). Ver docs/BUILD.md.
+play {
+    serviceAccountCredentials.set(
+        file(System.getenv("PLAY_PUBLISHER_CREDENTIALS_PATH") ?: "play-publisher-credentials.json")
+    )
+    track.set("alpha")
+    defaultToAppBundles.set(true)
 }
