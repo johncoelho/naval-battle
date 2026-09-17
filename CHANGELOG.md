@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.16.1] — 2026-09-17 · Teste de ponta a ponta do publish automático
+
+### Verificado
+- Service account `play-publisher-ci` criada no Google Cloud, convidada em
+  **Users and permissions** da Play Console (a página antiga "Setup → API access" saiu do
+  ar — o convite agora é feito ali, como um usuário comum, com permissão de release nas
+  faixas de teste) e o secret `PLAY_SERVICE_ACCOUNT_JSON` cadastrado no GitHub. Esta versão
+  é o primeiro release-bound commit depois da configuração completa, para confirmar que o
+  CI builda **e publica sozinho** na Play Console de ponta a ponta.
+
+### Corrigido
+- `gradle/libs.versions.toml`: versão do plugin Gradle Play Publisher corrigida duas vezes
+  em sequência — `3.11.1` não existe no Gradle Plugin Portal (`UnknownPluginException`);
+  `4.1.1` existe mas exige Gradle 9.1+ (o projeto está em 8.11.1). `3.13.0` (última da
+  série 3.x) é a compatível.
+
+---
+
 ## [0.16.0] — 2026-09-16 · Login com Google de volta na loja + publicação automática
 
 ### Corrigido

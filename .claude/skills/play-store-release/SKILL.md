@@ -74,9 +74,11 @@ This part cannot be automated by Claude — Google requires the account owner to
 access:
 1. Google Cloud Console (project `aigamesfactory`) → IAM & Admin → Service Accounts → create
    one (e.g. `play-publisher-ci`), then create a JSON key for it.
-2. Play Console → **Setup → API access** → link the Cloud project if not linked → find the
-   service account → **Grant access** → give it release-management permission on this app
-   (at minimum: manage testing track releases).
+2. Play Console → **Users and permissions → Invite new users** (the old dedicated "Setup →
+   API access" page is gone as of 2026-09 — service accounts are now invited exactly like a
+   human user, by email). Paste the service account's email
+   (`<name>@<project>.iam.gserviceaccount.com`), go to **App permissions**, pick this app,
+   and grant release-management permission (at minimum: manage testing track releases).
 3. Add the JSON key's raw content as a GitHub repo secret named `PLAY_SERVICE_ACCOUNT_JSON`
    (Settings → Secrets and variables → Actions) — **the user does this themselves**, the raw
    key should never be pasted into chat/logs.
