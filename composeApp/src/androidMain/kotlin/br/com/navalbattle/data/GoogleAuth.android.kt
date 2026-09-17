@@ -37,7 +37,14 @@ actual class GoogleAuth actual constructor() {
         } catch (e: GoogleIdTokenParsingException) {
             GoogleAuthResult.Fail("Não consegui ler a credencial do Google.")
         } catch (e: GetCredentialException) {
-            GoogleAuthResult.Fail(e.message ?: "Não consegui entrar com o Google.")
+            // e.message às vezes vem "" (vazio, não nulo) em vez de null — o "?:"
+            // não pega esse caso, e a tela trata mensagem vazia como cancelamento
+            // silencioso (ver AuthScreen), escondendo o erro de verdade
+            val detail = e.message?.takeIf { it.isNotBlank() }
+            GoogleAuthResult.Fail(
+                if (detail != null) "Não consegui entrar com o Google: $detail"
+                else "Não consegui entrar com o Google (${e::class.simpleName})."
+            )
         }
     }
 }
