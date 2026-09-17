@@ -1,5 +1,3 @@
-Novo: tela de boas-vindas — entre na conta ou jogue como convidado.
-Novo: escolha um avatar temático de marinha; ele aparece no canto do menu e abre Perfil + Conta numa tela só.
-Novo: aviso dentro do jogo quando sai uma versão nova, com atalho pra atualizar.
-Novo: duas músicas inéditas entram no rodízio da trilha do menu.
-Sem login, o modo Online fica bloqueado (depende de conta).
+Novo: retrato do perfil ganhou movimento — anel de marcações girando e entrada animada.
+Novo: barra de patente e seleção de retrato/insígnia agora animam em vez de trocar seco.
+Novo: site oficial da AI Games Factory no ar, com perfil de desenvolvedor completo na Play Store.

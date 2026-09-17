@@ -1,5 +1,14 @@
 package br.com.navalbattle.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOutBack
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,6 +33,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,8 +41,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -69,6 +81,17 @@ fun ProfileScreen(state: AppState) {
     // mudou identidade: sobe para a conta, se houver uma conectada
     fun sync() = scope.launch { state.pushQuietly() }
 
+    // entrada do retrato: cresce com uma pequena "quicada" ao abrir a tela, em vez
+    // de aparecer estático — o único lugar do perfil que tinha zero movimento
+    val portraitScale = remember { Animatable(0f) }
+    LaunchedEffect(Unit) { portraitScale.animateTo(1f, tween(420, easing = EaseOutBack)) }
+    val ringRotation by rememberInfiniteTransition(label = "portraitRing").animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(14000, easing = LinearEasing)),
+        label = "portraitRingAngle"
+    )
+
     Box(Modifier.fillMaxSize()) {
         Column(
             Modifier
@@ -86,7 +109,28 @@ fun ProfileScreen(state: AppState) {
             ) {
                 // retrato, nome e patente
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Canvas(Modifier.size(78.dp)) {
+                    Canvas(
+                        Modifier
+                            .size(78.dp)
+                            .scale(portraitScale.value)
+                    ) {
+                        // anel de marcações girando devagar por trás do retrato — o
+                        // único toque de vida contínua na tela, sutil o bastante
+                        // para não distrair de nome/patente/estatísticas
+                        rotate(ringRotation) {
+                            val r = size.minDimension / 2f - 2.dp.toPx()
+                            val center = Offset(size.width / 2f, size.height / 2f)
+                            repeat(12) { i ->
+                                val a = (i / 12f) * 2f * kotlin.math.PI.toFloat()
+                                val inner = if (i % 3 == 0) r - 6.dp.toPx() else r - 3.dp.toPx()
+                                drawLine(
+                                    color = Naval.amber.copy(alpha = 0.4f),
+                                    start = Offset(center.x + inner * kotlin.math.cos(a), center.y + inner * kotlin.math.sin(a)),
+                                    end = Offset(center.x + r * kotlin.math.cos(a), center.y + r * kotlin.math.sin(a)),
+                                    strokeWidth = 1.2.dp.toPx()
+                                )
+                            }
+                        }
                         drawAvatar(
                             avatar = profile.avatar,
                             center = Offset(size.width / 2f, size.height / 2f),
@@ -150,12 +194,15 @@ fun ProfileScreen(state: AppState) {
                 ) {
                     Avatar.entries.forEach { option ->
                         val chosen = profile.avatar == option
+                        val borderColor by animateColorAsState(if (chosen) Naval.amber else Naval.line)
+                        val scale by animateFloatAsState(if (chosen) 1f else 0.92f, tween(220))
                         Box(
                             Modifier
                                 .weight(1f)
                                 .height(54.dp)
+                                .scale(scale)
                                 .background(if (chosen) Naval.surface3 else Naval.surface)
-                                .border(1.dp, if (chosen) Naval.amber else Naval.line)
+                                .border(1.dp, borderColor)
                                 .clickable { profile.chooseAvatar(option) },
                             contentAlignment = Alignment.Center
                         ) {
@@ -182,12 +229,15 @@ fun ProfileScreen(state: AppState) {
                 ) {
                     Insignia.entries.forEach { option ->
                         val chosen = profile.insignia == option
+                        val borderColor by animateColorAsState(if (chosen) Naval.amber else Naval.line)
+                        val scale by animateFloatAsState(if (chosen) 1f else 0.92f, tween(220))
                         Box(
                             Modifier
                                 .weight(1f)
                                 .height(54.dp)
+                                .scale(scale)
                                 .background(if (chosen) Naval.surface3 else Naval.surface)
-                                .border(1.dp, if (chosen) Naval.amber else Naval.line)
+                                .border(1.dp, borderColor)
                                 .clickable { profile.chooseInsignia(option); sync() },
                             contentAlignment = Alignment.Center
                         ) {
@@ -580,6 +630,12 @@ private fun Field(
 @Composable
 private fun RankBar(xp: Int, progress: Float) {
     val next = Rank.next(xp)
+    // a barra some e some de novo com valores diferentes (troca de patente, reset de
+    // carreira) — anima até o valor novo em vez de saltar direto, como um medidor de verdade
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0.02f, 1f),
+        animationSpec = tween(600)
+    )
     Column(Modifier.fillMaxWidth()) {
         Box(
             Modifier
@@ -589,7 +645,7 @@ private fun RankBar(xp: Int, progress: Float) {
         ) {
             Box(
                 Modifier
-                    .fillMaxWidth(progress.coerceIn(0.02f, 1f))
+                    .fillMaxWidth(animatedProgress)
                     .height(4.dp)
                     .background(Naval.amber)
             )

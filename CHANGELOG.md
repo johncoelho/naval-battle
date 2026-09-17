@@ -9,6 +9,33 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.18.0] — 2026-09-17 · Movimento no Perfil e perfil oficial da AI Games Factory
+
+### Adicionado
+- **Animações no Perfil** (`ui/ProfileScreen.kt`): o retrato entra com uma quicada
+  (`Animatable` + `EaseOutBack`) e ganhou um anel de marcações girando devagar por
+  trás (`rememberInfiniteTransition`), a barra de patente anima até o valor novo
+  em vez de saltar (`animateFloatAsState`), e os seletores de retrato/insígnia
+  transicionam cor de borda e escala ao trocar de opção — a tela não tinha
+  nenhum movimento antes disso.
+- **Site oficial da AI Games Factory** (`site/studio/index.html`, publicado em
+  `johncoelho.github.io/naval-battle/studio/` pelo mesmo workflow de Pages do
+  site do jogo): identidade do estúdio como fábrica de jogos em geral — não é
+  sobre o Naval Battle especificamente, é sobre o processo (jogos guiados por
+  IA, sem equipe fixa) — com o Naval Battle listado como o primeiro título.
+- **Perfil de desenvolvedor da Play Console finalizado**: ícone novo (engrenagem
+  + play, tema neutro de "fábrica de jogos" em vez do anchor naval do primeiro
+  rascunho), site oficial cadastrado, idioma padrão trocado para português com
+  traduções em inglês e espanhol do texto promocional.
+
+### Nota de projeto
+O ícone de desenvolvedor passou por duas versões: a primeira usava uma âncora
+(reaproveitando o tema do jogo), corrigida a pedido do usuário porque a AI
+Games Factory é uma fábrica de jogos em geral, não uma marca ligada ao Naval
+Battle — o ícone final e o site novo não têm nenhuma referência naval.
+
+---
+
 ## [0.17.0] — 2026-09-17 · Boas-vindas, avatar, Perfil+Conta e aviso de update
 
 ### Adicionado
