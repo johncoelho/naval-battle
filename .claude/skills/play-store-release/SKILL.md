@@ -61,10 +61,12 @@ release notes update is an incomplete release, not just a style nit.
 - `git push origin main` works directly from this machine (see
   [[project-naval-battle-git-push]]) — no need for GitHub web-upload, including for
   `.github/workflows/*.yml` changes.
-- If `git push` hangs with zero output for >30s, the Git Credential Manager is stuck on a
-  silent reauth. Check `tasklist | grep -i credential` — if `git-credential-manager.exe` is
-  alive well past when it should've returned, that's the hang. Kill it and retry once; if it
-  hangs twice, ask the user to complete an interactive login prompt rather than retrying blind.
+- **Fixed 2026-09-17**: pushes used to hang because `git-credential-manager` had two stored
+  GitHub identities and popped a native "Select an account" dialog Claude can't see or click.
+  Removed the extra identity and pinned the account (`git config
+  credential.https://github.com.username johncoelho`) — push should now return instantly. If
+  it ever hangs again, run `git-credential-manager github list` and check for a re-added
+  second identity before assuming anything else.
 - **As of 2026-09-16 the pipeline is end-to-end automatic**: CI builds the signed `.aab` AND
   publishes it straight to the Play Console closed-testing track (`alpha`) via the Play
   Developer API (Gradle Play Publisher plugin, `./gradlew :composeApp:publishBundle`), using
