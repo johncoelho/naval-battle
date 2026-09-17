@@ -60,6 +60,12 @@ android {
     namespace = "br.com.navalbattle"
     compileSdk = libs.versions.androidCompileSdk.get().toInt()
 
+    // gera BuildConfig.VERSION_NAME/VERSION_CODE — usado em AppVersion.android.kt pra
+    // mostrar a versão instalada na tela, sem duplicar o número em lugar nenhum
+    buildFeatures {
+        buildConfig = true
+    }
+
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
 
@@ -70,8 +76,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 3
-        versionName = "0.1.1"
+        versionCode = 4
+        versionName = "0.1.2"
     }
 
     /**
