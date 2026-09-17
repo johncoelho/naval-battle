@@ -34,6 +34,7 @@ import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.GoogleAuthConfig
 import br.com.navalbattle.data.SupabaseConfig
+import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -239,6 +240,10 @@ fun AuthScreen(state: AppState) {
 
         Gap(8)
         SecondaryButton(t(K.BACK_TO_DECK)) { state.screen = Screen.MENU }
+        Gap(6)
+        // versão do build instalado — confirma em segundos se uma atualização
+        // publicada já chegou neste aparelho, sem precisar abrir Ajustes do sistema
+        HudLabel("v$appVersionLabel", Naval.muted)
     }
 }
 
