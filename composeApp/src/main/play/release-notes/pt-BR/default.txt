@@ -1,3 +1,1 @@
-Novo: retrato do perfil ganhou movimento — anel de marcações girando e entrada animada.
-Novo: barra de patente e seleção de retrato/insígnia agora animam em vez de trocar seco.
-Novo: site oficial da AI Games Factory no ar, com perfil de desenvolvedor completo na Play Store.
+Corrigido: as duas músicas novas do menu estavam mudas no Android (arquivo com uma faixa de vídeo escondida que travava a reprodução) — agora tocam normalmente no rodízio.

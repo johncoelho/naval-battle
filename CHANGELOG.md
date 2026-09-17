@@ -9,6 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.19.0] — 2026-09-17 · Corrige as músicas novas mudas no Android
+
+### Corrigido
+- **`music_theme_2.ogg` e `music_theme_3.ogg` não tocavam no Android** (`res/raw/`):
+  a primeira conversão do MP3 original (Suno) manteve uma faixa de vídeo `theora`
+  embutida (a capa/thumbnail) junto do áudio `vorbis`. O `MediaPlayer.create()`
+  do Android falha em silêncio ao preparar um arquivo com um codec de vídeo que
+  ele não sabe decodificar, então a faixa nova nunca tocava — mas como o rodízio
+  (`Profile.rollThemeTrack`) continuava avançando o cursor normalmente, dava a
+  impressão de que a lógica de playlist não funcionava, quando na verdade só as
+  duas faixas novas estavam quebradas (a original, sem vídeo embutido, sempre
+  tocou certo). Reextraídas com `ffmpeg -map 0:a -c:a copy`, mantendo o áudio
+  intacto sem recodificar. Os `.m4a` do iOS já estavam corretos — só o `.ogg`
+  do Android tinha essa faixa sobrando.
+
+### Nota de projeto
+Vale desconfiar do mesmo problema em qualquer áudio futuro gerado por IA que
+venha com capa embutida (Suno, Udio etc.) — sempre conferir com
+`ffprobe -show_entries stream=codec_name` antes de adicionar ao projeto.
+
+---
+
 ## [0.18.0] — 2026-09-17 · Movimento no Perfil e perfil oficial da AI Games Factory
 
 ### Adicionado
