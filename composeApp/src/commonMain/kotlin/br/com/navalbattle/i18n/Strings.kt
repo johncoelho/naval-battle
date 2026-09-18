@@ -386,6 +386,8 @@ enum class K(val pt: String, val en: String, val es: String) {
     ONLINE_STEP_2("Numa sala de amigo, mande o código por fora do jogo", "In a friend room, send the code outside the game", "En una sala de amigo, manda el código fuera del juego"),
     ONLINE_STEP_3("Cada um posiciona a própria frota e a batalha começa", "Each deploys their own fleet and the battle starts", "Cada uno despliega su flota y empieza la batalla"),
 
+    ONLINE_INVITE_BANNER("%s te convidou para uma partida", "%s invited you to a match", "%s te invitó a una partida"),
+
     FRIENDS_TITLE("Amigos", "Friends", "Amigos"),
     FRIENDS_SEARCH_HINT("Buscar comandante pelo nome", "Search commander by name", "Buscar comandante por nombre"),
     FRIENDS_ADD("Adicionar", "Add", "Agregar"),

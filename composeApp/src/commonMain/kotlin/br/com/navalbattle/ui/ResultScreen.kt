@@ -212,8 +212,16 @@ fun ResultScreen(state: AppState, match: Match) {
  */
 @Composable
 private fun RematchSection(state: AppState, match: Match) {
+    // cada transporte guarda o próprio estado de ligação (linkState pra LAN,
+    // onlineLinkState pra internet) — usar sempre linkState fazia toda partida
+    // online cair aqui achando que a ligação tinha caído, mesmo conectada
+    val connected = when (match.opponent) {
+        Opponent.LAN -> state.linkState == LinkState.CONNECTED
+        Opponent.ONLINE -> state.onlineLinkState == LinkState.CONNECTED
+        else -> false
+    }
     when {
-        state.linkState != LinkState.CONNECTED ->
+        !connected ->
             HudLabel(t(K.RESULT_REMATCH_LOST_LINK), Naval.danger)
 
         state.rematchRequestedByMe ->

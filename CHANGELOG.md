@@ -9,6 +9,41 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.20.0] — 2026-09-18 · Modo online: convite de amigo com banner, revanche e partida rápida corrigidos
+
+### Adicionado
+- **Convite de amigo mirado** (`invited_id` em `online_matches`, migração aplicada
+  em produção): convidar um amigo agora cria uma sala travada só pra conta dele
+  (`join_online_match` recusa qualquer outro comandante) em vez de uma sala
+  aberta qualquer.
+- **Banner de convite fora da tela Online** (`ui/InviteBanner.kt`): com o app
+  aberto e sem partida em andamento, `AppState.pollPendingInvite()` checa a
+  cada 4s se algum amigo convidou e mostra "fulano te convidou" com
+  aceitar/recusar por cima de qualquer tela — antes, convidar um amigo não
+  avisava ele de jeito nenhum, só abria uma sala igual à de partida rápida.
+- Recusar chama a nova função `decline_online_invite` (RPC), pra o anfitrião
+  parar de esperar em vez de ficar preso numa sala que ninguém mais aceita.
+
+### Corrigido
+- **Revanche não aparecia em partidas online** (`ui/ResultScreen.kt`): a tela
+  checava `state.linkState` (o estado da rede local) em vez de
+  `state.onlineLinkState`, então toda partida online caía sempre no aviso "a
+  ligação caiu" mesmo conectada — o botão nunca tinha chance de aparecer.
+- **Partida rápida às vezes não emparelhava dois jogadores que clicaram quase
+  juntos** (`data/OnlineLink.kt`): a busca por uma sala aberta tentava uma vez
+  só antes de desistir e virar anfitrião; se os dois cliques caíssem nesse
+  instante, nenhum via a sala do outro e os dois ficavam esperando pra sempre,
+  cada um na própria sala. Agora tenta até 5 vezes ao longo de 2s antes de
+  desistir.
+
+### Nota de projeto
+A migração SQL (`supabase/online.sql`) foi aplicada direto no banco de
+produção pelo SQL Editor do Supabase, com autorização explícita do usuário —
+é aditiva (coluna nova, políticas substituídas, funções novas), não apaga
+nada das tabelas existentes.
+
+---
+
 ## [0.19.0] — 2026-09-17 · Corrige as músicas novas mudas no Android
 
 ### Corrigido

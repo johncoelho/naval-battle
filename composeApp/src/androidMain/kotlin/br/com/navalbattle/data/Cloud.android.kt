@@ -131,7 +131,8 @@ actual class CloudApi actual constructor() {
         mode: String,
         quick: Boolean,
         inviteCode: String?,
-        hostName: String
+        hostName: String,
+        invitedId: String?
     ): CloudResult<OnlineMatch> = call {
         val body = JSONObject()
             .put("host_id", session.userId)
@@ -139,6 +140,7 @@ actual class CloudApi actual constructor() {
             .put("mode", mode)
             .put("is_quick_match", quick)
             .put("invite_code", inviteCode)
+            .put("invited_id", invitedId)
         val json = post(
             "/rest/v1/online_matches",
             body,
@@ -166,6 +168,22 @@ actual class CloudApi actual constructor() {
         )
         val arr = JSONArray(json)
         CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
+    }
+
+    actual suspend fun findPendingInvite(session: Session): CloudResult<OnlineMatch?> = call {
+        val json = get(
+            "/rest/v1/online_matches?status=eq.waiting&invited_id=eq.${session.userId}" +
+                "&order=created_at.desc&limit=1",
+            session.accessToken
+        )
+        val arr = JSONArray(json)
+        CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
+    }
+
+    actual suspend fun declineOnlineInvite(session: Session, matchId: String): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_match_id", matchId)
+        post("/rest/v1/rpc/decline_online_invite", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
     }
 
     actual suspend fun joinOnlineMatch(
@@ -290,7 +308,8 @@ actual class CloudApi actual constructor() {
         mode = o.optString("mode", "CLASSIC"),
         status = o.optString("status", "waiting"),
         isQuickMatch = o.optBoolean("is_quick_match", false),
-        inviteCode = o.stringOrNull("invite_code")
+        inviteCode = o.stringOrNull("invite_code"),
+        invitedId = o.stringOrNull("invited_id")
     )
 
     private fun friendshipOf(o: JSONObject): Friendship = Friendship(

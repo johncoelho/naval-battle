@@ -28,6 +28,7 @@ import br.com.navalbattle.data.LanGame
 import br.com.navalbattle.data.LanLink
 import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.data.OnlineLink
+import br.com.navalbattle.data.OnlineMatch
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
@@ -54,6 +55,7 @@ import br.com.navalbattle.game.Side
 import br.com.navalbattle.ui.LanScreen
 import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
+import br.com.navalbattle.ui.InviteBanner
 import br.com.navalbattle.ui.MenuScreen
 import br.com.navalbattle.ui.NamesScreen
 import br.com.navalbattle.ui.OnlineScreen
@@ -233,14 +235,19 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     private val onlineLink: OnlineLink by lazy { OnlineLink(cloud, uiScope!!) }
 
-    /** Cria uma sala de amigo — quem cria sempre joga primeiro. */
-    fun createOnlineRoom() {
+    /**
+     * Cria uma sala de amigo — quem cria sempre joga primeiro. Com [invitedId], mira
+     * a sala num amigo específico: ele vê o convite como banner em qualquer tela do
+     * jogo, em vez de precisar digitar um código.
+     */
+    fun createOnlineRoom(invitedId: String? = null) {
         val session = profile.currentSession() ?: return
         onlineLink.close()
         onlineCode = null
         onlineLink.createRoom(
             session = session,
             mode = mode.name,
+            invitedId = invitedId,
             onState = { s, side -> onMain { onOnlineState(s, side) } },
             onCode = { code -> onMain { onlineCode = code } },
             onLine = { line -> onMain { onLine(line) } }
@@ -327,6 +334,48 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val session = profile.currentSession() ?: return
         val r = cloud.listFriendships(session)
         friendships = (r as? CloudResult.Ok)?.value.orEmpty()
+    }
+
+    // ---------------- convite de amigo mirado (banner fora da tela Online) ----------------
+
+    /** Convite pendente de algum amigo, se houver — vira o banner "fulano te convidou". */
+    var pendingInvite by mutableStateOf<OnlineMatch?>(null)
+        private set
+
+    /**
+     * Checa se algum amigo mandou convite mirado — só quando o comandante não está
+     * em partida nenhuma e não há convite já mostrado na tela, senão trocaríamos o
+     * banner debaixo do dedo de quem está lendo o de agora.
+     */
+    suspend fun pollPendingInvite() {
+        if (!profile.signedIn || match != null || pendingInvite != null) return
+        val session = profile.currentSession() ?: return
+        val found = (cloud.findPendingInvite(session) as? CloudResult.Ok)?.value ?: return
+        pendingInvite = found
+    }
+
+    /** Aceita o convite do banner: entra direto na sala, sem precisar do código. */
+    fun acceptInvite() {
+        val invite = pendingInvite ?: return
+        val session = profile.currentSession() ?: return
+        pendingInvite = null
+        onlineLink.close()
+        onlineCode = null
+        onlineLink.acceptInvite(
+            session = session,
+            matchId = invite.id,
+            onState = { s, side -> onMain { onOnlineState(s, side) } },
+            onLine = { line -> onMain { onLine(line) } }
+        )
+    }
+
+    /** Recusa sem entrar — o anfitrião para de esperar em vez de ficar preso na sala. */
+    fun declineInvite() {
+        val invite = pendingInvite ?: return
+        pendingInvite = null
+        val session = profile.currentSession() ?: return
+        val scope = uiScope ?: return
+        scope.launch { cloud.declineOnlineInvite(session, invite.id) }
     }
 
     // ---------------- ações compartilhadas entre LAN e online ----------------
@@ -609,6 +658,15 @@ fun App() {
     // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push
     LaunchedEffect(Unit) { state.updateAvailable = checkUpdateAvailable() }
 
+    // convite de amigo mirado: com o app aberto e fora de partida, checa de tempos em
+    // tempos se alguém convidou — é o que alimenta o banner em qualquer tela do jogo
+    LaunchedEffect(Unit) {
+        while (true) {
+            state.pollPendingInvite()
+            delay(4000)
+        }
+    }
+
     NavalTheme {
         Box(Modifier.fillMaxSize().background(Naval.bg)) {
             when (state.screen) {
@@ -626,6 +684,7 @@ fun App() {
                 Screen.BATTLE -> state.match?.let { BattleScreen(state, it) }
                 Screen.RESULT -> state.match?.let { ResultScreen(state, it) }
             }
+            state.pendingInvite?.let { invite -> InviteBanner(state, invite) }
         }
     }
 }

@@ -30,16 +30,23 @@ create table if not exists public.online_matches (
   updated_at     timestamptz not null default now()
 );
 
+-- convite mirado num amigo específico (em vez de partida rápida ou código
+-- solto): nulo é convite aberto; preenchido, só esse comandante pode entrar,
+-- e é ele quem recebe o banner "fulano te convidou" fora da tela Online
+alter table public.online_matches add column if not exists invited_id uuid references auth.users(id) on delete cascade;
+
 alter table public.online_matches enable row level security;
 
 -- quem está dentro da sala vê a sala; quem procura partida rápida ou tem o
--- código vê salas ainda abertas (sem isso não dá para encontrar/entrar)
+-- código vê salas ainda abertas (sem isso não dá para encontrar/entrar); quem
+-- foi convidado precisa ver a própria sala mirada mesmo antes de entrar nela
 drop policy if exists "sala online: ler" on public.online_matches;
 create policy "sala online: ler"
   on public.online_matches for select
   using (
     auth.uid() = host_id
     or auth.uid() = guest_id
+    or auth.uid() = invited_id
     or status = 'waiting'
   );
 
@@ -50,12 +57,13 @@ create policy "sala online: criar"
 
 -- host e guest podem atualizar; quem ainda não é ninguém na sala só pode
 -- mirar numa sala 'waiting' (é como se entra: escrevendo o próprio id em
--- guest_id) — o with check trava o resultado a sempre citar quem mexeu
+-- guest_id) — o with check trava o resultado a sempre citar quem mexeu; o
+-- convidado mirado também pode mexer (recusar sem virar guest)
 drop policy if exists "sala online: atualizar" on public.online_matches;
 create policy "sala online: atualizar"
   on public.online_matches for update
-  using (auth.uid() = host_id or auth.uid() = guest_id or status = 'waiting')
-  with check (auth.uid() = host_id or auth.uid() = guest_id);
+  using (auth.uid() = host_id or auth.uid() = guest_id or auth.uid() = invited_id or status = 'waiting')
+  with check (auth.uid() = host_id or auth.uid() = guest_id or auth.uid() = invited_id);
 
 create or replace function public.touch_online_match()
 returns trigger language plpgsql as $$
@@ -197,15 +205,31 @@ returns setof public.online_matches
 language plpgsql security invoker as $$
 begin
   -- a condição "guest_id is null" é a trava contra dois convidados entrando
-  -- na mesma sala ao mesmo tempo: só o primeiro UPDATE acerta a linha
+  -- na mesma sala ao mesmo tempo: só o primeiro UPDATE acerta a linha; quando
+  -- a sala é um convite mirado (invited_id preenchido), só quem foi convidado
+  -- pode ocupar a vaga de guest — outro comandante nem acha, mas trava aqui
+  -- também caso ele já tenha o id da sala por algum outro caminho
   return query
     update public.online_matches
     set guest_id = auth.uid(), guest_name = p_guest_name, status = 'active'
     where id = p_match_id and guest_id is null and status = 'waiting'
+      and (invited_id is null or invited_id = auth.uid())
     returning *;
 end $$;
 
 grant execute on function public.join_online_match(uuid, text) to authenticated;
+
+create or replace function public.decline_online_invite(p_match_id uuid)
+returns void
+language sql security invoker as $$
+  -- recusa sem virar guest: o anfitrião para de esperar em vez de ficar
+  -- preso indefinidamente numa sala que ninguém mais vai aceitar
+  update public.online_matches
+  set status = 'abandoned'
+  where id = p_match_id and invited_id = auth.uid() and status = 'waiting';
+$$;
+
+grant execute on function public.decline_online_invite(uuid) to authenticated;
 
 create or replace function public.close_online_match(p_match_id uuid, p_status text)
 returns void

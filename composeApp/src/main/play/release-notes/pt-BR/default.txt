@@ -1,1 +1,3 @@
-Corrigido: as duas músicas novas do menu estavam mudas no Android (arquivo com uma faixa de vídeo escondida que travava a reprodução) — agora tocam normalmente no rodízio.
+Corrigido: revanche não aparecia em partidas online (estado de conexão errado sendo checado).
+Corrigido: partida rápida às vezes não conectava dois jogadores que clicaram quase juntos.
+Novo: convidar um amigo agora manda um aviso de verdade — banner "fulano te convidou" aparece em qualquer tela do jogo, com aceitar/recusar.

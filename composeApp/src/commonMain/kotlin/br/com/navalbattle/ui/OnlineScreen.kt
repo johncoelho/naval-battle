@@ -262,12 +262,13 @@ private fun FriendsSection(
             FriendRow(name) { HudLabel("(${t(K.FRIENDS_SENT_TAG)})", Naval.muted) }
         }
         accepted.forEach { f ->
+            val friendId = if (f.requesterId == myId) f.addresseeId else f.requesterId
             val name = if (f.requesterId == myId) f.addresseeUsername else f.requesterUsername
             FriendRow(name) {
                 HudLabel(
                     t(K.FRIENDS_INVITE),
                     Naval.amberStrong,
-                    Modifier.clickable { state.createOnlineRoom() }
+                    Modifier.clickable { state.createOnlineRoom(invitedId = friendId) }
                 )
                 GapW(14)
                 HudLabel(

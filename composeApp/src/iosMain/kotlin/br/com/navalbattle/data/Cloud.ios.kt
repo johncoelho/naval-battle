@@ -122,17 +122,19 @@ actual class CloudApi actual constructor() {
         mode: String,
         quick: Boolean,
         inviteCode: String?,
-        hostName: String
+        hostName: String,
+        invitedId: String?
     ): CloudResult<OnlineMatch> = call {
-        // sem entrada nenhuma para invite_code quando for nulo: NSDictionary não
-        // aceita valor nulo de verdade (só o marcador NSNull), e um mapOf com null
-        // aqui quebraria a ponte para Foundation em tempo de execução
+        // sem entrada nenhuma para invite_code/invited_id quando forem nulos:
+        // NSDictionary não aceita valor nulo de verdade (só o marcador NSNull), e
+        // um mapOf com null aqui quebraria a ponte para Foundation em tempo de execução
         val body = buildMap<String, Any?> {
             put("host_id", session.userId)
             put("host_name", hostName)
             put("mode", mode)
             put("is_quick_match", quick)
             if (inviteCode != null) put("invite_code", inviteCode)
+            if (invitedId != null) put("invited_id", invitedId)
         }
         val json = post(
             "/rest/v1/online_matches",
@@ -161,6 +163,21 @@ actual class CloudApi actual constructor() {
         )
         val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
         CloudResult.Ok(row?.let { matchOf(it) })
+    }
+
+    actual suspend fun findPendingInvite(session: Session): CloudResult<OnlineMatch?> = call {
+        val json = get(
+            "/rest/v1/online_matches?status=eq.waiting&invited_id=eq.${session.userId}" +
+                "&order=created_at.desc&limit=1",
+            session.accessToken
+        )
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(row?.let { matchOf(it) })
+    }
+
+    actual suspend fun declineOnlineInvite(session: Session, matchId: String): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/decline_online_invite", mapOf("p_match_id" to matchId), token = session.accessToken)
+        CloudResult.Ok(Unit)
     }
 
     actual suspend fun joinOnlineMatch(
@@ -272,7 +289,8 @@ actual class CloudApi actual constructor() {
         mode = o.strOr("mode", "CLASSIC"),
         status = o.strOr("status", "waiting"),
         isQuickMatch = (o["is_quick_match"] as? Boolean) ?: false,
-        inviteCode = o["invite_code"] as? String
+        inviteCode = o["invite_code"] as? String,
+        invitedId = o["invited_id"] as? String
     )
 
     private fun friendshipOf(o: Map<*, *>): Friendship = Friendship(

@@ -66,7 +66,10 @@ data class OnlineMatch(
     val mode: String,
     val status: String,
     val isQuickMatch: Boolean,
-    val inviteCode: String?
+    val inviteCode: String?,
+    // nulo: convite aberto (partida rápida ou código); preenchido: convite mirado
+    // num amigo específico — só ele pode entrar, e é ele quem recebe o banner
+    val invitedId: String?
 )
 
 /** Uma jogada trocada na sala — o corpo é sempre uma linha do [Protocol]. */
@@ -112,13 +115,17 @@ expect class CloudApi() {
 
     // ---------------- modo online ----------------
 
-    /** Cria uma sala — de amigo (com [inviteCode]) ou de partida rápida. */
+    /**
+     * Cria uma sala — de amigo (com [inviteCode]), de partida rápida, ou um convite
+     * mirado num amigo específico ([invitedId]) que só ele pode aceitar.
+     */
     suspend fun createOnlineMatch(
         session: Session,
         mode: String,
         quick: Boolean,
         inviteCode: String?,
-        hostName: String
+        hostName: String,
+        invitedId: String? = null
     ): CloudResult<OnlineMatch>
 
     /** Procura uma sala de partida rápida aberta por outra pessoa. */
@@ -126,6 +133,15 @@ expect class CloudApi() {
 
     /** Procura a sala de um código de convite, se ainda estiver esperando alguém. */
     suspend fun findMatchByCode(session: Session, code: String): CloudResult<OnlineMatch?>
+
+    /**
+     * Convite mirado ainda esperando resposta, se algum amigo mandou um pra este
+     * comandante — usado pelo banner "fulano te convidou" fora da tela Online.
+     */
+    suspend fun findPendingInvite(session: Session): CloudResult<OnlineMatch?>
+
+    /** Recusa um convite mirado sem entrar na sala — o anfitrião para de esperar. */
+    suspend fun declineOnlineInvite(session: Session, matchId: String): CloudResult<Unit>
 
     /**
      * Tenta entrar numa sala como convidado. Devolve nulo quando outra pessoa

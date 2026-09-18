@@ -26,6 +26,11 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
     private var pollJob: Job? = null
     private var session: Session? = null
 
+    companion object {
+        private const val QUICK_MATCH_SEARCH_ATTEMPTS = 5
+        private const val QUICK_MATCH_SEARCH_INTERVAL_MS = 500L
+    }
+
     var matchId: String? = null
         private set
 
@@ -41,10 +46,17 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
         session = null
     }
 
-    /** Cria uma sala de amigo: gera um código e espera alguém entrar. */
+    /**
+     * Cria uma sala de amigo: gera um código e espera alguém entrar. Com
+     * [invitedId], a sala é mirada num amigo específico — só ele consegue entrar
+     * (trava no [join_online_match] do banco), e é ele quem recebe o banner de
+     * convite fora da tela Online; sem [invitedId], o código sozinho já basta,
+     * igual antes.
+     */
     fun createRoom(
         session: Session,
         mode: String,
+        invitedId: String? = null,
         onState: (LinkState, Side) -> Unit,
         onCode: (String) -> Unit,
         onLine: (String) -> Unit
@@ -54,8 +66,9 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
         onState(LinkState.HOSTING, Side.PLAYER)
         pollJob = scope.launch {
             val code = randomCode()
-            val result =
-                cloud.createOnlineMatch(session, mode, quick = false, inviteCode = code, hostName = session.username)
+            val result = cloud.createOnlineMatch(
+                session, mode, quick = false, inviteCode = code, hostName = session.username, invitedId = invitedId
+            )
             val match = (result as? CloudResult.Ok)?.value
             if (match == null) {
                 onState(LinkState.FAILED, Side.PLAYER)
@@ -68,22 +81,48 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
         }
     }
 
-    /** Procura uma sala de partida rápida aberta; se não achar, hospeda a própria. */
+    /** Aceita um convite mirado direto pelo id da sala — sem precisar digitar código. */
+    fun acceptInvite(session: Session, matchId: String, onState: (LinkState, Side) -> Unit, onLine: (String) -> Unit) {
+        this.session = session
+        pollJob?.cancel()
+        onState(LinkState.CONNECTING, Side.ENEMY)
+        pollJob = scope.launch {
+            val joined = (cloud.joinOnlineMatch(session, matchId, session.username) as? CloudResult.Ok)?.value
+            if (joined == null) {
+                onState(LinkState.FAILED, Side.ENEMY)
+                return@launch
+            }
+            this@OnlineLink.matchId = joined.id
+            onState(LinkState.CONNECTED, Side.ENEMY)
+            startMessagePolling(session, joined.id, onLine)
+        }
+    }
+
+    /**
+     * Procura uma sala de partida rápida aberta; se não achar, hospeda a própria.
+     * A busca tenta algumas vezes antes de desistir e virar anfitrião — uma tentativa
+     * só perdia pra corrida quando dois comandantes clicavam quase juntos (nenhum via
+     * a sala do outro a tempo, os dois hospedavam e ficavam esperando pra sempre).
+     */
     fun quickMatch(session: Session, mode: String, onState: (LinkState, Side) -> Unit, onLine: (String) -> Unit) {
         this.session = session
         pollJob?.cancel()
         onState(LinkState.SEARCHING, Side.PLAYER)
         pollJob = scope.launch {
-            val found = (cloud.findQuickMatch(session, mode) as? CloudResult.Ok)?.value
-            if (found != null) {
-                val joined = (cloud.joinOnlineMatch(session, found.id, session.username) as? CloudResult.Ok)?.value
-                if (joined != null) {
-                    matchId = joined.id
-                    onState(LinkState.CONNECTED, Side.ENEMY)
-                    startMessagePolling(session, joined.id, onLine)
-                    return@launch
+            repeat(QUICK_MATCH_SEARCH_ATTEMPTS) { attempt ->
+                val found = (cloud.findQuickMatch(session, mode) as? CloudResult.Ok)?.value
+                if (found != null) {
+                    val joined = (cloud.joinOnlineMatch(session, found.id, session.username) as? CloudResult.Ok)?.value
+                    if (joined != null) {
+                        matchId = joined.id
+                        onState(LinkState.CONNECTED, Side.ENEMY)
+                        startMessagePolling(session, joined.id, onLine)
+                        return@launch
+                    }
+                    // perdeu a corrida para outro jogador que entrou primeiro nessa sala —
+                    // tenta achar outra em vez de já desistir e hospedar a própria
                 }
-                // perdeu a corrida para outro jogador que entrou primeiro — hospeda a própria
+                if (attempt < QUICK_MATCH_SEARCH_ATTEMPTS - 1) delay(QUICK_MATCH_SEARCH_INTERVAL_MS)
             }
             val created = (cloud.createOnlineMatch(
                 session, mode, quick = true, inviteCode = null, hostName = session.username
