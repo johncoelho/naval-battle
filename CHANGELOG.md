@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.30.0] — 2026-09-19 · Setas do carrossel do mesmo tamanho do cartão
+
+### Alterado
+- **Setas do carrossel do menu** (`ui/MenuScreen.kt`, `MatchCarousel`): agora
+  esticam pra mesma altura do cartão grande central (`Row` com
+  `height(IntrinsicSize.Min)` + `fillMaxHeight()` nas setas), em vez de ficar
+  um quadrado pequeno de 44dp desalinhado — e o glifo `‹`/`›` ficou maior
+  (`NavalType.display`), ocupando melhor o botão.
+
+---
+
 ## [0.29.0] — 2026-09-19 · Remove a Imersão do Submarino
 
 ### Removido

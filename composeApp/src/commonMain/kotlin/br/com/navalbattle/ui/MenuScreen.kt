@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -160,15 +162,17 @@ private fun MatchCarousel(state: AppState) {
     val card = cards[index]
 
     Row(
-        Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        CarouselArrow(enabled = index > 0) { index = (index - 1).coerceAtLeast(0) }
+        CarouselArrow(enabled = index > 0, modifier = Modifier.fillMaxHeight()) {
+            index = (index - 1).coerceAtLeast(0)
+        }
         Box(Modifier.weight(1f)) {
             PrimaryButton(card.title, card.subtitle, enabled = card.enabled, big = true) { card.action(state) }
         }
-        CarouselArrow(enabled = index < cards.lastIndex, pointRight = true) {
+        CarouselArrow(enabled = index < cards.lastIndex, pointRight = true, modifier = Modifier.fillMaxHeight()) {
             index = (index + 1).coerceAtMost(cards.lastIndex)
         }
     }
@@ -186,10 +190,15 @@ private fun MatchCarousel(state: AppState) {
 }
 
 @Composable
-private fun CarouselArrow(enabled: Boolean, pointRight: Boolean = false, onClick: () -> Unit) {
+private fun CarouselArrow(
+    enabled: Boolean,
+    pointRight: Boolean = false,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Box(
-        Modifier
-            .size(44.dp)
+        modifier
+            .width(48.dp)
             .background(Naval.surface2)
             .border(1.dp, if (enabled) Naval.line else Naval.lineSoft)
             .clickable(enabled = enabled, onClick = onClick),
@@ -197,7 +206,7 @@ private fun CarouselArrow(enabled: Boolean, pointRight: Boolean = false, onClick
     ) {
         Text(
             if (pointRight) "›" else "‹",
-            style = NavalType.title,
+            style = NavalType.display,
             color = if (enabled) Naval.ink else Naval.muted.copy(alpha = 0.4f)
         )
     }

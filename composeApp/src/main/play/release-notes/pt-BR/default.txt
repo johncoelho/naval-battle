@@ -1,3 +1,3 @@
-Removida a habilidade Imersão do Submarino: causava confusão visual (parecia um acerto sem navio nenhum por perto). O Submarino agora recebe tiro normalmente, como qualquer outro navio.
+Ajuste visual: as setas do carrossel do menu agora ficam do mesmo tamanho do cartão grande, mais simétrico.
+Removida a habilidade Imersão do Submarino: causava confusão visual. O Submarino agora recebe tiro normalmente.
 Modo tático: ícones novos nas habilidades, avião animado no reconhecimento aéreo, anel de sonar, fumaça visível.
-Corrigido: título e legenda dos botões ficavam espremidos — agora bem espaçados em todas as telas.
