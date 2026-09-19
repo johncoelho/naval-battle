@@ -202,8 +202,6 @@ enum class K(val pt: String, val en: String, val es: String) {
     CALL_SONAR_NONE("Setor sem contato", "No contact in the sector", "Sector sin contacto"),
     CALL_SCAN_FAIL("Varredura falhou", "Sweep failed", "Barrido fallido"),
     CALL_SCAN_FAIL_SUB("Cortina de fumaça inimiga", "Enemy smoke screen", "Cortina de humo enemiga"),
-    CALL_DIVE("Imersão de emergência", "Emergency dive", "Inmersión de emergencia"),
-    CALL_DIVE_SUB("O casco de %s absorveu o impacto", "%s's hull absorbed the impact", "El casco de %s absorbió el impacto"),
     CALL_ENEMY_SONAR("Sonar inimigo", "Enemy sonar", "Sonar enemigo"),
     CALL_ENEMY_SONAR_SUB("Varredura em %s", "Sweep at %s", "Barrido en %s"),
     CALL_SMOKE_HELD("Cortina resistiu", "Smoke held", "La cortina resistió"),

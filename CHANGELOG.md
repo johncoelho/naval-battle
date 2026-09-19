@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.29.0] — 2026-09-19 · Remove a Imersão do Submarino
+
+### Removido
+- **Habilidade passiva "Imersão" do Submarino** (`Board.kt`): absorvia o
+  primeiro acerto contra o submarino sem afundar, marcando a célula como
+  `Mark.MISS` — visualmente idêntica a uma água qualquer, sem nenhuma
+  diferença na carta. Isso fazia um acerto de verdade num navio vizinho
+  parecer flutuar sozinho, sem nenhum casco por perto (a célula "vazia" ao
+  lado era, na real, o casco blindado disfarçado de água) — lido como bug
+  mesmo depois de eu ter corrigido só o aviso de texto numa versão anterior.
+  Pedido explícito do usuário: nunca foi uma feature encomendada. O
+  Submarino agora recebe tiro normalmente, como qualquer outro navio —
+  `Board.fireAt` perdeu o parâmetro `abilitiesEnabled` (não sobrou nenhum
+  uso pra ele) e `Ship.isSunk` voltou a olhar só pra `hits`, sem o conjunto
+  paralelo de células absorvidas.
+
+---
+
 ## [0.28.0] — 2026-09-19 · Ícones vetoriais e efeitos visuais nas habilidades táticas
 
 ### Adicionado

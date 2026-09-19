@@ -336,7 +336,7 @@ class Match(
             else -> Unit
         }
 
-        val outcome = target.fireAt(coord, abilitiesEnabled = mode == GameMode.TACTICAL)
+        val outcome = target.fireAt(coord)
         if (outcome.result == ShotResult.ALREADY_FIRED) return null
 
         val sunkShip = if (outcome.result == ShotResult.SUNK) {
@@ -454,9 +454,7 @@ class Match(
                 say(t(K.CALL_HIT), who + t(K.CALL_HIT_SUB, alvo, outcome.coord.label), Tone.HIT)
             ShotResult.SUNK ->
                 say(t(K.CALL_SUNK), who + t(K.CALL_SUNK_SUB, alvo, outcome.coord.label), Tone.SUNK)
-            ShotResult.MISS ->
-                if (outcome.absorbedByDive) say(t(K.CALL_DIVE), who + t(K.CALL_DIVE_SUB, alvo), Tone.SCAN)
-                else say(t(K.CALL_MISS), "$who${outcome.coord.label}", Tone.MISS)
+            ShotResult.MISS -> say(t(K.CALL_MISS), "$who${outcome.coord.label}", Tone.MISS)
             ShotResult.ALREADY_FIRED -> Unit
         }
     }

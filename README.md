@@ -36,7 +36,7 @@ só passa a vez para o adversário no primeiro erro.
 | Porta-aviões | 5 | Reconhecimento aéreo | Revela uma linha inteira |
 | Encouraçado | 4 | Barragem dupla | Dois disparos no mesmo turno |
 | Cruzador | 3 | Ping de sonar | Varre um setor 3×3 |
-| Submarino | 3 | Imersão | Absorve o primeiro acerto, uma vez |
+| Submarino | 3 | — | Sem habilidade própria — leva tiro como qualquer navio |
 | Destróier | 2 | Cortina de fumaça | Bloqueia a próxima varredura inimiga |
 
 Cada habilidade também tem um **cartucho avulso** na Loja do Arsenal: comprado com
@@ -49,8 +49,13 @@ do sistema, para não mudar de aparência entre aparelhos. O reconhecimento aér
 um avião animado sobrevoando a linha alvo (a célula só acende depois que ele passa
 por cima) e o sonar um anel se expandindo a partir do ponto varrido; os dois callouts
 agora dizem quantas embarcações foram identificadas. A cortina de fumaça fica visível
-como uma nuvem sobre a própria frota enquanto ativa, e a imersão do submarino avisa
-quando absorve um impacto — antes ela acontecia sem nenhum aviso na tela.
+como uma nuvem sobre a própria frota enquanto ativa.
+
+O Submarino teve a Imersão (absorvia o primeiro acerto escondendo o casco como se
+fosse água) removida por completo: a célula "blindada" ficava visualmente idêntica
+a uma água qualquer, então o próximo acerto de verdade num navio vizinho parecia
+flutuar sozinho, sem nenhum casco por perto — lido como bug mesmo depois de avisado
+por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio.
 
 ### Formas de jogar
 

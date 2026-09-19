@@ -92,8 +92,7 @@ enum class ShotResult { MISS, HIT, SUNK, ALREADY_FIRED }
 data class ShotOutcome(
     val coord: Coord,
     val result: ShotResult,
-    val ship: ShipClass? = null,
-    val absorbedByDive: Boolean = false
+    val ship: ShipClass? = null
 )
 
 /** Marcações visíveis num tabuleiro atacado. */

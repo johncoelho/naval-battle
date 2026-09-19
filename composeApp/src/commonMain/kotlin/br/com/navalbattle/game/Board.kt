@@ -19,13 +19,6 @@ class Board {
     val marks = mutableStateMapOf<Coord, Mark>()
 
     private val hits = mutableSetOf<Coord>()
-    private val diveUsed = mutableSetOf<ShipClass>()
-
-    /**
-     * Célula que a Imersão engoliu. Ela fica marcada como água e não aceita novo tiro,
-     * então precisa contar como resolvida — senão o submarino nunca afunda e a partida trava.
-     */
-    private val diveAbsorbed = mutableSetOf<Coord>()
 
     /** Ativada pelo dono do tabuleiro: anula a próxima varredura inimiga. */
     var smokeActive by mutableStateOf(false)
@@ -48,15 +41,15 @@ class Board {
 
     fun shipAt(coord: Coord): Ship? = _ships.firstOrNull { coord in it.cells }
 
-    fun isSunk(ship: Ship): Boolean = ship.cells.all { it in hits || it in diveAbsorbed }
+    fun isSunk(ship: Ship): Boolean = ship.cells.all { it in hits }
 
     fun allSunk(): Boolean = _ships.isNotEmpty() && _ships.all { isSunk(it) }
 
     fun remainingShips(): List<Ship> = _ships.filterNot { isSunk(it) }
 
-    fun fireAt(coord: Coord, abilitiesEnabled: Boolean = true): ShotOutcome {
+    fun fireAt(coord: Coord): ShotOutcome {
         val existing = marks[coord]
-        if (existing == Mark.MISS || existing == Mark.HIT || existing == Mark.SUNK) {
+        if (existing != null && existing != Mark.SCAN_HOT && existing != Mark.SCAN_COLD) {
             return ShotOutcome(coord, ShotResult.ALREADY_FIRED)
         }
 
@@ -64,14 +57,6 @@ class Board {
         if (ship == null) {
             marks[coord] = Mark.MISS
             return ShotOutcome(coord, ShotResult.MISS)
-        }
-
-        // Imersão: só existe no modo Tático. No Clássico nenhum navio tem habilidade.
-        if (abilitiesEnabled && ship.type == ShipClass.SUBMARINE && ShipClass.SUBMARINE !in diveUsed) {
-            diveUsed += ShipClass.SUBMARINE
-            diveAbsorbed += coord
-            marks[coord] = Mark.MISS
-            return ShotOutcome(coord, ShotResult.MISS, ship.type, absorbedByDive = true)
         }
 
         hits += coord
@@ -118,8 +103,6 @@ class Board {
         _ships.clear()
         marks.clear()
         hits.clear()
-        diveUsed.clear()
-        diveAbsorbed.clear()
         smokeActive = false
     }
 

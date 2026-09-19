@@ -1,3 +1,3 @@
-Modo tático: ícones novos nas habilidades, avião animado no reconhecimento aéreo, anel de sonar, fumaça visível na tela e aviso quando a imersão do submarino absorve um tiro.
+Removida a habilidade Imersão do Submarino: causava confusão visual (parecia um acerto sem navio nenhum por perto). O Submarino agora recebe tiro normalmente, como qualquer outro navio.
+Modo tático: ícones novos nas habilidades, avião animado no reconhecimento aéreo, anel de sonar, fumaça visível.
 Corrigido: título e legenda dos botões ficavam espremidos — agora bem espaçados em todas as telas.
-Configurações novas: música, efeitos, idioma, versão instalada, compartilhar o jogo e novidades da versão.
