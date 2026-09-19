@@ -319,10 +319,16 @@ create policy "ranking temporada: ler"
 -- placar geral (profiles.ranked_rating) — mesmo raciocínio de search_commander:
 -- profiles é trancada a "só a própria linha", então o ranking cross-usuário
 -- precisa de uma função com security definer que devolve só o mínimo público
-create or replace function public.leaderboard_overall(p_limit integer default 50)
-returns table (user_id uuid, username text, rating integer, matches integer, wins integer)
+-- retrato e insígnia entraram no placar pra mostrar o comandante de verdade
+-- em vez de só um nome; o de temporada precisa de join com profiles porque
+-- ranked_season_stats não guarda esses dois campos (são de perfil, não de
+-- temporada) — a assinatura não mudou, mas as colunas de saída sim, por isso
+-- o drop antes de recriar (create or replace não troca o formato de retorno)
+drop function if exists public.leaderboard_overall(integer);
+create function public.leaderboard_overall(p_limit integer default 50)
+returns table (user_id uuid, username text, insignia text, avatar text, rating integer, matches integer, wins integer)
 language sql security definer set search_path = public stable as $$
-  select p.id, p.username, p.ranked_rating, p.matches, p.wins
+  select p.id, p.username, p.insignia, p.avatar, p.ranked_rating, p.matches, p.wins
   from public.profiles p
   where p.matches > 0
   order by p.ranked_rating desc
@@ -332,12 +338,14 @@ $$;
 revoke all on function public.leaderboard_overall(integer) from public;
 grant execute on function public.leaderboard_overall(integer) to authenticated;
 
-create or replace function public.leaderboard_season(p_limit integer default 50)
-returns table (user_id uuid, username text, points integer, matches integer, wins integer)
+drop function if exists public.leaderboard_season(integer);
+create function public.leaderboard_season(p_limit integer default 50)
+returns table (user_id uuid, username text, insignia text, avatar text, points integer, matches integer, wins integer)
 language sql security definer set search_path = public stable as $$
-  select s.user_id, s.username, s.points, s.matches, s.wins
-  from public.ranked_season_stats s, public.current_season() c
-  where s.season_key = c.season_key
+  select s.user_id, s.username, p.insignia, p.avatar, s.points, s.matches, s.wins
+  from public.ranked_season_stats s
+  join public.current_season() c on s.season_key = c.season_key
+  left join public.profiles p on p.id = s.user_id
   order by s.points desc
   limit p_limit;
 $$;
@@ -400,12 +408,77 @@ $$;
 revoke all on function public.friend_profile(uuid) from public;
 grant execute on function public.friend_profile(uuid) to authenticated;
 
+-- retrato e patente públicos de qualquer comandante, sem exigir amizade
+-- (diferente de friend_profile) — usado pra mostrar quem foi encontrado na
+-- partida rápida e o nome do adversário durante o combate
+create or replace function public.opponent_profile(p_user_id uuid)
+returns table (username text, insignia text, avatar text, xp integer, ranked_rating integer)
+language sql security definer set search_path = public stable as $$
+  select p.username, p.insignia, p.avatar, p.xp, p.ranked_rating
+  from public.profiles p
+  where p.id = p_user_id;
+$$;
+
+revoke all on function public.opponent_profile(uuid) from public;
+grant execute on function public.opponent_profile(uuid) to authenticated;
+
+-- ranking de troféus da temporada: calculado sob demanda a partir do placar já
+-- congelado — nenhum resultado novo grava numa temporada que não seja a
+-- corrente (record_ranked_result sempre usa current_season()), então os dados
+-- de uma temporada passada nunca mais mudam depois que a próxima começa. Isso
+-- dispensa cron ou tabela extra pra "fechar" a temporada: o próprio cálculo
+-- na hora da consulta já é o resultado final. Top 10% leva ouro, os próximos
+-- 20% prata, os próximos 30% bronze, o resto sem medalha.
+create or replace function public.season_trophies(p_season_key text default null)
+returns table (
+  user_id uuid, username text, insignia text, avatar text,
+  points integer, "position" bigint, tier text
+)
+language sql security definer set search_path = public stable as $$
+  with target as (
+    select coalesce(
+      p_season_key,
+      (select s.season_key from public.ranked_season_stats s, public.current_season() c
+       where s.season_key <> c.season_key
+       order by s.season_key desc limit 1)
+    ) as season_key
+  ),
+  ranked as (
+    select
+      s.user_id, s.username, p.insignia, p.avatar, s.points,
+      row_number() over (order by s.points desc) as "position",
+      count(*) over () as total
+    from public.ranked_season_stats s
+    join target t on s.season_key = t.season_key
+    left join public.profiles p on p.id = s.user_id
+  )
+  select
+    user_id, username, insignia, avatar, points, "position",
+    case
+      when "position" <= greatest(1, ceil(total * 0.10)) then 'ouro'
+      when "position" <= greatest(1, ceil(total * 0.30)) then 'prata'
+      when "position" <= greatest(1, ceil(total * 0.60)) then 'bronze'
+      else null
+    end as tier
+  from ranked
+  order by "position";
+$$;
+
+revoke all on function public.season_trophies(text) from public;
+grant execute on function public.season_trophies(text) to authenticated;
+
 -- fecha o resultado de uma partida ranqueada — cada lado chama uma vez só (as
--- flags host_result_recorded/guest_result_recorded travam contra reenvio) e
--- soma/subtrai pontos como um placar de troféus (vitória +25, derrota -15,
--- nunca abaixo de zero) — mais simples que ELO de verdade, mas já evita que
--- perder derrube menos do que subir, igual à maioria dos jogos do gênero
-create or replace function public.record_ranked_result(p_match_id uuid, p_won boolean)
+-- flags host_result_recorded/guest_result_recorded travam contra reenvio). A
+-- pontuação pesa o desempenho: vitória sempre soma (20 a 50), derrota sempre
+-- desconta (-15 a -5) — nunca o contrário, verificável termo a termo — com
+-- bônus por precisão de tiro nos dois casos e, só na vitória, por quanto da
+-- própria frota ainda restava de pé (vencer com o casco intacto vale mais que
+-- vencer raspando). Mais simples que ELO de verdade, mas justo o bastante:
+-- quem joga bem e perde cai menos do que quem joga mal e perde.
+drop function if exists public.record_ranked_result(uuid, boolean);
+create function public.record_ranked_result(
+  p_match_id uuid, p_won boolean, p_accuracy integer, p_ships_left integer
+)
 returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -413,6 +486,8 @@ declare
   is_host boolean;
   already boolean;
   delta integer;
+  accuracy integer;
+  ships_left integer;
   my_username text;
   szn text;
 begin
@@ -439,7 +514,14 @@ begin
     my_username := m.guest_name;
   end if;
 
-  delta := case when p_won then 25 else -15 end;
+  accuracy := greatest(0, least(100, coalesce(p_accuracy, 0)));
+  ships_left := greatest(0, least(5, coalesce(p_ships_left, 0)));
+
+  if p_won then
+    delta := 20 + round(accuracy * 0.15) + ships_left * 3;
+  else
+    delta := -(15 - round(accuracy * 0.10));
+  end if;
 
   update public.profiles
     set ranked_rating = greatest(0, ranked_rating + delta)
@@ -457,5 +539,5 @@ begin
         updated_at = now();
 end $$;
 
-revoke all on function public.record_ranked_result(uuid, boolean) from public;
-grant execute on function public.record_ranked_result(uuid, boolean) to authenticated;
+revoke all on function public.record_ranked_result(uuid, boolean, integer, integer) from public;
+grant execute on function public.record_ranked_result(uuid, boolean, integer, integer) to authenticated;

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import br.com.navalbattle.audio.AppForeground
 import br.com.navalbattle.audio.AudioContextHolder
 
 class MainActivity : ComponentActivity() {
@@ -13,6 +14,16 @@ class MainActivity : ComponentActivity() {
         AudioContextHolder.appContext = applicationContext
         ActivityHolder.current = this
         setContent { App() }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        AppForeground.active = false
+    }
+
+    override fun onResume() {
+        super.onResume()
+        AppForeground.active = true
     }
 
     override fun onDestroy() {

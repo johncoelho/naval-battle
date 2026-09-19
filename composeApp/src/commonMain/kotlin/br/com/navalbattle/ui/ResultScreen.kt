@@ -72,7 +72,7 @@ fun ResultScreen(state: AppState, match: Match) {
             // com conta conectada a carreira sobe sozinha depois de cada partida
         } else if (match.opponent == Opponent.ONLINE) {
             // ranqueada soma pontos no placar — casual não mexe em nada aqui
-            state.reportRankedResult(victory)
+            state.reportRankedResult(victory, match.accuracy, match.playerBoard.remainingShips().size)
         }
     }
 

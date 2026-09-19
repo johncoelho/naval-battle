@@ -42,13 +42,32 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
     var ranked: Boolean = false
         private set
 
+    /** Id e nome de quem está do outro lado da sala — nulos até a conexão fechar. */
+    var opponentId: String? = null
+        private set
+    var opponentName: String? = null
+        private set
+
     fun close() {
         pollJob?.cancel()
         pollJob = null
         matchId = null
         inviteCode = null
         ranked = false
+        opponentId = null
+        opponentName = null
         session = null
+    }
+
+    /** Descobre quem é o adversário comparando os dois lados da sala com o próprio id. */
+    private fun captureOpponent(match: OnlineMatch, session: Session) {
+        if (match.hostId == session.userId) {
+            opponentId = match.guestId
+            opponentName = match.guestName
+        } else {
+            opponentId = match.hostId
+            opponentName = match.hostName
+        }
     }
 
     /**
@@ -99,6 +118,7 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
             }
             this@OnlineLink.matchId = joined.id
             this@OnlineLink.ranked = joined.ranked
+            captureOpponent(joined, session)
             onState(LinkState.CONNECTED, Side.ENEMY)
             startMessagePolling(session, joined.id, onLine)
         }
@@ -132,6 +152,7 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
                     if (joined != null) {
                         matchId = joined.id
                         this@OnlineLink.ranked = joined.ranked
+                        captureOpponent(joined, session)
                         onState(LinkState.CONNECTED, Side.ENEMY)
                         startMessagePolling(session, joined.id, onLine)
                         return@launch
@@ -171,6 +192,7 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
             }
             matchId = joined.id
             this@OnlineLink.ranked = joined.ranked
+            captureOpponent(joined, session)
             onState(LinkState.CONNECTED, Side.ENEMY)
             startMessagePolling(session, joined.id, onLine)
         }
@@ -187,6 +209,7 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
             delay(1500)
             val match = (cloud.getOnlineMatch(session, matchId) as? CloudResult.Ok)?.value ?: continue
             if (match.guestId != null) {
+                captureOpponent(match, session)
                 onState(LinkState.CONNECTED, Side.PLAYER)
                 startMessagePolling(session, matchId, onLine)
                 return

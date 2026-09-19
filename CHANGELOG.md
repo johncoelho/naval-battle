@@ -9,6 +9,48 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.23.0] — 2026-09-19 · Pontuação justa na ranqueada, placar em faixas e troféus de temporada
+
+### Alterado
+- **Pontuação ranqueada pesa desempenho** (`record_ranked_result` em
+  `supabase/online.sql`): antes era um placar fixo (vitória +25, derrota -15).
+  Agora vitória soma de 20 a 50 pontos (base 20 + até 15 por precisão + até 15
+  pela própria frota que sobrou de pé) e derrota sempre desconta de 5 a 15 (só
+  precisão pesa, já que quem perde teve a frota inteira afundada) — o ganho da
+  vitória nunca é menor que o desconto da derrota, garantido pela própria
+  fórmula (positivo vs. negativo), não só na média.
+- **Placar em faixas** (`ui/LeaderboardScreen.kt`): o top 10% vira "Senhor do
+  Mar" (ouro), os próximos 20% "Veterano de Guerra" (prata), os próximos 30%
+  "Guarda Costeira" (bronze) — cada faixa com cabeçalho colorido e ícone de
+  taça nos três primeiros, além do retrato de cada comandante nas linhas.
+- **Botão "Ranqueada" removido do menu** (`ui/MenuScreen.kt`): era um botão
+  desativado ("em breve") desde antes da ranqueada existir de verdade — ela já
+  vive dentro do Online.
+
+### Adicionado
+- **Ranking de troféus de fim de temporada** (`season_trophies` em
+  `supabase/online.sql`, nova aba na tela de Placar): calculado sob demanda a
+  partir do placar já congelado da última temporada fechada — como nenhum
+  resultado novo grava numa temporada que não seja a corrente, os dados de uma
+  temporada passada nunca mais mudam, então o cálculo na hora da consulta já é
+  o resultado final. Dispensa cron ou tabela extra.
+- **Adversário encontrado, com retrato e patente** (`ui/OpponentFoundPopup.kt`,
+  `opponent_profile` em `supabase/online.sql`): ao conectar numa sala online, um
+  popup mostra quem foi encontrado antes do posicionamento começar. `OnlineLink`
+  passou a rastrear o id e o nome de quem está do outro lado da sala.
+- **Nome do adversário durante o combate** (`ui/BattleScreen.kt`): partidas em
+  rede (LAN ou online) mostravam sempre "Alvo inimigo" fixo; agora mostram
+  "Vs. Fulano" — o nome já chegava pelo protocolo, só não era exibido.
+- **Trilha pausa em segundo plano** (`audio/AppForeground.kt`,
+  `MainActivity.onPause`/`onResume`): a música tocava por cima de qualquer app
+  que o comandante abrisse depois; agora para ao minimizar e retoma ao voltar.
+
+### Nota de projeto
+iOS segue em paridade estrutural (as três funções novas do `CloudApi` têm
+`actual` no `Cloud.ios.kt`), sem validar — foco continua Android.
+
+---
+
 ## [0.22.0] — 2026-09-19 · Frota e retratos redesenhados, sincronização automática
 
 ### Alterado

@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import br.com.navalbattle.audio.AppForeground
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.audio.THEME_PLAYLIST
@@ -36,7 +37,9 @@ import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.data.MyRank
 import br.com.navalbattle.data.OnlineLink
 import br.com.navalbattle.data.OnlineMatch
+import br.com.navalbattle.data.OpponentProfile
 import br.com.navalbattle.data.SeasonInfo
+import br.com.navalbattle.data.SeasonTrophy
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
@@ -68,6 +71,7 @@ import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
 import br.com.navalbattle.ui.LeaderboardScreen
 import br.com.navalbattle.ui.OnlineWaitingDialog
+import br.com.navalbattle.ui.OpponentFoundPopup
 import br.com.navalbattle.ui.MenuScreen
 import br.com.navalbattle.ui.NamesScreen
 import br.com.navalbattle.ui.OnlineScreen
@@ -113,6 +117,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     fun newMatch(opponent: Opponent) {
+        opponentProfile = null
         match = Match(mode, opponent)
         // no modo local os dois se identificam antes de posicionar as frotas
         screen = if (opponent == Opponent.LOCAL) Screen.NAMES else Screen.PLACEMENT
@@ -229,6 +234,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Abre uma partida em rede — na primeira ligação e em toda revanche seguinte. */
     private fun startLanMatch(side: Side) {
+        opponentProfile = null
         val m = Match(mode, Opponent.LAN, mySide = side)
         m.setName(side, profile.displayName)
         match = m
@@ -338,7 +344,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         m.setName(side, profile.displayName)
         match = m
         rankedResultSent = false
+        opponentProfile = null
         onlineLink.send(Protocol.hello(profile.displayName, mode.name))
+        onlineLink.opponentId?.let { id -> uiScope?.launch { loadOpponentProfile(id) } }
         screen = Screen.PLACEMENT
     }
 
@@ -451,15 +459,28 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Se a partida em andamento é ranqueada — soma pontos quando terminar. */
     val onlineMatchRanked: Boolean get() = onlineLink.ranked
 
+    /** Retrato e patente do adversário da sala online atual — carregado ao conectar. */
+    var opponentProfile by mutableStateOf<OpponentProfile?>(null)
+        private set
+
+    private suspend fun loadOpponentProfile(opponentId: String) {
+        val session = profile.currentSession() ?: return
+        opponentProfile = (cloud.opponentProfile(session, opponentId) as? CloudResult.Ok)?.value
+    }
+
     private var rankedResultSent = false
 
-    /** Fecha o resultado ranqueado uma única vez por partida (a flag evita reenvio). */
-    suspend fun reportRankedResult(victory: Boolean) {
+    /**
+     * Fecha o resultado ranqueado uma única vez por partida (a flag evita reenvio).
+     * [accuracy] e [shipsLeft] (a própria frota, não a do adversário) pesam na conta
+     * do servidor — ver `record_ranked_result` em `supabase/online.sql`.
+     */
+    suspend fun reportRankedResult(victory: Boolean, accuracy: Int, shipsLeft: Int) {
         if (rankedResultSent || !onlineMatchRanked) return
         val matchId = onlineLink.matchId ?: return
         val session = profile.currentSession() ?: return
         rankedResultSent = true
-        cloud.recordRankedResult(session, matchId, victory)
+        cloud.recordRankedResult(session, matchId, victory, accuracy, shipsLeft)
         loadMyRank(leaderboardSeasonMode)
     }
 
@@ -470,12 +491,20 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         private set
     var myRank by mutableStateOf<MyRank?>(null)
         private set
+    var seasonTrophies by mutableStateOf<List<SeasonTrophy>>(emptyList())
+        private set
 
     suspend fun loadLeaderboard(season: Boolean) {
         val session = profile.currentSession() ?: return
         val r = if (season) cloud.leaderboardSeason(session) else cloud.leaderboardOverall(session)
         leaderboardEntries = (r as? CloudResult.Ok)?.value.orEmpty()
         loadMyRank(season)
+    }
+
+    /** Ranking de troféus da última temporada fechada — ouro, prata e bronze. */
+    suspend fun loadSeasonTrophies() {
+        val session = profile.currentSession() ?: return
+        seasonTrophies = (cloud.seasonTrophies(session) as? CloudResult.Ok)?.value.orEmpty()
     }
 
     private suspend fun loadMyRank(season: Boolean) {
@@ -783,9 +812,9 @@ fun App() {
     val theme = remember { THEME_PLAYLIST[profile.rollThemeTrack(THEME_PLAYLIST.size)] }
 
     // a trilha acompanha a tela: tema no deque, faixa de combate na batalha
-    LaunchedEffect(state.screen, state.musicOn) {
+    LaunchedEffect(state.screen, state.musicOn, AppForeground.active) {
         profile.setMusic(state.musicOn)
-        if (!state.musicOn) {
+        if (!state.musicOn || !AppForeground.active) {
             music.stop()
         } else {
             music.play(if (state.screen == Screen.BATTLE) Music.BATTLE else theme)
@@ -837,6 +866,7 @@ fun App() {
             }
             OnlineWaitingDialog(state)
             state.pendingInvite?.let { invite -> InviteBanner(state, invite) }
+            if (state.screen == Screen.PLACEMENT) OpponentFoundPopup(state)
             UpdatePopup(state)
             if (state.match == null) SeasonPopup(state)
             FeedbackPopup(state)

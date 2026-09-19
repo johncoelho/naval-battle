@@ -319,6 +319,23 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun opponentProfile(session: Session, userId: String): CloudResult<OpponentProfile?> = call {
+        val body = JSONObject().put("p_user_id", userId)
+        val json = post("/rest/v1/rpc/opponent_profile", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        if (arr.length() == 0) return@call CloudResult.Ok(null)
+        val o = arr.getJSONObject(0)
+        CloudResult.Ok(
+            OpponentProfile(
+                username = o.optString("username"),
+                insignia = o.optString("insignia", "anc"),
+                avatar = o.optString("avatar", "om1"),
+                xp = o.optInt("xp"),
+                rankedRating = o.optInt("ranked_rating", 1000)
+            )
+        )
+    }
+
     // ------------------------------------------------------------------ ranqueada e temporadas
 
     actual suspend fun currentSeason(session: Session): CloudResult<SeasonInfo> = call {
@@ -336,6 +353,8 @@ actual class CloudApi actual constructor() {
             LeaderboardEntry(
                 userId = o.getString("user_id"),
                 username = o.optString("username"),
+                insignia = o.optString("insignia", "anc"),
+                avatar = o.optString("avatar", "om1"),
                 rating = o.optInt("rating"),
                 matches = o.optInt("matches"),
                 wins = o.optInt("wins")
@@ -353,6 +372,8 @@ actual class CloudApi actual constructor() {
             LeaderboardEntry(
                 userId = o.getString("user_id"),
                 username = o.optString("username"),
+                insignia = o.optString("insignia", "anc"),
+                avatar = o.optString("avatar", "om1"),
                 rating = o.optInt("points"),
                 matches = o.optInt("matches"),
                 wins = o.optInt("wins")
@@ -370,8 +391,37 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(MyRank(position = o.getLong("position"), rating = o.getInt("rating")))
     }
 
-    actual suspend fun recordRankedResult(session: Session, matchId: String, won: Boolean): CloudResult<Unit> = call {
-        val body = JSONObject().put("p_match_id", matchId).put("p_won", won)
+    actual suspend fun seasonTrophies(session: Session, seasonKey: String?): CloudResult<List<SeasonTrophy>> = call {
+        val body = JSONObject().apply { if (seasonKey != null) put("p_season_key", seasonKey) }
+        val json = post("/rest/v1/rpc/season_trophies", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            SeasonTrophy(
+                userId = o.getString("user_id"),
+                username = o.optString("username"),
+                insignia = o.optString("insignia", "anc"),
+                avatar = o.optString("avatar", "om1"),
+                points = o.optInt("points"),
+                position = o.getLong("position"),
+                tier = if (o.isNull("tier")) null else o.optString("tier")
+            )
+        }
+        CloudResult.Ok(list)
+    }
+
+    actual suspend fun recordRankedResult(
+        session: Session,
+        matchId: String,
+        won: Boolean,
+        accuracy: Int,
+        shipsLeft: Int
+    ): CloudResult<Unit> = call {
+        val body = JSONObject()
+            .put("p_match_id", matchId)
+            .put("p_won", won)
+            .put("p_accuracy", accuracy)
+            .put("p_ships_left", shipsLeft)
         post("/rest/v1/rpc/record_ranked_result", body, token = session.accessToken)
         CloudResult.Ok(Unit)
     }

@@ -91,6 +91,8 @@ data class FriendProfile(
 data class LeaderboardEntry(
     val userId: String,
     val username: String,
+    val insignia: String,
+    val avatar: String,
     val rating: Int,
     val matches: Int,
     val wins: Int
@@ -101,6 +103,34 @@ data class SeasonInfo(val seasonKey: String, val name: String)
 
 /** Posição e pontuação do próprio comandante no placar — geral ou de temporada. */
 data class MyRank(val position: Long, val rating: Int)
+
+/**
+ * Retrato e patente públicos de um comandante qualquer — mostrado quando a
+ * partida rápida encontra alguém e como nome do adversário durante o combate.
+ * Não exige amizade, ao contrário de [FriendProfile].
+ */
+data class OpponentProfile(
+    val username: String,
+    val insignia: String,
+    val avatar: String,
+    val xp: Int,
+    val rankedRating: Int
+)
+
+/**
+ * Uma linha do ranking de troféus de uma temporada já encerrada — [tier] é
+ * "ouro", "prata", "bronze" ou nulo (sem medalha), calculado no servidor a
+ * partir da colocação final.
+ */
+data class SeasonTrophy(
+    val userId: String,
+    val username: String,
+    val insignia: String,
+    val avatar: String,
+    val points: Int,
+    val position: Long,
+    val tier: String?
+)
 
 /** Uma jogada trocada na sala — o corpo é sempre uma linha do [Protocol]. */
 data class OnlineMessage(val id: Long, val senderId: String, val body: String)
@@ -214,6 +244,9 @@ expect class CloudApi() {
     /** Folha de serviço pública de um amigo (exige amizade aceita) — para a tela de perfil dele. */
     suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?>
 
+    /** Retrato e patente públicos de qualquer comandante — não exige amizade. */
+    suspend fun opponentProfile(session: Session, userId: String): CloudResult<OpponentProfile?>
+
     // ---------------- ranqueada e temporadas ----------------
 
     /** A temporada corrente (uma das 4 estações do ano), calculada no servidor. */
@@ -228,6 +261,21 @@ expect class CloudApi() {
     /** Posição e pontos do próprio comandante — geral (season=false) ou da temporada (season=true). */
     suspend fun myRank(session: Session, season: Boolean): CloudResult<MyRank?>
 
-    /** Fecha o resultado de uma partida ranqueada (soma/subtrai pontos) — idempotente por lado. */
-    suspend fun recordRankedResult(session: Session, matchId: String, won: Boolean): CloudResult<Unit>
+    /**
+     * Ranking de troféus de uma temporada já encerrada. [seasonKey] nulo pega a
+     * última temporada fechada automaticamente.
+     */
+    suspend fun seasonTrophies(session: Session, seasonKey: String? = null): CloudResult<List<SeasonTrophy>>
+
+    /**
+     * Fecha o resultado de uma partida ranqueada — idempotente por lado. [accuracy]
+     * (0–100) e [shipsLeft] (navios da própria frota ainda de pé) pesam na pontuação.
+     */
+    suspend fun recordRankedResult(
+        session: Session,
+        matchId: String,
+        won: Boolean,
+        accuracy: Int,
+        shipsLeft: Int
+    ): CloudResult<Unit>
 }

@@ -73,12 +73,15 @@ na próxima partida tática — some ao ser usado, a recarga normal segue igual.
     XP, pontuação ranqueada, vitórias/derrotas/sequência); convidar um amigo da
     lista abre uma sala do mesmo jeito que criar uma manualmente.
 - **Ranqueada** — alternância Casual/Ranqueada na partida rápida (convite de amigo
-  continua sempre casual, de propósito). Vitória soma 25 pontos, derrota tira 15,
-  nunca abaixo de zero. Temporadas por estação do ano, calculadas no servidor sem
-  tabela nem cron (`current_season()`); a cada temporada nova, um popup com ícone e
-  cor da estação pede aceite antes de liberar a ranqueada. Tela de **Placar**
-  (`ui/LeaderboardScreen.kt`) mostra ranking geral e por temporada, sempre com a
-  posição do próprio comandante mesmo fora do topo.
+  continua sempre casual, de propósito). Pontuação pesa desempenho: vitória soma de
+  20 a 50 pontos (base + precisão de tiro + navios da própria frota que sobraram de
+  pé), derrota sempre desconta de 5 a 15 — nunca o contrário. Temporadas por estação
+  do ano, calculadas no servidor sem tabela nem cron (`current_season()`); a cada
+  temporada nova, um popup com ícone e cor da estação pede aceite antes de liberar a
+  ranqueada. Tela de **Placar** (`ui/LeaderboardScreen.kt`) mostra ranking geral e
+  por temporada em faixas (ouro/prata/bronze, com retrato de cada comandante),
+  sempre com a posição do próprio comandante mesmo fora do topo, mais uma aba de
+  **Troféus** com o pódio final da última temporada encerrada.
 
 ### Carreira
 

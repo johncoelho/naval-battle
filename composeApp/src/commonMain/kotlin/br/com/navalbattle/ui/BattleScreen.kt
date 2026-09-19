@@ -167,8 +167,13 @@ fun BattleScreen(state: AppState, match: Match) {
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 ScreenTopBar(
-                    if (local) t(K.BATTLE_TURN_OF, match.sideName(viewSide)).uppercase()
-                    else t(K.BATTLE_ENEMY_TARGET),
+                    when {
+                        local -> t(K.BATTLE_TURN_OF, match.sideName(viewSide)).uppercase()
+                        // rede (LAN ou online): o nome do adversário chega pelo HELLO do
+                        // protocolo — antes a tela mostrava só "alvo inimigo" sempre
+                        lan -> t(K.BATTLE_VS, match.sideName(Side.ENEMY)).uppercase()
+                        else -> t(K.BATTLE_ENEMY_TARGET)
+                    },
                     "${t(K.TURN)} ${match.turnCount.toString().padStart(2, '0')}",
                     Modifier.weight(1f)
                 )

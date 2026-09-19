@@ -304,6 +304,22 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun opponentProfile(session: Session, userId: String): CloudResult<OpponentProfile?> = call {
+        val json = post("/rest/v1/rpc/opponent_profile", mapOf("p_user_id" to userId), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            row?.let {
+                OpponentProfile(
+                    username = it.strOr("username", ""),
+                    insignia = it.strOr("insignia", "anc"),
+                    avatar = it.strOr("avatar", "om1"),
+                    xp = it.intOr("xp", 0),
+                    rankedRating = it.intOr("ranked_rating", 1000)
+                )
+            }
+        )
+    }
+
     // ------------------------------------------------------------------ ranqueada e temporadas
 
     actual suspend fun currentSeason(session: Session): CloudResult<SeasonInfo> = call {
@@ -321,6 +337,8 @@ actual class CloudApi actual constructor() {
                 LeaderboardEntry(
                     userId = it.strOr("user_id", ""),
                     username = it.strOr("username", ""),
+                    insignia = it.strOr("insignia", "anc"),
+                    avatar = it.strOr("avatar", "om1"),
                     rating = it.intOr("rating", 0),
                     matches = it.intOr("matches", 0),
                     wins = it.intOr("wins", 0)
@@ -337,6 +355,8 @@ actual class CloudApi actual constructor() {
                 LeaderboardEntry(
                     userId = it.strOr("user_id", ""),
                     username = it.strOr("username", ""),
+                    insignia = it.strOr("insignia", "anc"),
+                    avatar = it.strOr("avatar", "om1"),
                     rating = it.intOr("points", 0),
                     matches = it.intOr("matches", 0),
                     wins = it.intOr("wins", 0)
@@ -351,10 +371,40 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(row?.let { MyRank(position = it.longOr("position", 0L), rating = it.intOr("rating", 0)) })
     }
 
-    actual suspend fun recordRankedResult(session: Session, matchId: String, won: Boolean): CloudResult<Unit> = call {
+    actual suspend fun seasonTrophies(session: Session, seasonKey: String?): CloudResult<List<SeasonTrophy>> = call {
+        val body = buildMap<String, Any> { if (seasonKey != null) put("p_season_key", seasonKey) }
+        val json = post("/rest/v1/rpc/season_trophies", body, token = session.accessToken)
+        val rows = (json as? List<*>).orEmpty()
+        CloudResult.Ok(
+            rows.mapNotNull { it as? Map<*, *> }.map {
+                SeasonTrophy(
+                    userId = it.strOr("user_id", ""),
+                    username = it.strOr("username", ""),
+                    insignia = it.strOr("insignia", "anc"),
+                    avatar = it.strOr("avatar", "om1"),
+                    points = it.intOr("points", 0),
+                    position = it.longOr("position", 0L),
+                    tier = it["tier"] as? String
+                )
+            }
+        )
+    }
+
+    actual suspend fun recordRankedResult(
+        session: Session,
+        matchId: String,
+        won: Boolean,
+        accuracy: Int,
+        shipsLeft: Int
+    ): CloudResult<Unit> = call {
         post(
             "/rest/v1/rpc/record_ranked_result",
-            mapOf("p_match_id" to matchId, "p_won" to won),
+            mapOf(
+                "p_match_id" to matchId,
+                "p_won" to won,
+                "p_accuracy" to accuracy,
+                "p_ships_left" to shipsLeft
+            ),
             token = session.accessToken
         )
         CloudResult.Ok(Unit)

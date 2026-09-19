@@ -131,7 +131,6 @@ fun MenuScreen(state: AppState) {
                 if (state.profile.signedIn) t(K.MENU_PROFILE) else t(K.MENU_CREATE_ACCOUNT),
                 if (state.profile.signedIn) state.profile.rank.label else t(K.MENU_ACCOUNT_SUB)
             ) { state.screen = Screen.PROFILE }
-            SecondaryButton(t(K.MENU_RANKED), t(K.MENU_SOON), enabled = false) {}
         }
 
         Spacer(Modifier.weight(1f))
