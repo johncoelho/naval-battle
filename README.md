@@ -31,17 +31,26 @@ só passa a vez para o adversário no primeiro erro.
   de decorar sigla — e a barra fica ao lado do mapa da própria frota, não empilhada
   em cima dele:
 
-| Classe | Tamanho | Habilidade | Ícone | Efeito |
-|---|---|---|---|---|
-| Porta-aviões | 5 | Reconhecimento aéreo | 📡 | Revela uma linha inteira |
-| Encouraçado | 4 | Barragem dupla | 💥 | Dois disparos no mesmo turno |
-| Cruzador | 3 | Ping de sonar | 📶 | Varre um setor 3×3 |
-| Submarino | 3 | Imersão | 🫧 | Absorve o primeiro acerto, uma vez |
-| Destróier | 2 | Cortina de fumaça | 💨 | Bloqueia a próxima varredura inimiga |
+| Classe | Tamanho | Habilidade | Efeito |
+|---|---|---|---|
+| Porta-aviões | 5 | Reconhecimento aéreo | Revela uma linha inteira |
+| Encouraçado | 4 | Barragem dupla | Dois disparos no mesmo turno |
+| Cruzador | 3 | Ping de sonar | Varre um setor 3×3 |
+| Submarino | 3 | Imersão | Absorve o primeiro acerto, uma vez |
+| Destróier | 2 | Cortina de fumaça | Bloqueia a próxima varredura inimiga |
 
 Cada habilidade também tem um **cartucho avulso** na Loja do Arsenal: comprado com
 créditos, fica guardado no aparelho e libera um uso mesmo com a habilidade em recarga
 na próxima partida tática — some ao ser usado, a recarga normal segue igual.
+
+Os ícones de cada habilidade são vetores desenhados a traço (`design/AbilityArt.kt`,
+`drawAbilityIcon`), na mesma linguagem visual dos navios e insígnias — nenhum emoji
+do sistema, para não mudar de aparência entre aparelhos. O reconhecimento aéreo tem
+um avião animado sobrevoando a linha alvo (a célula só acende depois que ele passa
+por cima) e o sonar um anel se expandindo a partir do ponto varrido; os dois callouts
+agora dizem quantas embarcações foram identificadas. A cortina de fumaça fica visível
+como uma nuvem sobre a própria frota enquanto ativa, e a imersão do submarino avisa
+quando absorve um impacto — antes ela acontecia sem nenhum aviso na tela.
 
 ### Formas de jogar
 

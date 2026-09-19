@@ -38,6 +38,7 @@ import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.Skin
+import br.com.navalbattle.design.drawAbilityIcon
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.ShipClass
@@ -204,7 +205,9 @@ private fun AbilityStoreRow(ability: Ability, owned: Int, price: Int, credits: I
                 .border(1.dp, Naval.line)
                 .padding(12.dp)
         ) {
-            Text(ability.icon, style = NavalType.title)
+            Canvas(Modifier.size(22.dp)) {
+                drawAbilityIcon(ability, center = Offset(size.width / 2f, size.height / 2f), size = size.minDimension, color = Naval.greenBright)
+            }
         }
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {

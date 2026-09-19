@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,12 +28,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.design.drawAbilityIcon
+import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.Callout
 import br.com.navalbattle.game.Tone
 import kotlinx.coroutines.delay
@@ -198,7 +202,7 @@ fun CalloutBanner(callout: Callout?, modifier: Modifier = Modifier) {
 
 @Composable
 fun AbilityButton(
-    code: String,
+    ability: Ability,
     name: String,
     enabled: Boolean,
     selected: Boolean,
@@ -214,15 +218,14 @@ fun AbilityButton(
                 .clickable(enabled = enabled, onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                code,
-                style = NavalType.mono,
-                color = when {
-                    selected -> Naval.amberStrong
-                    enabled -> Naval.greenBright
-                    else -> Naval.muted
-                }
-            )
+            val iconColor = when {
+                selected -> Naval.amberStrong
+                enabled -> Naval.greenBright
+                else -> Naval.muted
+            }
+            Canvas(Modifier.size(26.dp)) {
+                drawAbilityIcon(ability, center = Offset(size.width / 2f, size.height / 2f), size = size.minDimension, color = iconColor)
+            }
             if (cooldown > 0) {
                 Box(
                     modifier = Modifier

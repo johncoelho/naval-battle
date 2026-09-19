@@ -52,6 +52,7 @@ import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Impact
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
+import br.com.navalbattle.game.ScanEvent
 import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.ShipClass
@@ -102,6 +103,11 @@ fun BattleScreen(state: AppState, match: Match) {
     // impacto que EU causei (mira o tabuleiro alvo) e o que EU sofri (mira minha frota)
     val myImpact = if (viewSide == Side.PLAYER) playerImpact else enemyImpact
     val incomingImpact = if (viewSide == Side.PLAYER) enemyImpact else playerImpact
+
+    // varredura em andamento: vai para a carta alvo (fui eu que escaneei) ou para a
+    // própria frota (o adversário que me escaneou), nunca as duas ao mesmo tempo
+    val outgoingScan = match.lastScan?.takeIf { it.targetSide == viewSide.other() }
+    val incomingScan = match.lastScan?.takeIf { it.targetSide == viewSide }
 
     // a carta só troca de dono depois que a jogada termina de tocar
     LaunchedEffect(match.turnOwner, match.phase) {
@@ -254,6 +260,7 @@ fun BattleScreen(state: AppState, match: Match) {
                     showShips = false,
                     interactive = myTurn,
                     impact = myImpact,
+                    scan = outgoingScan,
                     markTint = commanderColor(viewSide.other()),
                     modifier = Modifier.fillMaxWidth()
                 ) { coord -> match.act(coord) }
@@ -265,6 +272,7 @@ fun BattleScreen(state: AppState, match: Match) {
                     showShips = false,
                     interactive = myTurn,
                     impact = myImpact,
+                    scan = outgoingScan,
                     modifier = Modifier.fillMaxWidth()
                 ) { coord -> if (lan) state.fireShared(coord) else match.act(coord) }
             }
@@ -297,7 +305,7 @@ fun BattleScreen(state: AppState, match: Match) {
                         Modifier.fillMaxWidth().weight(1f),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        OwnFleetPanel(state, match, viewSide, incomingImpact, Modifier.weight(1.1f))
+                        OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1.1f))
                         AbilityColumn(state, match, Modifier.weight(1f)) { ability, ignoreCooldown ->
                             if (lan) state.useAbilityShared(ability, ignoreCooldown)
                             else match.selectAbility(ability, ignoreCooldown)
@@ -305,7 +313,7 @@ fun BattleScreen(state: AppState, match: Match) {
                     }
                 }
                 // clássico contra a IA ou em rede: só a frota própria, tela cheia
-                else -> OwnFleetPanel(state, match, viewSide, incomingImpact, Modifier.weight(1f))
+                else -> OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1f))
             }
         }
 
@@ -349,6 +357,7 @@ private fun OwnFleetPanel(
     match: Match,
     viewSide: Side,
     incomingImpact: Impact?,
+    incomingScan: ScanEvent?,
     modifier: Modifier = Modifier
 ) {
     val board = match.board(viewSide)
@@ -388,6 +397,7 @@ private fun OwnFleetPanel(
                 showShips = true,
                 sweep = false,
                 impact = incomingImpact,
+                scan = incomingScan,
                 modifier = Modifier.size(side)
             )
         }
@@ -529,7 +539,7 @@ private fun AbilityColumn(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AbilityButton(
-                    code = ability.icon,
+                    ability = ability,
                     name = ability.shortName,
                     enabled = ready || usingCharge,
                     selected = match.pendingAbility == ability,

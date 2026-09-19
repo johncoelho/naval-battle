@@ -39,6 +39,8 @@ import br.com.navalbattle.game.Coord
 import br.com.navalbattle.game.Impact
 import br.com.navalbattle.game.Mark
 import br.com.navalbattle.game.Orientation
+import br.com.navalbattle.game.ScanEvent
+import br.com.navalbattle.game.ScanKind
 import br.com.navalbattle.game.Ship
 import br.com.navalbattle.game.Tone
 import kotlin.math.roundToInt
@@ -59,6 +61,8 @@ fun BoardView(
     preview: Ship? = null,
     previewValid: Boolean = true,
     impact: Impact? = null,
+    /** Reconhecimento aéreo ou sonar em andamento nesta carta — ver [ScanEvent]. */
+    scan: ScanEvent? = null,
     /** Cor do dono desta frota: pinta as marcas para saber de quem é o navio atingido. */
     markTint: Color? = null,
     /** Segunda frota desenhada na mesma carta (modo local): um mapa só para os dois. */
@@ -105,6 +109,16 @@ fun BoardView(
             for (offsetPx in pattern) {
                 shake.animateTo(offsetPx, tween(42, easing = LinearEasing))
             }
+        }
+    }
+
+    // varredura de reconhecimento aéreo (avião cruzando a linha) ou sonar (anel se
+    // expandindo) — dura a duração inteira antes de se apagar de vez.
+    val scanAnim = remember { Animatable(1f) }
+    LaunchedEffect(scan?.id) {
+        if (scan != null) {
+            scanAnim.snapTo(0f)
+            scanAnim.animateTo(1f, tween(if (scan.kind == ScanKind.RECON) 1000 else 550, easing = LinearEasing))
         }
     }
 
@@ -180,8 +194,19 @@ fun BoardView(
             }
         }
 
-        // marcações
+        // cortina de fumaça própria: nuvem cobrindo a frota enquanto bloqueia a
+        // próxima varredura inimiga (Board.smokeActive)
+        if (showShips && board.smokeActive) {
+            drawSmokeScreen(size.width, size.height, sweepAngle)
+        }
+
+        // marcações — numa linha varrida pelo reconhecimento aéreo ainda em andamento,
+        // só acende a célula depois que o avião passou por cima dela
+        val activeReconRow = scan?.takeIf { it.kind == ScanKind.RECON && scanAnim.value < 1f }?.row
         board.marks.forEach { (coord, mark) ->
+            if (activeReconRow == coord.y && (mark == Mark.SCAN_HOT || mark == Mark.SCAN_COLD)) {
+                if (coord.x > scanAnim.value * BOARD_SIZE) return@forEach
+            }
             val topLeft = Offset(coord.x * cell, coord.y * cell)
             drawMark(mark, topLeft, cell, markTint)
         }
@@ -220,6 +245,18 @@ fun BoardView(
             }
         }
 
+        // sobrevoo do reconhecimento aéreo ou anel do sonar, por cima de tudo
+        if (scan != null && scanAnim.value < 1f) {
+            when (scan.kind) {
+                ScanKind.RECON -> scan.row?.let { row ->
+                    drawReconPlane(Offset(scanAnim.value * size.width, row * cell + cell / 2f), cell)
+                }
+                ScanKind.SONAR -> scan.coord?.let { coord ->
+                    drawSonarRing(Offset(coord.x * cell + cell / 2f, coord.y * cell + cell / 2f), cell, scanAnim.value)
+                }
+            }
+        }
+
         // projétil e impacto
         impact?.let { imp ->
             val target = Offset(imp.coord.x * cell + cell / 2f, imp.coord.y * cell + cell / 2f)
@@ -235,6 +272,66 @@ fun BoardView(
             }
         }
     }
+}
+
+/** Nuvem de fumaça cobrindo o tabuleiro — [drift] (0–360) faz as volutas derivarem devagar. */
+private fun DrawScope.drawSmokeScreen(w: Float, h: Float, drift: Float) {
+    val puffs = listOf(
+        Triple(0.22f, 0.3f, 0.24f),
+        Triple(0.55f, 0.55f, 0.3f),
+        Triple(0.78f, 0.25f, 0.2f),
+        Triple(0.35f, 0.75f, 0.26f),
+        Triple(0.68f, 0.82f, 0.22f)
+    )
+    puffs.forEachIndexed { i, (fx, fy, fr) ->
+        val wobble = sin((drift + i * 70f) * 3.1415926f / 180f) * w * 0.02f
+        drawCircle(
+            color = Naval.inkSoft.copy(alpha = 0.16f),
+            radius = w * fr,
+            center = Offset(w * fx + wobble, h * fy)
+        )
+    }
+    drawRect(Naval.abyss2.copy(alpha = 0.22f), size = Size(w, h))
+}
+
+/** Avião de reconhecimento sobrevoando a linha, com um rastro de condensação atrás. */
+private fun DrawScope.drawReconPlane(pos: Offset, cell: Float) {
+    var back = 1
+    while (back < 6) {
+        val age = back / 6f
+        drawCircle(
+            color = Naval.greenBright.copy(alpha = (1f - age) * 0.35f),
+            radius = cell * 0.05f,
+            center = Offset(pos.x - back * cell * 0.5f, pos.y)
+        )
+        back++
+    }
+    rotate(90f, pos) {
+        val path = Path().apply {
+            moveTo(pos.x, pos.y - cell * 0.42f)
+            lineTo(pos.x + cell * 0.08f, pos.y - cell * 0.07f)
+            lineTo(pos.x + cell * 0.4f, pos.y + cell * 0.06f)
+            lineTo(pos.x + cell * 0.08f, pos.y + cell * 0.02f)
+            lineTo(pos.x + cell * 0.12f, pos.y + cell * 0.38f)
+            lineTo(pos.x, pos.y + cell * 0.22f)
+            lineTo(pos.x - cell * 0.12f, pos.y + cell * 0.38f)
+            lineTo(pos.x - cell * 0.08f, pos.y + cell * 0.02f)
+            lineTo(pos.x - cell * 0.4f, pos.y + cell * 0.06f)
+            lineTo(pos.x - cell * 0.08f, pos.y - cell * 0.07f)
+            close()
+        }
+        drawPath(path, Naval.greenBright)
+    }
+}
+
+/** Anel de sonar se expandindo a partir do ponto varrido, esmaecendo ao crescer. */
+private fun DrawScope.drawSonarRing(center: Offset, cell: Float, t: Float) {
+    drawCircle(
+        color = Naval.greenBright.copy(alpha = (1f - t) * 0.9f),
+        radius = cell * (0.3f + t * 2.1f),
+        center = center,
+        style = Stroke(2.5f * (1f - t * 0.6f))
+    )
 }
 
 /** Míssil com corpo, ogiva e aletas, deixando rastro de fumaça e chama de propulsão. */

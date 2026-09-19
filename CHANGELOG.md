@@ -9,6 +9,43 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.28.0] — 2026-09-19 · Ícones vetoriais e efeitos visuais nas habilidades táticas
+
+### Adicionado
+- **Ícones vetoriais para as 5 habilidades** (`design/AbilityArt.kt`,
+  `drawAbilityIcon`): substituem os emojis do sistema (📡💥📶🫧💨), que mudavam
+  de aparelho pra aparelho — mesma linguagem de traço que os navios e
+  insígnias do jogo já usam, sem imagem no APK. Usados no botão de
+  habilidade da batalha (`ui/Components.kt`) e na loja (`ui/StoreScreen.kt`).
+- **Sobrevoo animado do reconhecimento aéreo** (`ui/BoardView.kt`,
+  `ScanEvent`/`ScanKind` em `game/Match.kt`): um avião cruza a linha alvo da
+  esquerda pra direita (~1s) e cada célula só acende depois que ele passa
+  por cima — antes a linha inteira aparecia revelada de uma vez, sem efeito
+  nenhum. O callout agora informa quantas embarcações foram identificadas
+  ("2 embarcações identificadas" / "Nenhum contato na linha") em vez de só
+  dizer qual linha foi revelada.
+- **Anel de sonar** no ping direcional: expande a partir do ponto varrido e
+  esmaece, com a mesma melhoria de callout com contagem de contatos.
+- **Cortina de fumaça visível**: nuvem cobrindo a própria frota enquanto a
+  passiva está ativa (`Board.smokeActive`), não só o texto que já existia.
+- **Imersão furtiva deixou de ser silenciosa**: quando o casco de um
+  submarino absorve o primeiro impacto, a partida avisa ("Imersão de
+  emergência — o casco de Submarino absorveu o impacto") em vez de anunciar
+  como uma água qualquer — hoje não havia nenhuma pista de que a passiva
+  tinha entrado em ação.
+
+### Escopo desta rodada
+- Efeitos sonoros novos (motor de avião, ping de sonar, bolhas) ficaram de
+  fora: exigem arquivos de áudio reais, que não existem no projeto — nenhum
+  asset foi inventado. Falas gravadas ("2 embarcações identificadas" com voz
+  de verdade) exigiriam elenco/estúdio; o padrão adotado por ora é banner de
+  texto, sem voz sintetizada.
+- Barragem dupla e ativação da fumaça continuam com o feedback existente
+  (flash de impacto e tremor de tela já genéricos a qualquer acerto); não
+  ganharam efeito próprio nesta rodada.
+
+---
+
 ## [0.27.0] — 2026-09-19 · Corrige título/legenda espremidos em todo botão do jogo
 
 ### Corrigido

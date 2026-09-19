@@ -21,6 +21,22 @@ data class Callout(val main: String, val sub: String, val tone: Tone, val id: Lo
 
 data class Impact(val coord: Coord, val tone: Tone, val id: Long, val sunkShip: Ship? = null)
 
+enum class ScanKind { RECON, SONAR }
+
+/**
+ * Varredura de reconhecimento aéreo ou sonar — só decoração visual (a resolução real
+ * já aconteceu em [Board.revealRow]/[Board.sonarPing]). [targetSide] é de quem é o
+ * tabuleiro varrido, para a tela saber em qual das duas cartas desenhar o efeito.
+ */
+data class ScanEvent(
+    val kind: ScanKind,
+    val targetSide: Side,
+    val row: Int? = null,
+    val coord: Coord? = null,
+    val found: Int,
+    val id: Long
+)
+
 /** Emoji ou grito de guerra mandado por um lado — decoração, não mexe na partida. */
 data class Taunt(val from: Side, val code: String, val id: Long)
 
@@ -76,6 +92,10 @@ class Match(
 
     /** Id do disparo mais recente — a tela só anima o impacto que acabou de acontecer. */
     var lastImpactId by mutableStateOf(0L)
+        private set
+
+    /** Última varredura de reconhecimento aéreo ou sonar — mesma ideia do impacto. */
+    var lastScan by mutableStateOf<ScanEvent?>(null)
         private set
 
     var winner by mutableStateOf<Side?>(null)
@@ -287,8 +307,12 @@ class Match(
                 val worked = target.revealRow(coord.y)
                 cooldownsOf(attacker)[ability] = ability.cooldown
                 pendingAbility = null
-                if (worked) say(t(K.CALL_RECON), t(K.CALL_RECON_SUB, coord.y + 1), Tone.SCAN)
-                else say(t(K.CALL_SCAN_FAIL), t(K.CALL_SCAN_FAIL_SUB), Tone.MISS)
+                if (worked) {
+                    val found = (0 until BOARD_SIZE).count { x -> target.marks[Coord(x, coord.y)] == Mark.SCAN_HOT }
+                    lastScan = ScanEvent(ScanKind.RECON, attacker.other(), row = coord.y, found = found, id = nextId())
+                    if (found > 0) say(t(K.CALL_RECON), t(K.CALL_RECON_CONTACTS, found), Tone.SCAN)
+                    else say(t(K.CALL_RECON), t(K.CALL_RECON_NONE), Tone.SCAN)
+                } else say(t(K.CALL_SCAN_FAIL), t(K.CALL_SCAN_FAIL_SUB), Tone.MISS)
                 endTurn()
                 return null
             }
@@ -297,8 +321,14 @@ class Match(
                 val worked = target.sonarPing(coord)
                 cooldownsOf(attacker)[ability] = ability.cooldown
                 pendingAbility = null
-                if (worked) say(t(K.CALL_SONAR), t(K.CALL_SONAR_SUB, coord.label), Tone.SCAN)
-                else say(t(K.CALL_SCAN_FAIL), t(K.CALL_SCAN_FAIL_SUB), Tone.MISS)
+                if (worked) {
+                    val found = (-1..1).sumOf { dy ->
+                        (-1..1).count { dx -> target.marks[Coord(coord.x + dx, coord.y + dy)] == Mark.SCAN_HOT }
+                    }
+                    lastScan = ScanEvent(ScanKind.SONAR, attacker.other(), coord = coord, found = found, id = nextId())
+                    if (found > 0) say(t(K.CALL_SONAR), t(K.CALL_SONAR_CONTACTS, found), Tone.SCAN)
+                    else say(t(K.CALL_SONAR), t(K.CALL_SONAR_NONE), Tone.SCAN)
+                } else say(t(K.CALL_SCAN_FAIL), t(K.CALL_SCAN_FAIL_SUB), Tone.MISS)
                 endTurn()
                 return null
             }
@@ -424,7 +454,9 @@ class Match(
                 say(t(K.CALL_HIT), who + t(K.CALL_HIT_SUB, alvo, outcome.coord.label), Tone.HIT)
             ShotResult.SUNK ->
                 say(t(K.CALL_SUNK), who + t(K.CALL_SUNK_SUB, alvo, outcome.coord.label), Tone.SUNK)
-            ShotResult.MISS -> say(t(K.CALL_MISS), "$who${outcome.coord.label}", Tone.MISS)
+            ShotResult.MISS ->
+                if (outcome.absorbedByDive) say(t(K.CALL_DIVE), who + t(K.CALL_DIVE_SUB, alvo), Tone.SCAN)
+                else say(t(K.CALL_MISS), "$who${outcome.coord.label}", Tone.MISS)
             ShotResult.ALREADY_FIRED -> Unit
         }
     }
