@@ -1,6 +1,8 @@
 package br.com.navalbattle.audio
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 /**
  * Se o app está em primeiro plano. A trilha para sozinha quando o comandante
