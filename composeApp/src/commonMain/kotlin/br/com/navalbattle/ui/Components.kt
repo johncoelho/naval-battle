@@ -97,19 +97,25 @@ fun SecondaryButton(
 }
 
 @Composable
-fun ModeChip(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun ModeChip(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
     Box(
         modifier = modifier
             .background(if (selected) Naval.surface3 else Color.Transparent)
             .border(BorderStroke(1.dp, if (selected) Naval.amber else Naval.line))
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             label.uppercase(),
             style = NavalType.mono,
-            color = if (selected) Naval.amberStrong else Naval.muted
+            color = if (!enabled) Naval.muted.copy(alpha = 0.5f) else if (selected) Naval.amberStrong else Naval.muted
         )
     }
 }

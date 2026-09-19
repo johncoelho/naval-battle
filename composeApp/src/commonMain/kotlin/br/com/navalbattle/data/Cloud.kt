@@ -69,8 +69,36 @@ data class OnlineMatch(
     val inviteCode: String?,
     // nulo: convite aberto (partida rápida ou código); preenchido: convite mirado
     // num amigo específico — só ele pode entrar, e é ele quem recebe o banner
-    val invitedId: String?
+    val invitedId: String?,
+    // ranqueada só pareia com outra ranqueada; convite de amigo é sempre casual
+    val ranked: Boolean
 )
+
+/** A folha de serviço pública de um amigo — sem e-mail, sem avatar (esse é só local). */
+data class FriendProfile(
+    val username: String,
+    val insignia: String,
+    val xp: Int,
+    val matches: Int,
+    val wins: Int,
+    val bestStreak: Int,
+    val rankedRating: Int
+)
+
+/** Uma linha do placar — geral ou de temporada, a mesma forma para os dois. */
+data class LeaderboardEntry(
+    val userId: String,
+    val username: String,
+    val rating: Int,
+    val matches: Int,
+    val wins: Int
+)
+
+/** A temporada corrente — as 4 estações do ano, calculadas no servidor. */
+data class SeasonInfo(val seasonKey: String, val name: String)
+
+/** Posição e pontuação do próprio comandante no placar — geral ou de temporada. */
+data class MyRank(val position: Long, val rating: Int)
 
 /** Uma jogada trocada na sala — o corpo é sempre uma linha do [Protocol]. */
 data class OnlineMessage(val id: Long, val senderId: String, val body: String)
@@ -125,11 +153,12 @@ expect class CloudApi() {
         quick: Boolean,
         inviteCode: String?,
         hostName: String,
-        invitedId: String? = null
+        invitedId: String? = null,
+        ranked: Boolean = false
     ): CloudResult<OnlineMatch>
 
-    /** Procura uma sala de partida rápida aberta por outra pessoa. */
-    suspend fun findQuickMatch(session: Session, mode: String): CloudResult<OnlineMatch?>
+    /** Procura uma sala de partida rápida aberta por outra pessoa — do mesmo tipo (ranqueada ou não). */
+    suspend fun findQuickMatch(session: Session, mode: String, ranked: Boolean): CloudResult<OnlineMatch?>
 
     /** Procura a sala de um código de convite, se ainda estiver esperando alguém. */
     suspend fun findMatchByCode(session: Session, code: String): CloudResult<OnlineMatch?>
@@ -179,4 +208,24 @@ expect class CloudApi() {
 
     /** Todas as amizades do comandante — pendentes e aceitas, dos dois lados. */
     suspend fun listFriendships(session: Session): CloudResult<List<Friendship>>
+
+    /** Folha de serviço pública de um amigo (exige amizade aceita) — para a tela de perfil dele. */
+    suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?>
+
+    // ---------------- ranqueada e temporadas ----------------
+
+    /** A temporada corrente (uma das 4 estações do ano), calculada no servidor. */
+    suspend fun currentSeason(session: Session): CloudResult<SeasonInfo>
+
+    /** Placar geral (histórico completo, nunca zera). */
+    suspend fun leaderboardOverall(session: Session, limit: Int = 50): CloudResult<List<LeaderboardEntry>>
+
+    /** Placar da temporada corrente (reinicia sozinho a cada nova estação). */
+    suspend fun leaderboardSeason(session: Session, limit: Int = 50): CloudResult<List<LeaderboardEntry>>
+
+    /** Posição e pontos do próprio comandante — geral (season=false) ou da temporada (season=true). */
+    suspend fun myRank(session: Session, season: Boolean): CloudResult<MyRank?>
+
+    /** Fecha o resultado de uma partida ranqueada (soma/subtrai pontos) — idempotente por lado. */
+    suspend fun recordRankedResult(session: Session, matchId: String, won: Boolean): CloudResult<Unit>
 }

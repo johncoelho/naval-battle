@@ -123,7 +123,8 @@ actual class CloudApi actual constructor() {
         quick: Boolean,
         inviteCode: String?,
         hostName: String,
-        invitedId: String?
+        invitedId: String?,
+        ranked: Boolean
     ): CloudResult<OnlineMatch> = call {
         // sem entrada nenhuma para invite_code/invited_id quando forem nulos:
         // NSDictionary não aceita valor nulo de verdade (só o marcador NSNull), e
@@ -133,6 +134,7 @@ actual class CloudApi actual constructor() {
             put("host_name", hostName)
             put("mode", mode)
             put("is_quick_match", quick)
+            put("ranked", ranked)
             if (inviteCode != null) put("invite_code", inviteCode)
             if (invitedId != null) put("invited_id", invitedId)
         }
@@ -146,10 +148,10 @@ actual class CloudApi actual constructor() {
         row?.let { CloudResult.Ok(matchOf(it)) } ?: CloudResult.Fail("Não consegui abrir a sala.")
     }
 
-    actual suspend fun findQuickMatch(session: Session, mode: String): CloudResult<OnlineMatch?> = call {
+    actual suspend fun findQuickMatch(session: Session, mode: String, ranked: Boolean): CloudResult<OnlineMatch?> = call {
         val json = get(
             "/rest/v1/online_matches?status=eq.waiting&is_quick_match=is.true" +
-                "&mode=eq.$mode&host_id=neq.${session.userId}&order=created_at.asc&limit=1",
+                "&mode=eq.$mode&ranked=is.$ranked&host_id=neq.${session.userId}&order=created_at.asc&limit=1",
             session.accessToken
         )
         val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
@@ -280,6 +282,80 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(list)
     }
 
+    actual suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?> = call {
+        val json = post("/rest/v1/rpc/friend_profile", mapOf("p_friend_id" to friendId), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            row?.let {
+                FriendProfile(
+                    username = it.strOr("username", ""),
+                    insignia = it.strOr("insignia", "anc"),
+                    xp = it.intOr("xp", 0),
+                    matches = it.intOr("matches", 0),
+                    wins = it.intOr("wins", 0),
+                    bestStreak = it.intOr("best_streak", 0),
+                    rankedRating = it.intOr("ranked_rating", 1000)
+                )
+            }
+        )
+    }
+
+    // ------------------------------------------------------------------ ranqueada e temporadas
+
+    actual suspend fun currentSeason(session: Session): CloudResult<SeasonInfo> = call {
+        val json = get("/rest/v1/rpc/current_season", session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        row?.let { CloudResult.Ok(SeasonInfo(seasonKey = it.strOr("season_key", ""), name = it.strOr("name", ""))) }
+            ?: CloudResult.Fail("Não consegui saber a temporada.")
+    }
+
+    actual suspend fun leaderboardOverall(session: Session, limit: Int): CloudResult<List<LeaderboardEntry>> = call {
+        val json = post("/rest/v1/rpc/leaderboard_overall", mapOf("p_limit" to limit), token = session.accessToken)
+        val rows = (json as? List<*>).orEmpty()
+        CloudResult.Ok(
+            rows.mapNotNull { it as? Map<*, *> }.map {
+                LeaderboardEntry(
+                    userId = it.strOr("user_id", ""),
+                    username = it.strOr("username", ""),
+                    rating = it.intOr("rating", 0),
+                    matches = it.intOr("matches", 0),
+                    wins = it.intOr("wins", 0)
+                )
+            }
+        )
+    }
+
+    actual suspend fun leaderboardSeason(session: Session, limit: Int): CloudResult<List<LeaderboardEntry>> = call {
+        val json = post("/rest/v1/rpc/leaderboard_season", mapOf("p_limit" to limit), token = session.accessToken)
+        val rows = (json as? List<*>).orEmpty()
+        CloudResult.Ok(
+            rows.mapNotNull { it as? Map<*, *> }.map {
+                LeaderboardEntry(
+                    userId = it.strOr("user_id", ""),
+                    username = it.strOr("username", ""),
+                    rating = it.intOr("points", 0),
+                    matches = it.intOr("matches", 0),
+                    wins = it.intOr("wins", 0)
+                )
+            }
+        )
+    }
+
+    actual suspend fun myRank(session: Session, season: Boolean): CloudResult<MyRank?> = call {
+        val json = post("/rest/v1/rpc/my_rank", mapOf("p_season" to season), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(row?.let { MyRank(position = it.longOr("position", 0L), rating = it.intOr("rating", 0)) })
+    }
+
+    actual suspend fun recordRankedResult(session: Session, matchId: String, won: Boolean): CloudResult<Unit> = call {
+        post(
+            "/rest/v1/rpc/record_ranked_result",
+            mapOf("p_match_id" to matchId, "p_won" to won),
+            token = session.accessToken
+        )
+        CloudResult.Ok(Unit)
+    }
+
     private fun matchOf(o: Map<*, *>): OnlineMatch = OnlineMatch(
         id = o.strOr("id", ""),
         hostId = o.strOr("host_id", ""),
@@ -290,7 +366,8 @@ actual class CloudApi actual constructor() {
         status = o.strOr("status", "waiting"),
         isQuickMatch = (o["is_quick_match"] as? Boolean) ?: false,
         inviteCode = o["invite_code"] as? String,
-        invitedId = o["invited_id"] as? String
+        invitedId = o["invited_id"] as? String,
+        ranked = (o["ranked"] as? Boolean) ?: false
     )
 
     private fun friendshipOf(o: Map<*, *>): Friendship = Friendship(

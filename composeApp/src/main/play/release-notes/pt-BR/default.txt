@@ -1,3 +1,5 @@
-Corrigido: revanche não aparecia em partidas online (estado de conexão errado sendo checado).
-Corrigido: partida rápida às vezes não conectava dois jogadores que clicaram quase juntos.
-Novo: convidar um amigo agora manda um aviso de verdade — banner "fulano te convidou" aparece em qualquer tela do jogo, com aceitar/recusar.
+Corrigido: partida rápida e convite direto de amigo online.
+Novo: convite e partida rápida agora mostram radar de espera com botão de cancelar; quem é convidado vê popup para aceitar.
+Novo: tela de Amigos reformulada, com busca de verdade e perfil de cada comandante.
+Novo: modo Ranqueada online, com temporadas (uma por estação do ano) e tela de Placar geral/temporada.
+Novo: aviso de atualização disponível e lembrete pra avaliar o jogo na loja.

@@ -21,14 +21,18 @@ import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.CloudResult
 import br.com.navalbattle.data.CommanderHit
+import br.com.navalbattle.data.FriendProfile
 import br.com.navalbattle.data.Friendship
 import br.com.navalbattle.data.GoogleAuth
 import br.com.navalbattle.data.GoogleAuthResult
 import br.com.navalbattle.data.LanGame
 import br.com.navalbattle.data.LanLink
+import br.com.navalbattle.data.LeaderboardEntry
 import br.com.navalbattle.data.LinkState
+import br.com.navalbattle.data.MyRank
 import br.com.navalbattle.data.OnlineLink
 import br.com.navalbattle.data.OnlineMatch
+import br.com.navalbattle.data.SeasonInfo
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
@@ -55,19 +59,28 @@ import br.com.navalbattle.game.Side
 import br.com.navalbattle.ui.LanScreen
 import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
+import br.com.navalbattle.ui.FeedbackPopup
+import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
+import br.com.navalbattle.ui.LeaderboardScreen
+import br.com.navalbattle.ui.OnlineWaitingDialog
 import br.com.navalbattle.ui.MenuScreen
 import br.com.navalbattle.ui.NamesScreen
 import br.com.navalbattle.ui.OnlineScreen
 import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ProfileScreen
 import br.com.navalbattle.ui.ResultScreen
+import br.com.navalbattle.ui.SeasonPopup
 import br.com.navalbattle.ui.ShipyardScreen
 import br.com.navalbattle.ui.StoreScreen
 import br.com.navalbattle.ui.SplashScreen
+import br.com.navalbattle.ui.UpdatePopup
 import br.com.navalbattle.ui.WelcomeScreen
 
-enum class Screen { SPLASH, WELCOME, MENU, SHIPYARD, STORE, PROFILE, LAN, ONLINE, NAMES, PLACEMENT, HANDOFF, BATTLE, RESULT }
+enum class Screen {
+    SPLASH, WELCOME, MENU, SHIPYARD, STORE, PROFILE, LAN, ONLINE, NAMES,
+    PLACEMENT, HANDOFF, BATTLE, RESULT, FRIENDS, LEADERBOARD
+}
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
@@ -254,7 +267,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         )
     }
 
-    /** Procura uma partida rápida aberta; se não achar, fica esperando a própria. */
+    /**
+     * Procura uma partida rápida aberta; se não achar, fica esperando a própria.
+     * Ranqueada só pareia com outra ranqueada — o toggle [rankedMode] decide, mas
+     * só vale de verdade se a temporada corrente já foi aceita (ver [seasonPopupNeeded]).
+     */
     fun startQuickMatchOnline() {
         val session = profile.currentSession() ?: return
         onlineLink.close()
@@ -262,6 +279,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineLink.quickMatch(
             session = session,
             mode = mode.name,
+            ranked = rankedMode && !seasonPopupNeeded,
             onState = { s, side -> onMain { onOnlineState(s, side) } },
             onLine = { line -> onMain { onLine(line) } }
         )
@@ -287,6 +305,13 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         rematchRequestedByOpponent = false
     }
 
+    /** Cancela a busca de partida rápida ou a sala aberta esperando alguém aceitar. */
+    fun cancelOnlineWait() {
+        if (onlineLinkState != LinkState.SEARCHING && onlineLinkState != LinkState.HOSTING) return
+        onlineLink.finish("abandoned")
+        closeOnline()
+    }
+
     private fun onOnlineState(state: LinkState, side: Side) {
         onlineLinkState = state
         if (state != LinkState.CONNECTED) return
@@ -297,6 +322,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val m = Match(mode, Opponent.ONLINE, mySide = side)
         m.setName(side, profile.displayName)
         match = m
+        rankedResultSent = false
         onlineLink.send(Protocol.hello(profile.displayName, mode.name))
         screen = Screen.PLACEMENT
     }
@@ -376,6 +402,88 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val session = profile.currentSession() ?: return
         val scope = uiScope ?: return
         scope.launch { cloud.declineOnlineInvite(session, invite.id) }
+    }
+
+    // ---------------- ranqueada e temporadas ----------------
+
+    /** Casual (padrão) ou ranqueada — só afeta partida rápida; convite de amigo é sempre casual. */
+    var rankedMode by mutableStateOf(false)
+
+    var currentSeason by mutableStateOf<SeasonInfo?>(null)
+        private set
+
+    /** Verdadeiro enquanto o comandante não aceitou o popup da temporada corrente. */
+    val seasonPopupNeeded: Boolean
+        get() {
+            val season = currentSeason ?: return false
+            return season.seasonKey != profile.acceptedSeasonKey
+        }
+
+    suspend fun loadSeason() {
+        if (!profile.signedIn) return
+        val session = profile.currentSession() ?: return
+        currentSeason = (cloud.currentSeason(session) as? CloudResult.Ok)?.value
+    }
+
+    fun acceptSeason() {
+        currentSeason?.let { profile.acceptSeason(it.seasonKey) }
+    }
+
+    /** Lembrete de avaliação na loja — a cada tantas partidas, ver [Profile.feedbackNextPromptAt]. */
+    val feedbackPopupNeeded: Boolean
+        get() = !profile.feedbackOptedOut && profile.matches >= profile.feedbackNextPromptAt
+
+    /** Se a partida em andamento é ranqueada — soma pontos quando terminar. */
+    val onlineMatchRanked: Boolean get() = onlineLink.ranked
+
+    private var rankedResultSent = false
+
+    /** Fecha o resultado ranqueado uma única vez por partida (a flag evita reenvio). */
+    suspend fun reportRankedResult(victory: Boolean) {
+        if (rankedResultSent || !onlineMatchRanked) return
+        val matchId = onlineLink.matchId ?: return
+        val session = profile.currentSession() ?: return
+        rankedResultSent = true
+        cloud.recordRankedResult(session, matchId, victory)
+        loadMyRank(leaderboardSeasonMode)
+    }
+
+    // ---------------- placar ----------------
+
+    var leaderboardSeasonMode by mutableStateOf(true)
+    var leaderboardEntries by mutableStateOf<List<LeaderboardEntry>>(emptyList())
+        private set
+    var myRank by mutableStateOf<MyRank?>(null)
+        private set
+
+    suspend fun loadLeaderboard(season: Boolean) {
+        val session = profile.currentSession() ?: return
+        val r = if (season) cloud.leaderboardSeason(session) else cloud.leaderboardOverall(session)
+        leaderboardEntries = (r as? CloudResult.Ok)?.value.orEmpty()
+        loadMyRank(season)
+    }
+
+    private suspend fun loadMyRank(season: Boolean) {
+        val session = profile.currentSession() ?: return
+        myRank = (cloud.myRank(session, season) as? CloudResult.Ok)?.value
+    }
+
+    // ---------------- perfil de amigo ----------------
+
+    var viewedFriendProfile by mutableStateOf<FriendProfile?>(null)
+        private set
+    var friendProfileLoading by mutableStateOf(false)
+        private set
+
+    suspend fun loadFriendProfile(friendId: String) {
+        val session = profile.currentSession() ?: return
+        friendProfileLoading = true
+        viewedFriendProfile = (cloud.friendProfile(session, friendId) as? CloudResult.Ok)?.value
+        friendProfileLoading = false
+    }
+
+    fun closeFriendProfile() {
+        viewedFriendProfile = null
     }
 
     // ---------------- ações compartilhadas entre LAN e online ----------------
@@ -658,6 +766,10 @@ fun App() {
     // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push
     LaunchedEffect(Unit) { state.updateAvailable = checkUpdateAvailable() }
 
+    // temporada ranqueada corrente — vem do servidor pra não depender do relógio
+    // do aparelho; se for diferente da última aceita, o popup de nova temporada aparece
+    LaunchedEffect(Unit) { state.loadSeason() }
+
     // convite de amigo mirado: com o app aberto e fora de partida, checa de tempos em
     // tempos se alguém convidou — é o que alimenta o banner em qualquer tela do jogo
     LaunchedEffect(Unit) {
@@ -683,8 +795,14 @@ fun App() {
                 Screen.HANDOFF -> state.match?.let { HandoffScreen(state, it) }
                 Screen.BATTLE -> state.match?.let { BattleScreen(state, it) }
                 Screen.RESULT -> state.match?.let { ResultScreen(state, it) }
+                Screen.FRIENDS -> FriendsScreen(state)
+                Screen.LEADERBOARD -> LeaderboardScreen(state)
             }
+            OnlineWaitingDialog(state)
             state.pendingInvite?.let { invite -> InviteBanner(state, invite) }
+            UpdatePopup(state)
+            if (state.match == null) SeasonPopup(state)
+            FeedbackPopup(state)
         }
     }
 }

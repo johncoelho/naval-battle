@@ -38,11 +38,16 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
     var inviteCode: String? = null
         private set
 
+    /** Se a sala conectada é ranqueada — soma pontos no placar ao fim da partida. */
+    var ranked: Boolean = false
+        private set
+
     fun close() {
         pollJob?.cancel()
         pollJob = null
         matchId = null
         inviteCode = null
+        ranked = false
         session = null
     }
 
@@ -93,6 +98,7 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
                 return@launch
             }
             this@OnlineLink.matchId = joined.id
+            this@OnlineLink.ranked = joined.ranked
             onState(LinkState.CONNECTED, Side.ENEMY)
             startMessagePolling(session, joined.id, onLine)
         }
@@ -103,18 +109,29 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
      * A busca tenta algumas vezes antes de desistir e virar anfitrião — uma tentativa
      * só perdia pra corrida quando dois comandantes clicavam quase juntos (nenhum via
      * a sala do outro a tempo, os dois hospedavam e ficavam esperando pra sempre).
+     * [ranked] só pareia com outra sala ranqueada — a ladder de verdade é sempre
+     * matchmaking anônimo, nunca desafio combinado com amigo (mesmo padrão de
+     * Clash Royale e afins: convite de amigo é sempre casual).
      */
-    fun quickMatch(session: Session, mode: String, onState: (LinkState, Side) -> Unit, onLine: (String) -> Unit) {
+    fun quickMatch(
+        session: Session,
+        mode: String,
+        ranked: Boolean,
+        onState: (LinkState, Side) -> Unit,
+        onLine: (String) -> Unit
+    ) {
         this.session = session
         pollJob?.cancel()
+        this.ranked = ranked
         onState(LinkState.SEARCHING, Side.PLAYER)
         pollJob = scope.launch {
             repeat(QUICK_MATCH_SEARCH_ATTEMPTS) { attempt ->
-                val found = (cloud.findQuickMatch(session, mode) as? CloudResult.Ok)?.value
+                val found = (cloud.findQuickMatch(session, mode, ranked) as? CloudResult.Ok)?.value
                 if (found != null) {
                     val joined = (cloud.joinOnlineMatch(session, found.id, session.username) as? CloudResult.Ok)?.value
                     if (joined != null) {
                         matchId = joined.id
+                        this@OnlineLink.ranked = joined.ranked
                         onState(LinkState.CONNECTED, Side.ENEMY)
                         startMessagePolling(session, joined.id, onLine)
                         return@launch
@@ -125,7 +142,7 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
                 if (attempt < QUICK_MATCH_SEARCH_ATTEMPTS - 1) delay(QUICK_MATCH_SEARCH_INTERVAL_MS)
             }
             val created = (cloud.createOnlineMatch(
-                session, mode, quick = true, inviteCode = null, hostName = session.username
+                session, mode, quick = true, inviteCode = null, hostName = session.username, ranked = ranked
             ) as? CloudResult.Ok)?.value
             if (created == null) {
                 onState(LinkState.FAILED, Side.PLAYER)
@@ -153,6 +170,7 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
                 return@launch
             }
             matchId = joined.id
+            this@OnlineLink.ranked = joined.ranked
             onState(LinkState.CONNECTED, Side.ENEMY)
             startMessagePolling(session, joined.id, onLine)
         }

@@ -35,6 +35,15 @@ create table if not exists public.online_matches (
 -- e é ele quem recebe o banner "fulano te convidou" fora da tela Online
 alter table public.online_matches add column if not exists invited_id uuid references auth.users(id) on delete cascade;
 
+-- partida ranqueada: só entra no pareamento de partida rápida com outro ranked
+-- (convite de amigo é sempre casual, de propósito — ranqueada é matchmaking,
+-- não desafio combinado, mesmo padrão de Clash Royale/jogos do gênero); os
+-- dois campos de "resultado gravado" travam contra o cliente reportar duas
+-- vezes o mesmo lado (reabrir a tela de resultado, retomar o app, etc.)
+alter table public.online_matches add column if not exists ranked boolean not null default false;
+alter table public.online_matches add column if not exists host_result_recorded boolean not null default false;
+alter table public.online_matches add column if not exists guest_result_recorded boolean not null default false;
+
 alter table public.online_matches enable row level security;
 
 -- quem está dentro da sala vê a sala; quem procura partida rápida ou tem o
@@ -248,3 +257,205 @@ language sql security invoker as $$
 $$;
 
 grant execute on function public.respond_friend_request(uuid, boolean) to authenticated;
+
+-- ------------------------------------------------------------------ ranqueada e temporadas
+--
+-- Temporadas são as 4 estações do ano (calendário do hemisfério sul, já que o
+-- público é majoritariamente BR) — calculadas na hora, sem tabela de
+-- temporadas pra manter e sem cron pra virar a data: `current_season()`
+-- sempre responde a partir de `now()` do próprio banco, então não existe
+-- fuso/relógio do aparelho para desincronizar com o servidor.
+
+create or replace function public.current_season()
+returns table (season_key text, name text)
+language sql stable as $$
+  select
+    (case when extract(month from now()) = 12
+          then (extract(year from now())::int + 1)
+          else extract(year from now())::int
+     end)::text || '-' ||
+    (case
+       when extract(month from now()) in (12, 1, 2) then 'verao'
+       when extract(month from now()) in (3, 4, 5) then 'outono'
+       when extract(month from now()) in (6, 7, 8) then 'inverno'
+       else 'primavera'
+     end) as season_key,
+    (case
+       when extract(month from now()) in (12, 1, 2) then 'Verão'
+       when extract(month from now()) in (3, 4, 5) then 'Outono'
+       when extract(month from now()) in (6, 7, 8) then 'Inverno'
+       else 'Primavera'
+     end) as name;
+$$;
+
+grant execute on function public.current_season() to authenticated;
+
+-- pontuação geral (histórico completo, nunca zera) vive direto em `profiles`;
+-- pontuação por temporada é acumulada à parte e reinicia sozinha a cada nova
+-- `season_key` (a linha antiga fica gravada, viram os "recordes" de temporadas
+-- passadas — não tem exclusão nenhuma, só para de receber pontos novos)
+alter table public.profiles add column if not exists ranked_rating integer not null default 1000;
+
+create table if not exists public.ranked_season_stats (
+  user_id    uuid        not null references auth.users(id) on delete cascade,
+  season_key text        not null,
+  username   text        not null,
+  points     integer     not null default 1000,
+  matches    integer     not null default 0,
+  wins       integer     not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, season_key)
+);
+
+alter table public.ranked_season_stats enable row level security;
+
+-- ranking é público por natureza (todo jogo do gênero mostra o placar geral);
+-- as escritas só acontecem via record_ranked_result, nunca direto do cliente
+drop policy if exists "ranking temporada: ler" on public.ranked_season_stats;
+create policy "ranking temporada: ler"
+  on public.ranked_season_stats for select
+  using (true);
+
+-- placar geral (profiles.ranked_rating) — mesmo raciocínio de search_commander:
+-- profiles é trancada a "só a própria linha", então o ranking cross-usuário
+-- precisa de uma função com security definer que devolve só o mínimo público
+create or replace function public.leaderboard_overall(p_limit integer default 50)
+returns table (user_id uuid, username text, rating integer, matches integer, wins integer)
+language sql security definer set search_path = public stable as $$
+  select p.id, p.username, p.ranked_rating, p.matches, p.wins
+  from public.profiles p
+  where p.matches > 0
+  order by p.ranked_rating desc
+  limit p_limit;
+$$;
+
+revoke all on function public.leaderboard_overall(integer) from public;
+grant execute on function public.leaderboard_overall(integer) to authenticated;
+
+create or replace function public.leaderboard_season(p_limit integer default 50)
+returns table (user_id uuid, username text, points integer, matches integer, wins integer)
+language sql security definer set search_path = public stable as $$
+  select s.user_id, s.username, s.points, s.matches, s.wins
+  from public.ranked_season_stats s, public.current_season() c
+  where s.season_key = c.season_key
+  order by s.points desc
+  limit p_limit;
+$$;
+
+revoke all on function public.leaderboard_season(integer) from public;
+grant execute on function public.leaderboard_season(integer) to authenticated;
+
+-- posição e pontuação do próprio comandante, mesmo fora do top da lista —
+-- sem isso quem não está entre os melhores nunca saberia a própria colocação.
+-- "position" é palavra reservada do SQL (usada em SUBSTRING ... FROM ... FOR
+-- ... e afins), por isso vai entre aspas em todo lugar que aparece como nome
+create or replace function public.my_rank(p_season boolean)
+returns table ("position" bigint, rating integer)
+language sql security definer set search_path = public stable as $$
+  select "position", rating from (
+    select
+      row_number() over (order by p.ranked_rating desc) as "position",
+      p.ranked_rating as rating,
+      p.id
+    from public.profiles p
+    where p.matches > 0 and not p_season
+  ) ranked
+  where ranked.id = auth.uid()
+  union all
+  select "position", rating from (
+    select
+      row_number() over (order by s.points desc) as "position",
+      s.points as rating,
+      s.user_id
+    from public.ranked_season_stats s, public.current_season() c
+    where s.season_key = c.season_key and p_season
+  ) ranked
+  where ranked.user_id = auth.uid();
+$$;
+
+revoke all on function public.my_rank(boolean) from public;
+grant execute on function public.my_rank(boolean) to authenticated;
+
+-- folha de serviço pública de um amigo, para a tela "ver perfil" da gestão de
+-- amigos — só devolve algo se já existir amizade aceita entre os dois lados,
+-- e só os campos públicos (sem e-mail); avatar fica de fora porque é local
+-- só do aparelho de cada um, nunca sincronizado com a nuvem
+create or replace function public.friend_profile(p_friend_id uuid)
+returns table (
+  username text, insignia text, xp integer, matches integer,
+  wins integer, best_streak integer, ranked_rating integer
+)
+language sql security definer set search_path = public stable as $$
+  select p.username, p.insignia, p.xp, p.matches, p.wins, p.best_streak, p.ranked_rating
+  from public.profiles p
+  where p.id = p_friend_id
+    and exists (
+      select 1 from public.friendships f
+      where f.status = 'accepted'
+        and ((f.requester_id = auth.uid() and f.addressee_id = p_friend_id)
+          or (f.addressee_id = auth.uid() and f.requester_id = p_friend_id))
+    );
+$$;
+
+revoke all on function public.friend_profile(uuid) from public;
+grant execute on function public.friend_profile(uuid) to authenticated;
+
+-- fecha o resultado de uma partida ranqueada — cada lado chama uma vez só (as
+-- flags host_result_recorded/guest_result_recorded travam contra reenvio) e
+-- soma/subtrai pontos como um placar de troféus (vitória +25, derrota -15,
+-- nunca abaixo de zero) — mais simples que ELO de verdade, mas já evita que
+-- perder derrube menos do que subir, igual à maioria dos jogos do gênero
+create or replace function public.record_ranked_result(p_match_id uuid, p_won boolean)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  m public.online_matches%rowtype;
+  is_host boolean;
+  already boolean;
+  delta integer;
+  my_username text;
+  szn text;
+begin
+  select * into m from public.online_matches where id = p_match_id;
+  if m.id is null or not m.ranked then
+    return;
+  end if;
+
+  is_host := (m.host_id = auth.uid());
+  if not is_host and (m.guest_id is null or m.guest_id <> auth.uid()) then
+    return;
+  end if;
+
+  already := case when is_host then m.host_result_recorded else m.guest_result_recorded end;
+  if already then
+    return;
+  end if;
+
+  if is_host then
+    update public.online_matches set host_result_recorded = true where id = p_match_id;
+    my_username := m.host_name;
+  else
+    update public.online_matches set guest_result_recorded = true where id = p_match_id;
+    my_username := m.guest_name;
+  end if;
+
+  delta := case when p_won then 25 else -15 end;
+
+  update public.profiles
+    set ranked_rating = greatest(0, ranked_rating + delta)
+    where id = auth.uid();
+
+  select season_key into szn from public.current_season();
+
+  insert into public.ranked_season_stats (user_id, season_key, username, points, matches, wins)
+  values (auth.uid(), szn, my_username, greatest(0, 1000 + delta), 1, case when p_won then 1 else 0 end)
+  on conflict (user_id, season_key) do update
+    set points = greatest(0, public.ranked_season_stats.points + delta),
+        matches = public.ranked_season_stats.matches + 1,
+        wins = public.ranked_season_stats.wins + case when p_won then 1 else 0 end,
+        username = excluded.username,
+        updated_at = now();
+end $$;
+
+revoke all on function public.record_ranked_result(uuid, boolean) from public;
+grant execute on function public.record_ranked_result(uuid, boolean) to authenticated;

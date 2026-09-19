@@ -9,6 +9,52 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.21.0] — 2026-09-19 · Ranqueada, temporadas, placar e tela de Amigos nova
+
+### Adicionado
+- **Popups de convite e espera** (`ui/InviteBanner.kt`, `ui/OnlineWaitingDialog.kt`
+  novo): convidar um amigo ou procurar partida rápida agora mostra um popup de
+  tela cheia com radar animado e botão de cancelar, em vez de só um estado na
+  tela Online; quem é convidado também vê um popup de aceitar/recusar.
+- **Tela de Amigos nova** (`ui/FriendsScreen.kt`): busca com botão de verdade
+  (antes buscava a cada tecla, sem botão nem resultado visível), pedidos
+  pendentes, lista de amigos com convidar/remover, e um perfil do amigo
+  (patente, XP, pontuação ranqueada, vitórias/derrotas/sequência).
+- **Modo Ranqueada online** (`supabase/online.sql`: `ranked`, `ranked_rating`,
+  `ranked_season_stats`, `record_ranked_result`, `my_rank`,
+  `leaderboard_overall`/`leaderboard_season`, `current_season()`): partida
+  rápida ganha alternância Casual/Ranqueada — convite de amigo continua sempre
+  casual, de propósito, igual à separação ladder/amistoso de outros jogos do
+  gênero. Vitória soma 25 pontos, derrota tira 15 (nunca abaixo de zero).
+- **Temporadas por estação do ano** (calculadas no servidor a partir de
+  `now()`, sem tabela nem cron): a cada temporada nova, `ui/SeasonPopup.kt`
+  mostra um aviso com ícone e cor só daquela estação (sol de verão, folha de
+  outono, floco de inverno, broto de primavera) e trava a ranqueada até o
+  comandante aceitar.
+- **Tela de Placar** (`ui/LeaderboardScreen.kt`): ranking geral e por
+  temporada, sempre mostrando a posição do próprio comandante mesmo fora do
+  topo.
+- **Aviso de atualização mais direto** (`ui/UpdatePopup.kt`): além do banner
+  discreto do menu, agora aparece um popup de tela cheia assim que há uma
+  versão nova disponível.
+- **Lembrete de avaliação na loja** (`ui/FeedbackPopup.kt`): a cada N partidas
+  (com recuo progressivo se o comandante adiar, e opção de nunca mais
+  perguntar), um popup convida a avaliar o jogo na Play Store.
+
+### Corrigido
+- **Partida rápida e convite direto de amigo** ainda falhavam em cenários de
+  corrida (popups de espera/aceite acima resolvem a experiência; o
+  emparelhamento em si já tinha sido corrigido na versão anterior).
+
+### Nota de projeto
+iOS foi mantido em paridade estrutural (`Cloud.ios.kt` espelha os métodos
+novos), mas não foi compilado nem validado nesta versão — foco é Android por
+enquanto. A migração SQL foi aplicada direto no banco de produção pelo SQL
+Editor do Supabase, com autorização explícita do usuário; todas as instruções
+são aditivas e idempotentes (`if not exists`, `create or replace`).
+
+---
+
 ## [0.20.0] — 2026-09-18 · Modo online: convite de amigo com banner, revanche e partida rápida corrigidos
 
 ### Adicionado

@@ -90,6 +90,18 @@ enum class K(val pt: String, val en: String, val es: String) {
     MENU_TAB_DECK("Deque", "Deck", "Cubierta"),
     MENU_TAB_STORE("Loja", "Store", "Tienda"),
     MENU_UPDATE_AVAILABLE("Nova versão disponível — toque para atualizar", "New version available — tap to update", "Nueva versión disponible — toca para actualizar"),
+    UPDATE_POPUP_EYEBROW("Atualização disponível", "Update available", "Actualización disponible"),
+    UPDATE_POPUP_TITLE("Tem uma versão nova do jogo", "There's a new version of the game", "Hay una versión nueva del juego"),
+    UPDATE_POPUP_SUB("Melhorias e correções já publicadas — atualize para não ficar de fora.", "Improvements and fixes already published — update so you don't miss out.", "Mejoras y correcciones ya publicadas — actualiza para no quedarte afuera."),
+    UPDATE_POPUP_NOW("Atualizar agora", "Update now", "Actualizar ahora"),
+    UPDATE_POPUP_LATER("Depois", "Later", "Después"),
+
+    FEEDBACK_POPUP_EYEBROW("Gostando do jogo?", "Enjoying the game?", "¿Te está gustando el juego?"),
+    FEEDBACK_POPUP_TITLE("Deixe sua avaliação na loja", "Leave a rating on the store", "Deja tu calificación en la tienda"),
+    FEEDBACK_POPUP_SUB("Um comentário seu ajuda outros comandantes a encontrar o jogo.", "A review from you helps other commanders find the game.", "Una reseña tuya ayuda a otros comandantes a encontrar el juego."),
+    FEEDBACK_POPUP_RATE("Avaliar agora", "Rate now", "Calificar ahora"),
+    FEEDBACK_POPUP_LATER("Agora não", "Not now", "Ahora no"),
+    FEEDBACK_POPUP_NEVER("Não perguntar de novo", "Don't ask again", "No preguntar de nuevo"),
 
     // ---------------------------------------------------------------- modos e classes
     MODE_CLASSIC("Clássico", "Classic", "Clásico"),
@@ -386,7 +398,10 @@ enum class K(val pt: String, val en: String, val es: String) {
     ONLINE_STEP_2("Numa sala de amigo, mande o código por fora do jogo", "In a friend room, send the code outside the game", "En una sala de amigo, manda el código fuera del juego"),
     ONLINE_STEP_3("Cada um posiciona a própria frota e a batalha começa", "Each deploys their own fleet and the battle starts", "Cada uno despliega su flota y empieza la batalla"),
 
+    ONLINE_INVITE_EYEBROW("Convite recebido", "Invite received", "Invitación recibida"),
     ONLINE_INVITE_BANNER("%s te convidou para uma partida", "%s invited you to a match", "%s te invitó a una partida"),
+    ONLINE_WAIT_SEARCH_TITLE("Procurando comandante…", "Looking for a commander…", "Buscando comandante…"),
+    ONLINE_WAIT_HOST_TITLE("Aguardando aceitar…", "Waiting to be accepted…", "Esperando que acepten…"),
 
     FRIENDS_TITLE("Amigos", "Friends", "Amigos"),
     FRIENDS_SEARCH_HINT("Buscar comandante pelo nome", "Search commander by name", "Buscar comandante por nombre"),
@@ -399,6 +414,37 @@ enum class K(val pt: String, val en: String, val es: String) {
     FRIENDS_EMPTY("Nenhum amigo ainda — busque um comandante acima", "No friends yet — search a commander above", "Ningún amigo todavía — busca un comandante arriba"),
     FRIENDS_INVITE("Convidar para jogar", "Invite to play", "Invitar a jugar"),
     FRIENDS_REMOVE("Remover", "Remove", "Quitar"),
+    FRIENDS_SEARCH_BUTTON("Buscar", "Search", "Buscar"),
+    FRIENDS_SEARCH_EMPTY("Nenhum comandante encontrado com esse nome", "No commander found with that name", "Ningún comandante encontrado con ese nombre"),
+    FRIENDS_VIEW_PROFILE("Ver perfil", "View profile", "Ver perfil"),
+    FRIENDS_MANAGE("Gerenciar amigos", "Manage friends", "Gestionar amigos"),
+    FRIENDS_MANAGE_SUB("Buscar, convidar e ver o perfil de quem já é amigo", "Search, invite, and view the profile of your friends", "Buscar, invitar y ver el perfil de tus amigos"),
+    FRIENDS_PROFILE_TITLE("Folha de serviço", "Service record", "Hoja de servicio"),
+    FRIENDS_PROFILE_LOADING("Carregando…", "Loading…", "Cargando…"),
+    FRIENDS_PROFILE_NOT_FOUND("Não consegui ver o perfil dele", "Couldn't load their profile", "No pude ver su perfil"),
+
+    ONLINE_MODE_CASUAL("Casual", "Casual", "Casual"),
+    ONLINE_MODE_RANKED("Ranqueada", "Ranked", "Clasificatoria"),
+    ONLINE_MODE_RANKED_LOCKED("entre na temporada para liberar", "join the season to unlock", "entra en la temporada para desbloquear"),
+    ONLINE_LEADERBOARD_BUTTON("Ver ranking", "View ranking", "Ver clasificación"),
+
+    LEADERBOARD_TITLE("Ranking", "Ranking", "Clasificación"),
+    LEADERBOARD_OVERALL("Geral", "Overall", "General"),
+    LEADERBOARD_SEASON("Temporada", "Season", "Temporada"),
+    LEADERBOARD_YOUR_RANK("Sua posição", "Your position", "Tu posición"),
+    LEADERBOARD_UNRANKED("Jogue uma ranqueada para entrar no placar", "Play a ranked match to join the board", "Juega una clasificatoria para entrar en la tabla"),
+    LEADERBOARD_EMPTY("Ninguém no placar ainda — seja o primeiro", "No one on the board yet — be the first", "Nadie en la tabla todavía — sé el primero"),
+    LEADERBOARD_POSITION("#%s", "#%s", "#%s"),
+    LEADERBOARD_POINTS("%s pts", "%s pts", "%s pts"),
+
+    SEASON_POPUP_EYEBROW("Nova temporada", "New season", "Nueva temporada"),
+    SEASON_POPUP_TITLE("Temporada de %s começou", "The %s season has started", "La temporada de %s comenzó"),
+    SEASON_POPUP_SUB("Entre para liberar partidas ranqueadas e disputar o placar da temporada.", "Join to unlock ranked matches and compete on the season leaderboard.", "Entra para desbloquear partidas clasificatorias y competir en la tabla de la temporada."),
+    SEASON_POPUP_JOIN("Entrar na temporada", "Join the season", "Entrar a la temporada"),
+    SEASON_NAME_VERAO("Verão", "Summer", "Verano"),
+    SEASON_NAME_OUTONO("Outono", "Autumn", "Otoño"),
+    SEASON_NAME_INVERNO("Inverno", "Winter", "Invierno"),
+    SEASON_NAME_PRIMAVERA("Primavera", "Spring", "Primavera"),
     FRIENDS_SENT_TAG("enviado", "sent", "enviado"),
 
     // ---------------------------------------------------------------- patentes

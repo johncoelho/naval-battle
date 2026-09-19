@@ -132,7 +132,8 @@ actual class CloudApi actual constructor() {
         quick: Boolean,
         inviteCode: String?,
         hostName: String,
-        invitedId: String?
+        invitedId: String?,
+        ranked: Boolean
     ): CloudResult<OnlineMatch> = call {
         val body = JSONObject()
             .put("host_id", session.userId)
@@ -141,6 +142,7 @@ actual class CloudApi actual constructor() {
             .put("is_quick_match", quick)
             .put("invite_code", inviteCode)
             .put("invited_id", invitedId)
+            .put("ranked", ranked)
         val json = post(
             "/rest/v1/online_matches",
             body,
@@ -151,10 +153,10 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(matchOf(row))
     }
 
-    actual suspend fun findQuickMatch(session: Session, mode: String): CloudResult<OnlineMatch?> = call {
+    actual suspend fun findQuickMatch(session: Session, mode: String, ranked: Boolean): CloudResult<OnlineMatch?> = call {
         val json = get(
             "/rest/v1/online_matches?status=eq.waiting&is_quick_match=is.true" +
-                "&mode=eq.$mode&host_id=neq.${session.userId}&order=created_at.asc&limit=1",
+                "&mode=eq.$mode&ranked=is.$ranked&host_id=neq.${session.userId}&order=created_at.asc&limit=1",
             session.accessToken
         )
         val arr = JSONArray(json)
@@ -294,6 +296,82 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(list)
     }
 
+    actual suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?> = call {
+        val body = JSONObject().put("p_friend_id", friendId)
+        val json = post("/rest/v1/rpc/friend_profile", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        if (arr.length() == 0) return@call CloudResult.Ok(null)
+        val o = arr.getJSONObject(0)
+        CloudResult.Ok(
+            FriendProfile(
+                username = o.optString("username"),
+                insignia = o.optString("insignia", "anc"),
+                xp = o.optInt("xp"),
+                matches = o.optInt("matches"),
+                wins = o.optInt("wins"),
+                bestStreak = o.optInt("best_streak"),
+                rankedRating = o.optInt("ranked_rating", 1000)
+            )
+        )
+    }
+
+    // ------------------------------------------------------------------ ranqueada e temporadas
+
+    actual suspend fun currentSeason(session: Session): CloudResult<SeasonInfo> = call {
+        val json = get("/rest/v1/rpc/current_season", session.accessToken)
+        val o = JSONArray(json).getJSONObject(0)
+        CloudResult.Ok(SeasonInfo(seasonKey = o.getString("season_key"), name = o.getString("name")))
+    }
+
+    actual suspend fun leaderboardOverall(session: Session, limit: Int): CloudResult<List<LeaderboardEntry>> = call {
+        val body = JSONObject().put("p_limit", limit)
+        val json = post("/rest/v1/rpc/leaderboard_overall", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            LeaderboardEntry(
+                userId = o.getString("user_id"),
+                username = o.optString("username"),
+                rating = o.optInt("rating"),
+                matches = o.optInt("matches"),
+                wins = o.optInt("wins")
+            )
+        }
+        CloudResult.Ok(list)
+    }
+
+    actual suspend fun leaderboardSeason(session: Session, limit: Int): CloudResult<List<LeaderboardEntry>> = call {
+        val body = JSONObject().put("p_limit", limit)
+        val json = post("/rest/v1/rpc/leaderboard_season", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            LeaderboardEntry(
+                userId = o.getString("user_id"),
+                username = o.optString("username"),
+                rating = o.optInt("points"),
+                matches = o.optInt("matches"),
+                wins = o.optInt("wins")
+            )
+        }
+        CloudResult.Ok(list)
+    }
+
+    actual suspend fun myRank(session: Session, season: Boolean): CloudResult<MyRank?> = call {
+        val body = JSONObject().put("p_season", season)
+        val json = post("/rest/v1/rpc/my_rank", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        if (arr.length() == 0) return@call CloudResult.Ok(null)
+        val o = arr.getJSONObject(0)
+        CloudResult.Ok(MyRank(position = o.getLong("position"), rating = o.getInt("rating")))
+    }
+
+    actual suspend fun recordRankedResult(session: Session, matchId: String, won: Boolean): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_match_id", matchId).put("p_won", won)
+        post("/rest/v1/rpc/record_ranked_result", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     // optString devolve "" tanto para campo ausente quanto para JSON null — para os
     // campos que fazem diferença (nulo é "ninguém entrou ainda"), checa com isNull
     private fun JSONObject.stringOrNull(key: String): String? =
@@ -309,7 +387,8 @@ actual class CloudApi actual constructor() {
         status = o.optString("status", "waiting"),
         isQuickMatch = o.optBoolean("is_quick_match", false),
         inviteCode = o.stringOrNull("invite_code"),
-        invitedId = o.stringOrNull("invited_id")
+        invitedId = o.stringOrNull("invited_id"),
+        ranked = o.optBoolean("ranked", false)
     )
 
     private fun friendshipOf(o: JSONObject): Friendship = Friendship(

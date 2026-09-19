@@ -20,25 +20,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
-import br.com.navalbattle.data.OnlineMatch
+import br.com.navalbattle.data.LinkState
+import br.com.navalbattle.data.openStoreListing
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 
 /**
- * Convite de amigo mirado, num popup de verdade por cima de qualquer tela —
- * antes era só uma faixa fina no topo, fácil de não notar (motivo mais provável
- * de o convite "não funcionar" na prática). Só fecha pelos botões, de propósito:
- * não dá pra ignorar sem responder, já que quem convidou fica esperando.
+ * Lembrete de avaliação na loja — dispara a cada tantas partidas (ver
+ * [br.com.navalbattle.game.Profile.feedbackNextPromptAt]), não só uma vez, mas
+ * some de vez se o comandante disser que não quer ver de novo. Só aparece fora
+ * de partida e sem nenhum outro popup mais urgente na frente.
  */
 @Composable
-fun InviteBanner(state: AppState, invite: OnlineMatch) {
+fun FeedbackPopup(state: AppState) {
+    if (!state.feedbackPopupNeeded || state.match != null) return
+    if (state.updateAvailable || state.seasonPopupNeeded || state.pendingInvite != null) return
+    if (state.onlineLinkState == LinkState.SEARCHING || state.onlineLinkState == LinkState.HOSTING) return
+
     Box(
         Modifier
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.86f))
-            .clickable(enabled = false) {}
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(24.dp),
         contentAlignment = Alignment.Center
@@ -47,23 +51,36 @@ fun InviteBanner(state: AppState, invite: OnlineMatch) {
             Modifier
                 .fillMaxWidth()
                 .background(Naval.surface2)
-                .border(1.dp, Naval.amber)
+                .border(1.dp, Naval.green)
                 .padding(20.dp)
         ) {
-            HudLabel(t(K.ONLINE_INVITE_EYEBROW), Naval.muted)
+            HudLabel(t(K.FEEDBACK_POPUP_EYEBROW), Naval.muted)
             Gap(8)
             Text(
-                t(K.ONLINE_INVITE_BANNER, invite.hostName),
+                t(K.FEEDBACK_POPUP_TITLE),
                 style = NavalType.title,
                 color = Naval.ink,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
+            Gap(10)
+            HudLabel(t(K.FEEDBACK_POPUP_SUB), Naval.inkSoft)
             Gap(20)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SecondaryButton(t(K.FRIENDS_DECLINE), modifier = Modifier.weight(1f)) { state.declineInvite() }
-                PrimaryButton(t(K.FRIENDS_ACCEPT), modifier = Modifier.weight(1f)) { state.acceptInvite() }
+                SecondaryButton(t(K.FEEDBACK_POPUP_LATER), modifier = Modifier.weight(1f)) {
+                    state.profile.deferFeedbackPrompt()
+                }
+                PrimaryButton(t(K.FEEDBACK_POPUP_RATE), modifier = Modifier.weight(1f)) {
+                    openStoreListing()
+                    state.profile.optOutFeedback()
+                }
             }
+            Gap(12)
+            HudLabel(
+                t(K.FEEDBACK_POPUP_NEVER),
+                Naval.muted,
+                Modifier.clickable { state.profile.optOutFeedback() }
+            )
         }
     }
 }

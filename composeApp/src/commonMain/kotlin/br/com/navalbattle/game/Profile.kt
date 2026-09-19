@@ -191,6 +191,39 @@ class Profile(private val prefs: Prefs) {
         return cursor % count
     }
 
+    /**
+     * Última temporada ranqueada que o comandante aceitou no popup — local, não
+     * viaja pra nuvem. Enquanto for diferente da temporada corrente (vinda do
+     * servidor), o popup de "nova temporada" volta a aparecer e a ranqueada
+     * fica bloqueada, mesma ideia de season pass de outros jogos do gênero.
+     */
+    var acceptedSeasonKey: String by mutableStateOf(prefs.getString(K_SEASON_ACCEPTED, ""))
+        private set
+
+    fun acceptSeason(seasonKey: String) {
+        acceptedSeasonKey = seasonKey
+        prefs.putString(K_SEASON_ACCEPTED, seasonKey)
+    }
+
+    /**
+     * Lembrete de avaliação na loja — aparece a cada tantas partidas, não só uma
+     * vez, mas para de vez se o comandante disser que não quer mais ver.
+     */
+    var feedbackOptedOut: Boolean by mutableStateOf(prefs.getInt(K_FEEDBACK_OPT_OUT, 0) == 1)
+        private set
+    var feedbackNextPromptAt: Int by mutableStateOf(prefs.getInt(K_FEEDBACK_NEXT_AT, 5))
+        private set
+
+    fun deferFeedbackPrompt() {
+        feedbackNextPromptAt += 15
+        prefs.putInt(K_FEEDBACK_NEXT_AT, feedbackNextPromptAt)
+    }
+
+    fun optOutFeedback() {
+        feedbackOptedOut = true
+        prefs.putInt(K_FEEDBACK_OPT_OUT, 1)
+    }
+
     fun rememberSession(session: Session) {
         accountId = session.userId
         accountEmail = session.email
@@ -428,5 +461,8 @@ class Profile(private val prefs: Prefs) {
         const val K_AVATAR = "avatar"
         const val K_WELCOME_DONE = "welcome_done"
         const val K_THEME_TRACK = "theme_track"
+        const val K_SEASON_ACCEPTED = "season_accepted"
+        const val K_FEEDBACK_OPT_OUT = "feedback_opt_out"
+        const val K_FEEDBACK_NEXT_AT = "feedback_next_at"
     }
 }

@@ -66,10 +66,19 @@ na próxima partida tática — some ao ser usado, a recarga normal segue igual.
   conta conectada. Mesmo protocolo de jogadas do modo rede local, só que trafegando
   pela REST do Supabase em vez de socket — cada lado grava a própria jogada e consulta
   por novidades a cada 1-2 segundos, sem precisar dos dois na mesma rede.
-  - **Amigos** — pedido de amizade por nome de comandante, aceitar/recusar, lista
-    salva na conta; convidar um amigo da lista abre uma sala do mesmo jeito que criar
-    uma manualmente.
-- **Ranqueada** — pontuação valendo de verdade, planejada, ainda não implementada.
+  - Convidar um amigo ou procurar partida rápida abre um popup com radar de espera
+    e botão de cancelar; quem é convidado vê um popup de aceitar/recusar.
+  - **Amigos** — tela própria (`ui/FriendsScreen.kt`) com busca por nome de
+    comandante, pedidos pendentes, lista de amigos e perfil de cada um (patente,
+    XP, pontuação ranqueada, vitórias/derrotas/sequência); convidar um amigo da
+    lista abre uma sala do mesmo jeito que criar uma manualmente.
+- **Ranqueada** — alternância Casual/Ranqueada na partida rápida (convite de amigo
+  continua sempre casual, de propósito). Vitória soma 25 pontos, derrota tira 15,
+  nunca abaixo de zero. Temporadas por estação do ano, calculadas no servidor sem
+  tabela nem cron (`current_season()`); a cada temporada nova, um popup com ícone e
+  cor da estação pede aceite antes de liberar a ranqueada. Tela de **Placar**
+  (`ui/LeaderboardScreen.kt`) mostra ranking geral e por temporada, sempre com a
+  posição do próprio comandante mesmo fora do topo.
 
 ### Carreira
 
@@ -230,9 +239,10 @@ detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume n
 - [x] Login com Google — configurado de ponta a ponta (Google Cloud + Supabase),
       ver [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código)
 - [x] Convite de amigo e partida rápida pela internet — modo Online via REST do
-      Supabase (sala de amigo com código, partida rápida, lista de amigos)
-- [ ] Convite direto de amigo com notificação ("fulano te chamou pra jogar") — hoje
-      só abre uma sala normal, o código ainda viaja por fora do jogo
+      Supabase (sala de amigo com código, partida rápida, lista de amigos), com
+      popup de espera/aceite dos dois lados e tela de Amigos dedicada
+- [x] Ranqueada com temporadas por estação do ano e tela de Placar (geral e por
+      temporada)
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
 - [ ] Compras com pagamento real (Google Play Billing) vendendo créditos
 - [~] Alvo iOS: preferências, nuvem, modo Online e áudio já têm `actual` de verdade;
