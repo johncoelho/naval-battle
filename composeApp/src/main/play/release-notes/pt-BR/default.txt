@@ -1,4 +1,4 @@
-Nova frota: os cinco navios foram redesenhados do zero, com casco longo e estreito visto de cima, convés cheio de detalhe e sombra na água — e agora cabem folgados na célula, sem sobrepor o navio vizinho.
-Novos retratos: oito comandantes no traço de cartaz de guerra, com barba, cachimbo, lenço e capacete de voo. A patente é a mesma — muda só o rosto.
-Novo: tudo passa a salvar sozinho na nuvem. O botão "sincronizar agora" saiu; pontuação, partidas, frota, retrato e idioma sobem sem você pedir.
-Corrigido: o convite direto de amigo não mostra mais código de sala — é só aceitar do outro lado.
+Nova tela de fim de partida: a conta do XP aparece parcela por parcela (base, precisao, navios afundados, ataque relampago), com seis condecoracoes para conquistar, barra de patente e a sua frota mostrando quem voltou e quem ficou no mar.
+Nova frota: os cinco navios redesenhados do zero, com casco longo e estreito visto de cima e conves cheio de detalhe — e agora cabem folgados na celula, sem sobrepor o navio vizinho.
+Novos retratos: oito comandantes no traco de cartaz de guerra, com barba, cachimbo, lenco e capacete de voo.
+Novo: tudo passa a salvar sozinho na nuvem, sem botao de sincronizar.

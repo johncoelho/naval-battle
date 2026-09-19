@@ -69,8 +69,24 @@ enum class Avatar(val id: String, val key: K, val woman: Boolean) {
     }
 }
 
-/** Resultado de uma partida, do ponto de vista da carreira. */
-data class Award(val xp: Int, val credits: Int, val victory: Boolean, val rankUp: Rank?)
+/**
+ * Resultado de uma partida, do ponto de vista da carreira. Carrega as parcelas do
+ * XP separadas porque a tela de resultado mostra a conta sendo feita, linha a linha —
+ * inclusive a parcela que ficou em zero, que é o que ensina onde dá para melhorar.
+ */
+data class Award(
+    val xp: Int,
+    val credits: Int,
+    val victory: Boolean,
+    val rankUp: Rank?,
+    val base: Int,
+    val precision: Int,
+    val precisionBonus: Int,
+    val shipsSunk: Int,
+    val sunkBonus: Int,
+    val blitzBonus: Int,
+    val turns: Int
+)
 
 /**
  * Carreira do comandante: identidade, patente, créditos e estatísticas de todas as
@@ -404,7 +420,10 @@ class Profile(private val prefs: Prefs) {
         // vitória rende o dobro; precisão e economia de turnos entram como bônus
         val base = if (victory) 220 else 80
         val precision = if (shotsFired == 0) 0 else (hitsLanded * 100) / shotsFired
-        val bonus = precision * 2 + shipsSunk * 15 + if (victory && turns <= 40) 120 else 0
+        val precisionBonus = precision * 2
+        val sunkBonus = shipsSunk * 15
+        val blitzBonus = if (victory && turns <= BLITZ_TURNS) 120 else 0
+        val bonus = precisionBonus + sunkBonus + blitzBonus
         val gainedXp = base + bonus
         val gainedCredits = (base + bonus) / 3
 
@@ -428,7 +447,19 @@ class Profile(private val prefs: Prefs) {
         prefs.putInt(K_STREAK, streak)
         prefs.putInt(K_BEST_STREAK, bestStreak)
 
-        return Award(gainedXp, gainedCredits, victory, rank.takeIf { it != before })
+        return Award(
+            xp = gainedXp,
+            credits = gainedCredits,
+            victory = victory,
+            rankUp = rank.takeIf { it != before },
+            base = base,
+            precision = precision,
+            precisionBonus = precisionBonus,
+            shipsSunk = shipsSunk,
+            sunkBonus = sunkBonus,
+            blitzBonus = blitzBonus,
+            turns = turns
+        )
     }
 
     /** Zera a carreira inteira — pedido explícito do comandante no perfil. */
@@ -448,34 +479,37 @@ class Profile(private val prefs: Prefs) {
         avatar = Avatar.COMMANDER_M
     }
 
-    private companion object {
-        const val K_NAME = "name"
-        const val K_INSIGNIA = "insignia"
-        const val K_XP = "xp"
-        const val K_CREDITS = "credits"
-        const val K_MATCHES = "matches"
-        const val K_WINS = "wins"
-        const val K_SHOTS = "shots"
-        const val K_HITS = "hits"
-        const val K_SUNK = "sunk"
-        const val K_STREAK = "streak"
-        const val K_BEST_STREAK = "best_streak"
-        const val K_OWNED = "owned"
-        const val K_EQUIPPED = "equipped"
-        const val K_FLEETS = "fleets"
-        const val K_FLEET = "fleet"
-        const val K_ABILITY_CHARGES = "ability_charges"
-        const val K_UID = "uid"
-        const val K_EMAIL = "email"
-        const val K_TOKEN = "token"
-        const val K_REFRESH = "refresh"
-        const val K_MUSIC = "music"
-        const val K_LANG = "lang"
-        const val K_AVATAR = "avatar"
-        const val K_WELCOME_DONE = "welcome_done"
-        const val K_THEME_TRACK = "theme_track"
-        const val K_SEASON_ACCEPTED = "season_accepted"
-        const val K_FEEDBACK_OPT_OUT = "feedback_opt_out"
-        const val K_FEEDBACK_NEXT_AT = "feedback_next_at"
+    companion object {
+        /** Vitoria ate este numero de turnos rende o bonus de ataque relampago. */
+        const val BLITZ_TURNS = 40
+
+        private const val K_NAME = "name"
+        private const val K_INSIGNIA = "insignia"
+        private const val K_XP = "xp"
+        private const val K_CREDITS = "credits"
+        private const val K_MATCHES = "matches"
+        private const val K_WINS = "wins"
+        private const val K_SHOTS = "shots"
+        private const val K_HITS = "hits"
+        private const val K_SUNK = "sunk"
+        private const val K_STREAK = "streak"
+        private const val K_BEST_STREAK = "best_streak"
+        private const val K_OWNED = "owned"
+        private const val K_EQUIPPED = "equipped"
+        private const val K_FLEETS = "fleets"
+        private const val K_FLEET = "fleet"
+        private const val K_ABILITY_CHARGES = "ability_charges"
+        private const val K_UID = "uid"
+        private const val K_EMAIL = "email"
+        private const val K_TOKEN = "token"
+        private const val K_REFRESH = "refresh"
+        private const val K_MUSIC = "music"
+        private const val K_LANG = "lang"
+        private const val K_AVATAR = "avatar"
+        private const val K_WELCOME_DONE = "welcome_done"
+        private const val K_THEME_TRACK = "theme_track"
+        private const val K_SEASON_ACCEPTED = "season_accepted"
+        private const val K_FEEDBACK_OPT_OUT = "feedback_opt_out"
+        private const val K_FEEDBACK_NEXT_AT = "feedback_next_at"
     }
 }

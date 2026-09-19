@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Relatório de combate — proposta</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+  :root{
+    --bg:#080B07; --surface:#101509; --surface2:#161C10; --surface3:#1F2717;
+    --line:#2B3520; --ink:#EFF2E4; --inkSoft:#B4C0A4; --muted:#6B7760;
+    --green:#5F8F4A; --greenBright:#8ED17A; --amber:#E6AC3F; --amberStrong:#FFC95C;
+    --danger:#E05A35;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#050704;font-family:'Chakra Petch',sans-serif;display:flex;gap:28px;padding:28px;align-items:flex-start;justify-content:center}
+  .phone{width:430px;background:var(--bg);border:1px solid var(--line);padding:20px 20px 24px;display:flex;flex-direction:column;gap:0}
+  .hud{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase}
+  .topbar{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px}
+  .sec{margin-top:22px}
+  .sechead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .sechead .hud{white-space:nowrap}
+  .rule{height:1px;background:var(--line);flex:1}
+  .row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid #1B2214}
+  .row:last-child{border-bottom:0}
+  .lbl{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.4px;color:var(--inkSoft)}
+  .calc{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);margin-left:8px}
+  .val{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .val.gain{color:var(--greenBright)}
+  .val.zero{color:#4A5340}
+  .total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;background:var(--surface2);border:1px solid var(--green);padding:12px 14px}
+  .total .big{font-size:30px;font-weight:700;color:var(--greenBright);line-height:1}
+  .medals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .medal{background:var(--surface2);border:1px solid var(--line);padding:10px 8px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .medal.on{border-color:var(--amber);background:#1A200F}
+  .medal .name{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;color:var(--inkSoft);line-height:1.35}
+  .medal.off .name{color:#4A5340}
+  .medal .req{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#3E4736;letter-spacing:.5px}
+  .rank{background:var(--surface2);border:1px solid var(--line);padding:14px}
+  .bar{height:12px;background:#0C1208;border:1px solid var(--line);position:relative;overflow:hidden;margin:10px 0 8px}
+  .bar i{position:absolute;inset:0;width:57%;background:repeating-linear-gradient(90deg,var(--amber) 0 6px,#C9962F 6px 10px)}
+  .bar b{position:absolute;inset:0;left:57%;width:9%;background:var(--greenBright);opacity:.85}
+  .fleet{display:flex;flex-direction:column;gap:7px}
+  .ship{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--line);padding:7px 10px}
+  .ship.sunk{opacity:.55;border-color:#33200F}
+  .ship .nm{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.4px;color:var(--inkSoft);flex:1}
+  .ship.sunk .nm{color:var(--muted);text-decoration:line-through}
+  .tag{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:1px;padding:2px 6px;border:1px solid}
+  .tag.ok{color:var(--greenBright);border-color:#2E4A25}
+  .tag.no{color:var(--danger);border-color:#4A2416}
+  .btn{padding:16px;text-align:center;font-weight:700;font-size:17px;letter-spacing:1px}
+  .btn.p{background:var(--amber);color:#1E1402;margin-top:18px}
+  .btn.s{border:1px solid var(--line);color:var(--ink);margin-top:8px}
+  .note{max-width:360px;color:#8FA0A8;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.85}
+  .note h3{font-family:'Chakra Petch',sans-serif;color:#EAF1F7;font-size:19px;margin:0 0 10px}
+  .note b{color:var(--amberStrong);font-weight:400}
+  .note hr{border:0;border-top:1px solid #23303A;margin:16px 0}
+</style>
+</head>
+<body>
+
+  <div class="phone">
+    <div class="topbar">
+      <span class="hud">Relatório de combate</span>
+      <span class="hud" style="color:var(--amberStrong)">Clássico</span>
+    </div>
+
+    <!-- desfecho -->
+    <div style="display:flex;align-items:center;gap:12px">
+      <svg width="46" height="34" viewBox="0 0 46 34"><g fill="#E6AC3F">
+        <path d="M2,4 L30,4 L38,10 L10,10 Z"/><path d="M2,14 L30,14 L38,20 L10,20 Z" opacity=".75"/><path d="M2,24 L30,24 L38,30 L10,30 Z" opacity=".5"/>
+      </g></svg>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:42px;font-weight:700;color:var(--danger);line-height:1">DERROTA</div>
+        <div class="hud" style="margin-top:2px">Nossa frota foi destruída</div>
+      </div>
+      <svg width="46" height="34" viewBox="0 0 46 34"><g fill="#E6AC3F" transform="scale(-1,1) translate(-46,0)">
+        <path d="M2,4 L30,4 L38,10 L10,10 Z"/><path d="M2,14 L30,14 L38,20 L10,20 Z" opacity=".75"/><path d="M2,24 L30,24 L38,30 L10,30 Z" opacity=".5"/>
+      </g></svg>
+    </div>
+
+    <!-- apuração -->
+    <div class="sec">
+      <div class="sechead"><span class="hud">Apuração de pontos</span><i class="rule"></i></div>
+      <div class="row"><span><span class="lbl">Base de combate</span><span class="calc">derrota</span></span><span class="val">80</span></div>
+      <div class="row"><span><span class="lbl">Precisão</span><span class="calc">28% × 2</span></span><span class="val gain">+56</span></div>
+      <div class="row"><span><span class="lbl">Navios afundados</span><span class="calc">4 × 15</span></span><span class="val gain">+60</span></div>
+      <div class="row"><span><span class="lbl">Ataque relâmpago</span><span class="calc">38 turnos · só em vitória</span></span><span class="val zero">—</span></div>
+      <div class="total">
+        <div>
+          <div class="hud" style="color:var(--green)">Experiência ganha</div>
+          <div class="big">+196 XP</div>
+        </div>
+        <div style="text-align:right">
+          <div class="hud" style="color:var(--muted)">Créditos</div>
+          <div style="font-size:24px;font-weight:700;color:var(--amberStrong)">◆ +65</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- condecorações -->
+    <div class="sec">
+      <div class="sechead"><span class="hud">Condecorações</span><i class="rule"></i><span class="hud" style="color:var(--amberStrong)">2 / 6</span></div>
+      <div class="medals">
+        <div class="medal on">
+          <svg width="34" height="40" viewBox="0 0 34 40">
+            <rect x="9" y="0" width="16" height="12" fill="#8C3B22"/><rect x="13" y="0" width="3" height="12" fill="#E6AC3F"/><rect x="18" y="0" width="3" height="12" fill="#E6AC3F"/>
+            <circle cx="17" cy="25" r="12" fill="#E6AC3F"/><circle cx="17" cy="25" r="12" fill="none" stroke="#FFC95C"/>
+            <circle cx="17" cy="25" r="7" fill="none" stroke="#1E1402" stroke-width="1.6"/>
+            <path d="M17,16 L17,34 M8,25 L26,25" stroke="#1E1402" stroke-width="1.6"/>
+          </svg>
+          <span class="name">CAÇADOR<br>DE FROTA</span>
+        </div>
+        <div class="medal on">
+          <svg width="34" height="40" viewBox="0 0 34 40">
+            <rect x="9" y="0" width="16" height="12" fill="#2E4A25"/><rect x="15" y="0" width="4" height="12" fill="#8ED17A"/>
+            <path d="M17,13 L21,23 L32,23 L23,30 L26,40 L17,34 L8,40 L11,30 L2,23 L13,23 Z" fill="#E6AC3F"/>
+          </svg>
+          <span class="name">ESTREIA<br>NO MAR</span>
+        </div>
+        <div class="medal off">
+          <svg width="34" height="40" viewBox="0 0 34 40" opacity=".35">
+            <rect x="9" y="0" width="16" height="12" fill="#3A4436"/>
+            <circle cx="17" cy="25" r="12" fill="none" stroke="#6B7760" stroke-width="2"/>
+            <circle cx="17" cy="25" r="4" fill="#6B7760"/>
+            <path d="M17,13 L17,19 M17,31 L17,37 M5,25 L11,25 M23,25 L29,25" stroke="#6B7760" stroke-width="2"/>
+          </svg>
+          <span class="name">ATIRADOR<br>DE ELITE</span><span class="req">40% precisão</span>
+        </div>
+        <div class="medal off">
+          <svg width="34" height="40" viewBox="0 0 34 40" opacity=".35">
+            <rect x="9" y="0" width="16" height="12" fill="#3A4436"/>
+            <path d="M20,13 L10,27 L16,27 L13,40 L24,24 L18,24 Z" fill="none" stroke="#6B7760" stroke-width="2"/>
+          </svg>
+          <span class="name">ATAQUE<br>RELÂMPAGO</span><span class="req">vencer ≤ 40 turnos</span>
+        </div>
+        <div class="medal off">
+          <svg width="34" height="40" viewBox="0 0 34 40" opacity=".35">
+            <rect x="9" y="0" width="16" height="12" fill="#3A4436"/>
+            <path d="M17,14 L17,36 M10,20 L24,20 M17,36 C11,36 8,31 8,28 M17,36 C23,36 26,31 26,28" fill="none" stroke="#6B7760" stroke-width="2"/>
+            <circle cx="17" cy="15" r="3" fill="none" stroke="#6B7760" stroke-width="2"/>
+          </svg>
+          <span class="name">CASCO<br>INTACTO</span><span class="req">vencer sem perder navio</span>
+        </div>
+        <div class="medal off">
+          <svg width="34" height="40" viewBox="0 0 34 40" opacity=".35">
+            <rect x="9" y="0" width="16" height="12" fill="#3A4436"/>
+            <path d="M6,32 L12,18 L17,26 L22,14 L28,32" fill="none" stroke="#6B7760" stroke-width="2"/>
+          </svg>
+          <span class="name">TRÊS<br>SEGUIDAS</span><span class="req">3 vitórias em sequência</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- patente -->
+    <div class="sec">
+      <div class="sechead"><span class="hud">Carreira</span><i class="rule"></i></div>
+      <div class="rank">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span style="font-size:19px;font-weight:700;color:var(--amberStrong)">MARINHEIRO</span>
+          <span class="lbl">571 XP</span>
+        </div>
+        <div class="bar"><i></i><b></b></div>
+        <div style="display:flex;justify-content:space-between">
+          <span class="hud" style="color:var(--greenBright)">+196 nesta partida</span>
+          <span class="hud">faltam 229 para CABO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- frota -->
+    <div class="sec">
+      <div class="sechead"><span class="hud">Sua frota</span><i class="rule"></i><span class="hud" style="color:var(--danger)">0 / 5 à tona</span></div>
+      <div class="fleet">
+        <div class="ship sunk">
+          <svg width="76" height="14" viewBox="0 0 76 14"><path d="M74,7 C70,4 63,2 55,2 L8,2 C4,2 2,4 2,7 C2,10 4,12 8,12 L55,12 C63,12 70,10 74,7 Z" fill="#5E6A65"/><path d="M74,7 C70,4 63,2 55,2 L8,2 C4,2 2,4 2,7 Z" fill="#8B9992"/></svg>
+          <span class="nm">Porta-aviões</span><span class="tag no">afundado</span>
+        </div>
+        <div class="ship sunk">
+          <svg width="64" height="14" viewBox="0 0 64 14"><path d="M62,7 C58,4 52,2 45,2 L8,2 C4,2 2,4 2,7 C2,10 4,12 8,12 L45,12 C52,12 58,10 62,7 Z" fill="#5E6A65"/><path d="M62,7 C58,4 52,2 45,2 L8,2 C4,2 2,4 2,7 Z" fill="#8B9992"/></svg>
+          <span class="nm">Encouraçado</span><span class="tag no">afundado</span>
+        </div>
+        <div class="ship sunk">
+          <svg width="52" height="14" viewBox="0 0 52 14"><path d="M50,7 C46,4 41,2 35,2 L7,2 C4,2 2,4 2,7 C2,10 4,12 7,12 L35,12 C41,12 46,10 50,7 Z" fill="#5E6A65"/><path d="M50,7 C46,4 41,2 35,2 L7,2 C4,2 2,4 2,7 Z" fill="#8B9992"/></svg>
+          <span class="nm">Cruzador</span><span class="tag no">afundado</span>
+        </div>
+        <div class="ship sunk">
+          <svg width="52" height="14" viewBox="0 0 52 14"><path d="M46,7 C46,4 41,3 34,3 L10,3 C5,3 2,5 2,7 C2,9 5,11 10,11 L34,11 C41,11 46,10 46,7 Z" fill="#5E6A65"/><path d="M46,7 C46,4 41,3 34,3 L10,3 C5,3 2,5 2,7 Z" fill="#8B9992"/></svg>
+          <span class="nm">Submarino</span><span class="tag no">afundado</span>
+        </div>
+        <div class="ship sunk">
+          <svg width="40" height="14" viewBox="0 0 40 14"><path d="M38,7 C35,4 30,3 25,3 L7,3 C4,3 2,5 2,7 C2,9 4,11 7,11 L25,11 C30,11 35,10 38,7 Z" fill="#5E6A65"/><path d="M38,7 C35,4 30,3 25,3 L7,3 C4,3 2,5 2,7 Z" fill="#8B9992"/></svg>
+          <span class="nm">Destróier</span><span class="tag no">afundado</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn p">NOVA PARTIDA</div>
+    <div class="btn s">VOLTAR AO DEQUE</div>
+  </div>
+
+  <!-- notas -->
+  <div class="note">
+    <h3>O que enche a tela</h3>
+    Hoje ela mostra cinco números e para. A referência do concorrente ganha corpo
+    porque <b>mostra a conta sendo feita</b> e <b>dá o que perseguir</b> — não porque
+    tem mais efeito.
+    <hr>
+    <b>1 · Apuração de pontos.</b> A fórmula de XP já existe no jogo (base + precisão×2
+    + afundados×15 + relâmpago). Ela só nunca foi mostrada: virava um "+196 XP" solto.
+    Agora cada parcela aparece com a conta ao lado — inclusive a que você não ganhou,
+    em cinza, que é o que ensina a jogar melhor.
+    <hr>
+    <b>2 · Condecorações.</b> Seis medalhas calculadas a partir do que a partida já
+    registra: caçador de frota, estreia, atirador de elite, ataque relâmpago, casco
+    intacto e três seguidas. As não ganhas ficam apagadas com o requisito escrito —
+    é o "progresso e recompensas" do concorrente, na nossa linguagem.
+    <hr>
+    <b>3 · Barra de patente.</b> Sai o texto "faltam 425 XP" e entra a barra com o
+    trecho ganho nesta partida destacado em verde na ponta.
+    <hr>
+    <b>4 · Sua frota.</b> Os cinco navios com a arte nova, marcando quem afundou e
+    quem voltou — fecha o relatório com a imagem da batalha, não só com número.
+    <hr>
+    <b>Fora de escopo por ora:</b> XP por navio e batalhas diárias (as duas últimas
+    telas da referência) pedem progressão por embarcação e missão diária, que o jogo
+    ainda não tem. Dá pra fazer depois, se você quiser.
+  </div>
+
+</body>
+</html>
