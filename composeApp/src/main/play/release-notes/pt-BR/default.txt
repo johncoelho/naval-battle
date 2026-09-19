@@ -1,4 +1,4 @@
-Nova tela de fim de partida: a conta do XP aparece parcela por parcela (base, precisao, navios afundados, ataque relampago), com seis condecoracoes para conquistar, barra de patente e a sua frota mostrando quem voltou e quem ficou no mar.
-Nova frota: os cinco navios redesenhados do zero, com casco longo e estreito visto de cima e conves cheio de detalhe — e agora cabem folgados na celula, sem sobrepor o navio vizinho.
-Novos retratos: oito comandantes no traco de cartaz de guerra, com barba, cachimbo, lenco e capacete de voo.
-Novo: tudo passa a salvar sozinho na nuvem, sem botao de sincronizar.
+Nova tela de fim de partida: o XP aparece parcela por parcela, com seis condecoracoes para conquistar, barra de patente e a sua frota marcando quem voltou e quem ficou no mar.
+Nova frota: os cinco navios redesenhados, com casco longo e estreito visto de cima — e agora cabem folgados na celula, sem sobrepor o vizinho.
+Novos retratos: oito comandantes no traco de cartaz de guerra.
+Novo: tudo salva sozinho na nuvem, sem botao de sincronizar.
