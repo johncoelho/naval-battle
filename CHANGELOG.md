@@ -9,6 +9,33 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.24.0] — 2026-09-19 · Placar Geral corrigido e pausa por ausência na partida online
+
+### Corrigido
+- **Placar Geral mostrava pontuação fixa** (`leaderboard_overall` e `my_rank`
+  em `supabase/online.sql`): a query cruzava `profiles.matches`/`wins`, que
+  somam QUALQUER partida (IA, local, LAN) — por isso quem nunca jogou
+  ranqueada aparecia no ranking geral parado em 1000 pontos. Novas colunas
+  `profiles.ranked_matches`/`ranked_wins`, atualizadas só por
+  `record_ranked_result`, agora filtram e ordenam o placar geral e a posição
+  do próprio comandante. `profiles.matches`/`wins` continuam somando toda
+  partida (é o que alimenta XP e patente na Carreira) — só o ranking passou a
+  olhar exclusivamente para jogos ranqueados de verdade.
+
+### Adicionado
+- **Pausa automática ao ir para segundo plano numa partida online**
+  (`AppState.onForegroundChanged`, `Match.forfeitByTimeout`, protocolo
+  `PAUSE`/`RESUME` em `LanLink.kt`): cada lado mede os 60s pelo próprio
+  relógio (`data/Clock.kt`, sem precisar sincronizar nada com o outro
+  aparelho) — o adversário só recebe um aviso de interface com contagem
+  regressiva. Se o app não voltar ao primeiro plano dentro do prazo, o lado
+  ausente perde por desistência e não soma nem desconta pontos ranqueados
+  (`Match.forfeitedBySelf`, checado em `ResultScreen.kt`); nas demais
+  variantes de partida (IA, local, LAN) o app já suspende os turnos sozinho
+  em segundo plano, então não precisou de nada disso.
+
+---
+
 ## [0.23.0] — 2026-09-19 · Pontuação justa na ranqueada, placar em faixas e troféus de temporada
 
 ### Alterado

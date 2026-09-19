@@ -207,6 +207,11 @@ enum class K(val pt: String, val en: String, val es: String) {
     CALL_VICTORY_SUB("Vitória, comandante", "Victory, commander", "Victoria, comandante"),
     CALL_DEFEAT("Perdemos o contato", "We lost contact", "Perdimos el contacto"),
     CALL_DEFEAT_SUB("Nossa frota foi destruída", "Our fleet was destroyed", "Nuestra flota fue destruida"),
+    CALL_PAUSE_TIMEOUT("Desistência por ausência", "Forfeit by absence", "Abandono por ausencia"),
+    CALL_PAUSE_TIMEOUT_SUB("Você ficou 60s fora da partida", "You were away for 60s", "Estuviste 60s fuera de la partida"),
+
+    BATTLE_OPPONENT_PAUSED("Adversário pausou", "Opponent paused", "El adversario pausó"),
+    BATTLE_OPPONENT_PAUSED_SUB("Desiste em %ss se não voltar", "Forfeits in %ss if not back", "Abandona en %ss si no vuelve"),
     ENEMY("Inimigo", "Enemy", "Enemigo"),
     YOU("Você", "You", "Tú"),
 

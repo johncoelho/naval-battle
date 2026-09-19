@@ -81,7 +81,18 @@ na próxima partida tática — some ao ser usado, a recarga normal segue igual.
   ranqueada. Tela de **Placar** (`ui/LeaderboardScreen.kt`) mostra ranking geral e
   por temporada em faixas (ouro/prata/bronze, com retrato de cada comandante),
   sempre com a posição do próprio comandante mesmo fora do topo, mais uma aba de
-  **Troféus** com o pódio final da última temporada encerrada.
+  **Troféus** com o pódio final da última temporada encerrada. O placar geral e a
+  posição própria só contam `ranked_matches`/`ranked_wins` (colunas dedicadas,
+  atualizadas só por `record_ranked_result`) — partida contra IA, local ou LAN
+  seguem valendo XP e patente na Carreira, mas não entram no ranking.
+- **Pausa por ausência (Online)** — se o app for para segundo plano numa partida
+  online, ela pausa e o adversário vê um aviso com contagem regressiva de 60s
+  (`Protocol.PAUSE`/`RESUME` em `data/LanLink.kt`, cada lado mede o prazo pelo
+  próprio relógio via `data/Clock.kt`, sem sincronizar nada entre os aparelhos).
+  Se não voltar a tempo, o outro lado vence por desistência e quem ficou ausente
+  não soma nem perde pontos ranqueados (`Match.forfeitByTimeout`). Nas demais
+  variantes de partida o próprio sistema já suspende os turnos em segundo plano,
+  então não precisa de aviso nenhum.
 
 ### Carreira
 

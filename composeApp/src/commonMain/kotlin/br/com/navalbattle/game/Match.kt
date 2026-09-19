@@ -195,6 +195,22 @@ class Match(
         finish(winnerSide)
     }
 
+    /**
+     * Marcado quando ESTE aparelho ficou 60s em segundo plano numa partida online
+     * sem voltar — ver [AppState.onForegroundChanged]. Diferente de uma derrota de
+     * verdade: quem passa daqui não soma nem perde pontos ranqueados por isso (só
+     * quem venceu por desistência é que registra o resultado normalmente).
+     */
+    var forfeitedBySelf by mutableStateOf(false)
+        private set
+
+    fun forfeitByTimeout() {
+        if (phase == Phase.RESULT) return
+        forfeitedBySelf = true
+        finish(mySide.other())
+        say(t(K.CALL_PAUSE_TIMEOUT), t(K.CALL_PAUSE_TIMEOUT_SUB), Tone.MISS)
+    }
+
     private fun startBattle() {
         phase = Phase.BATTLE
         turnOwner = Side.PLAYER

@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.audio.AppForeground
 import br.com.navalbattle.audio.Sfx
 import br.com.navalbattle.audio.SoundPlayer
 import br.com.navalbattle.design.Naval
@@ -119,7 +120,9 @@ fun BattleScreen(state: AppState, match: Match) {
             secondsLeft = TURN_SECONDS
             while (secondsLeft > 0) {
                 delay(1000)
-                secondsLeft--
+                // com o app em segundo plano o relógio do turno fica parado — sem
+                // isso o comandante podia voltar e já ter atirado sozinho às cegas
+                if (AppForeground.active) secondsLeft--
             }
             // em rede, quem escolhe a coordenada é o dono do turno, e ela viaja
             if (lan) match.pickTarget()?.let { state.fireShared(it) } else match.fireRandom()
@@ -127,12 +130,13 @@ fun BattleScreen(state: AppState, match: Match) {
     }
 
     // só contra a IA existe turno automático do adversário; continua atirando
-    // enquanto for acertando, do mesmo jeito que o humano
+    // enquanto for acertando, do mesmo jeito que o humano — também pausa em
+    // segundo plano, pelo mesmo motivo do relógio do turno acima
     LaunchedEffect(match.turnOwner, match.phase) {
         if (!local && !lan && match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
             while (match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
                 delay(1500)
-                match.enemyTurn()
+                if (AppForeground.active) match.enemyTurn()
             }
         }
     }
@@ -197,6 +201,28 @@ fun BattleScreen(state: AppState, match: Match) {
                         .clickable { confirmQuit = true }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 )
+            }
+            if (match.opponent == Opponent.ONLINE && state.opponentPaused) {
+                Gap(8)
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Naval.surface2)
+                        .border(1.dp, Naval.amber)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        HudLabel(t(K.BATTLE_OPPONENT_PAUSED), Naval.amberStrong)
+                        HudLabel(t(K.BATTLE_OPPONENT_PAUSED_SUB, state.opponentPauseSecondsLeft), Naval.muted)
+                    }
+                    Text(
+                        state.opponentPauseSecondsLeft.toString().padStart(2, '0'),
+                        style = NavalType.title,
+                        color = Naval.amberStrong
+                    )
+                }
             }
             Gap(6)
 

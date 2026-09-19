@@ -295,6 +295,11 @@ grant execute on function public.current_season() to authenticated;
 -- `season_key` (a linha antiga fica gravada, viram os "recordes" de temporadas
 -- passadas — não tem exclusão nenhuma, só para de receber pontos novos)
 alter table public.profiles add column if not exists ranked_rating integer not null default 1000;
+-- contadores próprios da ranqueada, separados de profiles.matches/wins (que somam
+-- QUALQUER partida — IA, local, LAN). Sem isso o placar geral mostrava até quem
+-- nunca jogou ranqueada, só porque tinha jogado contra a IA alguma vez
+alter table public.profiles add column if not exists ranked_matches integer not null default 0;
+alter table public.profiles add column if not exists ranked_wins integer not null default 0;
 
 create table if not exists public.ranked_season_stats (
   user_id    uuid        not null references auth.users(id) on delete cascade,
@@ -328,9 +333,9 @@ drop function if exists public.leaderboard_overall(integer);
 create function public.leaderboard_overall(p_limit integer default 50)
 returns table (user_id uuid, username text, insignia text, avatar text, rating integer, matches integer, wins integer)
 language sql security definer set search_path = public stable as $$
-  select p.id, p.username, p.insignia, p.avatar, p.ranked_rating, p.matches, p.wins
+  select p.id, p.username, p.insignia, p.avatar, p.ranked_rating, p.ranked_matches, p.ranked_wins
   from public.profiles p
-  where p.matches > 0
+  where p.ranked_matches > 0
   order by p.ranked_rating desc
   limit p_limit;
 $$;
@@ -366,7 +371,7 @@ language sql security definer set search_path = public stable as $$
       p.ranked_rating as rating,
       p.id
     from public.profiles p
-    where p.matches > 0 and not p_season
+    where p.ranked_matches > 0 and not p_season
   ) ranked
   where ranked.id = auth.uid()
   union all
@@ -524,7 +529,9 @@ begin
   end if;
 
   update public.profiles
-    set ranked_rating = greatest(0, ranked_rating + delta)
+    set ranked_rating = greatest(0, ranked_rating + delta),
+        ranked_matches = ranked_matches + 1,
+        ranked_wins = ranked_wins + case when p_won then 1 else 0 end
     where id = auth.uid();
 
   select season_key into szn from public.current_season();

@@ -70,8 +70,10 @@ fun ResultScreen(state: AppState, match: Match) {
                 turns = match.turnCount
             )
             // com conta conectada a carreira sobe sozinha depois de cada partida
-        } else if (match.opponent == Opponent.ONLINE) {
-            // ranqueada soma pontos no placar — casual não mexe em nada aqui
+        } else if (match.opponent == Opponent.ONLINE && !match.forfeitedBySelf) {
+            // ranqueada soma pontos no placar — casual não mexe em nada aqui. Quem
+            // perdeu por ter ficado 60s em segundo plano não reporta nada: não some
+            // nem sobe ponto, é como se a partida não tivesse contado pra esse lado
             state.reportRankedResult(victory, match.accuracy, match.playerBoard.remainingShips().size)
         }
     }

@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -44,6 +45,7 @@ import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
 import br.com.navalbattle.data.checkUpdateAvailable
+import br.com.navalbattle.data.nowMillis
 import br.com.navalbattle.data.openStoreListing
 import br.com.navalbattle.design.FleetLine
 import br.com.navalbattle.design.Paint
@@ -56,6 +58,7 @@ import br.com.navalbattle.game.FleetCodec
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
+import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Profile
 import br.com.navalbattle.i18n.I18n
@@ -324,6 +327,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineInvitedFriend = false
         rematchRequestedByMe = false
         rematchRequestedByOpponent = false
+        selfPausedAtMillis = null
+        stopOpponentPauseWatch()
     }
 
     /** Cancela a busca de partida rápida ou a sala aberta esperando alguém aceitar. */
@@ -571,7 +576,69 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 m.abandon(m.mySide)
                 if (m.opponent == Opponent.LAN) closeLink() else closeOnline()
             }
+
+            Protocol.PAUSE -> startOpponentPauseWatch()
+            Protocol.RESUME -> stopOpponentPauseWatch()
         }
+    }
+
+    // ---------------- pausa em segundo plano (online) ----------------
+
+    /** Instante em que ESTE aparelho foi para segundo plano — nulo enquanto ativo. */
+    private var selfPausedAtMillis: Long? = null
+    private var opponentPausedAtMillis: Long? = null
+    private var opponentPauseJob: Job? = null
+
+    /** Se o adversário avisou que pausou — a tela de batalha mostra a contagem. */
+    var opponentPaused by mutableStateOf(false)
+        private set
+    var opponentPauseSecondsLeft by mutableStateOf(PAUSE_TIMEOUT_SECONDS)
+        private set
+
+    /**
+     * Chamado sempre que o app inteiro entra ou sai de primeiro plano (ver
+     * `AppForeground` e o `LaunchedEffect` em [App]). Só importa durante o combate
+     * de uma partida online — cada lado mede os 60s pelo próprio relógio ([nowMillis]),
+     * então não precisa confiar em nenhuma mensagem do outro para decidir a própria
+     * desistência, só para avisar a interface do adversário.
+     */
+    fun onForegroundChanged(active: Boolean) {
+        val m = match ?: return
+        if (m.opponent != Opponent.ONLINE || m.phase != Phase.BATTLE) return
+        if (!active) {
+            if (selfPausedAtMillis != null) return
+            selfPausedAtMillis = nowMillis()
+            onlineLink.send(Protocol.PAUSE)
+        } else {
+            val pausedAt = selfPausedAtMillis ?: return
+            selfPausedAtMillis = null
+            if (nowMillis() - pausedAt >= PAUSE_TIMEOUT_MS) {
+                m.forfeitByTimeout()
+            } else {
+                onlineLink.send(Protocol.RESUME)
+            }
+        }
+    }
+
+    private fun startOpponentPauseWatch() {
+        opponentPausedAtMillis = nowMillis()
+        opponentPaused = true
+        opponentPauseSecondsLeft = PAUSE_TIMEOUT_SECONDS
+        opponentPauseJob?.cancel()
+        opponentPauseJob = uiScope?.launch {
+            while (opponentPauseSecondsLeft > 0) {
+                delay(1000)
+                opponentPauseSecondsLeft--
+            }
+            if (opponentPaused) match?.abandon(match!!.mySide)
+            opponentPaused = false
+        }
+    }
+
+    private fun stopOpponentPauseWatch() {
+        opponentPauseJob?.cancel()
+        opponentPauseJob = null
+        opponentPaused = false
     }
 
     /** Dispara e conta ao adversário — os dois aparelhos resolvem o mesmo tiro. */
@@ -794,6 +861,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     private companion object {
         /** Espera depois da última mudança antes de gravar — junta rajadas numa só. */
         const val SYNC_DEBOUNCE_MS = 1500L
+        const val PAUSE_TIMEOUT_SECONDS = 60
+        const val PAUSE_TIMEOUT_MS = PAUSE_TIMEOUT_SECONDS * 1000L
     }
 }
 
@@ -828,6 +897,12 @@ fun App() {
     // daí em diante a carreira sobe sozinha a cada mudança — não existe botão de
     // sincronizar, o comandante nunca precisa lembrar de gravar nada
     LaunchedEffect(Unit) { state.autoSync() }
+
+    // partida online em segundo plano: avisa o adversário e mede os 60s de prazo
+    // (ver AppState.onForegroundChanged) — nas outras variantes de partida, o
+    // próprio sistema já suspende as corrotinas de turno enquanto o app não está
+    // em primeiro plano, então não precisa de aviso nenhum
+    LaunchedEffect(AppForeground.active) { state.onForegroundChanged(AppForeground.active) }
 
     // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push
     LaunchedEffect(Unit) { state.updateAvailable = checkUpdateAvailable() }

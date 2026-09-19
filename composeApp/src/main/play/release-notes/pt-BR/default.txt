@@ -1,5 +1,2 @@
-Ranqueada: a pontuação agora pesa precisão e frota intacta — vencer sempre vale mais que perder.
-Ranking novo: faixas de ouro, prata e bronze, com retrato de cada comandante. Ao fim da temporada, um ranking de troféus mostra o pódio.
-Partida rápida mostra o adversário encontrado (retrato e patente) antes de começar, e o nome dele aparece durante o combate.
-Removido o botão "Ranqueada" do menu — ela já vive no Online.
-Corrigido: a trilha pausa em segundo plano e retoma ao voltar.
+Corrigido: o placar Geral agora mostra a pontuação real de cada comandante, só considerando partidas ranqueadas de verdade.
+Novo: se o app for para segundo plano numa partida online, ela pausa e avisa o adversário. Depois de 60s sem voltar, o outro vence e quem sumiu não ganha nem perde pontos.

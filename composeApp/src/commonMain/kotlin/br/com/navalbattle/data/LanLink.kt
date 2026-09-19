@@ -40,6 +40,11 @@ object Protocol {
     const val QUIT = "QUIT"
     const val REMATCH = "REMATCH"
     const val TAUNT = "TAUNT"
+    // partida online em segundo plano: cada lado mede os 60s pelo próprio relógio
+    // (ver AppState.onForegroundChanged) — estas duas linhas só avisam a interface
+    // do outro lado, nunca decidem quem perde
+    const val PAUSE = "PAUSE"
+    const val RESUME = "RESUME"
 
     fun hello(name: String, mode: String) = "$HELLO|$name|$mode"
 
