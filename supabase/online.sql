@@ -480,8 +480,7 @@ grant execute on function public.season_trophies(text) to authenticated;
 -- própria frota ainda restava de pé (vencer com o casco intacto vale mais que
 -- vencer raspando). Mais simples que ELO de verdade, mas justo o bastante:
 -- quem joga bem e perde cai menos do que quem joga mal e perde.
-drop function if exists public.record_ranked_result(uuid, boolean);
-create function public.record_ranked_result(
+create or replace function public.record_ranked_result(
   p_match_id uuid, p_won boolean, p_accuracy integer, p_ships_left integer
 )
 returns void
