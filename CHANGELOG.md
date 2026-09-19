@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.31.0] — 2026-09-19 · Blinda o carregamento de áudio no iOS contra crash na abertura
+
+### Corrigido
+- **App fechava sozinho logo após o splash no iOS** (`MusicPlayer.ios.kt`,
+  `SoundPlayer.ios.kt`): o carregamento dos arquivos de música/efeito roda
+  numa corrotina sem nenhum tratamento de erro — no Kotlin/Native, uma
+  exceção não tratada numa corrotina derruba o processo inteiro (diferente
+  da JVM). Se o pacote do app não tiver algum desses arquivos embutido
+  certinho (o projeto Xcode deste repo foi montado à mão, sem Mac pra
+  validar antes do primeiro teste real num iPhone), o app abria o splash e
+  fechava sozinho no primeiro `Res.readBytes(...)` que falhasse. Agora cada
+  arquivo carrega dentro de um `try/catch` isolado: se um faltar ou vier
+  corrompido, o app segue sem aquele som/faixa em vez de travar — os
+  demais continuam carregando normalmente.
+- Não é garantido que essa fosse a única causa (não há como confirmar sem
+  o log de crash de um Mac/iPhone de verdade), mas é a única exceção não
+  tratada plausível no caminho de abertura, e o app agora sobrevive a ela
+  de qualquer jeito.
+
+---
+
 ## [0.30.0] — 2026-09-19 · Setas do carrossel do mesmo tamanho do cartão
 
 ### Alterado

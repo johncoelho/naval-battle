@@ -36,10 +36,16 @@ actual class SoundPlayer actual constructor() {
     init {
         scope.launch {
             for (sfx in Sfx.entries) {
-                val data = Res.readBytes(sfx.path).toNSData()
-                AVAudioPlayer(data = data, error = null)?.let { player ->
-                    player.prepareToPlay()
-                    players[sfx] = player
+                // um arquivo faltando ou corrompido no pacote não pode derrubar o app
+                // inteiro — sem esse efeito é ruim, travar na abertura é muito pior
+                try {
+                    val data = Res.readBytes(sfx.path).toNSData()
+                    AVAudioPlayer(data = data, error = null)?.let { player ->
+                        player.prepareToPlay()
+                        players[sfx] = player
+                    }
+                } catch (e: Exception) {
+                    // segue sem esse efeito; os outros continuam tentando carregar
                 }
             }
         }

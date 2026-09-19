@@ -39,12 +39,18 @@ actual class MusicPlayer actual constructor() {
     init {
         scope.launch {
             for (track in Music.entries) {
-                val data = Res.readBytes(track.path()).toNSData()
-                AVAudioPlayer(data = data, error = null)?.let { player ->
-                    player.numberOfLoops = -1
-                    player.volume = track.volume()
-                    player.prepareToPlay()
-                    players[track] = player
+                // um arquivo faltando ou corrompido no pacote não pode derrubar o app
+                // inteiro — sem música é ruim, travar na abertura é muito pior
+                try {
+                    val data = Res.readBytes(track.path()).toNSData()
+                    AVAudioPlayer(data = data, error = null)?.let { player ->
+                        player.numberOfLoops = -1
+                        player.volume = track.volume()
+                        player.prepareToPlay()
+                        players[track] = player
+                    }
+                } catch (e: Exception) {
+                    // segue sem essa faixa; as outras continuam tentando carregar
                 }
             }
         }

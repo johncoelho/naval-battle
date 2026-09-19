@@ -222,6 +222,20 @@ compila para iOS.
   pode devolver nulo — a chamada é tratada com `?.let { ... }`, mesmo cuidado do
   `NSURL(string = ...)` acima.
 
+> **Primeiro teste real num iPhone (2026-09-19): app abria o splash e fechava sozinho.**
+> Nunca tinha sido testado em aparelho de verdade antes disso — o `ios.yml` só garante
+> que compila, não que roda. Causa mais provável: `Res.readBytes(...)` dentro do
+> `init { scope.launch { ... } }` de `SoundPlayer`/`MusicPlayer` sem nenhum
+> `try/catch` — no Kotlin/Native, uma exceção não tratada numa corrotina derruba o
+> processo inteiro (não é como a JVM, que isola por thread). Se o projeto Xcode
+> montado à mão (sem Mac pra validar) não empacotar um dos `.wav`/`.m4a` direitinho
+> dentro do app, a primeira leitura que falhar mata o app logo depois do splash —
+> bate exatamente com o sintoma relatado. Corrigido envolvendo cada leitura num
+> `try/catch` isolado por arquivo: sem confirmação de log de crash real, mas a causa
+> mais plausível já não derruba mais o app de qualquer jeito, só toca sem aquele
+> som/faixa. Se persistir mesmo assim, o próximo passo exige um log de crash de
+> verdade (Mac com Console.app, ou `idevicecrashreport` a partir do Windows).
+
 **O que está de propósito só como pendência** (compila, mas não faz nada ainda):
 - `GoogleAuth` — sempre devolve falha. `ASWebAuthenticationSession` (a via sem SDK
   externo) precisa de um esquema de URL de retorno registrado no `Info.plist` — que só
