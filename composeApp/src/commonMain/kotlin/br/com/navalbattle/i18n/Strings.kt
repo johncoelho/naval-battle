@@ -87,6 +87,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     MENU_ACTIVE_FLEET("Frota ativa", "Active fleet", "Flota activa"),
     MENU_TAB_DECK("Deque", "Deck", "Cubierta"),
     MENU_TAB_STORE("Loja", "Store", "Tienda"),
+    MENU_SETTINGS("Configurações", "Settings", "Configuración"),
     MENU_UPDATE_AVAILABLE("Nova versão disponível — toque para atualizar", "New version available — tap to update", "Nueva versión disponible — toca para actualizar"),
     UPDATE_POPUP_EYEBROW("Atualização disponível", "Update available", "Actualización disponible"),
     UPDATE_POPUP_TITLE("Tem uma versão nova do jogo", "There's a new version of the game", "Hay una versión nueva del juego"),
@@ -326,6 +327,15 @@ enum class K(val pt: String, val en: String, val es: String) {
     PROFILE_RESET_DO("Zerar tudo", "Reset everything", "Reiniciar todo"),
     PROFILE_WINS_SUFFIX("vitórias", "wins", "victorias"),
     PROFILE_LANGUAGE("Idioma", "Language", "Idioma"),
+
+    // ---------------------------------------------------------------- configurações
+    SETTINGS_TITLE("Configurações", "Settings", "Configuración"),
+    SETTINGS_AUDIO("Áudio", "Audio", "Audio"),
+    SETTINGS_MUSIC("Trilha sonora", "Music", "Banda sonora"),
+    SETTINGS_SFX("Efeitos sonoros", "Sound effects", "Efectos de sonido"),
+    SETTINGS_LANGUAGE("Idioma do jogo", "Game language", "Idioma del juego"),
+    SETTINGS_ON("Ligado", "On", "Activado"),
+    SETTINGS_OFF("Desligado", "Off", "Desactivado"),
 
     // ---------------------------------------------------------------- conta
     AUTH_TITLE("Conta", "Account", "Cuenta"),

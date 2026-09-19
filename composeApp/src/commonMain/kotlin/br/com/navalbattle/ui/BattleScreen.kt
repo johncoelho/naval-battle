@@ -146,12 +146,12 @@ fun BattleScreen(state: AppState, match: Match) {
     val mySide = if (solo) viewSide else null
     LaunchedEffect(match.playerImpact?.id) {
         match.playerImpact?.let { imp ->
-            playShot(sound, haptics, imp.tone, alarm = mySide != null && mySide != Side.PLAYER)
+            playShot(sound, haptics, imp.tone, alarm = mySide != null && mySide != Side.PLAYER, sfxOn = state.profile.sfxOn)
         }
     }
     LaunchedEffect(match.enemyImpact?.id) {
         match.enemyImpact?.let { imp ->
-            playShot(sound, haptics, imp.tone, alarm = mySide != null && mySide != Side.ENEMY)
+            playShot(sound, haptics, imp.tone, alarm = mySide != null && mySide != Side.ENEMY, sfxOn = state.profile.sfxOn)
         }
     }
 
@@ -473,22 +473,23 @@ private suspend fun playShot(
     sound: SoundPlayer,
     haptics: androidx.compose.ui.hapticfeedback.HapticFeedback,
     tone: Tone,
-    alarm: Boolean
+    alarm: Boolean,
+    sfxOn: Boolean
 ) {
-    sound.play(Sfx.LAUNCH)
+    if (sfxOn) sound.play(Sfx.LAUNCH)
     delay(SHOT_TRAVEL_MS.toLong())
-    sound.play(tone.toSfx())
+    if (sfxOn) sound.play(tone.toSfx())
     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
     if (!alarm) return
     when (tone) {
         Tone.SUNK -> {
             delay(220)
-            sound.play(Sfx.ALARM_CRITICAL)
+            if (sfxOn) sound.play(Sfx.ALARM_CRITICAL)
         }
 
         Tone.HIT -> {
             delay(160)
-            sound.play(Sfx.ALARM)
+            if (sfxOn) sound.play(Sfx.ALARM)
         }
 
         else -> Unit

@@ -201,6 +201,15 @@ class Profile(private val prefs: Prefs) {
         prefs.putInt(K_MUSIC, if (on) 1 else 0)
     }
 
+    /** Preferência de efeitos sonoros (tiro, acerto, alarme) — separada da trilha. */
+    var sfxOn: Boolean = prefs.getInt(K_SFX, 1) == 1
+        private set
+
+    fun setSfx(on: Boolean) {
+        sfxOn = on
+        prefs.putInt(K_SFX, if (on) 1 else 0)
+    }
+
     /**
      * Roda a playlist do deque de comando: cada abertura do app toca a próxima faixa
      * da lista, em ciclo — ["count] é o tamanho atual da playlist, que cresce aos
@@ -504,6 +513,7 @@ class Profile(private val prefs: Prefs) {
         private const val K_TOKEN = "token"
         private const val K_REFRESH = "refresh"
         private const val K_MUSIC = "music"
+        private const val K_SFX = "sfx"
         private const val K_LANG = "lang"
         private const val K_AVATAR = "avatar"
         private const val K_WELCOME_DONE = "welcome_done"

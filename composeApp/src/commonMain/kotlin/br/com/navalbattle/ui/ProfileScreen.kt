@@ -62,8 +62,6 @@ import br.com.navalbattle.design.drawInsignia
 import br.com.navalbattle.game.Avatar
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.game.Rank
-import br.com.navalbattle.i18n.I18n
-import br.com.navalbattle.i18n.Lang
 import kotlinx.coroutines.launch
 
 /**
@@ -250,22 +248,6 @@ fun ProfileScreen(state: AppState) {
                 }
                 Gap(6)
                 HudLabel(profile.insignia.label.uppercase(), Naval.muted)
-
-                Gap(22)
-                HudLabel(t(K.PROFILE_LANGUAGE))
-                Gap(8)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Lang.entries.forEach { option ->
-                        ModeChip(
-                            label = option.label,
-                            selected = I18n.lang == option,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            I18n.lang = option
-                            profile.setLang(option.code)
-                        }
-                    }
-                }
 
                 Gap(22)
                 HudLabel(t(K.PROFILE_RECORD))

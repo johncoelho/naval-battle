@@ -9,6 +9,32 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.25.0] — 2026-09-19 · Menu inicial redesenhado, tela de Configurações nova
+
+### Alterado
+- **Menu inicial mais curto** (`ui/MenuScreen.kt`): a lista vertical de botões
+  (Partida rápida, Local, Rede, Online) virou um carrossel horizontal — um
+  cartão por vez, setas nas laterais e pontos indicando a posição — com
+  Estaleiro e Loja logo abaixo. A barra de rodapé com quatro abas saiu; sobrou
+  só o número da versão, centralizado. O topo ganhou um ícone de engrenagem
+  que leva à nova tela de Configurações; o toggle de trilha sonora saiu do
+  cabeçalho do menu porque agora vive lá. A prévia da frota (`FleetPreview`)
+  continua a mesma visão de cima de sempre.
+- **Idioma saiu do Perfil** (`ui/ProfileScreen.kt`): vivia duplicado — agora só
+  existe em Configurações, para não ter a mesma opção em dois lugares.
+
+### Adicionado
+- **Tela de Configurações** (`ui/SettingsScreen.kt`, `Screen.SETTINGS`):
+  trilha sonora e efeitos sonoros com toggles separados (`Profile.sfxOn`,
+  nova preferência local — os efeitos de tiro/acerto/alarme em
+  `BattleScreen.kt` agora checam essa flag antes de tocar) e seletor de
+  idioma. Cor do oceano, espessura da grade, cor do alvo e notificações push
+  ficaram de fora desta rodada — pedem preferências novas correndo até o
+  desenho do tabuleiro (`BoardView.kt`) e, no caso do push, uma infraestrutura
+  de envio que ainda não existe.
+
+---
+
 ## [0.24.0] — 2026-09-19 · Placar Geral corrigido e pausa por ausência na partida online
 
 ### Corrigido

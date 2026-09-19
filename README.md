@@ -114,10 +114,25 @@ Dois eixos independentes, ambos comprados com créditos:
 - **Camuflagem** — muda a pintura e o padrão recortado no casco: lisa, dazzle, estilhaço,
   faixas de linha d'água e retículo digital. Onze pinturas, duas inclusas.
 
+### Menu inicial
+
+O deque de comando (`ui/MenuScreen.kt`) mostra a prévia da frota (visão de cima, sempre
+a linha/pintura equipadas), o modo de combate (Clássico/Tático) e um **carrossel
+horizontal** para escolher como jogar — um cartão por vez, com setas nas laterais e
+pontos indicando a posição, no lugar da antiga lista vertical de botões. Estaleiro e
+Loja ficam logo abaixo. Sem barra de abas no rodapé: só o número da versão.
+
+### Configurações
+
+Tela própria (`ui/SettingsScreen.kt`, ícone de engrenagem no menu): trilha sonora e
+efeitos sonoros com toggles separados, e o seletor de idioma — que saiu do Perfil para
+não ficar duplicado. Cor do oceano, espessura da grade, cor do alvo e notificações push
+ainda não têm preferência própria (ficam no backlog).
+
 ### Idiomas
 
-Português do Brasil, inglês e espanhol, trocáveis no Perfil e aplicados na hora. Todo o
-texto vive em `i18n/Strings.kt`, com as três versões de cada frase na mesma linha.
+Português do Brasil, inglês e espanhol, trocáveis em Configurações e aplicados na hora.
+Todo o texto vive em `i18n/Strings.kt`, com as três versões de cada frase na mesma linha.
 
 A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado.
 

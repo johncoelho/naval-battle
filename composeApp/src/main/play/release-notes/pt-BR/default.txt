@@ -1,2 +1,3 @@
+Menu inicial redesenhado: carrossel de partidas, sem barra de abas no rodapé, ícone de engrenagem para as novas Configurações (música, efeitos sonoros e idioma).
 Corrigido: o placar Geral agora mostra a pontuação real de cada comandante, só considerando partidas ranqueadas de verdade.
 Novo: se o app for para segundo plano numa partida online, ela pausa e avisa o adversário. Depois de 60s sem voltar, o outro vence e quem sumiu não ganha nem perde pontos.

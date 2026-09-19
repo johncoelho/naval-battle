@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,10 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -36,6 +41,25 @@ import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.ShipClass
+
+/** Um cartão do carrossel de partidas — cobre uma forma de jogar por vez. */
+private class MatchCard(
+    val title: String,
+    val subtitle: String,
+    val enabled: Boolean = true,
+    val action: (AppState) -> Unit
+)
+
+private fun matchCards(state: AppState): List<MatchCard> = listOf(
+    MatchCard(t(K.MENU_QUICK), t(K.MENU_QUICK_SUB)) { it.newMatch(Opponent.AI) },
+    MatchCard(t(K.MENU_LOCAL), t(K.MENU_LOCAL_SUB)) { it.newMatch(Opponent.LOCAL) },
+    MatchCard(t(K.MENU_LAN), t(K.MENU_LAN_SUB)) { it.screen = Screen.LAN },
+    MatchCard(
+        t(K.MENU_ONLINE),
+        if (state.profile.signedIn) t(K.MENU_ONLINE_SUB) else t(K.MENU_ONLINE_LOCKED),
+        enabled = state.profile.signedIn
+    ) { it.screen = Screen.ONLINE }
+)
 
 @Composable
 fun MenuScreen(state: AppState) {
@@ -78,16 +102,9 @@ fun MenuScreen(state: AppState) {
                 HudLabel(state.profile.rank.label.uppercase(), Naval.inkSoft)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                HudLabel(
-                    if (state.musicOn) t(K.MENU_MUSIC_ON) else t(K.MENU_MUSIC_OFF),
-                    if (state.musicOn) Naval.greenBright else Naval.muted,
-                    Modifier
-                        .border(1.dp, Naval.line)
-                        .clickable { state.musicOn = !state.musicOn }
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
-                )
-                Spacer(Modifier.width(12.dp))
                 HudLabel("◆ ${state.profile.credits}", Naval.amberStrong)
+                Spacer(Modifier.width(12.dp))
+                GearButton { state.screen = Screen.SETTINGS }
             }
         }
 
@@ -97,10 +114,10 @@ fun MenuScreen(state: AppState) {
         Spacer(Modifier.height(4.dp))
         HudLabel("${state.profile.displayName.uppercase()} · ${state.profile.xp} XP")
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(18.dp))
         FleetPreview(state)
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(18.dp))
         HudLabel(t(K.MENU_MODE))
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -115,50 +132,87 @@ fun MenuScreen(state: AppState) {
         Spacer(Modifier.height(6.dp))
         HudLabel(state.mode.description, Naval.muted)
 
-        Spacer(Modifier.height(20.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            PrimaryButton(t(K.MENU_QUICK), t(K.MENU_QUICK_SUB)) { state.newMatch(Opponent.AI) }
-            SecondaryButton(t(K.MENU_LOCAL), t(K.MENU_LOCAL_SUB)) { state.newMatch(Opponent.LOCAL) }
-            SecondaryButton(t(K.MENU_LAN), t(K.MENU_LAN_SUB)) { state.screen = Screen.LAN }
-            SecondaryButton(
-                t(K.MENU_ONLINE),
-                if (state.profile.signedIn) t(K.MENU_ONLINE_SUB) else t(K.MENU_ONLINE_LOCKED),
-                enabled = state.profile.signedIn
-            ) { state.screen = Screen.ONLINE }
-            SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name) { state.screen = Screen.SHIPYARD }
-            SecondaryButton(t(K.MENU_STORE), "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
-            SecondaryButton(
-                if (state.profile.signedIn) t(K.MENU_PROFILE) else t(K.MENU_CREATE_ACCOUNT),
-                if (state.profile.signedIn) state.profile.rank.label else t(K.MENU_ACCOUNT_SUB)
-            ) { state.screen = Screen.PROFILE }
+        Spacer(Modifier.height(18.dp))
+        MatchCarousel(state)
+
+        Spacer(Modifier.height(14.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name, Modifier.weight(1f)) { state.screen = Screen.SHIPYARD }
+            SecondaryButton(t(K.MENU_STORE), "◆", Modifier.weight(1f)) { state.screen = Screen.STORE }
         }
 
         Spacer(Modifier.weight(1f))
-        Row(
-            Modifier.fillMaxWidth().padding(top = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            HudLabel(t(K.MENU_TAB_DECK), Naval.amberStrong)
-            HudLabel(
-                t(K.MENU_SHIPYARD),
-                Naval.muted,
-                Modifier.clickable { state.screen = Screen.SHIPYARD }
-            )
-            HudLabel(
-                t(K.MENU_PROFILE),
-                Naval.muted,
-                Modifier.clickable { state.screen = Screen.PROFILE }
-            )
-            HudLabel(
-                t(K.MENU_TAB_STORE),
-                Naval.muted,
-                Modifier.clickable { state.screen = Screen.STORE }
-            )
-        }
-        Spacer(Modifier.height(6.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             HudLabel("v$appVersionLabel", Naval.line)
         }
+    }
+}
+
+/**
+ * Carrossel horizontal de formas de jogar — um cartão por vez, com setas nas
+ * laterais e pontos indicando a posição. Substitui a antiga lista vertical de
+ * botões (Partida rápida, Local, Rede, Online), que deixava o menu comprido.
+ */
+@Composable
+private fun MatchCarousel(state: AppState) {
+    val cards = matchCards(state)
+    var index by remember { mutableStateOf(0) }
+    val card = cards[index]
+
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        CarouselArrow(enabled = index > 0) { index = (index - 1).coerceAtLeast(0) }
+        Box(Modifier.weight(1f)) {
+            PrimaryButton(card.title, card.subtitle, enabled = card.enabled) { card.action(state) }
+        }
+        CarouselArrow(enabled = index < cards.lastIndex, pointRight = true) {
+            index = (index + 1).coerceAtMost(cards.lastIndex)
+        }
+    }
+    Spacer(Modifier.height(10.dp))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        cards.indices.forEach { i ->
+            Box(
+                Modifier
+                    .padding(horizontal = 3.dp)
+                    .size(if (i == index) 7.dp else 5.dp)
+                    .background(if (i == index) Naval.amberStrong else Naval.line)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CarouselArrow(enabled: Boolean, pointRight: Boolean = false, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(44.dp)
+            .background(Naval.surface2)
+            .border(1.dp, if (enabled) Naval.line else Naval.lineSoft)
+            .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            if (pointRight) "›" else "‹",
+            style = NavalType.title,
+            color = if (enabled) Naval.ink else Naval.muted.copy(alpha = 0.4f)
+        )
+    }
+}
+
+@Composable
+private fun GearButton(onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(30.dp)
+            .border(1.dp, Naval.line)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("⚙", style = NavalType.body, color = Naval.inkSoft)
     }
 }
 
