@@ -46,19 +46,26 @@ enum class Insignia(val id: String, val key: K) {
     }
 }
 
-/** Retrato do comandante, desenhado no Canvas — mostrado no topo do menu e do perfil. */
-enum class Avatar(val id: String, val key: K) {
-    OFFICER_M1("om1", K.AVATAR_OFFICER_M1),
-    OFFICER_F1("of1", K.AVATAR_OFFICER_F1),
-    OFFICER_M2("om2", K.AVATAR_OFFICER_M2),
-    OFFICER_F2("of2", K.AVATAR_OFFICER_F2),
-    CAPTAIN_M("cpm", K.AVATAR_CAPTAIN_M),
-    CAPTAIN_F("cpf", K.AVATAR_CAPTAIN_F);
+/**
+ * Retrato do comandante, desenhado no Canvas — mostrado no topo do menu e do perfil.
+ * A patente é a mesma para os dois retratos do par: escolher entre eles é escolher
+ * o rosto, não o posto. Os identificadores gravados são os de sempre, para que
+ * ninguém perca a escolha já feita quando a arte muda.
+ */
+enum class Avatar(val id: String, val key: K, val woman: Boolean) {
+    COMMANDER_M("om1", K.AVATAR_COMMANDER, false),
+    COMMANDER_F("of1", K.AVATAR_COMMANDER, true),
+    OFFICER_M("om2", K.AVATAR_OFFICER, false),
+    OFFICER_F("of2", K.AVATAR_OFFICER, true),
+    BOATSWAIN_M("cpm", K.AVATAR_BOATSWAIN, false),
+    BOATSWAIN_F("cpf", K.AVATAR_BOATSWAIN, true),
+    AVIATOR_M("avm", K.AVATAR_AVIATOR, false),
+    AVIATOR_F("avf", K.AVATAR_AVIATOR, true);
 
     val label: String get() = t(key)
 
     companion object {
-        fun of(id: String): Avatar = entries.firstOrNull { it.id == id } ?: OFFICER_M1
+        fun of(id: String): Avatar = entries.firstOrNull { it.id == id } ?: COMMANDER_M
     }
 }
 
@@ -75,7 +82,7 @@ class Profile(private val prefs: Prefs) {
         private set
     var insignia by mutableStateOf(Insignia.of(prefs.getString(K_INSIGNIA, Insignia.ANCHOR.id)))
         private set
-    var avatar by mutableStateOf(Avatar.of(prefs.getString(K_AVATAR, Avatar.OFFICER_M1.id)))
+    var avatar by mutableStateOf(Avatar.of(prefs.getString(K_AVATAR, Avatar.COMMANDER_M.id)))
         private set
 
     var xp by mutableStateOf(prefs.getInt(K_XP, 0))
@@ -251,6 +258,8 @@ class Profile(private val prefs: Prefs) {
     fun snapshot(): CloudProfile = CloudProfile(
         username = displayName,
         insignia = insignia.id,
+        avatar = avatar.id,
+        langCode = langCode,
         xp = xp,
         credits = credits,
         matches = matches,
@@ -270,6 +279,8 @@ class Profile(private val prefs: Prefs) {
     fun adopt(remote: CloudProfile) {
         name = remote.username.ifBlank { name }
         insignia = Insignia.of(remote.insignia)
+        avatar = Avatar.of(remote.avatar)
+        if (remote.langCode.isNotBlank()) langCode = remote.langCode
         xp = remote.xp
         credits = remote.credits
         matches = remote.matches
@@ -289,6 +300,8 @@ class Profile(private val prefs: Prefs) {
     private fun persistAll() {
         prefs.putString(K_NAME, name)
         prefs.putString(K_INSIGNIA, insignia.id)
+        prefs.putString(K_AVATAR, avatar.id)
+        prefs.putString(K_LANG, langCode)
         prefs.putInt(K_XP, xp)
         prefs.putInt(K_CREDITS, credits)
         prefs.putInt(K_MATCHES, matches)
@@ -325,8 +338,8 @@ class Profile(private val prefs: Prefs) {
         prefs.putString(K_NAME, name)
     }
 
-    /** Idioma escolhido, gravado no aparelho. */
-    var langCode: String = prefs.getString(K_LANG, "pt")
+    /** Idioma escolhido — acompanha a carreira na nuvem, igual ao resto do perfil. */
+    var langCode: String by mutableStateOf(prefs.getString(K_LANG, "pt"))
         private set
 
     fun setLang(code: String) {
@@ -432,7 +445,7 @@ class Profile(private val prefs: Prefs) {
         ownedFleets = setOf("std")
         equippedFleet = "std"
         abilityCharges = emptyMap()
-        avatar = Avatar.OFFICER_M1
+        avatar = Avatar.COMMANDER_M
     }
 
     private companion object {

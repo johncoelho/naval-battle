@@ -31,6 +31,11 @@ create table if not exists public.profiles (
   created_at   timestamptz not null default now()
 );
 
+-- retrato e idioma acompanham a carreira: tudo que o comandante escolhe volta
+-- igual em qualquer aparelho, sem botão de sincronizar
+alter table public.profiles add column if not exists avatar text not null default 'om1';
+alter table public.profiles add column if not exists lang_code text not null default '';
+
 alter table public.profiles enable row level security;
 
 drop policy if exists "carreira propria: ler" on public.profiles;

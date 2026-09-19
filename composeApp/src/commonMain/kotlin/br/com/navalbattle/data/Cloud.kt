@@ -27,6 +27,8 @@ data class Session(
 data class CloudProfile(
     val username: String,
     val insignia: String,
+    val avatar: String,
+    val langCode: String,
     val xp: Int,
     val credits: Int,
     val matches: Int,

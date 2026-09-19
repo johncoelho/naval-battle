@@ -473,23 +473,26 @@ private fun DrawScope.drawSinkingShip(imp: Impact, cell: Float, t: Float, skin: 
         val local = ((t - i * 0.18f) / 0.8f).coerceIn(0f, 1f)
         drawCircle(
             color = Color(0xFFBFE8FF).copy(alpha = (1f - local) * 0.18f),
-            radius = length * (0.35f + local * 0.5f),
+            radius = length * (0.28f + local * 0.42f),
             center = Offset(baseCx, baseCy),
             style = Stroke(cell * 0.06f)
         )
     }
 
-    // o navio: inclina e afunda
+    // o navio: adborna, inclina e afunda. O casco é estreito, então quem vende o
+    // naufrágio é o emborcar — a boca vai sumindo, como um casco girando na água —
+    // mais do que a inclinação em si.
     if (visible > 0.02f) {
         val drop = sink * cell * 0.75f
         val center = Offset(baseCx, baseCy + drop)
         val tilt = sink * 26f * (if (vertical) -1f else 1f)
+        val roll = 1f - sink * 0.55f
         rotate(tilt, center) {
             drawShip(
                 type = ship.type,
                 center = center,
                 lengthPx = length,
-                thicknessPx = cell,
+                thicknessPx = cell * roll,
                 vertical = vertical,
                 skin = skin,
                 alpha = visible.coerceIn(0f, 1f)

@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +41,6 @@ import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.ShipClass
-import kotlinx.coroutines.launch
 
 private enum class Aisle(val key: K) { FLEETS(K.STORE_HULLS), CAMOS(K.STORE_CAMOS), ABILITIES(K.STORE_ABILITIES) }
 
@@ -64,10 +62,8 @@ fun StoreScreen(state: AppState) {
     val profile = state.profile
     var aisle by remember { mutableStateOf(Aisle.FLEETS) }
     var notice by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
 
     // toda compra sobe para a conta, quando existe uma conectada
-    fun sync() = scope.launch { state.pushQuietly() }
 
     Column(
         Modifier
@@ -113,7 +109,6 @@ fun StoreScreen(state: AppState) {
                         credits = profile.credits,
                         onBuy = {
                             if (profile.buyAbilityCharge(ability, abilityPrice(ability))) {
-                                sync()
                                 notice = t(K.STORE_ABILITY_BOUGHT, ability.label)
                             } else {
                                 notice = t(K.STORE_MISSING, abilityPrice(ability) - profile.credits, ability.label)
@@ -134,7 +129,6 @@ fun StoreScreen(state: AppState) {
                         onBuy = {
                             if (profile.buyFleet(line.id, line.price)) {
                                 profile.equipFleet(line.id)
-                                sync()
                                 notice = t(K.STORE_COMMISSIONED, line.name)
                             } else {
                                 notice = t(K.STORE_MISSING, line.price - profile.credits, line.name)
@@ -142,7 +136,6 @@ fun StoreScreen(state: AppState) {
                         },
                         onEquip = {
                             profile.equipFleet(line.id)
-                            sync()
                             notice = t(K.STORE_COMMISSIONED, line.name)
                         }
                     )
@@ -160,7 +153,6 @@ fun StoreScreen(state: AppState) {
                         onBuy = {
                             if (profile.buy(paint.id, paint.price)) {
                                 profile.equip(paint.id)
-                                sync()
                                 notice = t(K.STORE_PAINTED, paint.name)
                             } else {
                                 notice = t(K.STORE_MISSING, paint.price - profile.credits, paint.name)
@@ -168,7 +160,6 @@ fun StoreScreen(state: AppState) {
                         },
                         onEquip = {
                             profile.equip(paint.id)
-                            sync()
                             notice = t(K.STORE_PAINTED, paint.name)
                         }
                     )

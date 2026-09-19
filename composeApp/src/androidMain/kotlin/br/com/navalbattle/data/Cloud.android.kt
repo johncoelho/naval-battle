@@ -65,6 +65,8 @@ actual class CloudApi actual constructor() {
             CloudProfile(
                 username = o.optString("username", session.username),
                 insignia = o.optString("insignia", "anc"),
+                avatar = o.optString("avatar", "om1"),
+                langCode = o.optString("lang_code", ""),
                 xp = o.optInt("xp"),
                 credits = o.optInt("credits", 500),
                 matches = o.optInt("matches"),
@@ -89,6 +91,8 @@ actual class CloudApi actual constructor() {
                 .put("email", session.email)
                 .put("username", profile.username)
                 .put("insignia", profile.insignia)
+                .put("avatar", profile.avatar)
+                .put("lang_code", profile.langCode)
                 .put("xp", profile.xp)
                 .put("credits", profile.credits)
                 .put("matches", profile.matches)

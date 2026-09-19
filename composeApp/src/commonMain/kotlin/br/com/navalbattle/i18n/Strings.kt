@@ -297,10 +297,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     AUTH_HEAD_2("em qualquer mar", "on any sea", "en cualquier mar"),
     AUTH_SUB("Patente, créditos e frotas guardados na base do jogo", "Rank, credits and fleets kept in the game's database", "Rango, créditos y flotas guardados en la base del juego"),
     AUTH_CONNECTED_AS("Conectado como", "Connected as", "Conectado como"),
-    AUTH_SYNC_NOW("Sincronizar agora", "Sync now", "Sincronizar ahora"),
-    AUTH_SYNCING("Sincronizando…", "Syncing…", "Sincronizando…"),
-    AUTH_SYNCED("Carreira sincronizada.", "Career synced.", "Carrera sincronizada."),
-    AUTH_SYNC_FAIL("Não consegui sincronizar agora.", "Could not sync right now.", "No pude sincronizar ahora."),
+    AUTH_AUTO_SYNC("Tudo salvo na nuvem automaticamente", "Everything saved to the cloud automatically", "Todo guardado en la nube automáticamente"),
     AUTH_SIGN_OUT("Sair da conta", "Sign out", "Cerrar sesión"),
     AUTH_SIGNED_OUT("Sessão encerrada. A carreira continua neste aparelho.", "Signed out. Your career stays on this device.", "Sesión cerrada. La carrera sigue en este aparato."),
     AUTH_SIGN_IN("Entrar", "Sign in", "Entrar"),
@@ -469,12 +466,10 @@ enum class K(val pt: String, val en: String, val es: String) {
     INSIGNIA_SKULL("Caveira", "Skull", "Calavera"),
 
     // ---------------------------------------------------------------- avatares
-    AVATAR_OFFICER_M1("Oficial", "Officer", "Oficial"),
-    AVATAR_OFFICER_F1("Oficial", "Officer", "Oficial"),
-    AVATAR_OFFICER_M2("Imediato", "First Mate", "Primer Oficial"),
-    AVATAR_OFFICER_F2("Imediata", "First Mate", "Primer Oficial"),
-    AVATAR_CAPTAIN_M("Capitão", "Captain", "Capitán"),
-    AVATAR_CAPTAIN_F("Capitã", "Captain", "Capitana"),
+    AVATAR_COMMANDER("Comandante", "Commander", "Comandante"),
+    AVATAR_OFFICER("Oficial", "Officer", "Oficial"),
+    AVATAR_BOATSWAIN("Contramestre", "Boatswain", "Contramaestre"),
+    AVATAR_AVIATOR("Aviador", "Aviator", "Aviador"),
     PROFILE_AVATAR("Retrato", "Avatar", "Retrato"),
 
     // ---------------------------------------------------------------- boas-vindas

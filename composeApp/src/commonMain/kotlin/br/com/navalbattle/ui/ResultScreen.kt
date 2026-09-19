@@ -60,7 +60,6 @@ fun ResultScreen(state: AppState, match: Match) {
                 turns = match.turnCount
             )
             // com conta conectada a carreira sobe sozinha depois de cada partida
-            state.pushQuietly()
         } else if (match.opponent == Opponent.ONLINE) {
             // ranqueada soma pontos no placar — casual não mexe em nada aqui
             state.reportRankedResult(victory)

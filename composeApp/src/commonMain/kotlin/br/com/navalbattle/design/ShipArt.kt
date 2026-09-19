@@ -5,6 +5,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
@@ -33,7 +34,12 @@ private fun Color.shaded(t: Float) = Color(red * (1f - t), green * (1f - t), blu
 
 /**
  * Cada classe é desenhada em um viewBox de (tamanho * 50) x 50 — vista de topo,
- * proa à direita. As três cores da libré são os únicos parâmetros de pintura.
+ * proa à direita, quilha em y = 25.
+ *
+ * A boca fica em torno de 1/10 do comprimento, como num navio de verdade: o casco
+ * ocupa só a faixa central da célula, e a folga que sobra nas laterais é o que deixa
+ * lugar para verga de mastro, escaler e reparo antiaéreo sem nada vazar para a célula
+ * vizinha — é isso que mantém duas embarcações encostadas sem sobreposição.
  */
 fun DrawScope.drawShip(
     type: ShipClass,
@@ -70,6 +76,52 @@ fun DrawScope.drawShip(
     }
 }
 
+// ------------------------------------------------------------ medidas por classe
+
+private fun bowX(type: ShipClass): Float = type.size * 50f - 5f
+
+private fun sternX(type: ShipClass): Float = 5f
+
+/** Meia-boca do casco. Perto de 1/20 do comprimento dos dois lados da quilha. */
+private fun hullHalf(type: ShipClass): Float = when (type) {
+    ShipClass.CARRIER -> 11.5f
+    ShipClass.BATTLESHIP -> 10.8f
+    ShipClass.CRUISER -> 8.8f
+    ShipClass.SUBMARINE -> 7.6f
+    ShipClass.DESTROYER -> 6.8f
+}
+
+/** Quanto do comprimento é consumido pelo afilamento da proa. */
+private fun bowRun(type: ShipClass): Float = when (type) {
+    ShipClass.CARRIER -> 46f
+    ShipClass.BATTLESHIP -> 44f
+    ShipClass.CRUISER -> 36f
+    ShipClass.SUBMARINE -> 34f
+    ShipClass.DESTROYER -> 26f
+}
+
+/**
+ * Silhueta de casco: proa afilada em curva, corpo paralelo e popa arredondada. É a
+ * mesma construção para todas as classes — o que muda é boca e afilamento.
+ */
+private fun hullPath(
+    sx: Float,
+    bx: Float,
+    half: Float,
+    run: Float,
+    sternRound: Float = 6f
+): Path = Path().apply {
+    moveTo(bx, 25f)
+    cubicTo(bx - run * 0.30f, 25f - half * 0.36f, bx - run * 0.72f, 25f - half * 0.88f, bx - run, 25f - half)
+    lineTo(sx + sternRound, 25f - half)
+    cubicTo(sx + sternRound * 0.3f, 25f - half, sx, 25f - half * 0.72f, sx, 25f - half * 0.34f)
+    lineTo(sx, 25f + half * 0.34f)
+    cubicTo(sx, 25f + half * 0.72f, sx + sternRound * 0.3f, 25f + half, sx + sternRound, 25f + half)
+    lineTo(bx - run, 25f + half)
+    cubicTo(bx - run * 0.72f, 25f + half * 0.88f, bx - run * 0.30f, 25f + half * 0.36f, bx, 25f)
+    close()
+}
+
 /** Ponta da proa: fica atrás do casco, prolongando a linha da embarcação. */
 private fun DrawScope.drawProw(type: ShipClass, line: FleetLine, l: Paint, a: Float) {
     if (line.prow == Prow.PADRAO) return
@@ -78,50 +130,45 @@ private fun DrawScope.drawProw(type: ShipClass, line: FleetLine, l: Paint, a: Fl
     when (line.prow) {
         Prow.CLIPPER -> {
             val p = Path().apply {
-                moveTo(bow - 6f, 25f - half * 0.75f)
-                lineTo(bow + half * 0.95f, 25f)
-                lineTo(bow - 6f, 25f + half * 0.75f)
+                moveTo(bow - 8f, 25f - half * 0.62f)
+                lineTo(bow + half * 1.1f, 25f)
+                lineTo(bow - 8f, 25f + half * 0.62f)
                 close()
             }
             drawPath(p, l.hull, alpha = a)
-            drawPath(p, l.dark, alpha = a, style = Stroke(1.2f))
+            drawPath(p, l.dark, alpha = a, style = Stroke(0.9f))
         }
 
         Prow.BULBOSA -> {
-            drawCircle(l.hull, radius = half * 0.55f, center = Offset(bow + half * 0.2f, 25f), alpha = a)
-            drawCircle(l.dark, radius = half * 0.55f, center = Offset(bow + half * 0.2f, 25f), alpha = a * 0.9f, style = Stroke(1.2f))
+            drawCircle(l.hull, radius = half * 0.5f, center = Offset(bow + half * 0.22f, 25f), alpha = a)
+            drawCircle(l.dark, radius = half * 0.5f, center = Offset(bow + half * 0.22f, 25f), alpha = a * 0.9f, style = Stroke(0.9f))
         }
 
         Prow.FACETADA -> {
             val p = Path().apply {
-                moveTo(bow - 10f, 25f - half)
-                lineTo(bow + half * 0.7f, 25f - half * 0.22f)
-                lineTo(bow + half * 0.7f, 25f + half * 0.22f)
-                lineTo(bow - 10f, 25f + half)
+                moveTo(bow - 14f, 25f - half)
+                lineTo(bow + half * 0.8f, 25f - half * 0.2f)
+                lineTo(bow + half * 0.8f, 25f + half * 0.2f)
+                lineTo(bow - 14f, 25f + half)
                 close()
             }
             drawPath(p, l.hull, alpha = a)
-            drawPath(p, l.dark, alpha = a, style = Stroke(1.2f))
-            // quinas do casco de baixa assinatura
-            drawLine(l.dark.copy(alpha = 0.75f), Offset(sternX(type) + 4f, 25f - half * 0.45f), Offset(bow - 6f, 25f - half * 0.2f), 1.1f, alpha = a)
-            drawLine(l.dark.copy(alpha = 0.75f), Offset(sternX(type) + 4f, 25f + half * 0.45f), Offset(bow - 6f, 25f + half * 0.2f), 1.1f, alpha = a)
+            drawPath(p, l.dark, alpha = a, style = Stroke(0.9f))
+            drawLine(l.dark.copy(alpha = 0.75f), Offset(sternX(type) + 6f, 25f - half * 0.5f), Offset(bow - 10f, 25f - half * 0.22f), 0.8f, alpha = a)
+            drawLine(l.dark.copy(alpha = 0.75f), Offset(sternX(type) + 6f, 25f + half * 0.5f), Offset(bow - 10f, 25f + half * 0.22f), 0.8f, alpha = a)
         }
 
         Prow.PADRAO -> Unit
     }
 }
 
-/** Chaminés inclinadas, logo atrás do meio do navio. */
+/** Chaminés da linha de construção, logo atrás do meio do navio. */
 private fun DrawScope.drawFunnels(type: ShipClass, line: FleetLine, l: Paint, a: Float) {
     if (line.funnels == 0) return
     val bow = bowX(type)
     val half = hullHalf(type)
-    val w = half * 0.34f
-    val h = half * 0.62f
     for (i in 0 until line.funnels) {
-        val x = bow * (0.36f + i * 0.10f)
-        deckBlock(x, 25f - h / 2f, w, h, l.dark, a, 2.6f)
-        deckBlock(x + w * 0.18f, 25f - h / 2f, w * 0.3f, h * 0.28f, l.trim, a * 0.8f, 3f)
+        funnel(bow * (0.34f + i * 0.11f), half * 0.58f, half * 0.46f, l, a)
     }
 }
 
@@ -130,72 +177,49 @@ private fun DrawScope.drawTower(type: ShipClass, line: FleetLine, l: Paint, a: F
     if (line.tower == Tower.PADRAO) return
     val bow = bowX(type)
     val half = hullHalf(type)
-    val cx = bow * 0.55f
+    val cx = bow * 0.52f
     when (line.tower) {
         Tower.PAGODE -> {
-            // torre em pagode: caixas empilhadas afinando para cima
+            // torre em pagode: caixas empilhadas afinando para a proa
             for (i in 0 until 3) {
-                val w = half * (1.05f - i * 0.26f)
-                val h = half * (0.34f - i * 0.06f)
-                deckBlock(cx - w / 2f, 25f - half * (0.30f + i * 0.34f), w, h, l.dark, a, 2f + i)
+                val w = half * (1.5f - i * 0.36f)
+                val h = half * (1.15f - i * 0.30f)
+                deckBlock(cx - w / 2f + i * half * 0.2f, 25f - h / 2f, w, h, l.dark, a, 1.6f + i * 0.8f)
             }
-            box(cx - half * 0.06f, 25f - half * 1.5f, half * 0.12f, half * 0.42f, l.trim, a)
+            mastAndYards(cx - half * 0.9f, half * 1.9f, l, a)
         }
 
         Tower.BLOCO -> {
-            val w = half * 1.5f
-            deckBlock(cx - w / 2f, 25f - half * 0.62f, w, half * 1.24f, l.dark, a, 2.4f)
-            deckBlock(cx - w / 2f + half * 0.16f, 25f - half * 0.36f, w - half * 0.32f, half * 0.72f, l.deck, a * 0.9f, 3f)
-            // mastro em treliça
-            drawLine(l.trim, Offset(cx - half * 0.3f, 25f - half * 0.62f), Offset(cx + half * 0.3f, 25f + half * 0.62f), 1f, alpha = a * 0.8f)
-            drawLine(l.trim, Offset(cx + half * 0.3f, 25f - half * 0.62f), Offset(cx - half * 0.3f, 25f + half * 0.62f), 1f, alpha = a * 0.8f)
+            val w = half * 2.1f
+            deckBlock(cx - w / 2f, 25f - half * 0.92f, w, half * 1.84f, l.dark, a, 2f)
+            deckBlock(cx - w / 2f + half * 0.26f, 25f - half * 0.54f, w - half * 0.52f, half * 1.08f, l.deck, a * 0.9f, 2.6f)
+            mastAndYards(cx - half * 1.2f, half * 2.1f, l, a)
         }
 
         Tower.FACETADA -> {
             val p = Path().apply {
-                moveTo(cx - half * 0.8f, 25f - half * 0.52f)
-                lineTo(cx + half * 0.55f, 25f - half * 0.30f)
-                lineTo(cx + half * 0.55f, 25f + half * 0.30f)
-                lineTo(cx - half * 0.8f, 25f + half * 0.52f)
+                moveTo(cx - half * 1.1f, 25f - half * 0.78f)
+                lineTo(cx + half * 0.8f, 25f - half * 0.42f)
+                lineTo(cx + half * 0.8f, 25f + half * 0.42f)
+                lineTo(cx - half * 1.1f, 25f + half * 0.78f)
                 close()
             }
+            translate(-LIGHT_DX * 1.8f, -LIGHT_DY * 1.8f) {
+                drawPath(p, Color.Black.copy(alpha = 0.3f * a))
+            }
             drawPath(p, l.dark, alpha = a)
-            drawPath(p, l.trim.copy(alpha = 0.5f), alpha = a, style = Stroke(1f))
+            drawPath(p, l.trim.copy(alpha = 0.5f), alpha = a, style = Stroke(0.7f))
         }
 
         Tower.PADRAO -> Unit
     }
 }
 
-private fun bowX(type: ShipClass): Float = when (type) {
-    ShipClass.CARRIER -> 247f
-    ShipClass.BATTLESHIP -> 198f
-    ShipClass.CRUISER -> 148f
-    ShipClass.SUBMARINE -> 146f
-    ShipClass.DESTROYER -> 98.5f
-}
-
-private fun sternX(type: ShipClass): Float = when (type) {
-    ShipClass.CARRIER -> 10f
-    ShipClass.BATTLESHIP -> 8f
-    ShipClass.CRUISER -> 7f
-    ShipClass.SUBMARINE -> 9f
-    ShipClass.DESTROYER -> 6f
-}
-
-private fun hullHalf(type: ShipClass): Float = when (type) {
-    ShipClass.CARRIER -> 15f
-    ShipClass.BATTLESHIP -> 14f
-    ShipClass.CRUISER -> 12.5f
-    ShipClass.SUBMARINE -> 11f
-    ShipClass.DESTROYER -> 11f
-}
-
 /**
  * Casco com volume: sombra projetada na água, gradiente de bordo a bordo, camuflagem
  * recortada no contorno e um fio de luz na amurada iluminada.
  */
-private fun DrawScope.hull(path: Path, paint: Paint, alpha: Float, stroke: Float = 1.4f) {
+private fun DrawScope.hull(path: Path, paint: Paint, alpha: Float, stroke: Float = 1.1f) {
     // sombra na água, deslocada no sentido contrário à luz
     translate(-LIGHT_DX * 2.4f, -LIGHT_DY * 2.4f) {
         drawPath(path, Color.Black.copy(alpha = 0.28f * alpha))
@@ -204,10 +228,11 @@ private fun DrawScope.hull(path: Path, paint: Paint, alpha: Float, stroke: Float
     drawPath(
         path = path,
         brush = Brush.verticalGradient(
-            0.00f to paint.hull.lit(0.30f),
-            0.28f to paint.hull.lit(0.08f),
-            0.62f to paint.hull,
-            1.00f to paint.hull.shaded(0.34f)
+            0.00f to paint.hull.lit(0.34f),
+            0.16f to paint.hull.lit(0.12f),
+            0.52f to paint.hull,
+            0.82f to paint.hull.shaded(0.22f),
+            1.00f to paint.hull.shaded(0.44f)
         ),
         alpha = alpha
     )
@@ -219,13 +244,26 @@ private fun DrawScope.hull(path: Path, paint: Paint, alpha: Float, stroke: Float
         drawPath(
             path = path,
             brush = Brush.verticalGradient(
-                0.00f to Color.White.copy(alpha = 0.38f * alpha),
-                0.22f to Color.Transparent
+                0.00f to Color.White.copy(alpha = 0.42f * alpha),
+                0.20f to Color.Transparent
             ),
-            style = Stroke(width = stroke * 2.2f)
+            style = Stroke(width = stroke * 2.4f)
         )
     }
     drawPath(path, paint.dark.shaded(0.2f), alpha = alpha, style = Stroke(width = stroke))
+}
+
+/** Convés interno: a chapa em que a miudeza é montada, mais escura que a amurada. */
+private fun DrawScope.deck(path: Path, l: Paint, a: Float, strength: Float = 0.9f) {
+    drawPath(path, l.deck, alpha = a * strength)
+}
+
+/** Fiadas de chapa correndo no sentido do comprimento — miudeza que dá escala. */
+private fun DrawScope.plating(sx: Float, bx: Float, half: Float, l: Paint, a: Float) {
+    val c = l.dark.copy(alpha = 0.35f * a)
+    listOf(-0.56f, 0f, 0.56f).forEach { f ->
+        drawLine(c, Offset(sx + 6f, 25f + half * f), Offset(bx - 10f, 25f + half * f), 0.5f)
+    }
 }
 
 /**
@@ -261,8 +299,124 @@ private fun DrawScope.deckBlock(
         topLeft = Offset(x + LIGHT_DX * height, y + LIGHT_DY * height),
         size = Size(w, h),
         alpha = alpha * 0.9f,
-        style = Stroke(0.6f)
+        style = Stroke(0.5f)
     )
+}
+
+/**
+ * Torre de artilharia: barbeta redonda, casamata por cima e canos finos deitados no
+ * eixo do navio. [dir] é +1 para quem aponta à proa e -1 para as torres de ré, de
+ * modo que nenhum cano ultrapasse a ponta do casco.
+ */
+private fun DrawScope.turret(
+    cx: Float, r: Float, barrels: Int, barrelLen: Float, dir: Float,
+    l: Paint, a: Float
+) {
+    // barbeta
+    drawCircle(
+        color = Color.Black.copy(alpha = 0.3f * a),
+        radius = r,
+        center = Offset(cx - LIGHT_DX * 1.3f, 25f - LIGHT_DY * 1.3f)
+    )
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(l.dark.lit(0.44f), l.dark, l.dark.shaded(0.34f)),
+            center = Offset(cx + LIGHT_DX * r * 0.45f, 25f + LIGHT_DY * r * 0.45f),
+            radius = r * 1.5f
+        ),
+        radius = r,
+        center = Offset(cx, 25f),
+        alpha = a
+    )
+    // casamata: face de cima clara, base escura
+    val hw = r * 0.95f
+    val hh = r * 0.78f
+    deckBlock(cx - hw * 0.7f, 25f - hh, hw * 1.5f, hh * 2f, l.dark, a, 1.4f)
+
+    // canos, espaçados na boca da torre
+    val step = if (barrels <= 1) 0f else (r * 1.05f) / (barrels - 1)
+    val first = -(step * (barrels - 1)) / 2f
+    for (i in 0 until barrels) {
+        val y = 25f + first + step * i
+        val x0 = cx + dir * hw * 0.8f
+        val x1 = x0 + dir * barrelLen
+        drawLine(Color.Black.copy(alpha = 0.32f * a), Offset(x0, y + 0.55f), Offset(x1, y + 0.55f), r * 0.24f, cap = StrokeCap.Round)
+        drawLine(l.dark.shaded(0.1f), Offset(x0, y), Offset(x1, y), r * 0.24f, cap = StrokeCap.Round)
+        drawLine(l.dark.lit(0.5f), Offset(x0, y - r * 0.06f), Offset(x1, y - r * 0.06f), r * 0.09f, alpha = a * 0.9f, cap = StrokeCap.Round)
+    }
+}
+
+/** Reparo antiaéreo: poço redondo com a peça apontando para fora do costado. */
+private fun DrawScope.aaTub(cx: Float, cy: Float, r: Float, out: Float, l: Paint, a: Float) {
+    drawCircle(Color.Black.copy(alpha = 0.3f * a), radius = r, center = Offset(cx - LIGHT_DX * 0.9f, cy - LIGHT_DY * 0.9f))
+    drawCircle(l.deck.lit(0.1f), radius = r, center = Offset(cx, cy), alpha = a)
+    drawCircle(l.dark, radius = r * 0.48f, center = Offset(cx, cy), alpha = a)
+    drawLine(l.dark.lit(0.35f), Offset(cx, cy), Offset(cx, cy + out * r * 1.7f), r * 0.3f, alpha = a, cap = StrokeCap.Round)
+}
+
+/**
+ * Mastro visto de cima: o pau some na vertical, o que se vê são as vergas. Elas
+ * avançam sobre a água dos dois bordos, no espaço que o casco fino deixa livre.
+ */
+private fun DrawScope.mastAndYards(cx: Float, span: Float, l: Paint, a: Float) {
+    val c = l.trim.copy(alpha = 0.9f * a)
+    drawLine(c, Offset(cx, 25f - span), Offset(cx, 25f + span), 0.7f, cap = StrokeCap.Round)
+    listOf(-0.55f, 0.55f).forEach { f ->
+        drawLine(c, Offset(cx + span * f * 0.5f, 25f - span * 0.5f), Offset(cx + span * f * 0.5f, 25f + span * 0.5f), 0.6f, cap = StrokeCap.Round)
+    }
+    drawCircle(l.dark.lit(0.3f), radius = span * 0.16f, center = Offset(cx, 25f), alpha = a)
+}
+
+/** Chaminé: boca escura no meio de um anel claro. */
+private fun DrawScope.funnel(cx: Float, rx: Float, ry: Float, l: Paint, a: Float) {
+    drawCircle(Color.Black.copy(alpha = 0.3f * a), radius = rx, center = Offset(cx - LIGHT_DX * 1.2f, 25f - LIGHT_DY * 1.2f))
+    withTransform({ scale(1f, ry / rx, pivot = Offset(cx, 25f)) }) {
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(l.dark.lit(0.4f), l.dark.shaded(0.1f)),
+                center = Offset(cx + LIGHT_DX * rx * 0.4f, 25f + LIGHT_DY * rx * 0.4f),
+                radius = rx * 1.4f
+            ),
+            radius = rx,
+            center = Offset(cx, 25f),
+            alpha = a
+        )
+        drawCircle(Color.Black.copy(alpha = 0.72f * a), radius = rx * 0.62f, center = Offset(cx, 25f))
+    }
+}
+
+/** Radar de superfície: prato meio iluminado girando sobre a ponte. */
+private fun DrawScope.radar(cx: Float, r: Float, l: Paint, a: Float) {
+    drawCircle(Color.Black.copy(alpha = 0.28f * a), radius = r, center = Offset(cx - LIGHT_DX, 25f - LIGHT_DY))
+    drawCircle(l.trim, radius = r, center = Offset(cx, 25f), alpha = a)
+    drawCircle(l.dark, radius = r * 0.4f, center = Offset(cx, 25f), alpha = a)
+}
+
+/** Escaler estivado no costado. */
+private fun DrawScope.boat(cx: Float, cy: Float, len: Float, l: Paint, a: Float) {
+    withTransform({ scale(1f, 0.38f, pivot = Offset(cx, cy)) }) {
+        drawCircle(l.deck.lit(0.15f), radius = len / 2f, center = Offset(cx, cy), alpha = a)
+        drawCircle(l.dark, radius = len * 0.32f, center = Offset(cx, cy), alpha = a * 0.9f)
+    }
+}
+
+/** Espuma na proa — só um par de lascas claras, para dar sentido de marcha. */
+private fun DrawScope.bowWash(bx: Float, half: Float, a: Float) {
+    val c = Color(0xFFCFE4F5).copy(alpha = 0.4f * a)
+    val up = Path().apply {
+        moveTo(bx, 25f)
+        lineTo(bx + half * 0.7f, 25f - half * 1.15f)
+        lineTo(bx - half * 0.2f, 25f - half * 0.3f)
+        close()
+    }
+    val dn = Path().apply {
+        moveTo(bx, 25f)
+        lineTo(bx + half * 0.7f, 25f + half * 1.15f)
+        lineTo(bx - half * 0.2f, 25f + half * 0.3f)
+        close()
+    }
+    drawPath(up, c)
+    drawPath(dn, c)
 }
 
 /** Padrão de camuflagem, sempre recortado no contorno do casco. */
@@ -333,219 +487,262 @@ private fun DrawScope.drawCamo(l: Paint, a: Float) {
     }
 }
 
-private fun DrawScope.box(
-    x: Float, y: Float, w: Float, h: Float,
-    color: androidx.compose.ui.graphics.Color, alpha: Float
-) = drawRect(color, topLeft = Offset(x, y), size = Size(w, h), alpha = alpha)
-
-// ---------------------------------------------------------------- carrier
+// ---------------------------------------------------------------- porta-aviões
 
 private fun DrawScope.drawCarrier(l: Paint, a: Float) {
-    val h = Path().apply {
-        moveTo(10f, 25f)
-        cubicTo(10f, 15f, 17f, 10f, 27f, 10f)
-        lineTo(196f, 10f)
-        cubicTo(222f, 10f, 242f, 17f, 247f, 25f)
-        cubicTo(242f, 33f, 222f, 40f, 196f, 40f)
-        lineTo(27f, 40f)
-        cubicTo(17f, 40f, 10f, 35f, 10f, 25f)
+    val bx = bowX(ShipClass.CARRIER)
+    val sx = sternX(ShipClass.CARRIER)
+    val half = hullHalf(ShipClass.CARRIER)
+
+    hull(hullPath(sx, bx, half, bowRun(ShipClass.CARRIER)), l, a)
+
+    // convés de voo: mais largo que o casco, cantos cortados na proa
+    val deckHalf = 17.5f
+    val fd = Path().apply {
+        moveTo(bx - 8f, 25f - deckHalf * 0.55f)
+        lineTo(sx + 6f, 25f - deckHalf)
+        lineTo(sx, 25f - deckHalf * 0.7f)
+        lineTo(sx, 25f + deckHalf * 0.7f)
+        lineTo(sx + 6f, 25f + deckHalf)
+        lineTo(bx - 8f, 25f + deckHalf * 0.55f)
+        cubicTo(bx - 2f, 25f + deckHalf * 0.3f, bx, 25f + 3f, bx, 25f)
+        cubicTo(bx, 25f - 3f, bx - 2f, 25f - deckHalf * 0.3f, bx - 8f, 25f - deckHalf * 0.55f)
         close()
     }
-    hull(h, l, a)
-
-    val deck = Path().apply {
-        moveTo(22f, 15f)
-        lineTo(198f, 15f)
-        cubicTo(214f, 15f, 228f, 19f, 234f, 25f)
-        cubicTo(228f, 31f, 214f, 35f, 198f, 35f)
-        lineTo(22f, 35f)
-        close()
-    }
-    drawPath(deck, l.deck, alpha = a)
-
-    // faixa central intermitente da pista
-    var x = 34f
-    while (x < 212f) {
-        box(x, 24.2f, 9f, 1.8f, l.trim, a * 0.85f)
-        x += 16f
-    }
-    box(36f, 18.5f, 16f, 13f, l.dark, a * 0.5f)
-    box(150f, 18.5f, 16f, 13f, l.dark, a * 0.5f)
-
-    // ilha de comando a boreste
-    deckBlock(176f, 7f, 30f, 9f, l.dark, a, 2.2f)
-    deckBlock(182f, 3.5f, 8f, 4f, l.trim, a, 2.8f)
-    drawCircle(l.trim, radius = 2f, center = Offset(198f, 11.5f), alpha = a)
-}
-
-// ------------------------------------------------------------ battleship
-
-private fun DrawScope.drawBattleship(l: Paint, a: Float) {
-    val h = Path().apply {
-        moveTo(8f, 25f)
-        cubicTo(8f, 16f, 14f, 11f, 23f, 11f)
-        lineTo(158f, 11f)
-        cubicTo(180f, 11f, 194f, 18f, 198f, 25f)
-        cubicTo(194f, 32f, 180f, 39f, 158f, 39f)
-        lineTo(23f, 39f)
-        cubicTo(14f, 39f, 8f, 34f, 8f, 25f)
-        close()
-    }
-    hull(h, l, a)
-
-    val deck = Path().apply {
-        moveTo(20f, 16f)
-        lineTo(156f, 16f)
-        cubicTo(172f, 16f, 184f, 20f, 189f, 25f)
-        cubicTo(184f, 30f, 172f, 34f, 156f, 34f)
-        lineTo(20f, 34f)
-        close()
-    }
-    drawPath(deck, l.deck, alpha = a * 0.9f)
-
-    turret(44f, 25f, 8f, 50f, 23.2f, 18f, 3.6f, l, a)
-    turret(74f, 25f, 7f, 79f, 23.4f, 15f, 3.2f, l, a)
-    turret(150f, 25f, 7.5f, 130f, 23.4f, 17f, 3.2f, l, a)
-
-    deckBlock(96f, 16f, 26f, 18f, l.dark, a, 2.4f)
-    deckBlock(102f, 19f, 14f, 12f, l.deck, a, 3f)
-    deckBlock(107f, 10f, 4f, 8f, l.trim, a, 3.4f)
-    drawCircle(l.trim, radius = 2.4f, center = Offset(109f, 25f), alpha = a)
-}
-
-// ---------------------------------------------------------------- cruiser
-
-private fun DrawScope.drawCruiser(l: Paint, a: Float) {
-    val h = Path().apply {
-        moveTo(7f, 25f)
-        cubicTo(7f, 17f, 12f, 12.5f, 21f, 12.5f)
-        lineTo(116f, 12.5f)
-        cubicTo(136f, 12.5f, 145f, 18.5f, 148f, 25f)
-        cubicTo(145f, 31.5f, 136f, 37.5f, 116f, 37.5f)
-        lineTo(21f, 37.5f)
-        cubicTo(12f, 37.5f, 7f, 33f, 7f, 25f)
-        close()
-    }
-    hull(h, l, a, 1.3f)
-
-    val deck = Path().apply {
-        moveTo(18f, 17f)
-        lineTo(114f, 17f)
-        cubicTo(128f, 17f, 137f, 21f, 141f, 25f)
-        cubicTo(137f, 29f, 128f, 33f, 114f, 33f)
-        lineTo(18f, 33f)
-        close()
-    }
-    drawPath(deck, l.deck, alpha = a * 0.9f)
-
-    turret(36f, 25f, 6.5f, 41f, 23.6f, 14f, 2.9f, l, a)
-    turret(112f, 25f, 6f, 96f, 23.6f, 13f, 2.9f, l, a)
-
-    deckBlock(66f, 17.5f, 22f, 15f, l.dark, a, 2.2f)
-    deckBlock(71f, 20f, 12f, 10f, l.deck, a, 2.8f)
-    deckBlock(75f, 11f, 3.4f, 8f, l.trim, a, 3.2f)
-    drawCircle(l.trim, radius = 2.1f, center = Offset(76.5f, 25f), alpha = a)
-}
-
-// -------------------------------------------------------------- submarine
-
-private fun DrawScope.drawSubmarine(l: Paint, a: Float) {
-    val h = Path().apply {
-        moveTo(9f, 25f)
-        cubicTo(9f, 18.5f, 19f, 14f, 40f, 14f)
-        lineTo(108f, 14f)
-        cubicTo(130f, 14f, 142f, 19.5f, 146f, 25f)
-        cubicTo(142f, 30.5f, 130f, 36f, 108f, 36f)
-        lineTo(40f, 36f)
-        cubicTo(19f, 36f, 9f, 31.5f, 9f, 25f)
-        close()
-    }
-    hull(h, l, a, 1.3f)
-
-    val deck = Path().apply {
-        moveTo(28f, 18f)
-        lineTo(110f, 18f)
-        cubicTo(124f, 18f, 134f, 21.5f, 138f, 25f)
-        cubicTo(134f, 28.5f, 124f, 32f, 110f, 32f)
-        lineTo(28f, 32f)
-        close()
-    }
-    drawPath(deck, l.deck, alpha = a * 0.55f)
-
-    deckBlock(58f, 16.5f, 24f, 17f, l.dark, a, 2.2f)
-    deckBlock(63f, 19.5f, 14f, 11f, l.deck, a, 2.6f)
-    deckBlock(68f, 9.5f, 3f, 8f, l.trim, a, 3f)
-    box(16f, 24.2f, 10f, 1.6f, l.trim, a * 0.8f)
-    box(28.5f, 10f, 3f, 5f, l.dark, a)
-    box(28.5f, 35f, 3f, 5f, l.dark, a)
-}
-
-// -------------------------------------------------------------- destroyer
-
-private fun DrawScope.drawDestroyer(l: Paint, a: Float) {
-    val h = Path().apply {
-        moveTo(6f, 25f)
-        cubicTo(6f, 18f, 10f, 14f, 18f, 14f)
-        lineTo(74f, 14f)
-        cubicTo(90f, 14f, 96f, 19.5f, 98.5f, 25f)
-        cubicTo(96f, 30.5f, 90f, 36f, 74f, 36f)
-        lineTo(18f, 36f)
-        cubicTo(10f, 36f, 6f, 32f, 6f, 25f)
-        close()
-    }
-    hull(h, l, a, 1.2f)
-
-    val deck = Path().apply {
-        moveTo(15f, 18f)
-        lineTo(72f, 18f)
-        cubicTo(84f, 18f, 90f, 21.5f, 93f, 25f)
-        cubicTo(90f, 28.5f, 84f, 32f, 72f, 32f)
-        lineTo(15f, 32f)
-        close()
-    }
-    drawPath(deck, l.deck, alpha = a * 0.9f)
-
-    turret(28f, 25f, 5.6f, 32f, 23.7f, 12f, 2.6f, l, a)
-    deckBlock(50f, 19f, 16f, 12f, l.dark, a, 2f)
-    deckBlock(54f, 21.5f, 8f, 7f, l.deck, a, 2.4f)
-    deckBlock(57f, 13f, 3f, 7f, l.trim, a, 2.8f)
-    drawCircle(l.trim, radius = 1.9f, center = Offset(58.5f, 25f), alpha = a)
-}
-
-/** Torre de artilharia: cúpula com brilho e canos com fio de luz. */
-private fun DrawScope.turret(
-    cx: Float, cy: Float, r: Float,
-    bx: Float, by: Float, bw: Float, bh: Float,
-    l: Paint, a: Float
-) {
-    // canos
-    drawRect(
-        color = Color.Black.copy(alpha = 0.3f * a),
-        topLeft = Offset(bx - LIGHT_DX * 1.2f, by - LIGHT_DY * 1.2f),
-        size = Size(bw, bh)
-    )
-    drawRect(l.dark.shaded(0.1f), topLeft = Offset(bx, by), size = Size(bw, bh), alpha = a)
-    drawRect(
-        l.dark.lit(0.35f),
-        topLeft = Offset(bx, by),
-        size = Size(bw, bh * 0.34f),
-        alpha = a * 0.8f
-    )
-
-    // cúpula
-    drawCircle(
-        color = Color.Black.copy(alpha = 0.32f * a),
-        radius = r,
-        center = Offset(cx - LIGHT_DX * 1.4f, cy - LIGHT_DY * 1.4f)
-    )
-    drawCircle(
-        brush = Brush.radialGradient(
-            colors = listOf(l.dark.lit(0.42f), l.dark, l.dark.shaded(0.35f)),
-            center = Offset(cx + LIGHT_DX * r * 0.45f, cy + LIGHT_DY * r * 0.45f),
-            radius = r * 1.4f
+    translate(-LIGHT_DX * 1.6f, -LIGHT_DY * 1.6f) { drawPath(fd, Color.Black.copy(alpha = 0.26f * a)) }
+    drawPath(
+        fd,
+        brush = Brush.verticalGradient(
+            0.00f to l.deck.lit(0.30f),
+            0.42f to l.deck,
+            1.00f to l.deck.shaded(0.34f)
         ),
-        radius = r,
-        center = Offset(cx, cy),
         alpha = a
     )
+    drawPath(fd, l.dark.shaded(0.15f), alpha = a, style = Stroke(0.9f))
+
+    // área de pouso rebaixada e faixa central
+    drawRect(l.dark, topLeft = Offset(sx + 8f, 25f - 6.5f), size = Size(bx - sx - 42f, 13f), alpha = a * 0.4f)
+    var x = sx + 14f
+    while (x < bx - 40f) {
+        drawRect(l.trim, topLeft = Offset(x, 24.3f), size = Size(7f, 1.4f), alpha = a * 0.85f)
+        x += 13f
+    }
+    // cabos de parada
+    listOf(0f, 1f, 2f, 3f).forEach { i ->
+        val cx = sx + 22f + i * 11f
+        drawLine(l.trim.copy(alpha = 0.5f * a), Offset(cx, 25f - 6f), Offset(cx, 25f + 6f), 0.6f)
+    }
+    // elevadores
+    drawRect(l.dark, topLeft = Offset(sx + 62f, 25f + 8f), size = Size(22f, 7f), alpha = a * 0.55f)
+    drawRect(l.dark, topLeft = Offset(sx + 132f, 25f - 15f), size = Size(22f, 7f), alpha = a * 0.55f)
+
+    // ilha a boreste, rente à borda do convés
+    val islandX = bx - 74f
+    deckBlock(islandX, 25f + 8.5f, 26f, 7.5f, l.dark, a, 2.2f)
+    deckBlock(islandX + 3f, 25f + 10f, 9f, 4.5f, l.deck, a, 2.8f)
+    funnel(islandX + 20f, 2.6f, 2.1f, l, a)
+    radar(islandX + 9f, 1.8f, l, a * 0.9f)
+
+    // aeronaves estivadas no convés de voo
+    listOf(0f, 1f, 2f, 3f).forEach { i ->
+        carrierJet(sx + 34f + i * 21f, 25f - 12.5f, l, a)
+    }
+    carrierJet(bx - 34f, 25f + 12f, l, a)
+
+    plating(sx, bx, half, l, a)
+    bowWash(bx, half, a)
+}
+
+/** Caça estivado: fuselagem, asa em flecha e leme, no tamanho do convés. */
+private fun DrawScope.carrierJet(cx: Float, cy: Float, l: Paint, a: Float) {
+    val p = Path().apply {
+        moveTo(cx + 5.5f, cy)
+        lineTo(cx + 1.4f, cy - 1.2f)
+        lineTo(cx - 1.6f, cy - 4.4f)
+        lineTo(cx - 2.6f, cy - 4.4f)
+        lineTo(cx - 1.4f, cy - 1.1f)
+        lineTo(cx - 5.4f, cy)
+        lineTo(cx - 1.4f, cy + 1.1f)
+        lineTo(cx - 2.6f, cy + 4.4f)
+        lineTo(cx - 1.6f, cy + 4.4f)
+        lineTo(cx + 1.4f, cy + 1.2f)
+        close()
+    }
+    translate(-LIGHT_DX * 0.8f, -LIGHT_DY * 0.8f) { drawPath(p, Color.Black.copy(alpha = 0.3f * a)) }
+    drawPath(p, l.trim.lit(0.1f), alpha = a * 0.95f)
+    drawCircle(l.dark, radius = 0.8f, center = Offset(cx + 1.6f, cy), alpha = a)
+}
+
+// ------------------------------------------------------------------ couraçado
+
+private fun DrawScope.drawBattleship(l: Paint, a: Float) {
+    val bx = bowX(ShipClass.BATTLESHIP)
+    val sx = sternX(ShipClass.BATTLESHIP)
+    val half = hullHalf(ShipClass.BATTLESHIP)
+
+    hull(hullPath(sx, bx, half, bowRun(ShipClass.BATTLESHIP)), l, a)
+    deck(hullPath(sx + 4f, bx - 8f, half * 0.74f, bowRun(ShipClass.BATTLESHIP) * 0.8f, 4f), l, a, 0.85f)
+    plating(sx, bx, half, l, a)
+
+    // três torres triplas: duas à proa apontando para a frente, uma à ré virada
+    turret(cx = bx - 52f, r = half * 0.62f, barrels = 3, barrelLen = half * 2.1f, dir = 1f, l = l, a = a)
+    turret(cx = bx - 76f, r = half * 0.55f, barrels = 3, barrelLen = half * 1.7f, dir = 1f, l = l, a = a)
+    turret(cx = sx + 34f, r = half * 0.6f, barrels = 3, barrelLen = half * 2f, dir = -1f, l = l, a = a)
+
+    // ilha central em blocos, com ponte fechada e radar
+    val cx = bx * 0.5f
+    deckBlock(cx - 16f, 25f - half * 0.68f, 32f, half * 1.36f, l.dark, a, 2.2f)
+    deckBlock(cx - 10f, 25f - half * 0.42f, 18f, half * 0.84f, l.deck, a, 2.8f)
+    radar(cx - 1f, half * 0.2f, l, a)
+    mastAndYards(cx + 12f, half * 1.55f, l, a)
+    funnel(cx + 20f, half * 0.5f, half * 0.4f, l, a)
+    funnel(cx - 26f, half * 0.4f, half * 0.32f, l, a)
+
+    // secundárias e antiaéreos nas galerias dos dois bordos
+    listOf(-1f, 1f).forEach { s ->
+        aaTub(bx - 96f, 25f + s * half * 0.86f, half * 0.28f, s, l, a)
+        aaTub(cx + 4f, 25f + s * half * 0.9f, half * 0.26f, s, l, a)
+        aaTub(sx + 58f, 25f + s * half * 0.86f, half * 0.26f, s, l, a)
+        boat(sx + 46f, 25f + s * half * 0.72f, half * 0.9f, l, a)
+    }
+    bowWash(bx, half, a)
+}
+
+// -------------------------------------------------------------------- cruzador
+
+private fun DrawScope.drawCruiser(l: Paint, a: Float) {
+    val bx = bowX(ShipClass.CRUISER)
+    val sx = sternX(ShipClass.CRUISER)
+    val half = hullHalf(ShipClass.CRUISER)
+
+    hull(hullPath(sx, bx, half, bowRun(ShipClass.CRUISER)), l, a, 1f)
+    deck(hullPath(sx + 3f, bx - 7f, half * 0.74f, bowRun(ShipClass.CRUISER) * 0.8f, 3.5f), l, a, 0.85f)
+    plating(sx, bx, half, l, a)
+
+    turret(cx = bx - 38f, r = half * 0.6f, barrels = 2, barrelLen = half * 1.9f, dir = 1f, l = l, a = a)
+    turret(cx = bx - 56f, r = half * 0.54f, barrels = 2, barrelLen = half * 1.5f, dir = 1f, l = l, a = a)
+    turret(cx = sx + 30f, r = half * 0.56f, barrels = 2, barrelLen = half * 1.7f, dir = -1f, l = l, a = a)
+
+    // lançadores verticais: tampas em relevo no meio do convés
+    var x = bx - 84f
+    while (x < bx - 62f) {
+        listOf(-0.42f, 0.42f).forEach { s ->
+            deckBlock(x, 25f + s * half - half * 0.2f, 4.2f, half * 0.4f, l.dark, a, 1f)
+        }
+        x += 6f
+    }
+
+    val cx = bx * 0.44f
+    deckBlock(cx - 11f, 25f - half * 0.62f, 22f, half * 1.24f, l.dark, a, 2f)
+    deckBlock(cx - 6f, 25f - half * 0.38f, 12f, half * 0.76f, l.deck, a, 2.5f)
+    radar(cx, half * 0.19f, l, a)
+    mastAndYards(cx + 9f, half * 1.5f, l, a)
+    funnel(cx - 14f, half * 0.46f, half * 0.37f, l, a)
+    funnel(cx - 26f, half * 0.4f, half * 0.32f, l, a)
+
+    // convoo marcado na popa
+    drawCircle(l.dark, radius = half * 0.82f, center = Offset(sx + 13f, 25f), alpha = a * 0.5f)
+    drawCircle(l.trim.copy(alpha = 0.6f * a), radius = half * 0.82f, center = Offset(sx + 13f, 25f), style = Stroke(0.7f))
+
+    listOf(-1f, 1f).forEach { s ->
+        aaTub(cx + 16f, 25f + s * half * 0.86f, half * 0.26f, s, l, a)
+        boat(cx - 34f, 25f + s * half * 0.7f, half * 0.85f, l, a)
+    }
+    bowWash(bx, half, a)
+}
+
+// ------------------------------------------------------------------ submarino
+
+private fun DrawScope.drawSubmarine(l: Paint, a: Float) {
+    val bx = bowX(ShipClass.SUBMARINE)
+    val sx = sternX(ShipClass.SUBMARINE)
+    val half = hullHalf(ShipClass.SUBMARINE)
+
+    // casco em gota: sem proa afilada, as duas pontas arredondadas
+    val h = Path().apply {
+        moveTo(sx + 2f, 25f)
+        cubicTo(sx + 2f, 25f - half * 0.86f, sx + 16f, 25f - half, sx + 30f, 25f - half)
+        lineTo(bx - 34f, 25f - half)
+        cubicTo(bx - 14f, 25f - half, bx, 25f - half * 0.56f, bx, 25f)
+        cubicTo(bx, 25f + half * 0.56f, bx - 14f, 25f + half, bx - 34f, 25f + half)
+        lineTo(sx + 30f, 25f + half)
+        cubicTo(sx + 16f, 25f + half, sx + 2f, 25f + half * 0.86f, sx + 2f, 25f)
+        close()
+    }
+    hull(h, l, a, 1f)
+
+    // lombo iluminado: a faixa clara que faz o casco parecer cilíndrico
+    val spine = Path().apply {
+        moveTo(sx + 12f, 25f - half * 0.2f)
+        cubicTo(sx + 18f, 25f - half * 0.66f, sx + 34f, 25f - half * 0.74f, sx + 52f, 25f - half * 0.74f)
+        lineTo(bx - 40f, 25f - half * 0.74f)
+        cubicTo(bx - 22f, 25f - half * 0.74f, bx - 10f, 25f - half * 0.5f, bx - 6f, 25f - half * 0.24f)
+        cubicTo(bx - 14f, 25f - half * 0.44f, bx - 26f, 25f - half * 0.52f, sx + 48f, 25f - half * 0.5f)
+        lineTo(sx + 30f, 25f - half * 0.46f)
+        close()
+    }
+    drawPath(spine, Color.White.copy(alpha = 0.16f * a))
+
+    // vela com periscópios
+    val vx = bx * 0.44f
+    deckBlock(vx - 9f, 25f - half * 0.6f, 18f, half * 1.2f, l.dark, a, 2f)
+    deckBlock(vx - 5f, 25f - half * 0.34f, 9f, half * 0.68f, l.deck, a, 2.5f)
+    listOf(-2.5f, 0.5f, 3f).forEach { d ->
+        drawCircle(l.dark.shaded(0.5f), radius = half * 0.1f, center = Offset(vx + d, 25f), alpha = a)
+    }
+    // planos de mergulho
+    listOf(-1f, 1f).forEach { s ->
+        deckBlock(vx - 4f, 25f + s * half * 1.25f - half * 0.2f, 6f, half * 0.4f, l.deck, a, 1f)
+    }
+    // canhão de convés à proa
+    turret(cx = bx - 34f, r = half * 0.42f, barrels = 1, barrelLen = half * 1.5f, dir = 1f, l = l, a = a)
+
+    // leme em X e hélice, recolhidos dentro da célula
+    listOf(-1f, 1f).forEach { s ->
+        drawLine(
+            l.dark.lit(0.2f),
+            Offset(sx + 16f, 25f + s * half * 0.6f),
+            Offset(sx + 4f, 25f + s * half * 1.5f),
+            half * 0.22f,
+            alpha = a,
+            cap = StrokeCap.Round
+        )
+    }
+    drawCircle(l.trim, radius = half * 0.3f, center = Offset(sx + 3f, 25f), alpha = a * 0.9f)
+}
+
+// ------------------------------------------------------------------- destróier
+
+private fun DrawScope.drawDestroyer(l: Paint, a: Float) {
+    val bx = bowX(ShipClass.DESTROYER)
+    val sx = sternX(ShipClass.DESTROYER)
+    val half = hullHalf(ShipClass.DESTROYER)
+
+    hull(hullPath(sx, bx, half, bowRun(ShipClass.DESTROYER)), l, a, 0.9f)
+    deck(hullPath(sx + 3f, bx - 6f, half * 0.74f, bowRun(ShipClass.DESTROYER) * 0.8f, 3f), l, a, 0.85f)
+    plating(sx, bx, half, l, a)
+
+    turret(cx = bx - 26f, r = half * 0.62f, barrels = 2, barrelLen = half * 1.9f, dir = 1f, l = l, a = a)
+    turret(cx = sx + 20f, r = half * 0.56f, barrels = 2, barrelLen = half * 1.6f, dir = -1f, l = l, a = a)
+
+    val cx = bx * 0.5f
+    deckBlock(cx - 8f, 25f - half * 0.64f, 16f, half * 1.28f, l.dark, a, 1.8f)
+    deckBlock(cx - 4f, 25f - half * 0.4f, 8f, half * 0.8f, l.deck, a, 2.2f)
+    mastAndYards(cx + 6f, half * 1.45f, l, a)
+    funnel(cx - 11f, half * 0.44f, half * 0.35f, l, a)
+    funnel(cx - 21f, half * 0.38f, half * 0.3f, l, a)
+
+    // tubos lança-torpedos girados para um bordo
+    deckBlock(cx - 32f, 25f - half * 0.34f, 9f, half * 0.68f, l.dark, a, 1.4f)
+
+    // trilhos de carga de profundidade na popa
+    listOf(-0.5f, 0.5f).forEach { s ->
+        drawRect(l.dark, topLeft = Offset(sx + 6f, 25f + s * half * 0.9f - half * 0.14f), size = Size(6f, half * 0.28f), alpha = a * 0.8f)
+    }
+
+    listOf(-1f, 1f).forEach { s ->
+        aaTub(cx + 12f, 25f + s * half * 0.88f, half * 0.28f, s, l, a)
+    }
+    bowWash(bx, half, a)
 }

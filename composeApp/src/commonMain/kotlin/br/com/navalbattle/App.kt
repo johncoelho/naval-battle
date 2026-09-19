@@ -11,14 +11,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.CloudApi
+import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.CloudResult
 import br.com.navalbattle.data.CommanderHit
 import br.com.navalbattle.data.FriendProfile
@@ -241,6 +245,14 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var onlineCode by mutableStateOf<String?>(null)
         private set
 
+    /**
+     * true quando a sala aberta mirou um amigo específico — nesse caso o código é só
+     * controle interno (o convidado recebe o convite direto por popup, sem precisar
+     * digitar nada), então a tela de espera não deve mostrá-lo.
+     */
+    var onlineInvitedFriend by mutableStateOf(false)
+        private set
+
     var friendResults by mutableStateOf<List<CommanderHit>>(emptyList())
         private set
     var friendships by mutableStateOf<List<Friendship>>(emptyList())
@@ -257,6 +269,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val session = profile.currentSession() ?: return
         onlineLink.close()
         onlineCode = null
+        onlineInvitedFriend = invitedId != null
         onlineLink.createRoom(
             session = session,
             mode = mode.name,
@@ -276,6 +289,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val session = profile.currentSession() ?: return
         onlineLink.close()
         onlineCode = null
+        onlineInvitedFriend = false
         onlineLink.quickMatch(
             session = session,
             mode = mode.name,
@@ -301,6 +315,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineLink.close()
         onlineLinkState = LinkState.IDLE
         onlineCode = null
+        onlineInvitedFriend = false
         rematchRequestedByMe = false
         rematchRequestedByOpponent = false
     }
@@ -640,16 +655,26 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
     }
 
-    /** Sincroniza sob demanda, pelo botão da tela de conta. */
-    suspend fun syncNow(): Boolean {
-        if (!profile.signedIn) return false
-        return mergeWithCloud() != null
-    }
+    /** Último retrato já gravado na nuvem — evita regravar a mesma carreira. */
+    private var lastPushed: CloudProfile? = null
 
-    /** Sobe a carreira em silêncio depois de uma partida ou de uma compra. */
-    suspend fun pushQuietly() {
-        if (!profile.signedIn) return
-        authed { session -> cloud.saveProfile(session, profile.snapshot()) }
+    /**
+     * Sincronização automática: fica olhando a carreira inteira (patente, créditos,
+     * estatísticas, cosméticos, retrato e idioma) e grava na nuvem pouco depois de
+     * cada mudança. Não existe mais botão de sincronizar — o `collectLatest` com
+     * `delay` faz o papel de debounce, então uma rajada de mudanças (comprar e
+     * equipar em seguida, por exemplo) vira uma gravação só.
+     */
+    suspend fun autoSync() {
+        snapshotFlow { profile.snapshot() }
+            .distinctUntilChanged()
+            .collectLatest { snap ->
+                delay(SYNC_DEBOUNCE_MS)
+                if (!profile.signedIn || snap == lastPushed) return@collectLatest
+                if (authed { session -> cloud.saveProfile(session, snap) } is CloudResult.Ok) {
+                    lastPushed = snap
+                }
+            }
     }
 
     /**
@@ -724,15 +749,23 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 val cloudProfile = remote.value
                 if (cloudProfile != null && cloudProfile.xp > profile.xp) {
                     profile.adopt(cloudProfile)
+                    lastPushed = cloudProfile
                     t(K.AUTH_RESTORED)
                 } else {
-                    authed { session -> cloud.saveProfile(session, profile.snapshot()) }
+                    val snap = profile.snapshot()
+                    authed { session -> cloud.saveProfile(session, snap) }
+                    lastPushed = snap
                     t(K.AUTH_UPLOADED)
                 }
             }
 
             is CloudResult.Fail -> null
         }
+
+    private companion object {
+        /** Espera depois da última mudança antes de gravar — junta rajadas numa só. */
+        const val SYNC_DEBOUNCE_MS = 1500L
+    }
 }
 
 @Composable
@@ -762,6 +795,10 @@ fun App() {
 
     // com conta conectada, a abertura já renova a sessão e busca o que há na nuvem
     LaunchedEffect(Unit) { state.resumeSession() }
+
+    // daí em diante a carreira sobe sozinha a cada mudança — não existe botão de
+    // sincronizar, o comandante nunca precisa lembrar de gravar nada
+    LaunchedEffect(Unit) { state.autoSync() }
 
     // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push
     LaunchedEffect(Unit) { state.updateAvailable = checkUpdateAvailable() }

@@ -9,6 +9,53 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.22.0] — 2026-09-19 · Frota e retratos redesenhados, sincronização automática
+
+### Alterado
+- **Frota inteira redesenhada** (`design/ShipArt.kt`): o casco passou de "gordo"
+  (boca perto de 1/4 do comprimento) para a proporção de um navio de verdade,
+  perto de **1/10**, com proa afilada em curva e popa arredondada em vez de
+  hexágono chanfrado. Cada classe ganhou miudeza de convés — torres com barbeta
+  redonda e canos deitados no eixo, reparos antiaéreos nas galerias, escaleres,
+  chaminé com boca escura, radar e vergas de mastro.
+- **Nada mais sai da célula**: mastro e radar viraram *footprint* (é vista de
+  cima, o pau some na vertical) em vez de haste desenhada para fora do casco, e
+  os canos das torres de ré apontam para a popa. Como o casco fino ocupa só a
+  faixa central da célula, sobra folga lateral para as vergas — dois navios
+  encostados não se sobrepõem mais ao posicionar a frota.
+- **Retratos novos** (`design/AvatarArt.kt`): traço de cartaz de recrutamento —
+  duas tintas sobre fundo escuro, sombra chapada de um lado e meio-tom em
+  pontos. Rosto alongado, maxilar marcado, olho amendoado com pálpebra pesada e
+  marca de tempo, no lugar do flat design de olho grande que destoava do resto
+  do jogo.
+- **Patente do retrato virou unissex** (`game/Profile.kt`): o par de retratos de
+  cada papel divide o mesmo nome (Comandante, Oficial, Contramestre, Aviador) —
+  escolher entre eles é escolher o rosto, não o posto. Os identificadores
+  gravados continuam os mesmos, então ninguém perde a escolha já feita.
+- **Naufrágio acompanha o casco fino** (`ui/BoardView.kt`): o navio passa a
+  emborcar enquanto afunda (a boca some ao longo da animação), que é o que vende
+  o naufrágio num casco estreito — a inclinação sozinha quase não aparecia.
+
+### Adicionado
+- **Sincronização automática da carreira** (`App.kt`): um observador da carreira
+  inteira grava na nuvem ~1,5 s depois de cada mudança, juntando rajadas numa
+  gravação só. Substituiu as chamadas espalhadas por tela e fechou as brechas
+  que existiam — retrato e reset de carreira nunca subiam.
+- **Retrato e idioma passam a viajar na nuvem** (`supabase/schema.sql`: colunas
+  `avatar` e `lang_code`), para a conta voltar igual em qualquer aparelho.
+
+### Removido
+- **Botão "Sincronizar agora"** e as chamadas manuais de sincronização em Perfil,
+  Loja e tela de resultado: com a gravação automática não sobrou o que ele
+  fizesse. No lugar ficou só a linha "Tudo salvo na nuvem automaticamente".
+
+### Corrigido
+- **Convite direto de amigo mostrava código de sala** (`ui/OnlineWaitingDialog.kt`):
+  o código existe, mas é controle interno — quem foi convidado recebe o popup de
+  aceitar sem digitar nada. Agora ele só aparece na sala aberta por código.
+
+---
+
 ## [0.21.0] — 2026-09-19 · Ranqueada, temporadas, placar e tela de Amigos nova
 
 ### Adicionado

@@ -58,6 +58,8 @@ actual class CloudApi actual constructor() {
                 CloudProfile(
                     username = row.strOr("username", session.username),
                     insignia = row.strOr("insignia", "anc"),
+                    avatar = row.strOr("avatar", "om1"),
+                    langCode = row.strOr("lang_code", ""),
                     xp = row.intOr("xp", 0),
                     credits = row.intOr("credits", 500),
                     matches = row.intOr("matches", 0),
@@ -82,6 +84,8 @@ actual class CloudApi actual constructor() {
             "email" to session.email,
             "username" to profile.username,
             "insignia" to profile.insignia,
+            "avatar" to profile.avatar,
+            "lang_code" to profile.langCode,
             "xp" to profile.xp,
             "credits" to profile.credits,
             "matches" to profile.matches,

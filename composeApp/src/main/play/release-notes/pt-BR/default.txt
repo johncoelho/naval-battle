@@ -1,5 +1,4 @@
-Corrigido: partida rápida e convite direto de amigo online.
-Novo: convite e partida rápida agora mostram radar de espera com botão de cancelar; quem é convidado vê popup para aceitar.
-Novo: tela de Amigos reformulada, com busca de verdade e perfil de cada comandante.
-Novo: modo Ranqueada online, com temporadas (uma por estação do ano) e tela de Placar geral/temporada.
-Novo: aviso de atualização disponível e lembrete pra avaliar o jogo na loja.
+Nova frota: os cinco navios foram redesenhados do zero, com casco longo e estreito visto de cima, convés cheio de detalhe e sombra na água — e agora cabem folgados na célula, sem sobrepor o navio vizinho.
+Novos retratos: oito comandantes no traço de cartaz de guerra, com barba, cachimbo, lenço e capacete de voo. A patente é a mesma — muda só o rosto.
+Novo: tudo passa a salvar sozinho na nuvem. O botão "sincronizar agora" saiu; pontuação, partidas, frota, retrato e idioma sobem sem você pedir.
+Corrigido: o convite direto de amigo não mostra mais código de sala — é só aceitar do outro lado.

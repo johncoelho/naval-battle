@@ -66,11 +66,15 @@ fun OnlineWaitingDialog(state: AppState) {
                 if (state.onlineLinkState == LinkState.SEARCHING) t(K.ONLINE_WAIT_SEARCH_TITLE) else t(K.ONLINE_WAIT_HOST_TITLE),
                 Naval.amberStrong
             )
-            state.onlineCode?.let { code ->
-                Gap(12)
-                HudLabel(t(K.ONLINE_YOUR_CODE), Naval.muted)
-                Gap(4)
-                androidx.compose.material3.Text(code, style = NavalType.display, color = Naval.amberStrong)
+            // convite direto de amigo: o código é só controle interno, o convidado
+            // já recebe o popup de aceitar sem precisar digitar nada
+            if (!state.onlineInvitedFriend) {
+                state.onlineCode?.let { code ->
+                    Gap(12)
+                    HudLabel(t(K.ONLINE_YOUR_CODE), Naval.muted)
+                    Gap(4)
+                    androidx.compose.material3.Text(code, style = NavalType.display, color = Naval.amberStrong)
+                }
             }
             Gap(20)
             SecondaryButton(t(K.AUTH_CANCEL)) { state.cancelOnlineWait() }

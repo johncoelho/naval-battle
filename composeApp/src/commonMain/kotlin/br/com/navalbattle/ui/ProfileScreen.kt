@@ -76,10 +76,6 @@ fun ProfileScreen(state: AppState) {
     val profile = state.profile
     var name by remember { mutableStateOf(profile.name) }
     var confirmReset by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    // mudou identidade: sobe para a conta, se houver uma conectada
-    fun sync() = scope.launch { state.pushQuietly() }
 
     // entrada do retrato: cresce com uma pequena "quicada" ao abrir a tela, em vez
     // de aparecer estático — o único lugar do perfil que tinha zero movimento
@@ -180,7 +176,7 @@ fun ProfileScreen(state: AppState) {
                         if (name.trim() != profile.name) Naval.amberStrong else Naval.muted,
                         Modifier
                             .border(1.dp, Naval.line)
-                            .clickable { profile.rename(name); name = profile.name; sync() }
+                            .clickable { profile.rename(name); name = profile.name }
                             .padding(horizontal = 14.dp, vertical = 13.dp)
                     )
                 }
@@ -238,7 +234,7 @@ fun ProfileScreen(state: AppState) {
                                 .scale(scale)
                                 .background(if (chosen) Naval.surface3 else Naval.surface)
                                 .border(1.dp, borderColor)
-                                .clickable { profile.chooseInsignia(option); sync() },
+                                .clickable { profile.chooseInsignia(option) },
                             contentAlignment = Alignment.Center
                         ) {
                             Canvas(Modifier.size(38.dp)) {
@@ -383,16 +379,9 @@ private fun AccountSection(state: AppState) {
         )
 
         if (profile.signedIn) {
+            Gap(6)
+            HudLabel(t(K.AUTH_AUTO_SYNC), Naval.greenBright)
             Gap(14)
-            PrimaryButton(t(K.AUTH_SYNC_NOW), enabled = !busy) {
-                busy = true; failed = false; message = t(K.AUTH_SYNCING)
-                scope.launch {
-                    val ok = state.syncNow()
-                    busy = false; failed = !ok
-                    message = if (ok) t(K.AUTH_SYNCED) else t(K.AUTH_SYNC_FAIL)
-                }
-            }
-            Gap(8)
             SecondaryButton(t(K.AUTH_CHANGE_PASSWORD)) {
                 showChangePassword = !showChangePassword
                 message = null
