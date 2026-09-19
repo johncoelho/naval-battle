@@ -454,7 +454,11 @@
       const r = await fetch('https://api.github.com/repos/johncoelho/naval-battle/releases/tags/latest');
       if (!r.ok) throw new Error('sem resposta');
       const data = await r.json();
-      const quando = new Date(data.published_at).toLocaleDateString('pt-BR', {
+      // published_at é a criação da release (fixa desde o primeiro build) — como
+      // cada novo build só sobe um asset por cima (--clobber) sem recriar a
+      // release, essa data nunca muda. updated_at de CADA asset é que reflete o
+      // upload mais recente dele, e Android/iOS podem ter datas diferentes.
+      const formata = (iso) => new Date(iso).toLocaleDateString('pt-BR', {
         day: '2-digit', month: 'long', year: 'numeric'
       });
       const apk = (data.assets || []).find(a => a.name.endsWith('.apk'));
@@ -465,8 +469,8 @@
         const baixados = asset.download_count ? ' · ' + asset.download_count + ' downloads' : '';
         return ' · <b>' + mb + '</b>' + baixados;
       };
-      androidAlvos.forEach(el => { if (el) el.innerHTML = 'Última compilação: <b>' + quando + '</b>' + detalhe(apk); });
-      iosAlvos.forEach(el => { if (el) el.innerHTML = 'Última compilação: <b>' + quando + '</b>' + detalhe(ipa); });
+      androidAlvos.forEach(el => { if (el && apk) el.innerHTML = 'Última compilação: <b>' + formata(apk.updated_at) + '</b>' + detalhe(apk); });
+      iosAlvos.forEach(el => { if (el && ipa) el.innerHTML = 'Última compilação: <b>' + formata(ipa.updated_at) + '</b>' + detalhe(ipa); });
     } catch (e) {
       todos.forEach(el => { if (el) el.textContent = 'Versão de teste · sempre a última compilação'; });
     }
