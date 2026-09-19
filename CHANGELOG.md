@@ -9,6 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.32.0] — 2026-09-19 · Corrige nome e ícone do app no iOS
+
+### Corrigido
+- **App aparecia como "iosApp" e com ícone vazio (grade genérica) no iPhone**
+  (`iosApp/iosApp/Info.plist`, `Assets.xcassets/AppIcon.appiconset/`):
+  faltava `CFBundleDisplayName` (sem ele, o nome exibido cai pro
+  `PRODUCT_NAME` do Xcode, que é o nome do target — "iosApp" — não o nome
+  do jogo), e o `AppIcon.appiconset/Contents.json` declarava um slot de
+  1024×1024 sem nenhum arquivo de imagem de verdade associado. Adicionado
+  `CFBundleDisplayName = "Naval Battle"` (mesmo nome do Android,
+  `app_name` em `strings.xml`) e um ícone de verdade — o mesmo desenho do
+  ícone adaptável do Android (`ic_launcher_foreground.xml`: radar, casco de
+  navio, torre e núcleo âmbar), reconstruído em PNG 1024×1024 ponto a ponto
+  a partir do mesmo `pathData` vetorial, pra manter a marca consistente
+  entre as duas plataformas. Achado ao investigar o app
+  fechando sozinho no iPhone — não explica o crash em si (ícone/nome
+  ausentes não derrubam o app), mas confirma que esse projeto Xcode nunca
+  tinha sido testado num aparelho real antes de agora, então vale
+  desconfiar de mais lacunas de configuração além do código.
+
+---
+
 ## [0.31.0] — 2026-09-19 · Blinda o carregamento de áudio no iOS contra crash na abertura
 
 ### Corrigido
