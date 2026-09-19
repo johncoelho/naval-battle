@@ -137,8 +137,8 @@ fun MenuScreen(state: AppState) {
 
         Spacer(Modifier.height(14.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name, Modifier.weight(1f)) { state.screen = Screen.SHIPYARD }
-            SecondaryButton(t(K.MENU_STORE), "◆", Modifier.weight(1f)) { state.screen = Screen.STORE }
+            SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name, modifier = Modifier.weight(1f)) { state.screen = Screen.SHIPYARD }
+            SecondaryButton(t(K.MENU_STORE), "◆", modifier = Modifier.weight(1f)) { state.screen = Screen.STORE }
         }
 
         Spacer(Modifier.weight(1f))
