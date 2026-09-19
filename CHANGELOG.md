@@ -9,6 +9,26 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.27.0] — 2026-09-19 · Corrige título/legenda espremidos em todo botão do jogo
+
+### Corrigido
+- **Título e legenda espremidos nos botões com subtítulo** (`ui/Components.kt`,
+  `PrimaryButton`/`SecondaryButton`): título e legenda viviam lado a lado na
+  mesma linha (`Row` com `SpaceBetween`) — em botões estreitos (como o cartão
+  do carrossel do menu, com as setas tomando espaço dos lados) a legenda
+  quebrava em duas linhas e ficava colada no título. Os dois agora empilham:
+  título alinhado à esquerda numa linha, legenda alinhada à direita na linha
+  de baixo, com espaço entre elas — corrige em toda tela que usa esses
+  componentes (Rede Local, Online, Perfil, Estaleiro etc.), não só no menu.
+- **Cartão do carrossel do menu**: agora usa `big = true` (novo parâmetro em
+  `PrimaryButton`), com mais respiro vertical — o botão grande e único que o
+  redesenho pedia, em vez do tamanho compacto herdado dos outros botões.
+- **Estaleiro/Loja do arsenal voltam a ser botões empilhados** de largura
+  cheia (`ui/MenuScreen.kt`), como eram antes do redesenho — a versão em
+  duas colunas lado a lado ficou apertada demais.
+
+---
+
 ## [0.26.0] — 2026-09-19 · Sobre, novidades da versão e compartilhar o jogo
 
 ### Adicionado

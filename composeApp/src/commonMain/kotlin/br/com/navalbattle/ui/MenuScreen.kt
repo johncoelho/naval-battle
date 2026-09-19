@@ -136,9 +136,9 @@ fun MenuScreen(state: AppState) {
         MatchCarousel(state)
 
         Spacer(Modifier.height(14.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name, modifier = Modifier.weight(1f)) { state.screen = Screen.SHIPYARD }
-            SecondaryButton(t(K.MENU_STORE), "◆", modifier = Modifier.weight(1f)) { state.screen = Screen.STORE }
+        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name) { state.screen = Screen.SHIPYARD }
+            SecondaryButton(t(K.MENU_STORE), "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
         }
 
         Spacer(Modifier.weight(1f))
@@ -166,7 +166,7 @@ private fun MatchCarousel(state: AppState) {
     ) {
         CarouselArrow(enabled = index > 0) { index = (index - 1).coerceAtLeast(0) }
         Box(Modifier.weight(1f)) {
-            PrimaryButton(card.title, card.subtitle, enabled = card.enabled) { card.action(state) }
+            PrimaryButton(card.title, card.subtitle, enabled = card.enabled, big = true) { card.action(state) }
         }
         CarouselArrow(enabled = index < cards.lastIndex, pointRight = true) {
             index = (index + 1).coerceAtMost(cards.lastIndex)

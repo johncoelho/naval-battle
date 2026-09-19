@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -47,24 +48,30 @@ fun PrimaryButton(
     subtitle: String? = null,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    big: Boolean = false,
     onClick: () -> Unit
 ) {
-    Row(
+    ButtonShell(
         modifier = modifier
-            .fillMaxWidth()
             .background(if (enabled) Naval.amber else Naval.surface2)
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .clickable(enabled = enabled, onClick = onClick),
+        big = big
     ) {
         Text(
             text.uppercase(),
             style = NavalType.button,
-            color = if (enabled) Naval.amberInk else Naval.muted
+            color = if (enabled) Naval.amberInk else Naval.muted,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Start
         )
         subtitle?.let {
-            Text(it, style = NavalType.monoSmall, color = if (enabled) Naval.amberInk.copy(alpha = 0.7f) else Naval.muted)
+            Text(
+                it,
+                style = NavalType.monoSmall,
+                color = if (enabled) Naval.amberInk.copy(alpha = 0.7f) else Naval.muted,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
         }
     }
 }
@@ -75,25 +82,51 @@ fun SecondaryButton(
     subtitle: String? = null,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    big: Boolean = false,
     onClick: () -> Unit
 ) {
-    Row(
+    ButtonShell(
         modifier = modifier
-            .fillMaxWidth()
             .background(Naval.surface2)
             .border(BorderStroke(1.dp, Naval.line))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .clickable(enabled = enabled, onClick = onClick),
+        big = big
     ) {
         Text(
             text.uppercase(),
             style = NavalType.button,
-            color = if (enabled) Naval.ink else Naval.muted
+            color = if (enabled) Naval.ink else Naval.muted,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Start
         )
-        subtitle?.let { Text(it, style = NavalType.monoSmall, color = Naval.muted) }
+        subtitle?.let {
+            Text(
+                it,
+                style = NavalType.monoSmall,
+                color = Naval.muted,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
+        }
     }
+}
+
+/**
+ * Miolo comum de [PrimaryButton]/[SecondaryButton]: título alinhado à esquerda numa
+ * linha, legenda alinhada à direita na linha de baixo, com espaço entre as duas —
+ * empilhado em vez de lado a lado, porque título e legenda juntos na mesma linha
+ * espremiam e quebravam de um jeito feio quando o botão era estreito (ex: o cartão
+ * do carrossel do menu, com as setas tomando espaço dos lados).
+ */
+@Composable
+private fun ButtonShell(modifier: Modifier, big: Boolean, content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = if (big) 22.dp else 14.dp),
+        verticalArrangement = Arrangement.spacedBy(if (big) 8.dp else 4.dp),
+        content = content
+    )
 }
 
 @Composable
