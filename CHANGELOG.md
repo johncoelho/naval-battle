@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.26.0] — 2026-09-19 · Sobre, novidades da versão e compartilhar o jogo
+
+### Adicionado
+- **Seção "Sobre" em Configurações** (`ui/SettingsScreen.kt`): mostra a versão
+  instalada (`appVersionLabel`), um botão "Compartilhar o jogo" que abre o
+  seletor nativo do aparelho com o link da loja pronto (`shareStoreListing`,
+  nova função expect/actual em `data/UpdateChecker.kt` — no Android via
+  `Intent.ACTION_SEND`; no iOS ainda sem loja publicada, fica vazia) e um
+  botão "Novidades da versão".
+- **Tela de Novidades** (`ui/ReleaseNotesScreen.kt`, `Screen.RELEASE_NOTES`):
+  resumo de uma linha por versão publicada, da mais recente para trás — não
+  é o changelog técnico inteiro (esse continua só em `CHANGELOG.md`), é o
+  resumo que interessa a quem joga. Resolve a
+  [issue #1](https://github.com/johncoelho/naval-battle/issues/1).
+
+---
+
 ## [0.25.0] — 2026-09-19 · Menu inicial redesenhado, tela de Configurações nova
 
 ### Alterado

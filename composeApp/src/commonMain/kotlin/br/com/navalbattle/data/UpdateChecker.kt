@@ -10,3 +10,6 @@ expect suspend fun checkUpdateAvailable(): Boolean
 
 /** Abre a ficha do jogo na loja, de onde o comandante atualiza. */
 expect fun openStoreListing()
+
+/** Abre o seletor de compartilhamento do aparelho com o link da loja pronto. */
+expect fun shareStoreListing()

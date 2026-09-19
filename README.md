@@ -129,6 +129,11 @@ efeitos sonoros com toggles separados, e o seletor de idioma — que saiu do Per
 não ficar duplicado. Cor do oceano, espessura da grade, cor do alvo e notificações push
 ainda não têm preferência própria (ficam no backlog).
 
+Uma seção **Sobre** mostra a versão instalada, um botão para compartilhar o link da
+loja (`data/UpdateChecker.kt#shareStoreListing`) e leva à tela de **Novidades**
+(`ui/ReleaseNotesScreen.kt`) — resumo de uma linha por versão publicada, para quem
+joga; o changelog técnico completo continua só em `CHANGELOG.md`.
+
 ### Idiomas
 
 Português do Brasil, inglês e espanhol, trocáveis em Configurações e aplicados na hora.

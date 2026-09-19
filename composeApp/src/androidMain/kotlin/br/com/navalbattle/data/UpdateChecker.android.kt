@@ -43,3 +43,14 @@ actual fun openStoreListing() {
         )
     }
 }
+
+actual fun shareStoreListing() {
+    val context = ActivityHolder.current ?: AudioContextHolder.appContext
+    val newTaskFlag = if (ActivityHolder.current == null) Intent.FLAG_ACTIVITY_NEW_TASK else 0
+    val storeUrl = "https://play.google.com/store/apps/details?id=$PACKAGE_NAME"
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, storeUrl)
+    }
+    context.startActivity(Intent.createChooser(send, null).addFlags(newTaskFlag))
+}

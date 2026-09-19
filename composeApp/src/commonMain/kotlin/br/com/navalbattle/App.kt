@@ -81,6 +81,7 @@ import br.com.navalbattle.ui.OnlineScreen
 import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ProfileScreen
 import br.com.navalbattle.ui.SettingsScreen
+import br.com.navalbattle.ui.ReleaseNotesScreen
 import br.com.navalbattle.ui.ResultScreen
 import br.com.navalbattle.ui.SeasonPopup
 import br.com.navalbattle.ui.ShipyardScreen
@@ -90,7 +91,7 @@ import br.com.navalbattle.ui.UpdatePopup
 import br.com.navalbattle.ui.WelcomeScreen
 
 enum class Screen {
-    SPLASH, WELCOME, MENU, SHIPYARD, STORE, PROFILE, SETTINGS, LAN, ONLINE, NAMES,
+    SPLASH, WELCOME, MENU, SHIPYARD, STORE, PROFILE, SETTINGS, RELEASE_NOTES, LAN, ONLINE, NAMES,
     PLACEMENT, HANDOFF, BATTLE, RESULT, FRIENDS, LEADERBOARD
 }
 
@@ -931,6 +932,7 @@ fun App() {
                 Screen.STORE -> StoreScreen(state)
                 Screen.PROFILE -> ProfileScreen(state)
                 Screen.SETTINGS -> SettingsScreen(state)
+                Screen.RELEASE_NOTES -> ReleaseNotesScreen(state)
                 Screen.LAN -> LanScreen(state)
                 Screen.ONLINE -> OnlineScreen(state)
                 Screen.NAMES -> state.match?.let { NamesScreen(state, it) }

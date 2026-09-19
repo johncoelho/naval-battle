@@ -336,6 +336,20 @@ enum class K(val pt: String, val en: String, val es: String) {
     SETTINGS_LANGUAGE("Idioma do jogo", "Game language", "Idioma del juego"),
     SETTINGS_ON("Ligado", "On", "Activado"),
     SETTINGS_OFF("Desligado", "Off", "Desactivado"),
+    SETTINGS_ABOUT("Sobre", "About", "Acerca de"),
+    SETTINGS_VERSION("Versão instalada", "Installed version", "Versión instalada"),
+    SETTINGS_SHARE_STORE("Compartilhar o jogo", "Share the game", "Compartir el juego"),
+    SETTINGS_SHARE_STORE_SUB("Envia o link da loja", "Sends the store link", "Envía el enlace de la tienda"),
+    SETTINGS_RELEASE_NOTES("Novidades da versão", "What's new", "Novedades de la versión"),
+
+    // ---------------------------------------------------------------- novidades
+    RELEASE_NOTES_TITLE("Novidades", "What's new", "Novedades"),
+    RN_V0250("Menu inicial redesenhado, com carrossel de partidas e tela de Configurações nova (música, efeitos sonoros e idioma).", "Redesigned main menu with a match carousel and a new Settings screen (music, sound effects and language).", "Menú principal rediseñado, con carrusel de partidas y una nueva pantalla de Configuración (música, efectos de sonido e idioma)."),
+    RN_V0240("Placar Geral corrigido para mostrar a pontuação real de cada comandante; partidas online agora pausam com segurança se o app for para segundo plano.", "Fixed the Overall leaderboard to show each commander's real score; online matches now pause safely if the app goes to the background.", "Corregido el marcador General para mostrar la puntuación real de cada comandante; las partidas en línea ahora se pausan si la app pasa a segundo plano."),
+    RN_V0230("Pontuação ranqueada mais justa, placar em faixas de ouro/prata/bronze e troféus de fim de temporada.", "Fairer ranked scoring, gold/silver/bronze leaderboard tiers and end-of-season trophies.", "Puntuación ranqueada más justa, marcador en niveles de oro/plata/bronce y trofeos de fin de temporada."),
+    RN_V0220("Frota e retratos redesenhados, com sincronização automática na nuvem.", "Redesigned fleet and portraits, with automatic cloud sync.", "Flota y retratos rediseñados, con sincronización automática en la nube."),
+    RN_V0210("Chegou a ranqueada, com temporadas, placar e uma tela de Amigos nova.", "Ranked play arrived, with seasons, a leaderboard and a new Friends screen.", "Llegó el modo ranqueado, con temporadas, marcador y una nueva pantalla de Amigos."),
+    RN_V0200("Modo online: convite de amigo com banner e partida rápida corrigidos.", "Online mode: friend invite banner and quick match fixes.", "Modo en línea: invitación de amigo con aviso y partida rápida corregidos."),
 
     // ---------------------------------------------------------------- conta
     AUTH_TITLE("Conta", "Account", "Cuenta"),

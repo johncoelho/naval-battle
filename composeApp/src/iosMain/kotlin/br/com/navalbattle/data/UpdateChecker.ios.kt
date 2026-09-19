@@ -5,3 +5,5 @@ package br.com.navalbattle.data
 actual suspend fun checkUpdateAvailable(): Boolean = false
 
 actual fun openStoreListing() {}
+
+actual fun shareStoreListing() {}

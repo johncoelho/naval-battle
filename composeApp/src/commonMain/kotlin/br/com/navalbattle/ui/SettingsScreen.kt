@@ -13,12 +13,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.data.appVersionLabel
+import br.com.navalbattle.data.shareStoreListing
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.i18n.I18n
@@ -46,35 +50,53 @@ fun SettingsScreen(state: AppState) {
         ScreenTopBar(t(K.SETTINGS_TITLE), "")
         Gap(22)
 
-        HudLabel(t(K.SETTINGS_AUDIO))
-        Gap(10)
-        SettingsToggleRow(
-            label = t(K.SETTINGS_MUSIC),
-            on = state.musicOn
-        ) { state.musicOn = !state.musicOn }
-        Gap(8)
-        SettingsToggleRow(
-            label = t(K.SETTINGS_SFX),
-            on = profile.sfxOn
-        ) { profile.setSfx(!profile.sfxOn) }
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            HudLabel(t(K.SETTINGS_AUDIO))
+            Gap(10)
+            SettingsToggleRow(
+                label = t(K.SETTINGS_MUSIC),
+                on = state.musicOn
+            ) { state.musicOn = !state.musicOn }
+            Gap(8)
+            SettingsToggleRow(
+                label = t(K.SETTINGS_SFX),
+                on = profile.sfxOn
+            ) { profile.setSfx(!profile.sfxOn) }
 
-        Gap(26)
-        HudLabel(t(K.SETTINGS_LANGUAGE))
-        Gap(10)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Lang.entries.forEach { option ->
-                ModeChip(
-                    label = option.label,
-                    selected = I18n.lang == option,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    I18n.lang = option
-                    profile.setLang(option.code)
+            Gap(26)
+            HudLabel(t(K.SETTINGS_LANGUAGE))
+            Gap(10)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Lang.entries.forEach { option ->
+                    ModeChip(
+                        label = option.label,
+                        selected = I18n.lang == option,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        I18n.lang = option
+                        profile.setLang(option.code)
+                    }
                 }
             }
+
+            Gap(26)
+            HudLabel(t(K.SETTINGS_ABOUT))
+            Gap(10)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HudLabel(t(K.SETTINGS_VERSION), Naval.inkSoft)
+                HudLabel(appVersionLabel, Naval.amberStrong)
+            }
+            Gap(10)
+            SecondaryButton(t(K.SETTINGS_RELEASE_NOTES)) { state.screen = Screen.RELEASE_NOTES }
+            Gap(8)
+            SecondaryButton(t(K.SETTINGS_SHARE_STORE), t(K.SETTINGS_SHARE_STORE_SUB)) { shareStoreListing() }
         }
 
-        Gap(28)
+        Gap(14)
         SecondaryButton(t(K.BACK)) { state.screen = Screen.MENU }
     }
 }
