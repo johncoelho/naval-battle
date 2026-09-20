@@ -240,15 +240,33 @@ compila para iOS.
 > **Lição:** sem log de crash real, a causa mais "plausível" pelo código pode estar
 > simplesmente errada — vale pegar o log antes de blindar código por suspeita.
 
-**O que está de propósito só como pendência** (compila, mas não faz nada ainda):
-- `GoogleAuth` — sempre devolve falha. `ASWebAuthenticationSession` (a via sem SDK
-  externo) precisa de um esquema de URL de retorno registrado no `Info.plist` — que só
-  existe dentro de um projeto Xcode de verdade, ainda inexistente. Alternativa com SDK:
-  GoogleSignIn-iOS via Swift Package Manager, mesma pendência do projeto Xcode.
-- `LanLink` — qualquer hospedar/procurar/entrar falha na hora. Precisa de
-  `NetService`/`NetServiceBrowser` (Bonjour, o mesmo mDNS que o NSD do Android já usa
-  de propósito, pensando nisso) para anunciar/descobrir, e `Network.framework` ou
-  sockets BSD para a conversa TCP linha a linha.
+**Login com Google e Rede Local no iOS** (implementados, ainda sem confirmação de
+teste real num iPhone):
+- `GoogleAuth.ios.kt` — sem Credential Manager (exclusivo Android) nem SDK
+  GoogleSignIn-iOS (evita depender de Swift Package Manager), faz o próprio fluxo OAuth
+  "implícito" (`response_type=id_token`) contra `accounts.google.com` via
+  `ASWebAuthenticationSession`, nativo do iOS desde a versão 12. O token volta no
+  fragmento da URL de retorno (`#id_token=...`), capturado pelo esquema "reverso" do
+  Client ID iOS registrado em `CFBundleURLTypes` no `Info.plist`. Precisa de um Client
+  ID **tipo "iOS"** à parte no Google Cloud Console (Bundle ID `br.com.navalbattle`,
+  diferente do "Web application" que o Android usa) — cadastrado em
+  `GoogleAuthConfig.IOS_CLIENT_ID` e também na lista de "Client IDs" do provedor Google
+  no Supabase (Authentication → Providers), junto com o Web e o Android, senão o
+  Supabase rejeita o token por audiência desconhecida.
+- `LanLink.ios.kt` — `NSNetService`/`NSNetServiceBrowser` (Bonjour, o Foundation por
+  trás do mesmo mDNS que o `NsdManager` do Android já usa) para anunciar/descobrir a
+  partida, e sockets POSIX puros (`platform.posix.*`) para a conversa TCP linha a linha
+  — mesmo protocolo de texto do `LanLink.android.kt`, só a camada de transporte muda.
+  Porta fixa (`53421`) em vez de descobrir a porta que o SO escolheu, pra evitar a
+  introspecção de `sockaddr_in` que isso exigiria. Exige `NSLocalNetworkUsageDescription`
+  e `NSBonjourServices` no `Info.plist` (iOS 14+ exige os dois, senão a descoberta falha
+  calada).
+
+> **Nota:** boa parte desse código (delegates `NSNetServiceBrowserDelegateProtocol`/
+> `NSNetServiceDelegateProtocol`, structs `sockaddr_in`/`addrinfo`, o parâmetro `uRL` do
+> `ASWebAuthenticationSession`) foi escrita sem um Mac pra compilar localmente — como já
+> aconteceu antes com `Cloud.ios.kt`, é esperado precisar de algumas rodadas guiadas só
+> pelo erro do compilador no CI antes de fechar.
 
 ### O projeto Xcode e o `.ipa` sem assinatura
 

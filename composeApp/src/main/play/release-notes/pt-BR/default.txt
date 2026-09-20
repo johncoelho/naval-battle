@@ -1,3 +1,1 @@
-Corrigido crash de abertura no iOS: uma checagem interna do Compose derrubava o app logo depois do splash. Confirmado por log de crash real.
-Corrigido nome e ícone do app no iOS, agora iguais ao Android.
-Removida a habilidade Imersão do Submarino: causava confusão visual. Submarino recebe tiro normalmente.
+Login com Google e Rede Local agora chegam no iOS, junto de melhorias internas de compatibilidade.

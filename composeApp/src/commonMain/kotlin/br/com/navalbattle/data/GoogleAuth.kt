@@ -10,6 +10,17 @@ object GoogleAuthConfig {
     const val WEB_CLIENT_ID =
         "66774326611-010ggjho4008i5duqnau05br5oq1ubbo.apps.googleusercontent.com"
 
+    /**
+     * Client ID "iOS" criado no Google Cloud Console (Bundle ID `br.com.navalbattle`) —
+     * usado só pelo iOS, que não tem Credential Manager e por isso faz o próprio fluxo
+     * OAuth via `ASWebAuthenticationSession` (ver `GoogleAuth.ios.kt`). Precisa estar
+     * cadastrado também na lista de "Client IDs" do provedor Google no Supabase, junto
+     * com o Web e o Android — senão o token de identidade sai com uma audiência que o
+     * Supabase não reconhece e a troca por sessão falha.
+     */
+    const val IOS_CLIENT_ID =
+        "66774326611-rql2s9av51hpgvr0hq7jtclee4a1rcag.apps.googleusercontent.com"
+
     val isConfigured: Boolean get() = WEB_CLIENT_ID.isNotBlank()
 }
 

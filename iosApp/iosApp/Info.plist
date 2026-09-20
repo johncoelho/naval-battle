@@ -35,5 +35,25 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<!-- Esquema de retorno do login com Google (ASWebAuthenticationSession), convenção
+	     "reversa" do Client ID iOS: GoogleAuthConfig.IOS_CLIENT_ID sem o sufixo
+	     ".apps.googleusercontent.com", prefixado com "com.googleusercontent.apps." -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.66774326611-rql2s9av51hpgvr0hq7jtclee4a1rcag</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Rede local (LanLink.ios.kt): iOS 14+ exige justificativa e o tipo de serviço
+	     Bonjour anunciado/procurado, senão a descoberta falha sem aviso nenhum. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Usado para encontrar e jogar com outro comandante no mesmo Wi-Fi (Rede Local).</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_navalbattle._tcp.</string>
+	</array>
 </dict>
 </plist>

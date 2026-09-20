@@ -9,6 +9,29 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.0] — 2026-09-19 · Login com Google e Rede Local chegam no iOS
+
+### Adicionado
+- **Login com Google no iOS.** Como o iOS não tem Credential Manager (exclusivo
+  Android), o login passou a usar `ASWebAuthenticationSession` fazendo o próprio
+  fluxo OAuth "implícito" contra `accounts.google.com`, com o token voltando pela
+  URL de retorno. Exigiu um Client ID **tipo "iOS"** novo no Google Cloud Console
+  (separado do "Web application" que o Android usa) e cadastrá-lo também na lista
+  de provedores Google do Supabase, senão a troca de token falhava por audiência
+  não reconhecida.
+- **Rede Local (Wi-Fi) no iOS.** Anunciar/descobrir partidas via Bonjour
+  (`NSNetService`/`NSNetServiceBrowser`, o mesmo mDNS que o Android já usa por
+  baixo do NSD) e a conversa da partida em si por sockets POSIX puros, no mesmo
+  protocolo de texto linha a linha do Android. Precisa de permissão de rede local
+  do iOS 14+ (`NSLocalNetworkUsageDescription`/`NSBonjourServices`), agora
+  presentes no `Info.plist`.
+
+Ver [docs/BUILD.md](docs/BUILD.md) para os detalhes técnicos de cada implementação.
+Ambos foram escritos e compilados sem acesso a um Mac — testados de verdade só num
+iPhone físico depois da publicação.
+
+---
+
 ## [0.33.0] — 2026-09-19 · Causa real do crash de abertura no iOS: PlistSanityCheck
 
 ### Corrigido
