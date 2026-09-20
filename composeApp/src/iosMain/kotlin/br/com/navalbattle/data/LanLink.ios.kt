@@ -2,6 +2,7 @@ package br.com.navalbattle.data
 
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.ObjCSignatureOverride
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
@@ -37,7 +38,6 @@ import platform.posix.send
 import platform.posix.sockaddr_in
 import platform.posix.socket
 import kotlin.concurrent.Volatile
-import kotlin.native.ObjCSignatureOverride
 
 private const val SERVICE_TYPE = "_navalbattle._tcp."
 // Porta fixa: mais simples e robusto do que descobrir a porta que o SO escolheu
