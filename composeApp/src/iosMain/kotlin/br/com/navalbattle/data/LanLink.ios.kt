@@ -31,17 +31,24 @@ import platform.posix.close
 import platform.posix.connect
 import platform.posix.freeaddrinfo
 import platform.posix.getaddrinfo
-import platform.posix.htons
 import platform.posix.listen
 import platform.posix.recv
 import platform.posix.send
 import platform.posix.sockaddr_in
 import platform.posix.socket
+import kotlin.concurrent.Volatile
+import kotlin.native.ObjCSignatureOverride
 
 private const val SERVICE_TYPE = "_navalbattle._tcp."
 // Porta fixa: mais simples e robusto do que descobrir a porta que o SO escolheu
 // (bind(0) + getsockname) — os dois lados sempre sabem de antemão qual usar.
 private const val FIXED_PORT: UShort = 53421u
+
+/** `platform.posix.htons` não existe no cinterop do iOS (é macro no cabeçalho C, não símbolo de link) — troca de bytes escrita à mão (o arm64 do iPhone é little-endian, a porta de rede precisa vir em big-endian). */
+private fun htons(port: UShort): UShort {
+    val v = port.toInt()
+    return (((v and 0xFF) shl 8) or ((v shr 8) and 0xFF)).toUShort()
+}
 
 /**
  * Rede local no iOS: Bonjour (`NSNetService`/`NSNetServiceBrowser`, o Foundation por
@@ -128,6 +135,7 @@ actual class LanLink actual constructor() {
         resolvedGames.clear()
 
         val delegate = object : NSObject(), NSNetServiceBrowserDelegateProtocol {
+            @ObjCSignatureOverride
             override fun netServiceBrowser(browser: NSNetServiceBrowser, didFindService: NSNetService, moreComing: Boolean) {
                 foundServices[didFindService.name] = didFindService
                 val resolveDelegate = object : NSObject(), NSNetServiceDelegateProtocol {
@@ -142,6 +150,7 @@ actual class LanLink actual constructor() {
                 didFindService.resolveWithTimeout(5.0)
             }
 
+            @ObjCSignatureOverride
             override fun netServiceBrowser(browser: NSNetServiceBrowser, didRemoveService: NSNetService, moreComing: Boolean) {
                 foundServices.remove(didRemoveService.name)
                 resolvedGames.remove(didRemoveService.name)
