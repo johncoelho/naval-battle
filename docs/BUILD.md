@@ -240,19 +240,27 @@ compila para iOS.
 > **Lição:** sem log de crash real, a causa mais "plausível" pelo código pode estar
 > simplesmente errada — vale pegar o log antes de blindar código por suspeita.
 
-**Login com Google e Rede Local no iOS** (implementados, ainda sem confirmação de
-teste real num iPhone):
+**Login com Google e Rede Local no iOS**:
 - `GoogleAuth.ios.kt` — sem Credential Manager (exclusivo Android) nem SDK
   GoogleSignIn-iOS (evita depender de Swift Package Manager), faz o próprio fluxo OAuth
-  "implícito" (`response_type=id_token`) contra `accounts.google.com` via
-  `ASWebAuthenticationSession`, nativo do iOS desde a versão 12. O token volta no
-  fragmento da URL de retorno (`#id_token=...`), capturado pelo esquema "reverso" do
-  Client ID iOS registrado em `CFBundleURLTypes` no `Info.plist`. Precisa de um Client
+  via `ASWebAuthenticationSession`, nativo do iOS desde a versão 12. Precisa de um Client
   ID **tipo "iOS"** à parte no Google Cloud Console (Bundle ID `br.com.navalbattle`,
   diferente do "Web application" que o Android usa) — cadastrado em
   `GoogleAuthConfig.IOS_CLIENT_ID` e também na lista de "Client IDs" do provedor Google
   no Supabase (Authentication → Providers), junto com o Web e o Android, senão o
   Supabase rejeita o token por audiência desconhecida.
+  > **Correção confirmada num iPhone real:** a primeira versão tentava o fluxo
+  > "implícito" (`response_type=id_token`, token de volta no fragmento da URL) — o
+  > Google recusou com `Erro 400: unsupported_response_type`, porque esse modo só é
+  > aceito para Client ID tipo "Web application", não "iOS" (sem Client Secret). A
+  > correção foi trocar para **Authorization Code + PKCE**, o fluxo padrão do Google
+  > para apps nativos: o navegador devolve um `code` de curta duração pela QUERY da
+  > URL de retorno (não mais o token no fragmento), e o app troca esse `code` por um
+  > `id_token` de verdade via POST em `oauth2.googleapis.com/token`, provando a troca
+  > com um `code_verifier` aleatório gerado na hora (nunca exposto no navegador — só
+  > o hash SHA-256 dele, o `code_challenge`, vai na URL). O SHA-256 foi implementado
+  > em Kotlin puro (sem cinterop com CommonCrypto) para não precisar mexer no
+  > cinterop do projeto por causa disso.
 - `LanLink.ios.kt` — `NSNetService`/`NSNetServiceBrowser` (Bonjour, o Foundation por
   trás do mesmo mDNS que o `NsdManager` do Android já usa) para anunciar/descobrir a
   partida, e sockets POSIX puros (`platform.posix.*`) para a conversa TCP linha a linha

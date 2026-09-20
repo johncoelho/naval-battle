@@ -1,1 +1,1 @@
-Login com Google e Rede Local agora chegam no iOS, junto de melhorias internas de compatibilidade.
+Corrige erro no Login com Google no iOS que impedia a autenticacao. Melhorias internas de compatibilidade.

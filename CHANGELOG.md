@@ -9,6 +9,26 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.35.0] — 2026-09-19 · Corrige Login com Google no iOS: Google recusava o fluxo implícito
+
+### Corrigido
+- **Login com Google no iOS travava com "Erro 400: unsupported_response_type".**
+  Testado num iPhone de verdade, o Google recusou o fluxo "implícito"
+  (`response_type=id_token`) tentado antes — esse modo só é aceito para Client
+  ID tipo "Web application", não para o tipo "iOS" (sem Client Secret) que o
+  app usa. Trocado para o fluxo padrão de apps nativos, **Authorization Code +
+  PKCE**: o navegador devolve um `code` de curta duração (não mais o token
+  direto no fragmento da URL), que o app troca por um `id_token` de verdade via
+  POST em `oauth2.googleapis.com/token`, provando a troca com um
+  `code_verifier` gerado na hora (nunca exposto no navegador) — sem isso
+  qualquer app poderia interceptar o `code` e trocá-lo sozinho. O SHA-256 do
+  PKCE foi implementado em Kotlin puro (sem cinterop com CommonCrypto) para
+  manter a mesma filosofia de baixo risco já usada no resto do código iOS.
+
+Ver [docs/BUILD.md](docs/BUILD.md) para os detalhes técnicos.
+
+---
+
 ## [0.34.0] — 2026-09-19 · Login com Google e Rede Local chegam no iOS
 
 ### Adicionado
