@@ -1,3 +1,3 @@
-Blindado o carregamento de áudio no iOS contra fechamento inesperado logo após abrir o app.
-Ajuste visual: as setas do carrossel do menu agora ficam do mesmo tamanho do cartão grande.
+Corrigido crash de abertura no iOS: uma checagem interna do Compose derrubava o app logo depois do splash. Confirmado por log de crash real.
+Corrigido nome e ícone do app no iOS, agora iguais ao Android.
 Removida a habilidade Imersão do Submarino: causava confusão visual. Submarino recebe tiro normalmente.

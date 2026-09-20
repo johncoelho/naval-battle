@@ -9,6 +9,26 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.33.0] — 2026-09-19 · Causa real do crash de abertura no iOS: PlistSanityCheck
+
+### Corrigido
+- **App abria o splash e fechava sozinho no iPhone — causa real encontrada**
+  via log de crash de verdade (`Ajustes → Privacidade e Segurança → Análise
+  e Aperfeiçoamentos → Dados de Análise` no próprio aparelho, sem precisar
+  de Mac). O backtrace mostrava a exceção sendo lançada dentro de
+  `androidx.compose.ui.uikit.PlistSanityCheck.performIfNeeded` — uma
+  verificação do PRÓPRIO Compose Multiplatform que audita o `Info.plist` e
+  derruba o app de propósito se achar algo fora do esperado. Não tinha
+  nada a ver com a tentativa anterior (blindagem do carregamento de áudio,
+  0.6.4) — aquele código nunca chegou a rodar. `MainViewController.kt`
+  agora passa `configure = { enforceStrictPlistSanityCheck = false }` pro
+  `ComposeUIViewController`, a flag oficial pra desativar essa checagem —
+  usada por vários projetos Compose Multiplatform reais no mesmo cenário
+  (projeto Xcode montado à mão, sem o assistente do Xcode, nunca bate 100%
+  com o que a checagem espera).
+
+---
+
 ## [0.32.0] — 2026-09-19 · Corrige nome e ícone do app no iOS
 
 ### Corrigido

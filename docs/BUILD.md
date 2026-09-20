@@ -224,17 +224,21 @@ compila para iOS.
 
 > **Primeiro teste real num iPhone (2026-09-19): app abria o splash e fechava sozinho.**
 > Nunca tinha sido testado em aparelho de verdade antes disso — o `ios.yml` só garante
-> que compila, não que roda. Causa mais provável: `Res.readBytes(...)` dentro do
-> `init { scope.launch { ... } }` de `SoundPlayer`/`MusicPlayer` sem nenhum
-> `try/catch` — no Kotlin/Native, uma exceção não tratada numa corrotina derruba o
-> processo inteiro (não é como a JVM, que isola por thread). Se o projeto Xcode
-> montado à mão (sem Mac pra validar) não empacotar um dos `.wav`/`.m4a` direitinho
-> dentro do app, a primeira leitura que falhar mata o app logo depois do splash —
-> bate exatamente com o sintoma relatado. Corrigido envolvendo cada leitura num
-> `try/catch` isolado por arquivo: sem confirmação de log de crash real, mas a causa
-> mais plausível já não derruba mais o app de qualquer jeito, só toca sem aquele
-> som/faixa. Se persistir mesmo assim, o próximo passo exige um log de crash de
-> verdade (Mac com Console.app, ou `idevicecrashreport` a partir do Windows).
+> que compila, não que roda. Primeira tentativa (blindar `Res.readBytes(...)` de
+> `SoundPlayer`/`MusicPlayer` com `try/catch`, por suspeita de exceção não tratada
+> numa corrotina) **não era a causa** — só ficou confirmado depois de pegar o log de
+> crash de verdade direto do aparelho (sem precisar de Mac: **Ajustes → Privacidade e
+> Segurança → Análise e Aperfeiçoamentos → Dados de Análise**, procurar um arquivo
+> `iosApp`/`NavalBattle` recente). O backtrace apontava a exceção sendo lançada dentro
+> de `androidx.compose.ui.uikit.PlistSanityCheck.performIfNeeded` — uma checagem do
+> PRÓPRIO Compose Multiplatform que audita o `Info.plist` na inicialização e derruba o
+> app de propósito se achar algo fora do que espera. Um projeto Xcode montado à mão,
+> sem o assistente do Xcode, dificilmente bate 100% com essa expectativa. Corrigido em
+> `MainViewController.kt` com `ComposeUIViewController(configure = {
+> enforceStrictPlistSanityCheck = false })` — a flag oficial pra desativar essa
+> checagem, usada por vários projetos Compose Multiplatform reais no mesmo cenário.
+> **Lição:** sem log de crash real, a causa mais "plausível" pelo código pode estar
+> simplesmente errada — vale pegar o log antes de blindar código por suspeita.
 
 **O que está de propósito só como pendência** (compila, mas não faz nada ainda):
 - `GoogleAuth` — sempre devolve falha. `ASWebAuthenticationSession` (a via sem SDK
