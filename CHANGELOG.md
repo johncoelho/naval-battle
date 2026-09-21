@@ -9,6 +9,29 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.36.0] — 2026-09-20 · Placar da ranqueada, teclado preso no iOS e som de água errado
+
+### Corrigido
+- **Placar da ranqueada não subia (nem descia) em Android e iOS.** `reportRankedResult`
+  chamava a nuvem direto com o token da sessão, sem passar pelo helper `authed{}` que
+  o resto do app usa — o mesmo que detecta token vencido, renova com o refresh token
+  guardado e tenta de novo. Uma partida ranqueada, turno a turno, facilmente passa da
+  1h de vida do token do Supabase; quando isso acontecia, o envio do resultado falhava
+  calado (a flag que evita reenvio já tinha sido marcada) e nada era gravado — nem no
+  perfil, nem na tabela de temporada. Confirmado direto no banco: a tabela de
+  estatísticas da temporada estava zerada apesar de partidas ranqueadas já jogadas.
+- **Teclado preso na tela no iOS.** Sem o botão de "voltar" do Android pra recolher o
+  teclado, ele ficava aberto pra sempre depois de tocar em qualquer campo de texto —
+  escondendo até o botão de fechar da tela por baixo dele, exigindo fechar o app
+  inteiro. Agora tocar em qualquer lugar fora de um campo de texto fecha o teclado,
+  em qualquer tela do jogo (um único `pointerInput` na raiz do app).
+- **Som de água (tiro na água) errado no iOS.** O Android já tinha três gravações
+  diferentes sorteadas a cada tiro (`sfx_miss1/2/3.wav`), trocadas há um tempo por
+  um som mais realista — o iOS nunca foi atualizado e continuava carregando o
+  arquivo antigo (`sfx_miss.wav`), o que soava perceptivelmente diferente do Android.
+
+---
+
 ## [0.35.0] — 2026-09-19 · Corrige Login com Google no iOS: Google recusava o fluxo implícito
 
 ### Corrigido

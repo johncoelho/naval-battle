@@ -1,1 +1,1 @@
-Corrige erro no Login com Google no iOS que impedia a autenticacao. Melhorias internas de compatibilidade.
+Corrige placar da ranqueada que nao subia (token de sessao vencido). No iPhone: teclado agora fecha ao tocar fora do campo, e som de agua igual ao Android.

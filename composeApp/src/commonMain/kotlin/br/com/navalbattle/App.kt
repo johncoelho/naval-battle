@@ -1,6 +1,7 @@
 package br.com.navalbattle
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -13,6 +14,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -485,9 +488,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     suspend fun reportRankedResult(victory: Boolean, accuracy: Int, shipsLeft: Int) {
         if (rankedResultSent || !onlineMatchRanked) return
         val matchId = onlineLink.matchId ?: return
-        val session = profile.currentSession() ?: return
+        if (profile.currentSession() == null) return
         rankedResultSent = true
-        cloud.recordRankedResult(session, matchId, victory, accuracy, shipsLeft)
+        // uma partida ranqueada, turno a turno, facilmente passa da 1h de vida do
+        // token — sem o `authed`, o envio falhava calado com o token vencido e o
+        // placar nunca chegava a subir (nem a cair) pra ninguém
+        authed { session -> cloud.recordRankedResult(session, matchId, victory, accuracy, shipsLeft) }
         loadMyRank(leaderboardSeasonMode)
     }
 
@@ -923,7 +929,14 @@ fun App() {
     }
 
     NavalTheme {
-        Box(Modifier.fillMaxSize().background(Naval.bg)) {
+        val focusManager = LocalFocusManager.current
+        Box(
+            Modifier.fillMaxSize().background(Naval.bg)
+                // no iOS o teclado não tem botão de recolher (diferente do "voltar" do
+                // Android) — sem isso ele fica preso na tela pra sempre, escondendo até
+                // o botão de fechar por baixo dele
+                .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) }
+        ) {
             when (state.screen) {
                 Screen.SPLASH -> SplashScreen(state)
                 Screen.WELCOME -> WelcomeScreen(state)
