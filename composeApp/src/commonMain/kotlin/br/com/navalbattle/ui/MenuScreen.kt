@@ -101,7 +101,9 @@ fun MenuScreen(state: AppState) {
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                HudLabel(state.profile.rank.label.uppercase(), Naval.inkSoft)
+                // o nome de guerra escolhido pelo comandante tem prioridade aqui — a
+                // patente (automática por XP) fica na legenda abaixo do título
+                HudLabel(state.profile.displayName.uppercase(), Naval.inkSoft)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 HudLabel("◆ ${state.profile.credits}", Naval.amberStrong)
@@ -114,7 +116,7 @@ fun MenuScreen(state: AppState) {
         Text(t(K.MENU_TITLE_1).uppercase(), style = NavalType.display, color = Naval.ink)
         Text(t(K.MENU_TITLE_2).uppercase(), style = NavalType.display, color = Naval.amberStrong)
         Spacer(Modifier.height(4.dp))
-        HudLabel("${state.profile.displayName.uppercase()} · ${state.profile.xp} XP")
+        HudLabel("${state.profile.rank.label.uppercase()} · ${state.profile.xp} XP")
 
         Spacer(Modifier.height(18.dp))
         FleetPreview(state)

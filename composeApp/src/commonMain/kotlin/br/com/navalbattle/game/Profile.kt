@@ -265,7 +265,12 @@ class Profile(private val prefs: Prefs) {
         prefs.putString(K_EMAIL, accountEmail)
         prefs.putString(K_TOKEN, accessToken)
         prefs.putString(K_REFRESH, refreshToken)
-        if (name.isBlank()) rename(session.username)
+        // sem nome nenhum ainda (nem local, nem vindo do servidor): usa o alias do
+        // e-mail (a parte antes do @) em vez de deixar em branco — melhor um nome
+        // imperfeito do que cair no "Comandante" genérico logo na primeira sessão
+        if (name.isBlank()) {
+            rename(session.username.ifBlank { session.email.substringBefore('@') })
+        }
     }
 
     fun currentSession(): Session? {
@@ -355,8 +360,12 @@ class Profile(private val prefs: Prefs) {
             return ((xp - floor).toFloat() / (next.xp - floor)).coerceIn(0f, 1f)
         }
 
-    /** Em branco, o jogo chama o comandante pelo título traduzido. */
-    val displayName: String get() = name.ifBlank { t(K.COMMANDER) }
+    /**
+     * Em branco: "Convidado" para quem ainda não tem conta, "Comandante" para quem
+     * já entrou mas por algum motivo ficou sem nome (login sempre tenta preencher
+     * um, ver [rememberSession] — este é só um segurança).
+     */
+    val displayName: String get() = name.ifBlank { t(if (signedIn) K.COMMANDER else K.GUEST) }
 
     fun rename(value: String) {
         name = value.trim().take(18)

@@ -532,6 +532,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     RANK_REAR_ADMIRAL("Contra-Almirante", "Rear Admiral", "Contraalmirante"),
     RANK_ADMIRAL("Almirante", "Admiral", "Almirante"),
     COMMANDER("Comandante", "Commander", "Comandante"),
+    GUEST("Convidado", "Guest", "Invitado"),
 
     // ---------------------------------------------------------------- insígnias
     INSIGNIA_ANCHOR("Âncora", "Anchor", "Ancla"),

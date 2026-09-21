@@ -134,9 +134,11 @@ fun ProfileScreen(state: AppState) {
                     }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(profile.rank.label.uppercase(), style = NavalType.title, color = Naval.amberStrong)
+                        // o nome de guerra é quem o comandante escolheu pra ser reconhecido —
+                        // a patente é conquista automática por XP, secundária na hierarquia
+                        Text(profile.displayName, style = NavalType.title, color = Naval.ink)
                         Gap(2)
-                        Text(profile.displayName, style = NavalType.body, color = Naval.ink)
+                        HudLabel(profile.rank.label.uppercase(), Naval.amberStrong)
                         Gap(6)
                         HudLabel("${profile.xp} XP", Naval.muted)
                     }

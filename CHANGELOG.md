@@ -9,6 +9,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.37.0] — 2026-09-20 · Nome de guerra em destaque, não a patente
+
+### Alterado
+- **Nome de guerra em primeiro lugar, patente em segundo** no Perfil e na tela
+  inicial (deque). Antes a patente ("CABO", "SARGENTO"...) aparecia maior e
+  acima do nome escolhido pelo comandante — invertido: o nome que ele escolheu
+  é a identidade principal, a patente (automática, por XP) é só um detalhe
+  abaixo.
+
+### Adicionado
+- **"Convidado"** aparece agora como nome de quem ainda não tem conta nem
+  definiu um nome — antes usava "Comandante" tanto para convidado sem nome
+  quanto para conta conectada sem nome, sem diferenciar os dois casos.
+- **Login preenche o nome com o alias do e-mail** (a parte antes do "@") quando
+  não há nome nenhum ainda — nem local, nem vindo do servidor — em vez de cair
+  direto no genérico "Comandante" na primeira sessão.
+
+---
+
 ## [0.36.0] — 2026-09-20 · Placar da ranqueada, teclado preso no iOS e som de água errado
 
 ### Corrigido

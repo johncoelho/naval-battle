@@ -1,1 +1,1 @@
-Corrige placar da ranqueada que nao subia (token de sessao vencido). No iPhone: teclado agora fecha ao tocar fora do campo, e som de agua igual ao Android.
+Nome de guerra em destaque no Perfil e na tela inicial, patente em segundo plano. "Convidado" para quem ainda nao tem conta.
