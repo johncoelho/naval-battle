@@ -151,6 +151,18 @@ class Profile(private val prefs: Prefs) {
         return true
     }
 
+    /** Recompensa por feedback aprovado (bug confirmado) — não desconta nada, só soma. */
+    fun grantCredits(amount: Int) {
+        credits += amount
+        prefs.putInt(K_CREDITS, credits)
+    }
+
+    /** Recompensa por feedback aprovado (melhoria aceita) — presenteia uma carga da habilidade. */
+    fun grantAbilityCharge(ability: Ability) {
+        abilityCharges = abilityCharges + (ability.code to (chargesOf(ability) + 1))
+        persistCharges()
+    }
+
     fun consumeCharge(ability: Ability) {
         val left = chargesOf(ability)
         if (left <= 0) return

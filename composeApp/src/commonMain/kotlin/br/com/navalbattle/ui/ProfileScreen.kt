@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -60,6 +61,7 @@ import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawAvatar
 import br.com.navalbattle.design.drawInsignia
 import br.com.navalbattle.game.Avatar
+import br.com.navalbattle.game.Badge
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.game.Rank
 import kotlinx.coroutines.launch
@@ -146,6 +148,18 @@ fun ProfileScreen(state: AppState) {
 
                 Gap(12)
                 RankBar(profile.xp, profile.rankProgress)
+
+                if (state.badges.isNotEmpty()) {
+                    Gap(22)
+                    HudLabel(t(K.PROFILE_BADGES))
+                    Gap(8)
+                    Row(
+                        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        state.badges.forEach { badge -> BadgeChip(badge) }
+                    }
+                }
 
                 Gap(22)
                 AccountSection(state)
@@ -628,6 +642,24 @@ private fun RankBar(xp: Int, progress: Float) {
             if (next == null) t(K.PROFILE_CAREER_DONE) else t(K.PROFILE_XP_TO, next.xp - xp, next.label).uppercase(),
             Naval.muted
         )
+    }
+}
+
+/** Uma condecoração conquistada — só um selo com o nome, sem arte própria por enquanto. */
+@Composable
+private fun BadgeChip(badge: Badge) {
+    Row(
+        Modifier
+            .background(Naval.surface3)
+            .border(1.dp, Naval.amber)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Canvas(Modifier.size(12.dp)) {
+            drawCircle(color = Naval.amberStrong, radius = size.minDimension / 2f)
+        }
+        Spacer(Modifier.width(6.dp))
+        HudLabel(t(badge.key).uppercase(), Naval.amberStrong)
     }
 }
 

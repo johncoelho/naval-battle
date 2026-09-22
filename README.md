@@ -119,6 +119,15 @@ bônus por precisão, por navio afundado e por fechar em até 40 turnos.
 - **Créditos** compram na loja. Nada de dinheiro real por enquanto — pagamento entra
   na publicação, e a forma natural de encaixá-lo é vender créditos.
 
+### Feedback e badges
+
+Em Ajustes → "Enviar feedback", o comandante manda um bug ou uma sugestão direto pro
+servidor. A avaliação é manual (bug confirmado credita na loja, melhoria aceita
+presenteia uma carga de habilidade), mas o aviso é automático: o app checa na abertura
+e mostra um popup quando algo foi avaliado. **Badges** são condecorações permanentes na
+tela de Perfil — "Beta Tester" para quem se cadastrou pelo site antes de entrar, e
+"Colaborador" para quem já teve um feedback aprovado.
+
 ### Personalização
 
 Dois eixos independentes, ambos comprados com créditos:

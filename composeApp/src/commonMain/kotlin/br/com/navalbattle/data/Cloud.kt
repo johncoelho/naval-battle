@@ -135,6 +135,23 @@ data class SeasonTrophy(
 /** Uma jogada trocada na sala — o corpo é sempre uma linha do [Protocol]. */
 data class OnlineMessage(val id: Long, val senderId: String, val body: String)
 
+/**
+ * Um feedback (bug ou melhoria) já avaliado no servidor, ainda não reivindicado
+ * neste aparelho — [rewardCredits] e [rewardAbilityCode] só vêm preenchidos
+ * quando [status] é "approved" (ver `record_ranked_result`-like `claim_feedback`
+ * em `supabase/feedback.sql`).
+ */
+data class FeedbackUpdate(
+    val id: String,
+    val kind: String,
+    val status: String,
+    val rewardCredits: Int,
+    val rewardAbilityCode: String?
+)
+
+/** Um badge conquistado — o rótulo/ícone vêm do catálogo local, ver `game/Badge.kt`. */
+data class UserBadge(val code: String, val earnedAt: String)
+
 /** Resultado de uma busca por nome de comandante, para mandar pedido de amizade. */
 data class CommanderHit(val id: String, val username: String)
 
@@ -278,4 +295,18 @@ expect class CloudApi() {
         accuracy: Int,
         shipsLeft: Int
     ): CloudResult<Unit>
+
+    // ---------------- feedback e badges ----------------
+
+    /** Manda um bug ou sugestão — cai numa fila revisada manualmente, nunca creditada na hora. */
+    suspend fun submitFeedback(session: Session, kind: String, message: String): CloudResult<Unit>
+
+    /** Feedbacks já avaliados (aprovados ou recusados) que este aparelho ainda não reivindicou. */
+    suspend fun pendingFeedbackUpdates(session: Session): CloudResult<List<FeedbackUpdate>>
+
+    /** Marca um feedback avaliado como reivindicado — não volta a aparecer. */
+    suspend fun claimFeedback(session: Session, feedbackId: String): CloudResult<Unit>
+
+    /** Badges conquistados pelo comandante — concedidos só pelo servidor. */
+    suspend fun myBadges(session: Session): CloudResult<List<UserBadge>>
 }

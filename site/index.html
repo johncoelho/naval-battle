@@ -418,6 +418,26 @@
   </div>
 </section>
 
+<section id="testador">
+  <div class="wrap">
+    <div class="sechead">
+      <h2>Quero testar</h2>
+      <p>Deixe seu e-mail e você entra na fila de testadores fechados da Play Store —
+         o mesmo e-mail cadastrado na Google Conta que vai usar no Android.</p>
+    </div>
+    <form id="beta-form" style="max-width:480px;display:flex;gap:10px;flex-wrap:wrap">
+      <input
+        type="email" id="beta-email" required placeholder="seu@email.com"
+        style="flex:1;min-width:220px;padding:12px 14px;background:var(--surface2);
+               border:1px solid var(--line);color:var(--ink);font-family:var(--sans);
+               font-size:15px"
+      />
+      <button type="submit" class="btn btn-primary" style="border:0;cursor:pointer">Entrar na fila</button>
+    </form>
+    <p class="meta" id="beta-status" style="margin-top:10px"></p>
+  </div>
+</section>
+
 <footer>
   <div class="wrap footgrid">
     <div>
@@ -474,6 +494,53 @@
     } catch (e) {
       todos.forEach(el => { if (el) el.textContent = 'Versão de teste · sempre a última compilação'; });
     }
+  })();
+</script>
+<script>
+  // fila de beta testers — grava direto na tabela public.beta_testers do Supabase
+  // (a mesma chave anônima do app, protegida por RLS: só INSERT é permitido daqui).
+  // Alguém (não este site) ainda precisa levar esses e-mails pro Play Console —
+  // não existe API oficial do Google pra isso, ver docs/BUILD.md.
+  (() => {
+    const SUPABASE_URL = 'https://cwtslesnthbenxswdcbv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+      'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dHNsZXNudGhiZW54c3dkY2J2Iiwicm9sZSI6ImFub24i' +
+      'LCJpYXQiOjE3ODkyNjc4MDksImV4cCI6MjEwNDg0MzgwOX0.nNN323ZRPocbcRVc4DPHNoWtgP2nVBjjojWIMNSZI_g';
+    const form = document.getElementById('beta-form');
+    const status = document.getElementById('beta-status');
+    if (!form) return;
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const email = document.getElementById('beta-email').value.trim();
+      if (!email) return;
+      const button = form.querySelector('button');
+      button.disabled = true;
+      status.textContent = 'Enviando…';
+      try {
+        const r = await fetch(SUPABASE_URL + '/rest/v1/beta_testers', {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ email })
+        });
+        if (r.ok) {
+          status.textContent = 'Cadastrado! Assim que for adicionado, você recebe o convite no e-mail da Play Store.';
+          form.reset();
+        } else if (r.status === 409) {
+          status.textContent = 'Esse e-mail já está na fila.';
+        } else {
+          status.textContent = 'Não consegui cadastrar agora — tenta de novo daqui a pouco.';
+        }
+      } catch (e) {
+        status.textContent = 'Sem conexão com o servidor — tenta de novo daqui a pouco.';
+      } finally {
+        button.disabled = false;
+      }
+    });
   })();
 </script>
 </body>

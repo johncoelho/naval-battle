@@ -107,7 +107,39 @@ entra no repositório, no app ou em conversa.
 
 Para recriar a base do zero em outro projeto: rodar [`supabase/schema.sql`](../supabase/schema.sql)
 no SQL Editor e desligar *Confirm email* em Authentication → Sign In / Providers enquanto
-estiver em teste.
+estiver em teste. O modo online (salas, amigos, ranqueada) vem de
+[`supabase/online.sql`](../supabase/online.sql), rodado depois. Feedback, badges e a fila
+de beta testers vêm de [`supabase/feedback.sql`](../supabase/feedback.sql), rodado por
+último — nenhum desses três scripts roda sozinho em CI, é sempre manual no SQL Editor.
+
+## Feedback, badges e fila de beta testers
+
+- **Feedback** (bug ou melhoria, tela em Ajustes → "Enviar feedback") cai na tabela
+  `public.feedback`, sempre com `status = 'pending'`. **A avaliação é manual** — não existe
+  policy de update para `authenticated`, só quem tem acesso ao SQL Editor muda `status`
+  para `approved`/`rejected` e preenche `reward_credits` (bug) ou `reward_ability` (melhoria,
+  o `code` do `Ability` — ver `game/Model.kt`), por exemplo:
+  ```sql
+  update public.feedback set status = 'approved', reward_credits = 200
+  where id = '...';
+  ```
+  O app confere isso na abertura (`AppState.checkFeedbackRewards`, mesmo polling sem push
+  de verdade do resto do jogo), aplica a recompensa local e mostra um popup — sem exigir
+  nada manual além de aprovar no banco.
+- **Badges** (`public.user_badges`) são só do servidor — o app nunca escreve ali. Feedback
+  aprovado concede `feedback_contributor` sozinho (gatilho `feedback_grant_badge`); um
+  e-mail que já apareceu em `beta_testers` concede `beta_tester` assim que a conta com
+  esse e-mail nasce ou troca de e-mail (gatilho `grant_beta_badge`). Catálogo de badges
+  (nome exibido, ícone) fica em `game/Badge.kt`, client-side — nunca renomear um `code` já
+  concedido.
+- **Fila de beta testers** (`public.beta_testers`) é alimentada pelo formulário no site
+  ([site/index.html](../site/index.html), seção "Quero testar") — insert público (`anon`),
+  sem leitura pública nenhuma. **Não existe API oficial do Google para adicionar
+  testadores à lista de e-mails do Play Console**, nem via Google Grupo (isso só funciona
+  com Google Workspace; a conta deste projeto é Gmail pessoal). Até isso mudar, o processo
+  é: consultar `select email from public.beta_testers where status = 'pending'` no SQL
+  Editor, colar esses e-mails na lista de testadores do Play Console (Testing → Closed
+  testing → testers), e marcar as linhas como `invited`.
 
 ## Login com Google — configuração do lado de fora do código
 

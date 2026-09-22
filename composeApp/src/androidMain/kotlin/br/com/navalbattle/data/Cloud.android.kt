@@ -426,6 +426,57 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
+    // ------------------------------------------------------------------ feedback e badges
+
+    actual suspend fun submitFeedback(session: Session, kind: String, message: String): CloudResult<Unit> = call {
+        val body = JSONObject()
+            .put("user_id", session.userId)
+            .put("username", session.username)
+            .put("kind", kind)
+            .put("message", message)
+        post("/rest/v1/feedback", body, token = session.accessToken, prefer = "return=minimal")
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun pendingFeedbackUpdates(session: Session): CloudResult<List<FeedbackUpdate>> = call {
+        val json = get(
+            "/rest/v1/feedback?user_id=eq.${session.userId}&claimed=is.false&status=neq.pending" +
+                "&select=id,kind,status,reward_credits,reward_ability",
+            session.accessToken
+        )
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            FeedbackUpdate(
+                id = o.getString("id"),
+                kind = o.optString("kind"),
+                status = o.optString("status"),
+                rewardCredits = o.optInt("reward_credits", 0),
+                rewardAbilityCode = o.stringOrNull("reward_ability")
+            )
+        }
+        CloudResult.Ok(list)
+    }
+
+    actual suspend fun claimFeedback(session: Session, feedbackId: String): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_feedback_id", feedbackId)
+        post("/rest/v1/rpc/claim_feedback", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun myBadges(session: Session): CloudResult<List<UserBadge>> = call {
+        val json = get(
+            "/rest/v1/user_badges?user_id=eq.${session.userId}&select=badge_code,earned_at",
+            session.accessToken
+        )
+        val arr = JSONArray(json)
+        val list = (0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            UserBadge(code = o.getString("badge_code"), earnedAt = o.optString("earned_at"))
+        }
+        CloudResult.Ok(list)
+    }
+
     // optString devolve "" tanto para campo ausente quanto para JSON null — para os
     // campos que fazem diferença (nulo é "ninguém entrou ainda"), checa com isNull
     private fun JSONObject.stringOrNull(key: String): String? =

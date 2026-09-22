@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.38.0] — 2026-09-22 · Feedback recompensado, badges e fila de beta testers
+
+### Adicionado
+- **Enviar feedback** (Ajustes → "Enviar feedback"): bug ou melhoria, direto pro
+  servidor. Avaliação é manual — bug confirmado credita na loja, melhoria aceita
+  presenteia uma carga de habilidade. O comandante fica sabendo pelo mesmo tipo
+  de popup automático da temporada nova (sem push de verdade, só checa na
+  abertura do app).
+- **Badges** (condecorações permanentes, diferente das medalhas de fim de
+  partida que não ficam salvas): primeiro badge é "Beta Tester", concedido
+  sozinho quando a conta nasce com um e-mail que já se cadastrou como
+  testador; feedback aprovado rende o badge "Colaborador". Aparecem na tela
+  de Perfil.
+- **Fila de beta testers** no site (seção "Quero testar"): cadastro por e-mail,
+  grava na nuvem. Sem API oficial do Google pra automatizar a inclusão na
+  lista de testadores do Play Console (não existe, mesmo com Google Grupo —
+  isso só funciona com Workspace), o processo de convidar continua manual por
+  enquanto — ver docs/BUILD.md.
+
+---
+
 ## [0.37.0] — 2026-09-20 · Nome de guerra em destaque, não a patente
 
 ### Alterado

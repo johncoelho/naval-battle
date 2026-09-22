@@ -30,6 +30,7 @@ import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.CloudResult
 import br.com.navalbattle.data.CommanderHit
+import br.com.navalbattle.data.FeedbackUpdate
 import br.com.navalbattle.data.FriendProfile
 import br.com.navalbattle.data.Friendship
 import br.com.navalbattle.data.GoogleAuth
@@ -56,6 +57,7 @@ import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
 import br.com.navalbattle.game.Ability
+import br.com.navalbattle.game.Badge
 import br.com.navalbattle.game.Coord
 import br.com.navalbattle.game.FleetCodec
 import br.com.navalbattle.game.GameMode
@@ -72,7 +74,9 @@ import br.com.navalbattle.game.Side
 import br.com.navalbattle.ui.LanScreen
 import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
+import br.com.navalbattle.ui.FeedbackFormScreen
 import br.com.navalbattle.ui.FeedbackPopup
+import br.com.navalbattle.ui.FeedbackRewardPopup
 import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
 import br.com.navalbattle.ui.LeaderboardScreen
@@ -95,7 +99,7 @@ import br.com.navalbattle.ui.WelcomeScreen
 
 enum class Screen {
     SPLASH, WELCOME, MENU, SHIPYARD, STORE, PROFILE, SETTINGS, RELEASE_NOTES, LAN, ONLINE, NAMES,
-    PLACEMENT, HANDOFF, BATTLE, RESULT, FRIENDS, LEADERBOARD
+    PLACEMENT, HANDOFF, BATTLE, RESULT, FRIENDS, LEADERBOARD, FEEDBACK
 }
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
@@ -525,6 +529,63 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         myRank = (cloud.myRank(session, season) as? CloudResult.Ok)?.value
     }
 
+    // ---------------- feedback e badges ----------------
+
+    var feedbackSending by mutableStateOf(false)
+    var feedbackSent by mutableStateOf(false)
+
+    /** Manda um bug ou sugestão — precisa de conta, senão não tem pra quem devolver a recompensa. */
+    suspend fun submitFeedback(kind: String, message: String) {
+        val session = profile.currentSession() ?: return
+        feedbackSending = true
+        val result = authed { s -> cloud.submitFeedback(s, kind, message) }
+        feedbackSending = false
+        feedbackSent = result is CloudResult.Ok
+    }
+
+    /** Feedback avaliado (aprovado ou recusado) pronto pra mostrar num popup, uma vez só. */
+    var feedbackReward by mutableStateOf<FeedbackUpdate?>(null)
+        private set
+
+    /**
+     * Checa se algum feedback foi avaliado desde a última vez que o app abriu — mesmo
+     * padrão de polling de [loadSeason]/[pollPendingInvite], sem push de verdade. Ao
+     * aprovar (bug ou melhoria), aplica a recompensa localmente (mesma trilha de
+     * `buyAbilityCharge`/`registerMatch`, só que somando em vez de descontar) e avisa
+     * o servidor que já foi reivindicada, pra não conceder de novo.
+     */
+    suspend fun checkFeedbackRewards() {
+        if (feedbackReward != null) return
+        val session = profile.currentSession() ?: return
+        val updates = (cloud.pendingFeedbackUpdates(session) as? CloudResult.Ok)?.value.orEmpty()
+        val next = updates.firstOrNull() ?: return
+        if (next.status == "approved") {
+            if (next.rewardCredits > 0) profile.grantCredits(next.rewardCredits)
+            next.rewardAbilityCode?.let { code ->
+                Ability.entries.firstOrNull { it.code == code }?.let { profile.grantAbilityCharge(it) }
+            }
+        }
+        feedbackReward = next
+    }
+
+    /** Fecha o popup de recompensa e confirma pro servidor — não aparece de novo. */
+    fun ackFeedbackReward() {
+        val reward = feedbackReward ?: return
+        feedbackReward = null
+        uiScope?.launch {
+            authed { session -> cloud.claimFeedback(session, reward.id) }
+        }
+    }
+
+    var badges by mutableStateOf<List<Badge>>(emptyList())
+        private set
+
+    suspend fun loadBadges() {
+        val session = profile.currentSession() ?: return
+        val codes = (cloud.myBadges(session) as? CloudResult.Ok)?.value.orEmpty().map { it.code }
+        badges = codes.mapNotNull { Badge.of(it) }
+    }
+
     // ---------------- perfil de amigo ----------------
 
     var viewedFriendProfile by mutableStateOf<FriendProfile?>(null)
@@ -919,6 +980,14 @@ fun App() {
     // do aparelho; se for diferente da última aceita, o popup de nova temporada aparece
     LaunchedEffect(Unit) { state.loadSeason() }
 
+    // badges e feedback avaliado: mesmo padrão sem push de verdade — só checa na
+    // abertura. O popup de recompensa (se achar algo) aparece por conta própria
+    // via FeedbackRewardPopup, olhando state.feedbackReward
+    LaunchedEffect(Unit) {
+        state.loadBadges()
+        state.checkFeedbackRewards()
+    }
+
     // convite de amigo mirado: com o app aberto e fora de partida, checa de tempos em
     // tempos se alguém convidou — é o que alimenta o banner em qualquer tela do jogo
     LaunchedEffect(Unit) {
@@ -955,6 +1024,7 @@ fun App() {
                 Screen.RESULT -> state.match?.let { ResultScreen(state, it) }
                 Screen.FRIENDS -> FriendsScreen(state)
                 Screen.LEADERBOARD -> LeaderboardScreen(state)
+                Screen.FEEDBACK -> FeedbackFormScreen(state)
             }
             OnlineWaitingDialog(state)
             state.pendingInvite?.let { invite -> InviteBanner(state, invite) }
@@ -962,6 +1032,7 @@ fun App() {
             UpdatePopup(state)
             if (state.match == null) SeasonPopup(state)
             FeedbackPopup(state)
+            if (state.match == null) FeedbackRewardPopup(state)
         }
     }
 }

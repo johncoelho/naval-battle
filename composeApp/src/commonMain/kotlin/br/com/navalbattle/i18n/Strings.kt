@@ -345,6 +345,61 @@ enum class K(val pt: String, val en: String, val es: String) {
     SETTINGS_SHARE_STORE("Compartilhar o jogo", "Share the game", "Compartir el juego"),
     SETTINGS_SHARE_STORE_SUB("Envia o link da loja", "Sends the store link", "Envía el enlace de la tienda"),
     SETTINGS_RELEASE_NOTES("Novidades da versão", "What's new", "Novedades de la versión"),
+    SETTINGS_FEEDBACK("Enviar feedback", "Send feedback", "Enviar comentario"),
+    SETTINGS_FEEDBACK_SUB(
+        "Achou um bug ou tem uma ideia?",
+        "Found a bug or have an idea?",
+        "¿Encontraste un error o tienes una idea?"
+    ),
+
+    // ---------------------------------------------------------------- formulário de feedback
+    FEEDBACK_FORM_TITLE_1("Fale", "Send", "Enviar"),
+    FEEDBACK_FORM_TITLE_2("Conosco", "Feedback", "Comentario"),
+    FEEDBACK_FORM_SUB(
+        "Bug confirmado rende crédito na loja. Melhoria aceita rende uma carga de habilidade.",
+        "A confirmed bug earns store credit. An accepted improvement earns an ability charge.",
+        "Un error confirmado da crédito en la tienda. Una mejora aceptada da una carga de habilidad."
+    ),
+    FEEDBACK_FORM_KIND("O que você quer relatar?", "What do you want to report?", "¿Qué quieres reportar?"),
+    FEEDBACK_FORM_KIND_BUG("Bug", "Bug", "Error"),
+    FEEDBACK_FORM_KIND_IMPROVEMENT("Melhoria", "Improvement", "Mejora"),
+    FEEDBACK_FORM_MESSAGE("Descreva com detalhes", "Describe it in detail", "Descríbelo en detalle"),
+    FEEDBACK_FORM_SEND("Enviar", "Send", "Enviar"),
+    FEEDBACK_FORM_SENT(
+        "Enviado! Você será avisado se for aprovado.",
+        "Sent! You'll be notified if it's approved.",
+        "¡Enviado! Te avisaremos si es aprobado."
+    ),
+    FEEDBACK_FORM_NEEDS_ACCOUNT(
+        "Entre com uma conta para enviar feedback",
+        "Sign in with an account to send feedback",
+        "Inicia sesión con una cuenta para enviar comentarios"
+    ),
+
+    // ---------------------------------------------------------------- recompensa de feedback
+    FEEDBACK_REWARD_EYEBROW("Feedback aprovado", "Feedback approved", "Comentario aprobado"),
+    FEEDBACK_REWARD_TITLE("Seu feedback foi aceito!", "Your feedback was accepted!", "¡Tu comentario fue aceptado!"),
+    FEEDBACK_REWARD_CREDITS(
+        "Você ganhou %s créditos na loja",
+        "You earned %s store credits",
+        "Ganaste %s créditos en la tienda"
+    ),
+    FEEDBACK_REWARD_ABILITY(
+        "Você ganhou uma carga de %s",
+        "You earned a charge of %s",
+        "Ganaste una carga de %s"
+    ),
+    FEEDBACK_REWARD_REJECTED(
+        "Seu feedback foi avaliado, mas não pôde ser aceito desta vez.",
+        "Your feedback was reviewed, but couldn't be accepted this time.",
+        "Tu comentario fue evaluado, pero no pudo ser aceptado esta vez."
+    ),
+    FEEDBACK_REWARD_CLOSE("Show", "Nice", "Genial"),
+
+    // ---------------------------------------------------------------- badges
+    PROFILE_BADGES("Condecorações", "Badges", "Condecoraciones"),
+    BADGE_BETA_TESTER("Beta Tester", "Beta Tester", "Beta Tester"),
+    BADGE_FEEDBACK_CONTRIBUTOR("Colaborador", "Contributor", "Colaborador"),
 
     // ---------------------------------------------------------------- novidades
     RELEASE_NOTES_TITLE("Novidades", "What's new", "Novedades"),
