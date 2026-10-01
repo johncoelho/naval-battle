@@ -412,40 +412,51 @@ actual class CloudApi actual constructor() {
 
     // ------------------------------------------------------------------ feedback e badges
 
-    actual suspend fun submitFeedback(session: Session, kind: String, message: String): CloudResult<Unit> = call {
+    actual suspend fun submitFeedback(
+        session: Session,
+        kind: String,
+        message: String,
+        appVersion: String,
+        platform: String,
+        lang: String
+    ): CloudResult<Unit> = call {
         val body = mapOf(
-            "user_id" to session.userId,
-            "username" to session.username,
-            "kind" to kind,
-            "message" to message
+            "p_kind" to kind,
+            "p_message" to message,
+            "p_app_version" to appVersion,
+            "p_platform" to platform,
+            "p_lang" to lang
         )
-        post("/rest/v1/feedback", body, token = session.accessToken, prefer = "return=minimal")
+        post("/rest/v1/rpc/submit_feedback", body, token = session.accessToken)
         CloudResult.Ok(Unit)
     }
 
     actual suspend fun pendingFeedbackUpdates(session: Session): CloudResult<List<FeedbackUpdate>> = call {
         val json = get(
             "/rest/v1/feedback?user_id=eq.${session.userId}&claimed=is.false&status=neq.pending" +
-                "&select=id,kind,status,reward_credits,reward_ability",
+                "&select=id,kind,status,reward_credits,reward_ability,reward_charges,review_note" +
+                "&order=reviewed_at.asc",
             session.accessToken
         )
         val rows = (json as? List<*>).orEmpty()
-        val list = rows.mapNotNull { it as? Map<*, *> }.map { o ->
-            FeedbackUpdate(
-                id = o.strOr("id", ""),
-                kind = o.strOr("kind", ""),
-                status = o.strOr("status", ""),
-                rewardCredits = o.intOr("reward_credits", 0),
-                rewardAbilityCode = o["reward_ability"] as? String
-            )
-        }
-        CloudResult.Ok(list)
+        CloudResult.Ok(rows.mapNotNull { it as? Map<*, *> }.map { feedbackOf(it) })
     }
 
-    actual suspend fun claimFeedback(session: Session, feedbackId: String): CloudResult<Unit> = call {
-        post("/rest/v1/rpc/claim_feedback", mapOf("p_feedback_id" to feedbackId), token = session.accessToken)
-        CloudResult.Ok(Unit)
+    actual suspend fun claimFeedback(session: Session, feedbackId: String): CloudResult<FeedbackUpdate?> = call {
+        val json = post("/rest/v1/rpc/claim_feedback", mapOf("p_feedback_id" to feedbackId), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(row?.let { feedbackOf(it) })
     }
+
+    private fun feedbackOf(o: Map<*, *>): FeedbackUpdate = FeedbackUpdate(
+        id = o.strOr("id", ""),
+        kind = o.strOr("kind", ""),
+        status = o.strOr("status", ""),
+        rewardCredits = o.intOr("reward_credits", 0),
+        rewardAbilityCode = o["reward_ability"] as? String,
+        rewardCharges = o.intOr("reward_charges", 0),
+        reviewNote = o["review_note"] as? String
+    )
 
     actual suspend fun myBadges(session: Session): CloudResult<List<UserBadge>> = call {
         val json = get(

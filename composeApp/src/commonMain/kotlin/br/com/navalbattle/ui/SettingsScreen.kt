@@ -95,7 +95,7 @@ fun SettingsScreen(state: AppState) {
             Gap(8)
             SecondaryButton(t(K.SETTINGS_SHARE_STORE), t(K.SETTINGS_SHARE_STORE_SUB)) { shareStoreListing() }
             Gap(8)
-            SecondaryButton(t(K.SETTINGS_FEEDBACK), t(K.SETTINGS_FEEDBACK_SUB)) { state.screen = Screen.FEEDBACK }
+            SecondaryButton(t(K.SETTINGS_FEEDBACK), t(K.SETTINGS_FEEDBACK_SUB)) { state.openFeedback(Screen.SETTINGS) }
         }
 
         Gap(14)

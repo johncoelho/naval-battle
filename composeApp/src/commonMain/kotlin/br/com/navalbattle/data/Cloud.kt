@@ -136,17 +136,18 @@ data class SeasonTrophy(
 data class OnlineMessage(val id: Long, val senderId: String, val body: String)
 
 /**
- * Um feedback (bug ou melhoria) já avaliado no servidor, ainda não reivindicado
- * neste aparelho — [rewardCredits] e [rewardAbilityCode] só vêm preenchidos
- * quando [status] é "approved" (ver `record_ranked_result`-like `claim_feedback`
- * em `supabase/feedback.sql`).
+ * Um feedback (bug ou melhoria) já avaliado no servidor. A recompensa só vem
+ * preenchida quando [status] é "approved": créditos (bug) ou [rewardCharges]
+ * cargas de [rewardAbilityCode] (melhoria). Ver `supabase/feedback.sql`.
  */
 data class FeedbackUpdate(
     val id: String,
     val kind: String,
     val status: String,
     val rewardCredits: Int,
-    val rewardAbilityCode: String?
+    val rewardAbilityCode: String?,
+    val rewardCharges: Int,
+    val reviewNote: String?
 )
 
 /** Um badge conquistado — o rótulo/ícone vêm do catálogo local, ver `game/Badge.kt`. */
@@ -298,14 +299,27 @@ expect class CloudApi() {
 
     // ---------------- feedback e badges ----------------
 
-    /** Manda um bug ou sugestão — cai numa fila revisada manualmente, nunca creditada na hora. */
-    suspend fun submitFeedback(session: Session, kind: String, message: String): CloudResult<Unit>
+    /**
+     * Manda um bug ou sugestão — cai numa fila revisada manualmente, nunca creditada
+     * na hora. Falha com "feedback_limit" na mensagem quando já há 5 pendentes.
+     */
+    suspend fun submitFeedback(
+        session: Session,
+        kind: String,
+        message: String,
+        appVersion: String,
+        platform: String,
+        lang: String
+    ): CloudResult<Unit>
 
-    /** Feedbacks já avaliados (aprovados ou recusados) que este aparelho ainda não reivindicou. */
+    /** Feedbacks já avaliados que ainda não foram reivindicados, os mais antigos primeiro. */
     suspend fun pendingFeedbackUpdates(session: Session): CloudResult<List<FeedbackUpdate>>
 
-    /** Marca um feedback avaliado como reivindicado — não volta a aparecer. */
-    suspend fun claimFeedback(session: Session, feedbackId: String): CloudResult<Unit>
+    /**
+     * Reivindica um feedback avaliado e devolve a recompensa — nulo quando já foi
+     * reivindicado (por este ou outro aparelho). Só o que volta daqui é aplicado.
+     */
+    suspend fun claimFeedback(session: Session, feedbackId: String): CloudResult<FeedbackUpdate?>
 
     /** Badges conquistados pelo comandante — concedidos só pelo servidor. */
     suspend fun myBadges(session: Session): CloudResult<List<UserBadge>>

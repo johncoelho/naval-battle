@@ -8,3 +8,6 @@ package br.com.navalbattle.data
  */
 expect val appVersionLabel: String
 
+/** "android" ou "ios" — vai junto do feedback, pra saber onde reproduzir um bug. */
+expect val platformName: String
+

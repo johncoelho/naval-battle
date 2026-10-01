@@ -48,7 +48,9 @@ import br.com.navalbattle.data.SeasonTrophy
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.Session
+import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.data.checkUpdateAvailable
+import br.com.navalbattle.data.platformName
 import br.com.navalbattle.data.nowMillis
 import br.com.navalbattle.data.openStoreListing
 import br.com.navalbattle.design.FleetLine
@@ -58,6 +60,7 @@ import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
 import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.Badge
+import br.com.navalbattle.game.EarnedBadge
 import br.com.navalbattle.game.Coord
 import br.com.navalbattle.game.FleetCodec
 import br.com.navalbattle.game.GameMode
@@ -533,57 +536,90 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     var feedbackSending by mutableStateOf(false)
     var feedbackSent by mutableStateOf(false)
+    /** Mensagem do último envio que falhou (limite de pendentes ou rede) — nula quando deu certo. */
+    var feedbackError by mutableStateOf<String?>(null)
+
+    /** Para onde o "Voltar" da tela de feedback leva — Ajustes ou Perfil, quem abriu. */
+    var feedbackReturn by mutableStateOf(Screen.SETTINGS)
+
+    fun openFeedback(from: Screen) {
+        feedbackReturn = from
+        feedbackSent = false
+        feedbackError = null
+        screen = Screen.FEEDBACK
+    }
 
     /** Manda um bug ou sugestão — precisa de conta, senão não tem pra quem devolver a recompensa. */
     suspend fun submitFeedback(kind: String, message: String) {
-        val session = profile.currentSession() ?: return
+        if (profile.currentSession() == null) return
         feedbackSending = true
-        val result = authed { s -> cloud.submitFeedback(s, kind, message) }
+        feedbackError = null
+        val result = authed { s ->
+            cloud.submitFeedback(s, kind, message, appVersionLabel, platformName, I18n.lang.code)
+        }
         feedbackSending = false
         feedbackSent = result is CloudResult.Ok
+        if (result is CloudResult.Fail) {
+            feedbackError = t(if ("feedback_limit" in result.message) K.FEEDBACK_FORM_LIMIT else K.FEEDBACK_FORM_ERROR)
+        }
     }
 
-    /** Feedback avaliado (aprovado ou recusado) pronto pra mostrar num popup, uma vez só. */
+    /** Feedback avaliado (aprovado ou recusado) em exibição no popup, já reivindicado e aplicado. */
     var feedbackReward by mutableStateOf<FeedbackUpdate?>(null)
         private set
 
+    private val feedbackQueue = ArrayDeque<FeedbackUpdate>()
+
     /**
-     * Checa se algum feedback foi avaliado desde a última vez que o app abriu — mesmo
-     * padrão de polling de [loadSeason]/[pollPendingInvite], sem push de verdade. Ao
-     * aprovar (bug ou melhoria), aplica a recompensa localmente (mesma trilha de
-     * `buyAbilityCharge`/`registerMatch`, só que somando em vez de descontar) e avisa
-     * o servidor que já foi reivindicada, pra não conceder de novo.
+     * Checa se algum feedback foi avaliado — mesmo padrão de polling de [loadSeason],
+     * sem push de verdade; roda na abertura e ao voltar do segundo plano. Todos os
+     * avaliados entram numa fila e aparecem um popup por vez.
      */
     suspend fun checkFeedbackRewards() {
-        if (feedbackReward != null) return
+        if (feedbackReward != null || feedbackQueue.isNotEmpty()) return
         val session = profile.currentSession() ?: return
         val updates = (cloud.pendingFeedbackUpdates(session) as? CloudResult.Ok)?.value.orEmpty()
-        val next = updates.firstOrNull() ?: return
-        if (next.status == "approved") {
-            if (next.rewardCredits > 0) profile.grantCredits(next.rewardCredits)
-            next.rewardAbilityCode?.let { code ->
-                Ability.entries.firstOrNull { it.code == code }?.let { profile.grantAbilityCharge(it) }
+        feedbackQueue.addAll(updates)
+        showNextFeedbackReward()
+    }
+
+    /**
+     * Reivindica no servidor PRIMEIRO e só aplica a recompensa que voltou de lá — se o
+     * app morrer no meio, ou outro aparelho já tiver reivindicado, nada é dado duas vezes.
+     */
+    private suspend fun showNextFeedbackReward() {
+        while (feedbackQueue.isNotEmpty()) {
+            val next = feedbackQueue.removeFirst()
+            val claimed = (authed { s -> cloud.claimFeedback(s, next.id) } as? CloudResult.Ok)?.value ?: continue
+            if (claimed.status == "approved") {
+                if (claimed.rewardCredits > 0) profile.grantCredits(claimed.rewardCredits)
+                Ability.entries.firstOrNull { it.code == claimed.rewardAbilityCode }?.let { ability ->
+                    repeat(claimed.rewardCharges.coerceAtLeast(1)) { profile.grantAbilityCharge(ability) }
+                }
             }
+            feedbackReward = claimed
+            return
         }
-        feedbackReward = next
     }
 
-    /** Fecha o popup de recompensa e confirma pro servidor — não aparece de novo. */
+    /** Fecha o popup atual e mostra o próximo da fila, se houver. */
     fun ackFeedbackReward() {
-        val reward = feedbackReward ?: return
+        val shown = feedbackReward ?: return
         feedbackReward = null
+        // um feedback aprovado pode ter acabado de render o badge de Colaborador
         uiScope?.launch {
-            authed { session -> cloud.claimFeedback(session, reward.id) }
+            if (shown.status == "approved") loadBadges()
+            showNextFeedbackReward()
         }
     }
 
-    var badges by mutableStateOf<List<Badge>>(emptyList())
+    var badges by mutableStateOf<List<EarnedBadge>>(emptyList())
         private set
 
     suspend fun loadBadges() {
-        val session = profile.currentSession() ?: return
-        val codes = (cloud.myBadges(session) as? CloudResult.Ok)?.value.orEmpty().map { it.code }
-        badges = codes.mapNotNull { Badge.of(it) }
+        val session = profile.currentSession() ?: run { badges = emptyList(); return }
+        val rows = (cloud.myBadges(session) as? CloudResult.Ok)?.value ?: return
+        badges = rows.mapNotNull { row -> Badge.of(row.code)?.let { EarnedBadge(it, row.earnedAt) } }
     }
 
     // ---------------- perfil de amigo ----------------
@@ -980,12 +1016,14 @@ fun App() {
     // do aparelho; se for diferente da última aceita, o popup de nova temporada aparece
     LaunchedEffect(Unit) { state.loadSeason() }
 
-    // badges e feedback avaliado: mesmo padrão sem push de verdade — só checa na
-    // abertura. O popup de recompensa (se achar algo) aparece por conta própria
-    // via FeedbackRewardPopup, olhando state.feedbackReward
-    LaunchedEffect(Unit) {
-        state.loadBadges()
-        state.checkFeedbackRewards()
+    // badges e feedback avaliado: mesmo padrão sem push de verdade — checa na
+    // abertura e toda vez que o app volta do segundo plano. O popup de recompensa
+    // aparece por conta própria via FeedbackRewardPopup, olhando state.feedbackReward
+    LaunchedEffect(AppForeground.active) {
+        if (AppForeground.active) {
+            state.loadBadges()
+            state.checkFeedbackRewards()
+        }
     }
 
     // convite de amigo mirado: com o app aberto e fora de partida, checa de tempos em

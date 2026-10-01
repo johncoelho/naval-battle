@@ -53,17 +53,21 @@ fun FeedbackRewardPopup(state: AppState) {
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            HudLabel(t(K.FEEDBACK_REWARD_EYEBROW), Naval.muted)
+            HudLabel(t(if (approved) K.FEEDBACK_REWARD_EYEBROW else K.FEEDBACK_REWARD_REJECTED_EYEBROW), Naval.muted)
             Gap(8)
             Text(
-                t(K.FEEDBACK_REWARD_TITLE),
+                t(if (approved) K.FEEDBACK_REWARD_TITLE else K.FEEDBACK_REWARD_REJECTED_TITLE),
                 style = NavalType.title,
                 color = Naval.ink,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
             Gap(10)
-            HudLabel(rewardDescription(reward), Naval.inkSoft)
+            HudLabel(rewardDescription(reward), if (approved) Naval.amberStrong else Naval.inkSoft)
+            reward.reviewNote?.takeIf { it.isNotBlank() }?.let { note ->
+                Gap(8)
+                HudLabel(t(K.FEEDBACK_REWARD_NOTE, note), Naval.inkSoft)
+            }
             Gap(20)
             PrimaryButton(t(K.FEEDBACK_REWARD_CLOSE)) { state.ackFeedbackReward() }
         }
@@ -74,6 +78,8 @@ private fun rewardDescription(reward: FeedbackUpdate): String {
     if (reward.status != "approved") return t(K.FEEDBACK_REWARD_REJECTED)
     if (reward.rewardCredits > 0) return t(K.FEEDBACK_REWARD_CREDITS, reward.rewardCredits)
     val ability = reward.rewardAbilityCode?.let { code -> Ability.entries.firstOrNull { it.code == code } }
-    if (ability != null) return t(K.FEEDBACK_REWARD_ABILITY, t(ability.key))
-    return t(K.FEEDBACK_REWARD_REJECTED)
+        ?: return t(K.FEEDBACK_REWARD_REJECTED)
+    val charges = reward.rewardCharges.coerceAtLeast(1)
+    return if (charges == 1) t(K.FEEDBACK_REWARD_ABILITY, t(ability.key))
+    else t(K.FEEDBACK_REWARD_CHARGES, charges, t(ability.key))
 }

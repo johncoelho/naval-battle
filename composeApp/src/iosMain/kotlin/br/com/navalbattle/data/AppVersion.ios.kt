@@ -10,3 +10,5 @@ actual val appVersionLabel: String
         return "$shortVersion ($build)"
     }
 
+actual val platformName: String = "ios"
+

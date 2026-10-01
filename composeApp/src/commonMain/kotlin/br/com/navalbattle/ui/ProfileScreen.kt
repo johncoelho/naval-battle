@@ -62,6 +62,7 @@ import br.com.navalbattle.design.drawAvatar
 import br.com.navalbattle.design.drawInsignia
 import br.com.navalbattle.game.Avatar
 import br.com.navalbattle.game.Badge
+import br.com.navalbattle.game.EarnedBadge
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.game.Rank
 import kotlinx.coroutines.launch
@@ -76,6 +77,9 @@ fun ProfileScreen(state: AppState) {
     val profile = state.profile
     var name by remember { mutableStateOf(profile.name) }
     var confirmReset by remember { mutableStateOf(false) }
+    var openBadge by remember { mutableStateOf<EarnedBadge?>(null) }
+    // a abertura do app já carrega, mas um badge pode ter chegado depois (feedback aprovado)
+    LaunchedEffect(Unit) { state.loadBadges() }
 
     // entrada do retrato: cresce com uma pequena "quicada" ao abrir a tela, em vez
     // de aparecer estático — o único lugar do perfil que tinha zero movimento
@@ -157,8 +161,13 @@ fun ProfileScreen(state: AppState) {
                         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        state.badges.forEach { badge -> BadgeChip(badge) }
+                        state.badges.forEach { earned -> BadgeChip(earned) { openBadge = earned } }
                     }
+                }
+
+                if (profile.signedIn) {
+                    Gap(12)
+                    SecondaryButton(t(K.PROFILE_FEEDBACK_CTA)) { state.openFeedback(Screen.PROFILE) }
                 }
 
                 Gap(22)
@@ -334,6 +343,42 @@ fun ProfileScreen(state: AppState) {
                         name = profile.name
                         confirmReset = false
                     }
+                }
+            }
+        }
+
+        openBadge?.let { earned ->
+            // tocar fora do cartão também fecha — é só informativo
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Naval.bg.copy(alpha = 0.86f))
+                    .clickable { openBadge = null }
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Naval.surface2)
+                        .border(1.dp, Naval.amber)
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Canvas(Modifier.size(56.dp)) {
+                        drawBadgeIcon(earned.badge, Offset(size.width / 2f, size.height / 2f), size.minDimension, Naval.amberStrong)
+                    }
+                    Gap(12)
+                    Text(t(earned.badge.key).uppercase(), style = NavalType.title, color = Naval.ink)
+                    Gap(6)
+                    HudLabel(t(earned.badge.descKey), Naval.inkSoft)
+                    if (earned.earnedDate.isNotEmpty()) {
+                        Gap(4)
+                        HudLabel(t(K.BADGE_EARNED_ON, earned.earnedDate), Naval.muted)
+                    }
+                    Gap(18)
+                    PrimaryButton(t(K.FEEDBACK_REWARD_CLOSE)) { openBadge = null }
                 }
             }
         }
@@ -645,21 +690,60 @@ private fun RankBar(xp: Int, progress: Float) {
     }
 }
 
-/** Uma condecoração conquistada — só um selo com o nome, sem arte própria por enquanto. */
+/** Uma condecoração conquistada — ícone vetorial + nome; tocar abre o cartão com os detalhes. */
 @Composable
-private fun BadgeChip(badge: Badge) {
+private fun BadgeChip(earned: EarnedBadge, onClick: () -> Unit) {
     Row(
         Modifier
             .background(Naval.surface3)
             .border(1.dp, Naval.amber)
+            .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Canvas(Modifier.size(12.dp)) {
-            drawCircle(color = Naval.amberStrong, radius = size.minDimension / 2f)
+        Canvas(Modifier.size(18.dp)) {
+            drawBadgeIcon(earned.badge, Offset(size.width / 2f, size.height / 2f), size.minDimension, Naval.amberStrong)
         }
         Spacer(Modifier.width(6.dp))
-        HudLabel(t(badge.key).uppercase(), Naval.amberStrong)
+        HudLabel(t(earned.badge.key).uppercase(), Naval.amberStrong)
+    }
+}
+
+/**
+ * Arte vetorial de cada badge, no mesmo traço das insígnias. Beta Tester: um radar
+ * varrendo (quem chegou primeiro e explorou o terreno). Colaborador: um balão de
+ * mensagem com um sinal de visto (feedback aceito).
+ */
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBadgeIcon(
+    badge: Badge,
+    center: Offset,
+    size: Float,
+    color: androidx.compose.ui.graphics.Color
+) {
+    val r = size / 2f
+    val stroke = (size * 0.08f).coerceAtLeast(1.5f)
+    when (badge) {
+        Badge.BETA_TESTER -> {
+            drawCircle(color, radius = r * 0.9f, center = center, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
+            drawCircle(color, radius = r * 0.5f, center = center, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke * 0.7f))
+            drawLine(color, center, Offset(center.x + r * 0.64f, center.y - r * 0.64f), stroke)
+            drawCircle(color, radius = r * 0.14f, center = Offset(center.x - r * 0.35f, center.y + r * 0.2f))
+        }
+        Badge.FEEDBACK_CONTRIBUTOR -> {
+            val bubble = androidx.compose.ui.graphics.Path().apply {
+                moveTo(center.x - r * 0.85f, center.y - r * 0.65f)
+                lineTo(center.x + r * 0.85f, center.y - r * 0.65f)
+                lineTo(center.x + r * 0.85f, center.y + r * 0.35f)
+                lineTo(center.x - r * 0.1f, center.y + r * 0.35f)
+                lineTo(center.x - r * 0.5f, center.y + r * 0.85f)
+                lineTo(center.x - r * 0.45f, center.y + r * 0.35f)
+                lineTo(center.x - r * 0.85f, center.y + r * 0.35f)
+                close()
+            }
+            drawPath(bubble, color, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
+            drawLine(color, Offset(center.x - r * 0.4f, center.y - r * 0.15f), Offset(center.x - r * 0.1f, center.y + r * 0.1f), stroke)
+            drawLine(color, Offset(center.x - r * 0.1f, center.y + r * 0.1f), Offset(center.x + r * 0.45f, center.y - r * 0.4f), stroke)
+        }
     }
 }
 

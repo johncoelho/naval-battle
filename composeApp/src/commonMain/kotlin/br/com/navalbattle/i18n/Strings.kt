@@ -366,10 +366,26 @@ enum class K(val pt: String, val en: String, val es: String) {
     FEEDBACK_FORM_MESSAGE("Descreva com detalhes", "Describe it in detail", "Descríbelo en detalle"),
     FEEDBACK_FORM_SEND("Enviar", "Send", "Enviar"),
     FEEDBACK_FORM_SENT(
-        "Enviado! Você será avisado se for aprovado.",
-        "Sent! You'll be notified if it's approved.",
-        "¡Enviado! Te avisaremos si es aprobado."
+        "Enviado! Você será avisado quando for avaliado.",
+        "Sent! You'll be notified once it's reviewed.",
+        "¡Enviado! Te avisaremos cuando sea evaluado."
     ),
+    FEEDBACK_FORM_TOO_SHORT(
+        "Descreva com pelo menos 20 caracteres",
+        "Describe it in at least 20 characters",
+        "Descríbelo con al menos 20 caracteres"
+    ),
+    FEEDBACK_FORM_LIMIT(
+        "Você já tem 5 feedbacks aguardando avaliação",
+        "You already have 5 feedbacks awaiting review",
+        "Ya tienes 5 comentarios esperando evaluación"
+    ),
+    FEEDBACK_FORM_ERROR(
+        "Não consegui enviar agora — tente de novo",
+        "Couldn't send it right now — try again",
+        "No pude enviarlo ahora — inténtalo de nuevo"
+    ),
+    PROFILE_FEEDBACK_CTA("Achou um bug? Ganhe créditos", "Found a bug? Earn credits", "¿Encontraste un error? Gana créditos"),
     FEEDBACK_FORM_NEEDS_ACCOUNT(
         "Entre com uma conta para enviar feedback",
         "Sign in with an account to send feedback",
@@ -389,17 +405,36 @@ enum class K(val pt: String, val en: String, val es: String) {
         "You earned a charge of %s",
         "Ganaste una carga de %s"
     ),
+    FEEDBACK_REWARD_CHARGES(
+        "Você ganhou %1 cargas de %2",
+        "You earned %1 charges of %2",
+        "Ganaste %1 cargas de %2"
+    ),
     FEEDBACK_REWARD_REJECTED(
         "Seu feedback foi avaliado, mas não pôde ser aceito desta vez.",
         "Your feedback was reviewed, but couldn't be accepted this time.",
         "Tu comentario fue evaluado, pero no pudo ser aceptado esta vez."
     ),
+    FEEDBACK_REWARD_REJECTED_EYEBROW("Feedback avaliado", "Feedback reviewed", "Comentario evaluado"),
+    FEEDBACK_REWARD_REJECTED_TITLE("Obrigado pelo feedback", "Thanks for the feedback", "Gracias por tu comentario"),
+    FEEDBACK_REWARD_NOTE("Nota do revisor: %s", "Reviewer's note: %s", "Nota del revisor: %s"),
     FEEDBACK_REWARD_CLOSE("Show", "Nice", "Genial"),
 
     // ---------------------------------------------------------------- badges
     PROFILE_BADGES("Condecorações", "Badges", "Condecoraciones"),
     BADGE_BETA_TESTER("Beta Tester", "Beta Tester", "Beta Tester"),
+    BADGE_BETA_TESTER_DESC(
+        "Jogou durante os testes fechados",
+        "Played during the closed testing",
+        "Jugó durante las pruebas cerradas"
+    ),
     BADGE_FEEDBACK_CONTRIBUTOR("Colaborador", "Contributor", "Colaborador"),
+    BADGE_FEEDBACK_CONTRIBUTOR_DESC(
+        "Teve um feedback aprovado",
+        "Had a feedback approved",
+        "Tuvo un comentario aprobado"
+    ),
+    BADGE_EARNED_ON("Conquistado em %s", "Earned on %s", "Conseguido el %s"),
 
     // ---------------------------------------------------------------- novidades
     RELEASE_NOTES_TITLE("Novidades", "What's new", "Novedades"),

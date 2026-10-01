@@ -428,41 +428,51 @@ actual class CloudApi actual constructor() {
 
     // ------------------------------------------------------------------ feedback e badges
 
-    actual suspend fun submitFeedback(session: Session, kind: String, message: String): CloudResult<Unit> = call {
+    actual suspend fun submitFeedback(
+        session: Session,
+        kind: String,
+        message: String,
+        appVersion: String,
+        platform: String,
+        lang: String
+    ): CloudResult<Unit> = call {
         val body = JSONObject()
-            .put("user_id", session.userId)
-            .put("username", session.username)
-            .put("kind", kind)
-            .put("message", message)
-        post("/rest/v1/feedback", body, token = session.accessToken, prefer = "return=minimal")
+            .put("p_kind", kind)
+            .put("p_message", message)
+            .put("p_app_version", appVersion)
+            .put("p_platform", platform)
+            .put("p_lang", lang)
+        post("/rest/v1/rpc/submit_feedback", body, token = session.accessToken)
         CloudResult.Ok(Unit)
     }
 
     actual suspend fun pendingFeedbackUpdates(session: Session): CloudResult<List<FeedbackUpdate>> = call {
         val json = get(
             "/rest/v1/feedback?user_id=eq.${session.userId}&claimed=is.false&status=neq.pending" +
-                "&select=id,kind,status,reward_credits,reward_ability",
+                "&select=id,kind,status,reward_credits,reward_ability,reward_charges,review_note" +
+                "&order=reviewed_at.asc",
             session.accessToken
         )
         val arr = JSONArray(json)
-        val list = (0 until arr.length()).map { i ->
-            val o = arr.getJSONObject(i)
-            FeedbackUpdate(
-                id = o.getString("id"),
-                kind = o.optString("kind"),
-                status = o.optString("status"),
-                rewardCredits = o.optInt("reward_credits", 0),
-                rewardAbilityCode = o.stringOrNull("reward_ability")
-            )
-        }
-        CloudResult.Ok(list)
+        CloudResult.Ok((0 until arr.length()).map { i -> feedbackOf(arr.getJSONObject(i)) })
     }
 
-    actual suspend fun claimFeedback(session: Session, feedbackId: String): CloudResult<Unit> = call {
+    actual suspend fun claimFeedback(session: Session, feedbackId: String): CloudResult<FeedbackUpdate?> = call {
         val body = JSONObject().put("p_feedback_id", feedbackId)
-        post("/rest/v1/rpc/claim_feedback", body, token = session.accessToken)
-        CloudResult.Ok(Unit)
+        val json = post("/rest/v1/rpc/claim_feedback", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        CloudResult.Ok(if (arr.length() == 0) null else feedbackOf(arr.getJSONObject(0)))
     }
+
+    private fun feedbackOf(o: JSONObject): FeedbackUpdate = FeedbackUpdate(
+        id = o.getString("id"),
+        kind = o.optString("kind"),
+        status = o.optString("status"),
+        rewardCredits = o.optInt("reward_credits", 0),
+        rewardAbilityCode = o.stringOrNull("reward_ability"),
+        rewardCharges = o.optInt("reward_charges", 0),
+        reviewNote = o.stringOrNull("review_note")
+    )
 
     actual suspend fun myBadges(session: Session): CloudResult<List<UserBadge>> = call {
         val json = get(

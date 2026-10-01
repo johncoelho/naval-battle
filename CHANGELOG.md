@@ -9,6 +9,34 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.39.0] — 2026-10-01 · Feedback e badges conforme a SPEC; beta tester só pelo Play Console
+
+### Alterado
+- **Recompensa só depois de reivindicar no servidor.** Antes o app somava a recompensa e
+  só depois avisava o servidor — se travasse no meio, dava para ganhar duas vezes. Agora
+  `claim_feedback` responde uma única vez por feedback e só o que volta dele é aplicado.
+- **Vários feedbacks avaliados aparecem em sequência**, um popup depois do outro (antes só
+  o primeiro), checados na abertura e ao voltar do segundo plano.
+- **Tabela fixa de recompensas**, aplicada pela função `review_feedback`: bug 150 / 300 /
+  600 créditos (menor / médio / grave); melhoria 1 ou 3 cargas de habilidade. Recusa
+  mostra a nota do revisor.
+- **Envio com regras:** 20 a 800 caracteres, no máximo 5 pendentes por conta, e versão do
+  app, plataforma e idioma gravados junto para reproduzir o bug.
+- **Badge Beta Tester** passa a ir para toda conta criada durante o teste fechado (o Google
+  não expõe a lista de testadores, então o critério deixou de ser o e-mail). Quem já tinha
+  conta recebeu na hora.
+
+### Adicionado
+- Ícones vetoriais para os badges (radar para Beta Tester, balão para Colaborador) e um
+  cartão com descrição e data ao tocar neles.
+- Atalho "Achou um bug? Ganhe créditos" no Perfil.
+
+### Removido
+- Formulário "Quero testar" do site e a fila `beta_testers`: testadores Android entram só
+  pelo link oficial do Play Console.
+
+---
+
 ## [0.38.0] — 2026-09-22 · Feedback recompensado, badges e fila de beta testers
 
 ### Adicionado

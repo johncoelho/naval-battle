@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
-import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.i18n.K
@@ -46,6 +45,8 @@ fun FeedbackFormScreen(state: AppState) {
     var isBug by remember { mutableStateOf(true) }
     var message by remember { mutableStateOf("") }
     val needsAccount = !state.profile.signedIn
+    // mesmo limite do servidor (submit_feedback): curto demais não dá pra reproduzir
+    val validLength = message.trim().length in 20..800
 
     Column(
         Modifier
@@ -68,6 +69,10 @@ fun FeedbackFormScreen(state: AppState) {
         } else if (state.feedbackSent) {
             HudLabel(t(K.FEEDBACK_FORM_SENT), Naval.greenBright)
         } else {
+            state.feedbackError?.let {
+                HudLabel(it, Naval.danger)
+                Gap(14)
+            }
             HudLabel(t(K.FEEDBACK_FORM_KIND))
             Gap(8)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -87,7 +92,7 @@ fun FeedbackFormScreen(state: AppState) {
                     .fillMaxWidth()
                     .heightIn(min = 140.dp)
                     .background(Naval.surface2)
-                    .border(1.dp, if (message.isBlank()) Naval.line else Naval.green)
+                    .border(1.dp, if (validLength) Naval.green else Naval.line)
                     .padding(14.dp)
             ) {
                 BasicTextField(
@@ -98,6 +103,10 @@ fun FeedbackFormScreen(state: AppState) {
                     modifier = Modifier.fillMaxWidth()
                 )
             }
+            if (message.isNotBlank() && !validLength) {
+                Gap(6)
+                HudLabel(t(K.FEEDBACK_FORM_TOO_SHORT), Naval.muted)
+            }
         }
 
         Spacer(Modifier.weight(1f))
@@ -105,12 +114,12 @@ fun FeedbackFormScreen(state: AppState) {
         if (!needsAccount && !state.feedbackSent) {
             PrimaryButton(
                 t(K.FEEDBACK_FORM_SEND),
-                enabled = message.isNotBlank() && !state.feedbackSending
+                enabled = validLength && !state.feedbackSending
             ) {
-                scope.launch { state.submitFeedback(if (isBug) "bug" else "improvement", message) }
+                scope.launch { state.submitFeedback(if (isBug) "bug" else "improvement", message.trim()) }
             }
             Gap(8)
         }
-        SecondaryButton(t(K.BACK)) { state.screen = Screen.SETTINGS }
+        SecondaryButton(t(K.BACK)) { state.screen = state.feedbackReturn }
     }
 }

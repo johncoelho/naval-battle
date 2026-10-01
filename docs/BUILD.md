@@ -108,38 +108,41 @@ entra no repositório, no app ou em conversa.
 Para recriar a base do zero em outro projeto: rodar [`supabase/schema.sql`](../supabase/schema.sql)
 no SQL Editor e desligar *Confirm email* em Authentication → Sign In / Providers enquanto
 estiver em teste. O modo online (salas, amigos, ranqueada) vem de
-[`supabase/online.sql`](../supabase/online.sql), rodado depois. Feedback, badges e a fila
-de beta testers vêm de [`supabase/feedback.sql`](../supabase/feedback.sql), rodado por
+[`supabase/online.sql`](../supabase/online.sql), rodado depois. Feedback e badges vêm de [`supabase/feedback.sql`](../supabase/feedback.sql), rodado por
 último — nenhum desses três scripts roda sozinho em CI, é sempre manual no SQL Editor.
 
-## Feedback, badges e fila de beta testers
+## Feedback, badges e beta testers
 
-- **Feedback** (bug ou melhoria, tela em Ajustes → "Enviar feedback") cai na tabela
-  `public.feedback`, sempre com `status = 'pending'`. **A avaliação é manual** — não existe
-  policy de update para `authenticated`, só quem tem acesso ao SQL Editor muda `status`
-  para `approved`/`rejected` e preenche `reward_credits` (bug) ou `reward_ability` (melhoria,
-  o `code` do `Ability` — ver `game/Model.kt`), por exemplo:
+- **Feedback** (bug ou melhoria — Ajustes → "Enviar feedback", ou o atalho no Perfil) entra
+  só pela função `submit_feedback`, que exige 20 a 800 caracteres e no máximo 5 pendentes
+  por conta, e grava versão do app, plataforma e idioma junto. **A avaliação é manual**,
+  pela função `review_feedback` no SQL Editor (sem grant para o app), que aplica a tabela
+  de recompensas sozinha:
   ```sql
-  update public.feedback set status = 'approved', reward_credits = 200
-  where id = '...';
+  -- bug: 'minor' 150 · 'medium' 300 · 'major' 600 créditos
+  select review_feedback('<id>', true, 'medium', null, null);
+  -- melhoria: 'small' 1 · 'large' 3 cargas; habilidade = REC, 2X, SNR ou FUM
+  select review_feedback('<id>', true, 'small', 'SNR', 'Boa ideia!');
+  -- recusa, com nota que aparece no popup
+  select review_feedback('<id>', false, null, null, 'Duplicado — já estava na lista');
   ```
-  O app confere isso na abertura (`AppState.checkFeedbackRewards`, mesmo polling sem push
-  de verdade do resto do jogo), aplica a recompensa local e mostra um popup — sem exigir
-  nada manual além de aprovar no banco.
+  Pendentes: `select id, kind, message, platform, app_version from feedback where status = 'pending';`
+  O app confere na abertura e ao voltar do segundo plano (`AppState.checkFeedbackRewards`,
+  polling, sem push), **reivindica no servidor antes** (`claim_feedback`, que só responde
+  uma vez por feedback) e só então aplica a recompensa e mostra o popup — um por vez.
 - **Badges** (`public.user_badges`) são só do servidor — o app nunca escreve ali. Feedback
-  aprovado concede `feedback_contributor` sozinho (gatilho `feedback_grant_badge`); um
-  e-mail que já apareceu em `beta_testers` concede `beta_tester` assim que a conta com
-  esse e-mail nasce ou troca de e-mail (gatilho `grant_beta_badge`). Catálogo de badges
-  (nome exibido, ícone) fica em `game/Badge.kt`, client-side — nunca renomear um `code` já
-  concedido.
-- **Fila de beta testers** (`public.beta_testers`) é alimentada pelo formulário no site
-  ([site/index.html](../site/index.html), seção "Quero testar") — insert público (`anon`),
-  sem leitura pública nenhuma. **Não existe API oficial do Google para adicionar
-  testadores à lista de e-mails do Play Console**, nem via Google Grupo (isso só funciona
-  com Google Workspace; a conta deste projeto é Gmail pessoal). Até isso mudar, o processo
-  é: consultar `select email from public.beta_testers where status = 'pending'` no SQL
-  Editor, colar esses e-mails na lista de testadores do Play Console (Testing → Closed
-  testing → testers), e marcar as linhas como `invited`.
+  aprovado concede `feedback_contributor` (gatilho `feedback_grant_badge`). `beta_tester`
+  vai para toda conta criada enquanto `app_config.beta_ends_at` estiver vazio ou no futuro
+  (gatilho `profiles_grant_beta_badge`); no dia da publicação em produção:
+  `update app_config set value = now()::text where key = 'beta_ends_at';`.
+  Catálogo (nome, descrição, ícone) em `game/Badge.kt` e `ui/ProfileScreen.kt` — nunca
+  renomear um `code` já concedido.
+- **Beta testers Android** entram só pelo link oficial do Play Console,
+  `play.google.com/apps/testing/aigamesfactory.navalbattleclassic`. O teste é **fechado**:
+  o link só funciona para e-mails já na lista "Testadores fechados" (Play Console →
+  Test and release → Closed testing → Alpha → Testers). Não existe API do Google para
+  editar essa lista, então quem pede para testar é adicionado à mão ali. A fila própria
+  que o site tinha (`beta_testers`) foi removida.
 
 ## Login com Google — configuração do lado de fora do código
 
