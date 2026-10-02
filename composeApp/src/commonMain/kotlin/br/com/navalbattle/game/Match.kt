@@ -17,7 +17,11 @@ enum class Side {
 
 enum class Tone { HIT, SUNK, MISS, SCAN, INFO }
 
-data class Callout(val main: String, val sub: String, val tone: Tone, val id: Long)
+/**
+ * Aviso de combate. [sticky] = fica na tela até o próximo aviso ou um toque nele —
+ * usado no "Frota a postos", que traz instrução e não pode sumir antes de ser lida.
+ */
+data class Callout(val main: String, val sub: String, val tone: Tone, val id: Long, val sticky: Boolean = false)
 
 data class Impact(val coord: Coord, val tone: Tone, val id: Long, val sunkShip: Ship? = null)
 
@@ -235,9 +239,9 @@ class Match(
         phase = Phase.BATTLE
         turnOwner = Side.PLAYER
         if (mode == GameMode.TACTICAL) {
-            say(t(K.CALL_FLEET_READY), t(K.CALL_FLEET_READY_TACTICAL), Tone.INFO)
+            say(t(K.CALL_FLEET_READY), t(K.CALL_FLEET_READY_TACTICAL), Tone.INFO, sticky = true)
         } else {
-            say(t(K.CALL_FLEET_READY), t(K.CALL_FLEET_READY_CLASSIC), Tone.INFO)
+            say(t(K.CALL_FLEET_READY), t(K.CALL_FLEET_READY_CLASSIC), Tone.INFO, sticky = true)
         }
     }
 
@@ -273,6 +277,7 @@ class Match(
      */
     fun selectAbility(ability: Ability, ignoreCooldown: Boolean = false) {
         if (!abilityAvailable(ability, ignoreCooldown)) return
+        dismissSticky()
         when (ability) {
             Ability.SMOKE -> {
                 board(turnOwner).smokeActive = true
@@ -299,6 +304,7 @@ class Match(
     /** Dispara (ou usa a habilidade selecionada) contra o tabuleiro adversário de quem tem a vez. */
     fun act(coord: Coord): ShotOutcome? {
         if (phase != Phase.BATTLE) return null
+        dismissSticky()
         val attacker = turnOwner
         val target = board(attacker.other())
 
@@ -459,11 +465,16 @@ class Match(
         }
     }
 
-    private fun say(main: String, sub: String, tone: Tone) {
-        callout = Callout(main, sub, tone, nextId())
+    private fun say(main: String, sub: String, tone: Tone, sticky: Boolean = false) {
+        callout = Callout(main, sub, tone, nextId(), sticky)
     }
 
     private fun nextId(): Long = ++calloutSeq
+
+    /** O primeiro toque do comandante (tiro ou habilidade) encerra o aviso de abertura. */
+    private fun dismissSticky() {
+        if (callout?.sticky == true) callout = null
+    }
 
     fun accuracyOf(side: Side): Int {
         val shots = if (side == Side.PLAYER) playerShots else enemyShots

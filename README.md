@@ -162,7 +162,10 @@ joga; o changelog técnico completo continua só em `CHANGELOG.md`.
 Português do Brasil, inglês e espanhol, trocáveis em Configurações e aplicados na hora.
 Todo o texto vive em `i18n/Strings.kt`, com as três versões de cada frase na mesma linha.
 
-A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado.
+A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado. Toda compra
+passa por um cartão de confirmação (preço, saldo e saldo depois); item sem saldo aparece
+apagado, com cadeado e "faltam ◆ X". A prévia de cada casco/pintura desliza pelas cinco
+classes de navio.
 
 ### Como a rede local funciona
 

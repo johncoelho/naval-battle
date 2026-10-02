@@ -56,11 +56,11 @@ private fun matchCards(state: AppState): List<MatchCard> = listOf(
     MatchCard(t(K.MENU_QUICK), t(K.MENU_QUICK_SUB)) { it.newMatch(Opponent.AI) },
     MatchCard(t(K.MENU_LOCAL), t(K.MENU_LOCAL_SUB)) { it.newMatch(Opponent.LOCAL) },
     MatchCard(t(K.MENU_LAN), t(K.MENU_LAN_SUB)) { it.screen = Screen.LAN },
+    // sempre ativo: sem conta, o toque leva direto ao login e volta para cá depois
     MatchCard(
         t(K.MENU_ONLINE),
-        if (state.profile.signedIn) t(K.MENU_ONLINE_SUB) else t(K.MENU_ONLINE_LOCKED),
-        enabled = state.profile.signedIn
-    ) { it.screen = Screen.ONLINE }
+        if (state.profile.signedIn) t(K.MENU_ONLINE_SUB) else t(K.MENU_ONLINE_LOCKED)
+    ) { if (it.profile.signedIn) it.screen = Screen.ONLINE else it.openLogin(Screen.MENU) }
 )
 
 @Composable

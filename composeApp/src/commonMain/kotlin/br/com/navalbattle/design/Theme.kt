@@ -25,7 +25,7 @@ object Naval {
 
     val ink = Color(0xFFEFF2E4)
     val inkSoft = Color(0xFFB4C0A4)
-    val muted = Color(0xFF6B7760)
+    val muted = Color(0xFF939F88)
 
     val green = Color(0xFF5F8F4A)
     val greenBright = Color(0xFF8ED17A)

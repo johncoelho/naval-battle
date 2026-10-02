@@ -542,6 +542,18 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Para onde o "Voltar" da tela de feedback leva — Ajustes ou Perfil, quem abriu. */
     var feedbackReturn by mutableStateOf(Screen.SETTINGS)
 
+    /**
+     * Para onde voltar depois de entrar na conta, quando o perfil foi aberto só para
+     * isso (cartão Online do menu sem login). Nulo = perfil aberto normalmente.
+     */
+    var loginReturn by mutableStateOf<Screen?>(null)
+
+    /** Abre o perfil já na seção de conta; ao entrar, volta para [from]. */
+    fun openLogin(from: Screen) {
+        loginReturn = from
+        screen = Screen.PROFILE
+    }
+
     fun openFeedback(from: Screen) {
         feedbackReturn = from
         feedbackSent = false

@@ -34,6 +34,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +43,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
@@ -81,6 +84,21 @@ fun ProfileScreen(state: AppState) {
     // a abertura do app já carrega, mas um badge pode ter chegado depois (feedback aprovado)
     LaunchedEffect(Unit) { state.loadBadges() }
 
+    // aberto pelo cartão Online sem conta: rola até o login e, ao entrar, volta
+    val scroll = rememberScrollState()
+    var accountTop by remember { mutableStateOf(-1) }
+    LaunchedEffect(accountTop) {
+        if (state.loginReturn != null && accountTop >= 0) scroll.animateScrollTo(accountTop)
+    }
+    LaunchedEffect(profile.signedIn) {
+        val back = state.loginReturn
+        if (profile.signedIn && back != null) {
+            state.loginReturn = null
+            state.screen = back
+        }
+    }
+    DisposableEffect(Unit) { onDispose { state.loginReturn = null } }
+
     // entrada do retrato: cresce com uma pequena "quicada" ao abrir a tela, em vez
     // de aparecer estático — o único lugar do perfil que tinha zero movimento
     val portraitScale = remember { Animatable(0f) }
@@ -105,7 +123,7 @@ fun ProfileScreen(state: AppState) {
             Column(
                 Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scroll)
             ) {
                 // retrato, nome e patente
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -171,7 +189,9 @@ fun ProfileScreen(state: AppState) {
                 }
 
                 Gap(22)
-                AccountSection(state)
+                Box(Modifier.onGloballyPositioned { accountTop = it.positionInParent().y.toInt() }) {
+                    AccountSection(state)
+                }
 
                 Gap(22)
                 HudLabel(t(K.PROFILE_NAME))

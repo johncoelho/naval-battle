@@ -9,6 +9,31 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.40.0] — 2026-10-02 · Melhorias de CX, fase 1 (avaliação heurística)
+
+### Alterado
+- **"Frota a postos" fica na tela até o primeiro toque** (tiro ou habilidade). Avisos
+  informativos duram 1,9 s + 50 ms por caractere da legenda (até 5 s); tocar no aviso
+  o dispensa.
+- **Compra só com confirmação:** cartão com item, preço, saldo e saldo depois, botões
+  Comprar/Cancelar; tocar fora cancela. "Usar" segue sem confirmação.
+- **Item sem saldo evidente:** meia opacidade, cadeado e "faltam ◆ X"; tocar explica como
+  ganhar créditos.
+- **Cartão Online sempre ativo:** sem conta, leva ao login do Perfil e volta ao deque
+  depois de entrar.
+- Texto das habilidades na loja diz o modo e que o cartucho é gasto ao usar; estoque
+  aparece sempre ("Você tem 0").
+- Abas da loja viram sublinhado (não se confundem mais com a borda de "Em uso"); subtítulo
+  da seção em corpo de texto, acima das descrições.
+- Cada pintura lisa ganha descrição própria no lugar de "Pintura lisa".
+- Texto secundário (`muted`) clareado para #939F88 — passa o contraste WCAG AA em todos os
+  fundos.
+
+### Adicionado
+- Prévia da loja em carrossel com as cinco classes de navio (abre no encouraçado).
+
+---
+
 ## [0.39.0] — 2026-10-01 · Feedback e badges conforme a SPEC; beta tester só pelo Play Console
 
 ### Alterado

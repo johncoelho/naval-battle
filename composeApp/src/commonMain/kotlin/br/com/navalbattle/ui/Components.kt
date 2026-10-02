@@ -157,17 +157,49 @@ fun ModeChip(
     }
 }
 
+/**
+ * Aba de navegação (loja): só texto e um sublinhado âmbar de 2dp na selecionada —
+ * sem caixa, para não se confundir com o item equipado, que usa borda âmbar.
+ */
+@Composable
+fun UnderlineTab(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Column(
+        modifier.clickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            label.uppercase(),
+            style = NavalType.mono,
+            color = if (selected) Naval.amberStrong else Naval.muted,
+            modifier = Modifier.padding(vertical = 10.dp)
+        )
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(if (selected) Naval.amber else Naval.lineSoft)
+        )
+    }
+}
+
 @Composable
 fun CalloutBanner(callout: Callout?, modifier: Modifier = Modifier) {
     var visible by remember { mutableStateOf(false) }
     var current by remember { mutableStateOf<Callout?>(null) }
 
     LaunchedEffect(callout?.id) {
+        // aviso retirado pela partida (o "Frota a postos" no primeiro toque)
+        if (callout == null) visible = false
         if (callout != null) {
             current = callout
             visible = true
-            delay(1900)
-            visible = false
+            // avisos com instrução ficam o tempo de serem lidos: 1,9s + 50ms por
+            // caractere da legenda, até 5s; os "sticky" só saem no próximo aviso ou no toque
+            if (!callout.sticky) {
+                val readMs = if (callout.tone == Tone.INFO) (1900L + 50L * callout.sub.length).coerceIn(1900L, 5000L) else 1900L
+                delay(readMs)
+                visible = false
+            }
         }
     }
 
@@ -190,6 +222,7 @@ fun CalloutBanner(callout: Callout?, modifier: Modifier = Modifier) {
                 modifier = Modifier
                     .background(Naval.bg.copy(alpha = 0.92f))
                     .border(BorderStroke(1.dp, accent))
+                    .clickable { visible = false }
                     .padding(horizontal = 18.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
