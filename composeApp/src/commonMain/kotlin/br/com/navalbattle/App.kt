@@ -997,13 +997,23 @@ fun App() {
     // por sessão (remember), pra não trocar de música sozinha a cada recomposição
     val theme = remember { THEME_PLAYLIST[profile.rollThemeTrack(THEME_PLAYLIST.size)] }
 
-    // a trilha acompanha a tela: tema no deque, faixa de combate na batalha
-    LaunchedEffect(state.screen, state.musicOn, AppForeground.active) {
+    // a trilha acompanha a tela: tema no deque, faixa de combate na batalha (com o mar
+    // por baixo), e a variante intensa quando algum lado fica com um navio só
+    val inBattle = state.screen == Screen.BATTLE
+    val lastStand = inBattle && state.match?.lastStand == true
+    LaunchedEffect(state.screen, state.musicOn, AppForeground.active, lastStand) {
         profile.setMusic(state.musicOn)
         if (!state.musicOn || !AppForeground.active) {
             music.stop()
         } else {
-            music.play(if (state.screen == Screen.BATTLE) Music.BATTLE else theme)
+            music.play(
+                when {
+                    lastStand -> Music.BATTLE_INTENSE
+                    inBattle -> Music.BATTLE
+                    else -> theme
+                }
+            )
+            music.ambient(inBattle)
         }
     }
     DisposableEffect(Unit) { onDispose { music.release() } }
