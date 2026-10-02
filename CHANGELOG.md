@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.41.0] — 2026-10-02 · Melhorias de CX, fase 2: pinturas distintas
+
+### Alterado
+- **Frotas nacionais levam a bandeira pintada na popa** (Brasil, Japão, EUA, Reino Unido,
+  Portugal) — em célula pequena vira um ponto de cor que já separa uma da outra.
+- **Cores de casco mais afastadas** entre as pinturas lisas: Padrão com convés cáqui,
+  Brasil verde vivo, Japão cinza claro, EUA cinza-azulado, Reino Unido azul-marinho,
+  Portugal casco grená. Pinturas com padrão (Dazzle, Estilhaço, Listras, Digital) não mudam.
+
+---
+
 ## [0.40.0] — 2026-10-02 · Melhorias de CX, fase 1 (avaliação heurística)
 
 ### Alterado

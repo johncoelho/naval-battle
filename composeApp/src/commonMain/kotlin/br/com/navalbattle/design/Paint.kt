@@ -23,6 +23,12 @@ enum class Camo {
 }
 
 /**
+ * Bandeira pintada na popa das frotas nacionais — a marca que separa pinturas lisas de
+ * tons parecidos sem depender só da cor do casco (ver `drawEnsign` em ShipArt.kt).
+ */
+enum class Ensign { BRAZIL, JAPAN, USA, UK, PORTUGAL }
+
+/**
  * Uma libré repinta a frota inteira com três tokens de cor mais um padrão de
  * camuflagem. É o que torna barato produzir pinturas novas como item de loja.
  */
@@ -35,7 +41,8 @@ data class Paint(
     val dark: Color,
     /** Preço em créditos ganhos em combate. Zero para as que já vêm com o jogo. */
     val price: Int,
-    val camo: Camo = Camo.LISA
+    val camo: Camo = Camo.LISA,
+    val ensign: Ensign? = null
 ) {
     val name: String get() = t(key)
     val priceLabel: String get() = if (price == 0) t(K.STORE_INCLUDED) else "◆ $price"
@@ -44,39 +51,39 @@ data class Paint(
     companion object {
         val STANDARD = Paint(
             "std", K.PAINT_STD,
-            hull = Color(0xFF2C3624), deck = Color(0xFF46583A),
+            hull = Color(0xFF39432D), deck = Color(0xFF6B6A43),
             trim = Color(0xFF8ED17A), dark = Color(0xFF1A2115),
             price = 0
         )
         val BRAZIL = Paint(
             "br", K.PAINT_BR,
-            hull = Color(0xFF123A1D), deck = Color(0xFF1E7038),
+            hull = Color(0xFF0E4A22), deck = Color(0xFF1E7038),
             trim = Color(0xFFFFD83D), dark = Color(0xFF0B2412),
-            price = 0
+            price = 0, ensign = Ensign.BRAZIL
         )
         val JAPAN = Paint(
             "jp", K.PAINT_JP,
-            hull = Color(0xFF393F44), deck = Color(0xFF575F66),
-            trim = Color(0xFFE0392B), dark = Color(0xFF23272B),
-            price = 450
+            hull = Color(0xFF55595D), deck = Color(0xFF73787C),
+            trim = Color(0xFFE0392B), dark = Color(0xFF2E3134),
+            price = 450, ensign = Ensign.JAPAN
         )
         val USA = Paint(
             "us", K.PAINT_US,
-            hull = Color(0xFF2B3740), deck = Color(0xFF4A5C67),
-            trim = Color(0xFFCFD9E0), dark = Color(0xFF1A232A),
-            price = 450
+            hull = Color(0xFF3A5163), deck = Color(0xFF5A7385),
+            trim = Color(0xFFCFD9E0), dark = Color(0xFF1F2C36),
+            price = 450, ensign = Ensign.USA
         )
         val UK = Paint(
             "uk", K.PAINT_UK,
-            hull = Color(0xFF243040), deck = Color(0xFF3D5069),
-            trim = Color(0xFFE6EBEF), dark = Color(0xFF161E29),
-            price = 600
+            hull = Color(0xFF172A4E), deck = Color(0xFF2C4675),
+            trim = Color(0xFFE6EBEF), dark = Color(0xFF0E1A31),
+            price = 600, ensign = Ensign.UK
         )
         val PORTUGAL = Paint(
             "pt", K.PAINT_PT,
-            hull = Color(0xFF1E4436), deck = Color(0xFF2F6B52),
-            trim = Color(0xFFD8362F), dark = Color(0xFF122A21),
-            price = 600
+            hull = Color(0xFF4A1C1C), deck = Color(0xFF2F6B52),
+            trim = Color(0xFFD8362F), dark = Color(0xFF2B1010),
+            price = 600, ensign = Ensign.PORTUGAL
         )
         val ARCTIC = Paint(
             "arc", K.PAINT_ARC,
