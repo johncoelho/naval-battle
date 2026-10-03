@@ -22,10 +22,15 @@ Como uma versão nova do Naval Battle sai daqui e chega ao celular.
 
 O APK sai em `composeApp/build/outputs/apk/debug/`.
 
-> **Nota de ambiente:** na máquina de desenvolvimento atual o Gradle falha com
-> *"Unable to establish loopback connection"* (limitação de JDK/Windows). Enquanto isso
-> não se resolve, **toda compilação acontece no CI** — que é, de qualquer forma, a fonte
-> de verdade do APK entregue.
+> **Nota de ambiente:** se o Gradle falhar com *"Unable to establish loopback
+> connection"*, é o Java sem conseguir criar pipes no diretório temporário. Apontar o
+> temporário para uma pasta comum resolve:
+>
+> ```bash
+> export TMP='D:	mp' TEMP='D:	mp' JAVA_TOOL_OPTIONS='-Djdk.net.unixdomain.tmpdir=D:	mp -Djava.io.tmpdir=D:	mp'
+> ```
+>
+> O CI continua sendo a fonte de verdade do APK entregue.
 
 ## Integração contínua
 
@@ -110,6 +115,21 @@ no SQL Editor e desligar *Confirm email* em Authentication → Sign In / Provide
 estiver em teste. O modo online (salas, amigos, ranqueada) vem de
 [`supabase/online.sql`](../supabase/online.sql), rodado depois. Feedback e badges vêm de [`supabase/feedback.sql`](../supabase/feedback.sql), rodado por
 último — nenhum desses três scripts roda sozinho em CI, é sempre manual no SQL Editor.
+
+**Projeto pausado.** No plano gratuito, o Supabase pausa o projeto depois de ~7 dias sem
+requisições — login, nuvem, ranqueada, Online e feedback param até alguém clicar em
+*Resume project* no painel (os dados ficam guardados). Para evitar, o
+[`tools/supabase-keepalive.ps1`](../tools/supabase-keepalive.ps1) faz uma leitura simples
+na API e registra o resultado em `%LOCALAPPDATA%
+aval-battle-keepalive.log`. Agendado no
+Windows a cada 2 dias (roda quando o PC estiver ligado; se perdeu o horário, roda ao ligar):
+
+```powershell
+$a = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "D:\sourcecodeatalha-naval	ools\supabase-keepalive.ps1"'
+$t = New-ScheduledTaskTrigger -Daily -DaysInterval 2 -At "12:00"
+$s = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+Register-ScheduledTask -TaskName "NavalBattle Supabase keepalive" -Action $a -Trigger $t -Settings $s
+```
 
 ## Feedback, badges e beta testers
 
