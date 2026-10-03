@@ -267,9 +267,12 @@ compila para iOS.
   só a chamada HTTP muda.
 - `SoundPlayer` / `MusicPlayer` — via `AVAudioPlayer`, um tocador por efeito/faixa,
   carregado em segundo plano e reaproveitado a cada `play()`. Os `.wav` dos efeitos são
-  os mesmos do Android; as duas faixas de música foram convertidas de `.ogg` para
+  os mesmos do Android; as faixas de música foram convertidas de `.ogg` para
   `.m4a` (`ffmpeg -i x.ogg -c:a aac -b:a 160k x.m4a`) porque o `AVAudioPlayer` não lê
-  Ogg Vorbis. Todos os arquivos vivem em `commonMain/composeResources/files` e são lidos
+  Ogg Vorbis. As de combate e o mar saem de `node tools/audio/synth-battle.js <pasta>`
+  (WAV), codificados com `ffmpeg -i x.wav -c:a libvorbis -q:a 4 x.ogg` e
+  `ffmpeg -i x.wav -c:a aac -b:a 112k x.m4a`; o mar toca num segundo tocador
+  (`MusicPlayer.ambient`). Todos os arquivos vivem em `commonMain/composeResources/files` e são lidos
   via `Res.readBytes(...)` (biblioteca `compose.components.resources`,
   `packageOfResClass` fixado em `br.com.navalbattle.generated.resources` porque o
   projeto não define `group` nenhum, e o padrão `{group}.{module}...` viraria um pacote

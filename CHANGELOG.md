@@ -9,6 +9,34 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.42.0] — 2026-10-02 · Melhorias de CX, fase 3: trilha de combate nova
+
+### Alterado
+- **Trilha de combate nova**, de tensão naval (ré menor, 72 bpm), no lugar de "Secret
+  Agent Rock" — sintetizada por `tools/audio/synth-battle.js`, sem samples de terceiros.
+- **Variante intensa** quando qualquer lado fica com um navio só; troca no mesmo ponto do
+  compasso, sem voltar ao começo.
+
+### Adicionado
+- **Camada do mar** por baixo da música no combate: ondas, casco rangendo e ping de sonar
+  ocasional, em volume baixo. Desligar a trilha nos Ajustes silencia as duas camadas.
+
+---
+
+## [0.41.0] — 2026-10-02 · Melhorias de CX, fase 2: pinturas distintas
+
+### Alterado
+- **Frotas nacionais levam a bandeira pintada na popa** (Brasil, Japão, EUA, Reino Unido,
+  Portugal) — em célula pequena vira um ponto de cor que já separa uma da outra.
+- **Cores de casco mais afastadas** entre as pinturas lisas: Padrão com convés cáqui,
+  Brasil verde vivo, Japão cinza claro, EUA cinza-azulado, Reino Unido azul-marinho,
+  Portugal casco verde com convés vermelho. Pinturas com padrão (Dazzle, Estilhaço,
+  Listras, Digital) não mudam.
+- A bandeira fica por cima do convés e por baixo das torres, sem cobrir os canos da torre
+  de ré.
+
+---
+
 ## [0.40.0] — 2026-10-02 · Melhorias de CX, fase 1 (avaliação heurística)
 
 ### Alterado

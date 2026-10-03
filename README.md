@@ -290,7 +290,18 @@ Laços de um minuto cortados em número inteiro de compassos (andamento e tempo 
 detectados por análise de envelope), fusão cruzada de 1 s na emenda e volume normalizado:
 
 - `music_theme.ogg` — "Systems Go", do conjunto de rock da [United States Air Force Band of Flight](https://commons.wikimedia.org/wiki/File:4th_Street_Exit_-_Systems_Go_-_United_States_Air_Force_Band_of_Flight.mp3) (composição de Steve Ward). Obra do governo dos EUA, **domínio público**. Abertura e menu.
-- `music_battle.ogg` — ["Secret Agent Rock"](https://commons.wikimedia.org/wiki/File:John_Bartmann_-_17_-_Secret_Agent_Rock.ogg), de John Bartmann (**CC0**). Combate, em volume mais baixo para não cobrir os tiros.
+- `music_battle.ogg` / `music_battle_intense.ogg` — tensão naval em ré menor a 72 bpm
+  (zumbido grave, pad Dm–Bb–Gm–A, ostinato de cordas graves e tambores esparsos),
+  **sintetizada do zero** por [tools/audio/synth-battle.js](tools/audio/synth-battle.js) —
+  sem samples, sem licença de terceiros. A intensa (semicolcheias, caixa, trêmulo agudo)
+  entra quando algum lado fica com um navio só e continua do mesmo ponto do compasso.
+- `ambient_sea.ogg` — camada do mar por baixo da música no combate (ondas, casco rangendo,
+  um ping de sonar por volta dos 22 s), sintetizada pelo mesmo script. A opção de trilha
+  nos Ajustes desliga as duas camadas; os efeitos de tiro seguem.
+
+Para trocar por uma faixa feita com IA ou de banco livre, basta substituir os arquivos
+com os mesmos nomes (`.ogg` em `androidMain/res/raw`, `.m4a` em `composeResources/files`);
+as duas faixas de combate precisam ter o mesmo andamento e duração para a troca casar.
 
 ---
 

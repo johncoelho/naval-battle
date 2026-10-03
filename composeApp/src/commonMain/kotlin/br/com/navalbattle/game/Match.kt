@@ -70,6 +70,18 @@ class Match(
 
     fun board(side: Side): Board = if (side == Side.PLAYER) playerBoard else enemyBoard
 
+    /**
+     * Algum lado está com um navio só — a trilha passa para a variante intensa. Lê as
+     * marcações (observáveis) para a UI reavaliar a cada tiro; os acertos em si não são.
+     */
+    val lastStand: Boolean
+        get() {
+            playerBoard.marks.size
+            enemyBoard.marks.size
+            return phase == Phase.BATTLE &&
+                (playerBoard.remainingShips().size == 1 || enemyBoard.remainingShips().size == 1)
+        }
+
     private val ai = Ai(random)
 
     var phase by mutableStateOf(Phase.PLACEMENT)

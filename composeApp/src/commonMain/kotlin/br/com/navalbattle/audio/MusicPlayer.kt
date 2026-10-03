@@ -13,9 +13,21 @@ enum class Music {
     THEME_2,
     THEME_3,
 
-    /** Combate: mais contido, para não brigar com os efeitos de tiro. */
-    BATTLE
+    /**
+     * Combate: tensão naval em ré menor, sintetizada (ver `tools/audio/synth-battle.js`),
+     * mais contida para não brigar com os efeitos de tiro.
+     */
+    BATTLE,
+
+    /**
+     * Variante intensa do combate, quando algum lado fica com um navio só. Mesmo
+     * andamento, tom e duração de [BATTLE] — a troca continua do mesmo ponto do compasso.
+     */
+    BATTLE_INTENSE
 }
+
+/** As duas faixas de combate, que trocam entre si sem voltar ao começo. */
+internal fun Music.isBattle() = this == Music.BATTLE || this == Music.BATTLE_INTENSE
 
 /** Faixas do deque de comando, na ordem do rodízio. */
 val THEME_PLAYLIST = listOf(Music.THEME_1, Music.THEME_2, Music.THEME_3)
@@ -23,9 +35,13 @@ val THEME_PLAYLIST = listOf(Music.THEME_1, Music.THEME_2, Music.THEME_3)
 /**
  * Trilha de fundo em laço. Trocar de faixa faz a transição sozinho; [stop] silencia
  * sem soltar os recursos, para o comandante poder ligar de novo no menu.
+ *
+ * [ambient] liga a segunda camada — ondas, casco rangendo e um ping de sonar de vez em
+ * quando — que toca por baixo da música no combate. [stop] desliga as duas.
  */
 expect class MusicPlayer() {
     fun play(track: Music)
+    fun ambient(on: Boolean)
     fun stop()
     fun release()
 }

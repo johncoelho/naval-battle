@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import br.com.navalbattle.game.ShipClass
@@ -74,6 +75,63 @@ fun DrawScope.drawShip(
             drawTower(type, line, paint, alpha)
         }
     }
+}
+
+/**
+ * Bandeira pintada no convés da popa, como o pavilhão que os navios içam ali. Entra
+ * junto com o chapeamento — por cima do convés e por baixo das torres, para não cobrir
+ * os canos da torre de ré; em célula pequena vira um ponto de cor, o bastante para
+ * separar duas frotas de casco parecido.
+ */
+private fun DrawScope.drawEnsign(ensign: Ensign, sx: Float, half: Float, a: Float) {
+    val h = half * 1.05f
+    val w = h * 1.5f
+    val x0 = sx + 5f
+    val y0 = 25f - h / 2f
+    val r = Offset(x0, y0)
+    val sz = Size(w, h)
+    val cx = x0 + w / 2f
+    val cy = 25f
+    when (ensign) {
+        Ensign.BRAZIL -> {
+            drawRect(Color(0xFF1E9A3C), r, sz, alpha = a)
+            drawPath(Path().apply {
+                moveTo(x0 + w * 0.1f, cy); lineTo(cx, y0 + h * 0.1f)
+                lineTo(x0 + w * 0.9f, cy); lineTo(cx, y0 + h * 0.9f); close()
+            }, Color(0xFFFFD83D), alpha = a)
+            drawCircle(Color(0xFF1F3C8C), radius = h * 0.22f, center = Offset(cx, cy), alpha = a)
+        }
+        Ensign.JAPAN -> {
+            drawRect(Color(0xFFF2F2EE), r, sz, alpha = a)
+            drawCircle(Color(0xFFD02A20), radius = h * 0.28f, center = Offset(cx, cy), alpha = a)
+        }
+        Ensign.USA -> {
+            val stripes = 7
+            repeat(stripes) { i ->
+                drawRect(
+                    if (i % 2 == 0) Color(0xFFC0272D) else Color(0xFFF2F2EE),
+                    Offset(x0, y0 + h * i / stripes), Size(w, h / stripes + 0.05f), alpha = a
+                )
+            }
+            drawRect(Color(0xFF243A73), r, Size(w * 0.42f, h * 4f / stripes), alpha = a)
+        }
+        Ensign.UK -> clipRect(x0, y0, x0 + w, y0 + h) {
+            drawRect(Color(0xFF1F3A7A), r, sz, alpha = a)
+            val diag = h * 0.16f
+            drawLine(Color(0xFFF2F2EE), r, Offset(x0 + w, y0 + h), diag, alpha = a)
+            drawLine(Color(0xFFF2F2EE), Offset(x0, y0 + h), Offset(x0 + w, y0), diag, alpha = a)
+            drawRect(Color(0xFFF2F2EE), Offset(cx - h * 0.15f, y0), Size(h * 0.3f, h), alpha = a)
+            drawRect(Color(0xFFF2F2EE), Offset(x0, cy - h * 0.15f), Size(w, h * 0.3f), alpha = a)
+            drawRect(Color(0xFFC8102E), Offset(cx - h * 0.08f, y0), Size(h * 0.16f, h), alpha = a)
+            drawRect(Color(0xFFC8102E), Offset(x0, cy - h * 0.08f), Size(w, h * 0.16f), alpha = a)
+        }
+        Ensign.PORTUGAL -> {
+            drawRect(Color(0xFF046A38), r, Size(w * 0.4f, h), alpha = a)
+            drawRect(Color(0xFFDA291C), Offset(x0 + w * 0.4f, y0), Size(w * 0.6f, h), alpha = a)
+            drawCircle(Color(0xFFFFE900), radius = h * 0.2f, center = Offset(x0 + w * 0.4f, cy), alpha = a)
+        }
+    }
+    drawRect(Color.Black.copy(alpha = 0.45f * a), r, sz, style = Stroke(width = 0.6f))
 }
 
 // ------------------------------------------------------------ medidas por classe
@@ -264,6 +322,7 @@ private fun DrawScope.plating(sx: Float, bx: Float, half: Float, l: Paint, a: Fl
     listOf(-0.56f, 0f, 0.56f).forEach { f ->
         drawLine(c, Offset(sx + 6f, 25f + half * f), Offset(bx - 10f, 25f + half * f), 0.5f)
     }
+    l.ensign?.let { drawEnsign(it, sx, half, a) }
 }
 
 /**
@@ -683,6 +742,7 @@ private fun DrawScope.drawSubmarine(l: Paint, a: Float) {
         close()
     }
     drawPath(spine, Color.White.copy(alpha = 0.16f * a))
+    l.ensign?.let { drawEnsign(it, sx + 8f, half, a) }
 
     // vela com periscópios
     val vx = bx * 0.44f
