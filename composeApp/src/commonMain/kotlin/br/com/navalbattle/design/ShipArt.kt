@@ -74,19 +74,19 @@ fun DrawScope.drawShip(
             drawFunnels(type, line, paint, alpha)
             drawTower(type, line, paint, alpha)
         }
-        paint.ensign?.let { drawEnsign(it, type, alpha) }
     }
 }
 
 /**
- * Bandeira pintada no convés da popa, como o pavilhão que os navios içam ali. Fica
- * por cima de tudo para não sumir sob torres; em célula pequena vira um ponto de cor,
- * que é o bastante para separar duas frotas de casco parecido.
+ * Bandeira pintada no convés da popa, como o pavilhão que os navios içam ali. Entra
+ * junto com o chapeamento — por cima do convés e por baixo das torres, para não cobrir
+ * os canos da torre de ré; em célula pequena vira um ponto de cor, o bastante para
+ * separar duas frotas de casco parecido.
  */
-private fun DrawScope.drawEnsign(ensign: Ensign, type: ShipClass, a: Float) {
-    val h = hullHalf(type) * 1.05f
+private fun DrawScope.drawEnsign(ensign: Ensign, sx: Float, half: Float, a: Float) {
+    val h = half * 1.05f
     val w = h * 1.5f
-    val x0 = sternX(type) + 5f
+    val x0 = sx + 5f
     val y0 = 25f - h / 2f
     val r = Offset(x0, y0)
     val sz = Size(w, h)
@@ -322,6 +322,7 @@ private fun DrawScope.plating(sx: Float, bx: Float, half: Float, l: Paint, a: Fl
     listOf(-0.56f, 0f, 0.56f).forEach { f ->
         drawLine(c, Offset(sx + 6f, 25f + half * f), Offset(bx - 10f, 25f + half * f), 0.5f)
     }
+    l.ensign?.let { drawEnsign(it, sx, half, a) }
 }
 
 /**
@@ -741,6 +742,7 @@ private fun DrawScope.drawSubmarine(l: Paint, a: Float) {
         close()
     }
     drawPath(spine, Color.White.copy(alpha = 0.16f * a))
+    l.ensign?.let { drawEnsign(it, sx + 8f, half, a) }
 
     // vela com periscópios
     val vx = bx * 0.44f

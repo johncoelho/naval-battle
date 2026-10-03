@@ -30,7 +30,10 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
   Portugal) — em célula pequena vira um ponto de cor que já separa uma da outra.
 - **Cores de casco mais afastadas** entre as pinturas lisas: Padrão com convés cáqui,
   Brasil verde vivo, Japão cinza claro, EUA cinza-azulado, Reino Unido azul-marinho,
-  Portugal casco grená. Pinturas com padrão (Dazzle, Estilhaço, Listras, Digital) não mudam.
+  Portugal casco verde com convés vermelho. Pinturas com padrão (Dazzle, Estilhaço,
+  Listras, Digital) não mudam.
+- A bandeira fica por cima do convés e por baixo das torres, sem cobrir os canos da torre
+  de ré.
 
 ---
 

@@ -81,8 +81,8 @@ data class Paint(
         )
         val PORTUGAL = Paint(
             "pt", K.PAINT_PT,
-            hull = Color(0xFF4A1C1C), deck = Color(0xFF2F6B52),
-            trim = Color(0xFFD8362F), dark = Color(0xFF2B1010),
+            hull = Color(0xFF123B2A), deck = Color(0xFF7A2621),
+            trim = Color(0xFFE8C24A), dark = Color(0xFF0A2219),
             price = 600, ensign = Ensign.PORTUGAL
         )
         val ARCTIC = Paint(

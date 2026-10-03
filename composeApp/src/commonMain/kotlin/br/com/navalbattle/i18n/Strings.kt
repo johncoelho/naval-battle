@@ -672,7 +672,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     PAINT_JP_DESC("Cinza de esquadra, faixa vermelha", "Squadron grey, red band", "Gris de escuadra, franja roja"),
     PAINT_US_DESC("Cinza-azulado do Pacífico", "Pacific blue-grey", "Gris azulado del Pacífico"),
     PAINT_UK_DESC("Azul do Atlântico Norte", "North Atlantic blue", "Azul del Atlántico Norte"),
-    PAINT_PT_DESC("Casco grená, convés verde", "Maroon hull, green deck", "Casco granate, cubierta verde"),
+    PAINT_PT_DESC("Casco verde, convés vermelho", "Green hull, red deck", "Casco verde, cubierta roja"),
     PAINT_ARC_DESC("Cinza-gelo para águas polares", "Ice grey for polar waters", "Gris hielo para aguas polares"),
     CAMO_DAZZLE("Faixas dazzle de alto contraste", "High-contrast dazzle stripes", "Franjas dazzle de alto contraste"),
     CAMO_SPLINTER("Manchas angulares de estilhaço", "Angular splinter patches", "Manchas angulares de astilla"),
