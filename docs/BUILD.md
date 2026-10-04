@@ -165,7 +165,7 @@ mesma leitura e anota em `%LOCALAPPDATA%\naval-battle-keepalive.log`.
   o link só funciona para e-mails já na lista "Testadores fechados" (Play Console →
   Test and release → Closed testing → Alpha → Testers). Não existe API do Google para
   editar essa lista, então quem pede para testar é adicionado à mão ali.
-- **Fila "Quero testar" do site** ([`supabase/beta_waitlist.sql`](../supabase/beta_waitlist.sql)):
+- **Fila "Quero testar" do site** (passo 1 do quadro do Android, antes do link da Play Store) ([`supabase/beta_waitlist.sql`](../supabase/beta_waitlist.sql)):
   o formulário chama `join_beta_waitlist(p_email, p_platform)` com a chave anônima, que
   valida o e-mail e não duplica (devolve `ok`, `exists` ou `invalid`). A tabela
   `beta_testers` não tem policy — ninguém lê pela API. Para atender a fila:

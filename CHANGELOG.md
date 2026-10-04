@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.46.2] — 2026-10-04 · "Quero testar" dentro do quadro do Android
+
+App 0.15.2 (versionCode 44), sem mudança no jogo.
+
+### Alterado
+- O cadastro na lista de testadores saiu da seção própria e virou o **passo 1 do quadro do
+  Android**, antes do botão da Play Store (passo 2) — o link do teste fechado só funciona
+  para quem já está na lista. Só e-mail (a escolha Android/iPhone saiu; o iPhone segue pelo .ipa).
+
+---
+
 ## [0.46.1] — 2026-10-04 · Fila de testadores de volta no site
 
 App 0.15.1 (versionCode 43), sem mudança no jogo. **Exige rodar `supabase/beta_waitlist.sql`** (novo).

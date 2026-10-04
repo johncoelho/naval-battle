@@ -141,11 +141,17 @@
   .step p{margin:6px 0 0;font-size:14.5px}
 
   .betaform{max-width:560px;display:flex;gap:10px;flex-wrap:wrap}
-  .betaform input,.betaform select{padding:12px 14px;background:var(--surface2);border:1px solid var(--line);
-    color:var(--ink);font-family:var(--sans);font-size:15px;border-radius:0}
-  .betaform input{flex:1;min-width:220px}
-  .betaform input:focus,.betaform select:focus{outline:2px solid var(--amber);outline-offset:1px}
-  .betaform button{border:0;cursor:pointer}
+  .betastep{border:1px solid var(--amber);background:rgba(230,172,63,.08);padding:14px;margin:14px 0}
+  .betastep + .betastep{border-color:var(--line);background:transparent}
+  .step-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--amberStrong);margin:0 0 6px}
+  .step-p{font-size:13.5px;margin:0 0 12px}
+  .betastep .meta{margin-top:8px}
+  .betastep .meta:empty{display:none}
+  .betaform input{padding:12px 14px;background:var(--surface2);border:1px solid var(--line);
+    color:var(--ink);font-family:var(--sans);font-size:15px;border-radius:0;flex:1 1 200px;min-width:0;width:100%}
+  .betaform input:focus{outline:2px solid var(--amber);outline-offset:1px}
+  .betaform button{border:0;cursor:pointer;white-space:nowrap;flex:1 1 auto;justify-content:center}
   .betaform button:disabled{opacity:.6;cursor:wait}
   .install{border:1px solid var(--line);background:var(--surface2);padding:24px;margin-top:26px}
   .install ol{margin:12px 0 0;padding-left:20px;color:var(--inkSoft);line-height:1.9;font-size:14.5px}
@@ -176,7 +182,6 @@
       <a href="#frota">Frota</a>
       <a href="#telas">Telas</a>
       <a href="#baixar">Baixar</a>
-      <a href="#testador">Quero testar</a>
       <a href="https://github.com/johncoelho/naval-battle">GitHub</a>
     </nav>
   </div>
@@ -365,21 +370,30 @@
     <div class="grid">
       <div class="install">
         <h3>Android</h3>
-        <div class="cta" style="margin:14px 0">
-          <a class="btn btn-primary"
-             href="https://play.google.com/apps/testing/aigamesfactory.navalbattleclassic"
-             target="_blank" rel="noopener">
-            ↓ Entrar pela Play Store
-          </a>
+        <div id="testador" class="betastep">
+          <p class="step-k">1 · Entre na lista de testadores</p>
+          <p class="step-p">A Play Store só libera o teste fechado para quem está na lista. Use o
+             e-mail da Google Conta do celular — é nele que o convite chega.</p>
+          <form id="beta-form" class="betaform">
+            <input type="email" id="beta-email" required maxlength="254" autocomplete="email"
+                   placeholder="seu@email.com" aria-label="E-mail da Google Conta">
+            <button type="submit" class="btn btn-primary">Quero testar</button>
+          </form>
+          <p class="meta" id="beta-status" role="status" aria-live="polite"></p>
         </div>
-        <div style="border:1px solid var(--amber);background:rgba(230,172,63,.08);padding:12px 14px;margin:0 0 14px">
-          <p style="margin:0;font-size:13.5px;color:var(--inkSoft)">
-            <b style="color:var(--amberStrong)">Antes de clicar:</b> o teste fechado só libera pra
-            quem já está na lista de testadores. Ainda não está? Deixe seu e-mail em
-            <a href="#testador" style="color:var(--ink)">Quero testar</a> logo abaixo —
-            enquanto o convite não chega, use o APK direto, que instala sem precisar de convite.
-          </p>
+        <div class="betastep">
+          <p class="step-k">2 · Com o convite no e-mail, entre pela Play Store</p>
+          <div class="cta" style="margin:10px 0 0">
+            <a class="btn btn-ghost"
+               href="https://play.google.com/apps/testing/aigamesfactory.navalbattleclassic"
+               target="_blank" rel="noopener">
+              ↓ Entrar pela Play Store
+            </a>
+          </div>
         </div>
+        <p style="margin:0 0 14px;font-size:13.5px;color:var(--muted)">
+          Enquanto o convite não chega, use o APK direto, que instala sem precisar de convite.
+        </p>
         <div class="cta" style="margin:0 0 14px">
           <a class="btn btn-ghost"
              href="https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk">
@@ -431,26 +445,6 @@
         O que mudou
       </a>
     </div>
-  </div>
-</section>
-
-<section id="testador">
-  <div class="wrap">
-    <div class="sechead">
-      <h2>Quero testar</h2>
-      <p>Deixe seu e-mail e você entra na fila de testadores do teste fechado. No Android,
-         use o mesmo e-mail da Google Conta do celular — é nele que o convite da Play Store chega.</p>
-    </div>
-    <form id="beta-form" class="betaform">
-      <input type="email" id="beta-email" required maxlength="254" autocomplete="email"
-             placeholder="seu@email.com" aria-label="Seu e-mail">
-      <select id="beta-platform" aria-label="Seu celular">
-        <option value="android">Android</option>
-        <option value="ios">iPhone</option>
-      </select>
-      <button type="submit" class="btn btn-primary">Entrar na fila</button>
-    </form>
-    <p class="meta" id="beta-status" role="status" aria-live="polite"></p>
   </div>
 </section>
 
@@ -526,7 +520,6 @@
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const email = document.getElementById('beta-email').value.trim();
-      const platform = document.getElementById('beta-platform').value;
       if (!email) return;
       const button = form.querySelector('button');
       button.disabled = true;
@@ -539,16 +532,14 @@
             'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ p_email: email, p_platform: platform })
+          body: JSON.stringify({ p_email: email, p_platform: 'android' })
         });
         const result = r.ok ? await r.json() : null;
         if (result === 'ok') {
-          status.textContent = platform === 'ios'
-            ? 'Cadastrado! Avisamos no seu e-mail quando houver novidade para iPhone.'
-            : 'Cadastrado! Assim que for adicionado, o convite da Play Store chega nesse e-mail.';
+          status.textContent = 'Cadastrado! Assim que for adicionado, o convite da Play Store chega nesse e-mail.';
           form.reset();
         } else if (result === 'exists') {
-          status.textContent = 'Esse e-mail já está na fila.';
+          status.textContent = 'Esse e-mail já está na fila. Quando o convite chegar, siga para o passo 2.';
         } else if (result === 'invalid') {
           status.textContent = 'Confira o e-mail — ele parece incompleto.';
         } else {
