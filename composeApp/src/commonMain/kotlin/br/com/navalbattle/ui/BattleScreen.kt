@@ -128,7 +128,8 @@ fun BattleScreen(state: AppState, match: Match) {
                 delay(1000)
                 // com o app em segundo plano o relógio do turno fica parado — sem
                 // isso o comandante podia voltar e já ter atirado sozinho às cegas
-                if (AppForeground.active) secondsLeft--
+                // sem conexão o relógio também para: a jogada não iria a lugar nenhum
+                if (AppForeground.active && !state.onlineSelfOffline) secondsLeft--
             }
             // em rede, quem escolhe a coordenada é o dono do turno, e ela viaja
             if (lan) match.pickTarget()?.let { state.fireShared(it) } else match.fireRandom()
@@ -159,6 +160,12 @@ fun BattleScreen(state: AppState, match: Match) {
         match.enemyImpact?.let { imp ->
             playShot(sound, haptics, imp.tone, alarm = mySide != null && mySide != Side.ENEMY, sfxOn = state.profile.sfxOn)
         }
+    }
+
+    // adversário sem conexão até o fim do prazo: vitória por abandono
+    val dropLeft = state.opponentDropSecondsLeft
+    LaunchedEffect(dropLeft) {
+        if (dropLeft == 0) state.claimDropVictory()
     }
 
     LaunchedEffect(match.phase) {
@@ -208,7 +215,22 @@ fun BattleScreen(state: AppState, match: Match) {
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 )
             }
-            if (match.opponent == Opponent.ONLINE && state.opponentPaused) {
+            val connectionBanner: Triple<String, String, String?>? = when {
+                match.opponent != Opponent.ONLINE -> null
+                state.opponentPaused -> Triple(
+                    t(K.BATTLE_OPPONENT_PAUSED),
+                    t(K.BATTLE_OPPONENT_PAUSED_SUB, state.opponentPauseSecondsLeft),
+                    state.opponentPauseSecondsLeft.toString().padStart(2, '0')
+                )
+                state.onlineSelfOffline -> Triple(t(K.BATTLE_SELF_OFFLINE), t(K.BATTLE_SELF_OFFLINE_SUB), null)
+                dropLeft != null -> Triple(
+                    t(K.BATTLE_OPPONENT_DROPPED),
+                    t(K.BATTLE_OPPONENT_DROPPED_SUB, dropLeft),
+                    dropLeft.toString().padStart(2, '0')
+                )
+                else -> null
+            }
+            if (connectionBanner != null) {
                 Gap(8)
                 Row(
                     Modifier
@@ -219,15 +241,13 @@ fun BattleScreen(state: AppState, match: Match) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
-                        HudLabel(t(K.BATTLE_OPPONENT_PAUSED), Naval.amberStrong)
-                        HudLabel(t(K.BATTLE_OPPONENT_PAUSED_SUB, state.opponentPauseSecondsLeft), Naval.muted)
+                    Column(Modifier.weight(1f)) {
+                        HudLabel(connectionBanner.first, Naval.amberStrong)
+                        HudLabel(connectionBanner.second, Naval.muted)
                     }
-                    Text(
-                        state.opponentPauseSecondsLeft.toString().padStart(2, '0'),
-                        style = NavalType.title,
-                        color = Naval.amberStrong
-                    )
+                    connectionBanner.third?.let { count ->
+                        Text(count, style = NavalType.title, color = Naval.amberStrong)
+                    }
                 }
             }
             Gap(6)

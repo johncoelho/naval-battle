@@ -235,13 +235,32 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
-    actual suspend fun sendOnlineMessage(session: Session, matchId: String, body: String): CloudResult<Unit> = call {
+    actual suspend fun sendOnlineMessage(
+        session: Session,
+        matchId: String,
+        body: String,
+        clientSeq: Int
+    ): CloudResult<Unit> = call {
         val json = JSONObject()
             .put("match_id", matchId)
             .put("sender_id", session.userId)
             .put("body", body)
-        post("/rest/v1/online_messages", json, token = session.accessToken, prefer = "return=minimal")
+            .put("client_seq", clientSeq)
+        // reenvio da mesma jogada (a confirmação se perdeu) cai no índice único e é ignorado
+        post(
+            "/rest/v1/online_messages?on_conflict=match_id,sender_id,client_seq",
+            json,
+            token = session.accessToken,
+            prefer = "return=minimal,resolution=ignore-duplicates"
+        )
         CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun onlineHeartbeat(session: Session, matchId: String): CloudResult<Int?> = call {
+        val body = JSONObject().put("p_match_id", matchId)
+        val arr = JSONArray(post("/rest/v1/rpc/online_heartbeat", body, token = session.accessToken))
+        val row = if (arr.length() == 0) null else arr.getJSONObject(0)
+        CloudResult.Ok(row?.takeIf { !it.isNull("opponent_seen_secs") }?.getInt("opponent_seen_secs"))
     }
 
     actual suspend fun pollOnlineMessages(

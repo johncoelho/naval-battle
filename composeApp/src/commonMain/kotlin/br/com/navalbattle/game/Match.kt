@@ -247,6 +247,17 @@ class Match(
         say(t(K.CALL_PAUSE_TIMEOUT), t(K.CALL_PAUSE_TIMEOUT_SUB), Tone.MISS)
     }
 
+    /**
+     * O adversário esperou este aparelho reconectar até o fim do prazo e levou a
+     * vitória (linha DROP do protocolo, lida quando a conexão voltou).
+     */
+    fun lostByDisconnect() {
+        if (phase == Phase.RESULT) return
+        forfeitedBySelf = true
+        finish(mySide.other())
+        say(t(K.CALL_DROPPED), t(K.CALL_DROPPED_SUB), Tone.MISS)
+    }
+
     private fun startBattle() {
         phase = Phase.BATTLE
         turnOwner = Side.PLAYER
@@ -268,13 +279,15 @@ class Match(
      * [ignoreCooldown] deixa passar mesmo com a habilidade ainda recarregando — é o
      * cartucho avulso comprado na loja, que a tela consulta antes de habilitar o botão.
      */
-    fun abilityAvailable(ability: Ability, ignoreCooldown: Boolean = false): Boolean {
+    fun abilityAvailable(ability: Ability, ignoreCooldown: Boolean = false, fromRemote: Boolean = false): Boolean {
         if (mode != GameMode.TACTICAL || !ability.active) return false
         if (phase != Phase.BATTLE) return false
         // contra a IA as habilidades só ficam ativas na vez do humano
         if (opponent == Opponent.AI && turnOwner != Side.PLAYER) return false
-        // em rede, só na sua vez e no seu lado
-        if (remote && turnOwner != mySide) return false
+        // em rede, o botão só acende na minha vez; a habilidade que o adversário usou
+        // chega pela rede na vez DELE e tem que ser aplicada aqui também — antes este
+        // aparelho recusava, os dois lados discordavam de quem jogava e a partida travava
+        if (remote && turnOwner != (if (fromRemote) mySide.other() else mySide)) return false
         val owner = ShipClass.fleet.firstOrNull { it.ability == ability } ?: return false
         val myBoard = board(turnOwner)
         val ship = myBoard.ships.firstOrNull { it.type == owner } ?: return false
@@ -287,8 +300,8 @@ class Match(
      * `Protocol.ability`) — senão o lado que recebe recusa aplicar o efeito porque,
      * do ponto de vista dele, a habilidade ainda está recarregando.
      */
-    fun selectAbility(ability: Ability, ignoreCooldown: Boolean = false) {
-        if (!abilityAvailable(ability, ignoreCooldown)) return
+    fun selectAbility(ability: Ability, ignoreCooldown: Boolean = false, fromRemote: Boolean = false) {
+        if (!abilityAvailable(ability, ignoreCooldown, fromRemote)) return
         dismissSticky()
         when (ability) {
             Ability.SMOKE -> {

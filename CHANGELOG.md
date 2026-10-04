@@ -9,6 +9,30 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.47.0] — 2026-10-04 · Habilidades em rede e partida online estável
+
+App 0.16.0 (versionCode 45). **Exige rodar `supabase/online.sql` de novo** (presença e
+numeração das jogadas — compatível com apps antigos).
+
+### Corrigido
+- **Habilidade em partida entre dois aparelhos travava o jogo** (LAN e online). O aparelho
+  de quem recebia a habilidade recusava aplicá-la (a checagem "só na sua vez" valia também
+  para a jogada que chegava pela rede). Com a Barragem dupla, um lado achava que ainda tinha
+  o segundo tiro e o outro já achava que era a vez dele — ninguém conseguia jogar. Afetava
+  também sonar, reconhecimento e fumaça. `Match.selectAbility(fromRemote = true)`.
+- **Partida online congelava sem aviso.** A sala guardava o token do início e nunca renovava:
+  vencido o token (1h), todo envio e consulta falhavam calados. Agora renova sozinho.
+- **Jogada perdida com a internet oscilando.** O envio era único e sem confirmação; agora vai
+  para uma fila reenviada até o servidor confirmar, na ordem, sem duplicar (`client_seq`).
+
+### Adicionado
+- **Avisos de conexão na batalha online:** "Sem conexão — reconectando…" (o relógio do turno
+  para e as jogadas ficam guardadas) e "Adversário sem conexão" com 60s de contagem depois de
+  10s sem sinal dele; no fim do prazo, vitória por abandono. Quem caiu e volta depois vê
+  "Conexão perdida" e a partida fecha (`Protocol.DROP`). Presença via `online_heartbeat`.
+
+---
+
 ## [0.46.2] — 2026-10-04 · "Quero testar" dentro do quadro do Android
 
 App 0.15.2 (versionCode 44), sem mudança no jogo.

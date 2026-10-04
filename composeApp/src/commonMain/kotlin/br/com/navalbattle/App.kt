@@ -306,7 +306,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var friendships by mutableStateOf<List<Friendship>>(emptyList())
         private set
 
-    private val onlineLink: OnlineLink by lazy { OnlineLink(cloud, uiScope!!) }
+    private val onlineLink: OnlineLink by lazy { OnlineLink(cloud, uiScope!!) { renew() } }
 
     /**
      * Cria uma sala de amigo — quem cria sempre joga primeiro. Com [invitedId], mira
@@ -1096,7 +1096,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
             Protocol.ABILITY -> parts.getOrNull(1)
                 ?.let { code -> Ability.entries.firstOrNull { it.code == code } }
-                ?.let { m.selectAbility(it, ignoreCooldown = parts.getOrNull(2) == "1") }
+                ?.let { m.selectAbility(it, ignoreCooldown = parts.getOrNull(2) == "1", fromRemote = true) }
 
             Protocol.ACT -> {
                 val x = parts.getOrNull(1)?.toIntOrNull() ?: return
@@ -1118,7 +1118,43 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
             Protocol.PAUSE -> startOpponentPauseWatch()
             Protocol.RESUME -> stopOpponentPauseWatch()
+
+            Protocol.DROP -> if (m.opponent == Opponent.ONLINE) {
+                m.lostByDisconnect()
+                closeOnline()
+            }
         }
+    }
+
+    // ---------------- conexão instável (online) ----------------
+
+    /** Este aparelho perdeu o servidor no meio da partida online — a tela avisa. */
+    val onlineSelfOffline: Boolean
+        get() = match?.opponent == Opponent.ONLINE && match?.phase == Phase.BATTLE && onlineLink.selfOffline
+
+    /**
+     * Segundos até a vitória por queda do adversário — nulo enquanto ele estiver
+     * aparecendo (ou já avisou que pausou, que tem contagem própria). Os primeiros
+     * [DROP_GRACE_SECONDS] sem sinal não contam: uma oscilação curta não assusta ninguém.
+     */
+    val opponentDropSecondsLeft: Int?
+        get() {
+            val m = match ?: return null
+            if (m.opponent != Opponent.ONLINE || m.phase != Phase.BATTLE || opponentPaused) return null
+            val away = onlineLink.opponentAwaySeconds ?: return null
+            if (away < DROP_GRACE_SECONDS) return null
+            return (DROP_GRACE_SECONDS + DROP_TIMEOUT_SECONDS - away).coerceAtLeast(0)
+        }
+
+    /** O prazo acabou com o adversário fora: vitória, e o aviso fica na sala para ele. */
+    fun claimDropVictory() {
+        val m = match ?: return
+        if (m.opponent != Opponent.ONLINE || m.phase != Phase.BATTLE) return
+        if (opponentDropSecondsLeft != 0) return
+        onlineLink.send(Protocol.DROP)
+        onlineLink.finish("abandoned")
+        m.abandon(m.mySide)
+        closeOnline()
     }
 
     // ---------------- pausa em segundo plano (online) ----------------
@@ -1401,6 +1437,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         /** Espera depois da última mudança antes de gravar — junta rajadas numa só. */
         const val SYNC_DEBOUNCE_MS = 1500L
         const val PAUSE_TIMEOUT_SECONDS = 60
+        const val DROP_GRACE_SECONDS = 10
+        const val DROP_TIMEOUT_SECONDS = 60
         const val PAUSE_TIMEOUT_MS = PAUSE_TIMEOUT_SECONDS * 1000L
         const val MILLIS_PER_DAY = 86_400_000L
     }

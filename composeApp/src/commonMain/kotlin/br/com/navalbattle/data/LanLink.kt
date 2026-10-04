@@ -45,6 +45,9 @@ object Protocol {
     // do outro lado, nunca decidem quem perde
     const val PAUSE = "PAUSE"
     const val RESUME = "RESUME"
+    // online: quem esperou o adversário sem conexão até o fim do prazo leva a vitória
+    // e deixa esta linha na sala — ao reconectar, o outro lado lê e fecha a partida
+    const val DROP = "DROP"
 
     fun hello(name: String, mode: String) = "$HELLO|$name|$mode"
 

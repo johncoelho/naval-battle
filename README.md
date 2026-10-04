@@ -145,6 +145,14 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   ficou ausente leva derrota cheia, e não ganha XP nem dobrões (`Match.forfeitByTimeout`). Nas demais
   variantes de partida o próprio sistema já suspende os turnos em segundo plano,
   então não precisa de aviso nenhum.
+- **Conexão instável (Online)** — cada jogada entra numa fila e é reenviada até o
+  servidor confirmar, numerada para não duplicar (`client_seq`); a sessão se renova
+  sozinha se o token vencer no meio da partida; e os dois lados batem o ponto de
+  presença a cada 3s (`online_heartbeat`). Sem servidor, a tela mostra **"Sem conexão —
+  reconectando"** e o relógio do turno para; ao voltar, as jogadas guardadas vão e as do
+  adversário chegam. Se o **adversário** some por mais de 10s, aparece **"Adversário sem
+  conexão"** com 60s de contagem; no fim, vitória por abandono, e a linha `DROP` fica na
+  sala para o outro lado fechar a partida quando reconectar (`Match.lostByDisconnect`).
 
 ### Carreira
 

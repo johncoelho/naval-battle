@@ -221,6 +221,12 @@ enum class K(val pt: String, val en: String, val es: String) {
 
     BATTLE_OPPONENT_PAUSED("Adversário pausou", "Opponent paused", "El adversario pausó"),
     BATTLE_OPPONENT_PAUSED_SUB("Desiste em %ss se não voltar", "Forfeits in %ss if not back", "Abandona en %ss si no vuelve"),
+    BATTLE_SELF_OFFLINE("Sem conexão", "No connection", "Sin conexión"),
+    BATTLE_SELF_OFFLINE_SUB("Reconectando… suas jogadas ficam guardadas", "Reconnecting… your moves are kept", "Reconectando… tus jugadas se guardan"),
+    BATTLE_OPPONENT_DROPPED("Adversário sem conexão", "Opponent disconnected", "Adversario sin conexión"),
+    BATTLE_OPPONENT_DROPPED_SUB("Aguardando voltar · vitória em %ss", "Waiting for return · win in %ss", "Esperando que vuelva · victoria en %ss"),
+    CALL_DROPPED("Conexão perdida", "Connection lost", "Conexión perdida"),
+    CALL_DROPPED_SUB("Você ficou sem conexão por tempo demais", "You were offline for too long", "Estuviste sin conexión demasiado tiempo"),
     ENEMY("Inimigo", "Enemy", "Enemigo"),
     YOU("Você", "You", "Tú"),
 

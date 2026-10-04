@@ -121,6 +121,52 @@ create policy "jogada online: criar"
     )
   );
 
+-- entrega confiável: o app numera as próprias jogadas (client_seq) e reenvia até o
+-- servidor confirmar; se a confirmação se perder e o reenvio repetir a linha, o
+-- índice único descarta a cópia (POST com on_conflict + ignore-duplicates). Apps
+-- antigos mandam client_seq nulo, que o índice não compara — seguem como antes.
+alter table public.online_messages add column if not exists client_seq integer;
+create unique index if not exists online_messages_client_seq_idx
+  on public.online_messages (match_id, sender_id, client_seq);
+
+-- presença: cada lado bate o ponto a cada poucos segundos durante a partida; o
+-- outro lado lê há quantos segundos o adversário não aparece e, passado o limite,
+-- mostra "aguardando o adversário reconectar" com contagem (ver data/OnlineLink.kt)
+alter table public.online_matches add column if not exists host_seen_at timestamptz;
+alter table public.online_matches add column if not exists guest_seen_at timestamptz;
+
+-- devolve há quantos segundos o adversário bateu o ponto pela última vez
+-- (nulo: ainda não bateu nenhuma vez — app antigo, sem presença)
+drop function if exists public.online_heartbeat(uuid);
+create function public.online_heartbeat(p_match_id uuid)
+returns table (opponent_seen_secs integer)
+language plpgsql security definer set search_path = public as $$
+declare
+  m public.online_matches%rowtype;
+  me uuid := auth.uid();
+  other_seen timestamptz;
+begin
+  select * into m from public.online_matches om where om.id = p_match_id;
+  if m.id is null or me is null then
+    return;
+  end if;
+  if m.host_id = me then
+    update public.online_matches om set host_seen_at = now() where om.id = p_match_id;
+    other_seen := m.guest_seen_at;
+  elsif m.guest_id = me then
+    update public.online_matches om set guest_seen_at = now() where om.id = p_match_id;
+    other_seen := m.host_seen_at;
+  else
+    return;
+  end if;
+  opponent_seen_secs := case when other_seen is null then null
+    else greatest(0, extract(epoch from (now() - other_seen))::integer) end;
+  return next;
+end $$;
+
+revoke all on function public.online_heartbeat(uuid) from public;
+grant execute on function public.online_heartbeat(uuid) to authenticated;
+
 -- ------------------------------------------------------------------ friendships
 
 -- nome dos dois lados vai gravado na própria linha: `profiles` de outra

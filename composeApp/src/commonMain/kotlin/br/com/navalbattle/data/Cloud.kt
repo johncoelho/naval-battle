@@ -333,8 +333,17 @@ expect class CloudApi() {
     /** Marca a sala como encerrada (partida terminou ou alguém abandonou). */
     suspend fun closeOnlineMatch(session: Session, matchId: String, status: String): CloudResult<Unit>
 
-    /** Grava uma jogada na sala — o corpo é uma linha do [Protocol]. */
-    suspend fun sendOnlineMessage(session: Session, matchId: String, body: String): CloudResult<Unit>
+    /**
+     * Grava uma jogada na sala — o corpo é uma linha do [Protocol]. [clientSeq] numera
+     * as jogadas deste lado: reenviar a mesma não duplica (índice único no banco).
+     */
+    suspend fun sendOnlineMessage(session: Session, matchId: String, body: String, clientSeq: Int): CloudResult<Unit>
+
+    /**
+     * Bate o ponto de presença na sala e devolve há quantos segundos o adversário
+     * bateu o dele (nulo: ele ainda não bateu nenhuma vez — app sem presença).
+     */
+    suspend fun onlineHeartbeat(session: Session, matchId: String): CloudResult<Int?>
 
     /** Traz as jogadas novas da sala, mais recentes que [afterId]. */
     suspend fun pollOnlineMessages(session: Session, matchId: String, afterId: Long): CloudResult<List<OnlineMessage>>

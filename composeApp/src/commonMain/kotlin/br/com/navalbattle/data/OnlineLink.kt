@@ -1,5 +1,8 @@
 package br.com.navalbattle.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import br.com.navalbattle.game.Side
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -21,14 +24,69 @@ import kotlinx.coroutines.launch
  * na sala de amigo e na hospedagem de partida rápida ele é sempre [Side.PLAYER]; ao
  * entrar (por código ou emparelhado numa partida rápida alheia) é sempre
  * [Side.ENEMY]. Esse valor só importa quando o estado é [LinkState.CONNECTED].
+ *
+ * Estabilidade (0.16.0): a sessão é renovada sozinha quando o token vence no meio da
+ * partida ([renewSession]) — antes tudo passava a falhar calado depois de 1h e o
+ * jogo congelava; cada jogada fica numa fila e é reenviada até o servidor confirmar
+ * (numerada, sem duplicar); e os dois lados batem o ponto de presença a cada poucos
+ * segundos, o que alimenta [selfOffline] e [opponentAwaySeconds] para a tela avisar.
  */
-class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope) {
+class OnlineLink(
+    private val cloud: CloudApi,
+    private val scope: CoroutineScope,
+    private val renewSession: suspend () -> Session?
+) {
     private var pollJob: Job? = null
+    private var heartbeatJob: Job? = null
+    private var sendJob: Job? = null
     private var session: Session? = null
+
+    /** Jogadas ainda não confirmadas pelo servidor, na ordem em que foram feitas. */
+    private val outbox = ArrayDeque<Pair<Int, String>>()
+    private var nextSeq = 0
+
+    /** Última resposta boa do servidor (envio, consulta ou presença). */
+    private var lastOkMillis = 0L
+
+    /** Instante estimado em que o adversário bateu o ponto pela última vez. */
+    private var opponentSeenAtMillis: Long? = null
+
+    /** Este aparelho está sem falar com o servidor há alguns segundos. */
+    var selfOffline by mutableStateOf(false)
+        private set
+
+    /**
+     * Há quantos segundos o adversário não aparece — nulo enquanto não houver
+     * presença dele (app antigo) ou enquanto este aparelho estiver sem conexão
+     * (aí não dá para saber quem caiu). Atualizado a cada segundo.
+     */
+    var opponentAwaySeconds by mutableStateOf<Int?>(null)
+        private set
 
     companion object {
         private const val QUICK_MATCH_SEARCH_ATTEMPTS = 5
         private const val QUICK_MATCH_SEARCH_INTERVAL_MS = 500L
+        private const val HEARTBEAT_INTERVAL_MS = 3000L
+        private const val OFFLINE_AFTER_MS = 6000L
+        private const val RESEND_MAX_DELAY_MS = 4000L
+    }
+
+    /**
+     * Roda [block] com a sessão da sala e, se o token tiver vencido, renova e repete
+     * uma vez — a partida pode durar mais que a hora de vida do token.
+     */
+    private suspend fun <T> withSession(block: suspend (Session) -> CloudResult<T>): CloudResult<T> {
+        val s = session ?: return CloudResult.Fail("sem sessão")
+        val first = block(s)
+        if (first !is CloudResult.Fail || !first.expired) {
+            if (first is CloudResult.Ok) lastOkMillis = nowMillis()
+            return first
+        }
+        val renewed = renewSession() ?: return first
+        session = renewed
+        val second = block(renewed)
+        if (second is CloudResult.Ok) lastOkMillis = nowMillis()
+        return second
     }
 
     var matchId: String? = null
@@ -49,8 +107,34 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
         private set
 
     fun close() {
+        // o que ficou na fila (o QUIT de quem está saindo, quase sempre) ainda vai,
+        // uma tentativa por linha, com a sala e a sessão de agora
+        val s = session
+        val id = matchId
+        val pending = outbox.toList()
+        if (s != null && id != null && pending.isNotEmpty()) {
+            scope.launch {
+                var current: Session = s
+                for ((seq, line) in pending) {
+                    val r = cloud.sendOnlineMessage(current, id, line, seq)
+                    if (r is CloudResult.Fail && r.expired) {
+                        current = renewSession() ?: return@launch
+                        cloud.sendOnlineMessage(current, id, line, seq)
+                    }
+                }
+            }
+        }
         pollJob?.cancel()
         pollJob = null
+        heartbeatJob?.cancel()
+        heartbeatJob = null
+        sendJob?.cancel()
+        sendJob = null
+        outbox.clear()
+        nextSeq = 0
+        opponentSeenAtMillis = null
+        selfOffline = false
+        opponentAwaySeconds = null
         matchId = null
         inviteCode = null
         ranked = false
@@ -262,30 +346,88 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
     }
 
     private fun startMessagePolling(session: Session, matchId: String, onLine: (String) -> Unit) {
+        lastOkMillis = nowMillis()
         pollJob = scope.launch {
+            // lastId só avança com o que chegou: depois de uma queda, a primeira
+            // consulta que der certo traz tudo o que o adversário jogou nesse meio-tempo
             var lastId = 0L
             while (isActive) {
                 delay(1200)
-                val messages = (cloud.pollOnlineMessages(session, matchId, lastId) as? CloudResult.Ok)?.value ?: continue
+                val messages = (withSession { cloud.pollOnlineMessages(it, matchId, lastId) } as? CloudResult.Ok)
+                    ?.value ?: continue
                 for (message in messages) {
                     lastId = message.id
                     if (message.senderId != session.userId) onLine(message.body)
                 }
             }
         }
+        startHeartbeat(matchId)
+        flushOutbox()
     }
 
+    private fun startHeartbeat(matchId: String) {
+        heartbeatJob?.cancel()
+        heartbeatJob = scope.launch {
+            var sinceBeat = HEARTBEAT_INTERVAL_MS
+            while (isActive) {
+                if (sinceBeat >= HEARTBEAT_INTERVAL_MS) {
+                    sinceBeat = 0L
+                    val beat = withSession { cloud.onlineHeartbeat(it, matchId) }
+                    if (beat is CloudResult.Ok) {
+                        opponentSeenAtMillis = beat.value?.let { secs -> nowMillis() - secs * 1000L }
+                    }
+                }
+                val now = nowMillis()
+                selfOffline = now - lastOkMillis > OFFLINE_AFTER_MS
+                // sem conexão aqui não dá para culpar o outro lado
+                opponentAwaySeconds = if (selfOffline) null
+                else opponentSeenAtMillis?.let { ((now - it) / 1000L).toInt() }
+                delay(1000)
+                sinceBeat += 1000L
+            }
+        }
+    }
+
+    /**
+     * Põe a jogada na fila e garante que alguém está esvaziando ela. A fila só anda
+     * quando o servidor confirma: com a internet oscilando, a jogada espera e vai
+     * assim que der, na ordem certa — antes ela se perdia e os dois aparelhos
+     * passavam a discordar da partida sem aviso nenhum.
+     */
     fun send(line: String) {
-        val s = session ?: return
+        if (session == null || matchId == null) return
+        outbox.addLast(nextSeq++ to line)
+        flushOutbox()
+    }
+
+    private fun flushOutbox() {
+        if (sendJob?.isActive == true) return
         val id = matchId ?: return
-        scope.launch { cloud.sendOnlineMessage(s, id, line) }
+        sendJob = scope.launch {
+            var wait = 500L
+            while (isActive && outbox.isNotEmpty()) {
+                val (seq, line) = outbox.first()
+                val sent = withSession { cloud.sendOnlineMessage(it, id, line, seq) }
+                if (sent is CloudResult.Ok) {
+                    outbox.removeFirst()
+                    wait = 500L
+                } else {
+                    delay(wait)
+                    wait = (wait * 2).coerceAtMost(RESEND_MAX_DELAY_MS)
+                }
+            }
+        }
     }
 
     /** Marca a sala como encerrada — chamado ao sair ou terminar a partida. */
     fun finish(status: String) {
+        // sessão e sala capturadas agora: quem chama costuma fechar o link logo depois
         val s = session ?: return
         val id = matchId ?: return
-        scope.launch { cloud.closeOnlineMatch(s, id, status) }
+        scope.launch {
+            val r = cloud.closeOnlineMatch(s, id, status)
+            if (r is CloudResult.Fail && r.expired) renewSession()?.let { cloud.closeOnlineMatch(it, id, status) }
+        }
     }
 
     private fun randomCode(): String {
