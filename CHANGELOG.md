@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.43.0] — 2026-10-04 · Ranqueada: convidado reportava o resultado do anfitrião
+
+### Corrigido
+- **Na partida ranqueada, o convidado mandava ao servidor a vitória, o acerto e a frota
+  do anfitrião.** O convidado joga do lado ENEMY do modelo da partida, mas a tela de
+  resultado lia sempre o lado PLAYER — então quem perdia também "vencia" com os números
+  do vencedor, e os dois apareciam empatados no ranking. Agora vitória, acerto e navios
+  restantes vêm do lado deste aparelho (`mySide`).
+
+---
+
 ## [0.42.0] — 2026-10-02 · Melhorias de CX, fase 3: trilha de combate nova
 
 ### Alterado

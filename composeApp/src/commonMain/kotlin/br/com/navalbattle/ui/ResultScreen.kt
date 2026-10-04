@@ -52,7 +52,10 @@ import br.com.navalbattle.game.Side
 
 @Composable
 fun ResultScreen(state: AppState, match: Match) {
-    val victory = match.winner == Side.PLAYER
+    // em partida de rede o convidado joga do lado ENEMY do modelo: vitória, acerto e
+    // frota restante são sempre do lado deste aparelho (mySide), nunca do PLAYER fixo —
+    // senão o convidado reportava à ranqueada a vitória e os números do anfitrião
+    val victory = match.winner == match.mySide
     // partida entre pessoas (mesmo aparelho ou rede) mostra os dois comandantes
     val local = match.opponent != Opponent.AI
     val winnerSide = match.winner ?: Side.PLAYER
@@ -74,7 +77,7 @@ fun ResultScreen(state: AppState, match: Match) {
             // ranqueada soma pontos no placar — casual não mexe em nada aqui. Quem
             // perdeu por ter ficado 60s em segundo plano não reporta nada: não some
             // nem sobe ponto, é como se a partida não tivesse contado pra esse lado
-            state.reportRankedResult(victory, match.accuracy, match.playerBoard.remainingShips().size)
+            state.reportRankedResult(victory, match.accuracyOf(match.mySide), match.board(match.mySide).remainingShips().size)
         }
     }
 

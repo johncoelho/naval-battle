@@ -1,1 +1,1 @@
-Frotas nacionais com a bandeira pintada na popa e cores de casco mais distintas entre as pinturas. Trilha de combate nova, de tensao naval, que fica mais intensa quando algum lado tem um navio so, com som do mar por baixo (ondas, casco rangendo, sonar). Desligar a trilha nos Ajustes silencia musica e mar.
+Corrige o placar da ranqueada: quem perdia no lado convidado aparecia com a vitoria e os numeros do vencedor. Inclui tambem as bandeiras na popa das frotas nacionais, cores de casco mais distintas e a trilha de combate nova com som do mar.
