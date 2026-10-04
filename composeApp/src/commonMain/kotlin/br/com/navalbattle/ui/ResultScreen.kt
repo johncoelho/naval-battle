@@ -55,14 +55,19 @@ fun ResultScreen(state: AppState, match: Match) {
     // em partida de rede o convidado joga do lado ENEMY do modelo: vitória, acerto e
     // frota restante são sempre do lado deste aparelho (mySide), nunca do PLAYER fixo —
     // senão o convidado reportava à ranqueada a vitória e os números do anfitrião
-    val victory = match.winner == match.mySide
-    // partida entre pessoas (mesmo aparelho ou rede) mostra os dois comandantes
-    val local = match.opponent != Opponent.AI
+    val me = match.mySide
+    val victory = match.winner == me
+    val online = match.opponent == Opponent.ONLINE
+    // mesmo aparelho ou rede local: os dois comandantes pelo nome, sem carreira.
+    // Online tem o relatório completo, do ponto de vista de quem está neste aparelho
+    val local = match.opponent == Opponent.LOCAL || match.opponent == Opponent.LAN
     val winnerSide = match.winner ?: Side.PLAYER
 
-    // a carreira só conta partidas contra a IA: no local os dois usam o mesmo perfil.
-    // fica num efeito para creditar uma única vez, e não a cada recomposição
+    // carreira (XP, medalhas, créditos) conta contra a IA e, desde a 0.14.0, online
+    // também — com o limite diário por adversário (anti-farm). No local os dois usam
+    // o mesmo perfil, então não conta. Fica num efeito para creditar uma única vez
     var award by remember(match) { mutableStateOf<Award?>(null) }
+    var rewardCapped by remember(match) { mutableStateOf(false) }
     LaunchedEffect(match) {
         if (match.opponent == Opponent.AI) {
             award = state.profile.registerMatch(
@@ -73,11 +78,30 @@ fun ResultScreen(state: AppState, match: Match) {
                 turns = match.turnCount
             )
             // com conta conectada a carreira sobe sozinha depois de cada partida
-        } else if (match.opponent == Opponent.ONLINE && !match.forfeitedBySelf) {
-            // ranqueada soma pontos no placar — casual não mexe em nada aqui. Quem
-            // perdeu por ter ficado 60s em segundo plano não reporta nada: não some
-            // nem sobe ponto, é como se a partida não tivesse contado pra esse lado
-            state.reportRankedResult(victory, match.accuracyOf(match.mySide), match.board(match.mySide).remainingShips().size)
+        } else if (online) {
+            if (!match.forfeitedBySelf) {
+                if (state.claimOnlineReward()) {
+                    award = state.profile.registerMatch(
+                        victory = victory,
+                        shotsFired = match.shotsOf(me),
+                        hitsLanded = match.hitsOf(me),
+                        shipsSunk = match.sunkBy(me),
+                        turns = match.turnCount
+                    )
+                } else {
+                    rewardCapped = true
+                }
+            }
+            // ranqueada fecha o resultado no servidor (casual não mexe em nada lá).
+            // Quem perdeu por ter ficado 60s em segundo plano agora TAMBÉM relata:
+            // abandono é derrota cheia (acerto 0, sem alívio), não mais "partida que
+            // não contou" — senão sair no meio virava saída grátis para não perder
+            // ponto. Recompensa de carreira, essa sim, quem abandonou não leva
+            if (match.forfeitedBySelf) {
+                state.reportRankedResult(victory = false, accuracy = 0, shipsLeft = 0)
+            } else {
+                state.reportRankedResult(victory, match.accuracyOf(me), match.board(me).remainingShips().size)
+            }
         }
     }
 
@@ -113,7 +137,7 @@ fun ResultScreen(state: AppState, match: Match) {
             )
 
             Gap(20)
-            if (local) {
+            if (local || online) {
                 // encerrada a partida as duas frotas se revelam: onde estavam os navios
                 // e todos os tiros que cada uma levou, na cor do seu dono
                 HudLabel(t(K.RESULT_CHART))
@@ -145,15 +169,15 @@ fun ResultScreen(state: AppState, match: Match) {
                         }
                     }
                 }
+            }
 
+            if (local) {
                 Gap(16)
                 listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
                     HudLabel(match.sideName(side).uppercase(), commanderColor(side))
                     StatRow(
                         t(K.RESULT_SHOTS_HITS),
-                        "${if (side == Side.PLAYER) match.playerShots else match.enemyShots}" +
-                            " / ${if (side == Side.PLAYER) match.playerHits else match.enemyHits}" +
-                            " · ${match.accuracyOf(side)}%"
+                        "${match.shotsOf(side)} / ${match.hitsOf(side)} · ${match.accuracyOf(side)}%"
                     )
                     StatRow(
                         t(K.RESULT_SHIPS_LEFT),
@@ -162,37 +186,29 @@ fun ResultScreen(state: AppState, match: Match) {
                     Gap(8)
                 }
                 StatRow(t(K.TURNS), match.turnCount.toString())
+            } else if (online) {
+                Gap(22)
+                Comparison(match)
+
+                Gap(22)
+                if (state.onlineMatchRanked) {
+                    RankingBlock(state, match)
+                } else {
+                    HudLabel(t(K.RESULT_CASUAL_NOTE), Naval.muted)
+                }
+
+                if (rewardCapped) {
+                    Gap(16)
+                    HudLabel(t(K.RESULT_NO_REWARD_TODAY, Profile.ONLINE_REWARDS_PER_OPPONENT), Naval.muted)
+                }
+                award?.let { a -> CareerReport(state, match, a) }
             } else {
                 StatRow(t(K.RESULT_SHOTS_FIRED), match.playerShots.toString())
                 StatRow(t(K.RESULT_HITS), match.playerHits.toString())
                 StatRow(t(K.ACCURACY), "${match.accuracy}%")
                 StatRow(t(K.TURNS), match.turnCount.toString())
 
-                award?.let { a ->
-                    val afloat = match.playerBoard.remainingShips().size
-
-                    Gap(26)
-                    ScoreTally(a)
-
-                    Gap(26)
-                    MedalCase(
-                        Medal.earnedIn(
-                            award = a,
-                            ownShipsLeft = afloat,
-                            fleetSize = ShipClass.fleet.size,
-                            matchesBefore = state.profile.matches - 1,
-                            streakAfter = state.profile.streak
-                        )
-                    )
-
-                    Gap(26)
-                    CareerPanel(state, a)
-
-                    Gap(26)
-                    FleetRoll(match, state, afloat)
-                    Gap(8)
-                    HudLabel(t(K.RESULT_CREDITS_HINT), Naval.muted)
-                }
+                award?.let { a -> CareerReport(state, match, a) }
             }
             Gap(16)
         }
@@ -207,6 +223,210 @@ fun ResultScreen(state: AppState, match: Match) {
         SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
     }
 }
+
+/**
+ * A parte de carreira do relatório — apuração do XP, condecorações, patente e a
+ * frota de volta ao porto. Igual contra a IA e online: sempre do lado deste
+ * aparelho ([Match.mySide]).
+ */
+@Composable
+private fun CareerReport(state: AppState, match: Match, a: Award) {
+    val afloat = match.board(match.mySide).remainingShips().size
+
+    Gap(26)
+    ScoreTally(a)
+
+    Gap(26)
+    MedalCase(
+        Medal.earnedIn(
+            award = a,
+            ownShipsLeft = afloat,
+            fleetSize = ShipClass.fleet.size,
+            matchesBefore = state.profile.matches - 1,
+            streakAfter = state.profile.streak
+        )
+    )
+
+    Gap(26)
+    CareerPanel(state, a)
+
+    Gap(26)
+    FleetRoll(match, state, afloat)
+    Gap(8)
+    HudLabel(t(K.RESULT_CREDITS_HINT), Naval.muted)
+}
+
+/**
+ * Os dois comandantes lado a lado, número contra número — este aparelho sempre à
+ * esquerda. O melhor valor de cada linha acende na cor de quem o fez.
+ */
+@Composable
+private fun Comparison(match: Match) {
+    val me = match.mySide
+    val them = me.other()
+    SectionHead(t(K.RESULT_COMPARE))
+    Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Spacer(Modifier.weight(1.4f))
+        Text(
+            match.sideName(me).uppercase(),
+            style = NavalType.monoSmall,
+            color = commanderColor(me),
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            match.sideName(them).uppercase(),
+            style = NavalType.monoSmall,
+            color = commanderColor(them),
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+    }
+    CompareRow(t(K.RESULT_SHOTS_FIRED), match.shotsOf(me), match.shotsOf(them), higherIsBetter = null)
+    CompareRow(t(K.RESULT_HITS), match.hitsOf(me), match.hitsOf(them))
+    CompareRow(t(K.ACCURACY), match.accuracyOf(me), match.accuracyOf(them), suffix = "%")
+    CompareRow(
+        t(K.RESULT_SHIPS_LEFT),
+        match.board(me).remainingShips().size,
+        match.board(them).remainingShips().size
+    )
+    CompareRow(t(K.RESULT_TALLY_SUNK), match.sunkBy(me), match.sunkBy(them))
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Naval.lineSoft))
+    StatRow(t(K.TURNS), match.turnCount.toString())
+}
+
+/** [higherIsBetter] nulo: linha neutra (mais tiros não é melhor nem pior por si só). */
+@Composable
+private fun CompareRow(label: String, mine: Int, theirs: Int, suffix: String = "", higherIsBetter: Boolean? = true) {
+    Box(Modifier.fillMaxWidth().height(1.dp).background(Naval.lineSoft))
+    val iLead = higherIsBetter != null && mine > theirs
+    val theyLead = higherIsBetter != null && theirs > mine
+    Row(Modifier.fillMaxWidth().padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+        HudLabel(label, Naval.muted, Modifier.weight(1.4f))
+        Text(
+            "$mine$suffix",
+            style = NavalType.mono,
+            color = if (iLead) Naval.greenBright else Naval.ink,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            "$theirs$suffix",
+            style = NavalType.mono,
+            color = if (theyLead) Naval.danger else Naval.ink,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+/**
+ * Bloco de ranking da ranqueada: quantos pontos a partida deu e de onde eles
+ * vieram (base Elo pela força do adversário + bônus de desempenho ou alívio),
+ * pontos e posição da temporada antes → depois, e o retrospecto da temporada.
+ * O "depois" vem sempre do servidor, que decide o vencedor; o "antes" da posição
+ * foi lido ao conectar (ver [AppState.rankBefore]).
+ */
+@Composable
+private fun RankingBlock(state: AppState, match: Match) {
+    val outcome = state.rankedOutcome
+    val seasonLabel = state.currentSeason?.let { t(seasonNameKey(it.seasonKey.substringAfterLast('-'))) }
+        ?: outcome?.seasonName.orEmpty()
+    SectionHead(t(K.RESULT_RANKING), if (seasonLabel.isBlank()) null else t(K.RESULT_RANKING_SEASON, seasonLabel))
+
+    when {
+        state.rankedReport == AppState.RankedReport.PENDING || state.rankedReport == AppState.RankedReport.IDLE ->
+            HudLabel(t(K.RESULT_RANKING_PENDING), Naval.muted)
+
+        outcome == null ->
+            HudLabel(t(K.RESULT_RANKING_FAILED), Naval.danger)
+
+        else -> {
+            if (match.forfeitedBySelf) {
+                HudLabel(t(K.RESULT_RANKING_ABANDON), Naval.danger)
+                Gap(8)
+            }
+            // relato novo: o servidor diz em `accepted`; o total diferente de zero também
+            // prova (relato repetido sempre volta com 0) e cobre uma leitura de booleano
+            // que falhe em alguma plataforma
+            val fresh = outcome.accepted || outcome.pointsDelta != 0
+            if (!fresh) {
+                HudLabel(t(K.RESULT_RANKING_REPEAT), Naval.muted)
+                Gap(8)
+            } else {
+                // vitória vale no mínimo +5 e derrota nunca soma: o sinal do total já
+                // diz de que lado o servidor gravou esta partida
+                val won = outcome.pointsDelta > 0
+                SignedRow(t(K.RESULT_RANKING_BASE), outcome.basePoints, first = true)
+                SignedRow(t(if (won) K.RESULT_RANKING_BONUS else K.RESULT_RANKING_MERCY), outcome.bonusPoints)
+            }
+
+            Gap(10)
+            val positive = outcome.pointsDelta >= 0
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Naval.surface2)
+                    .border(1.dp, if (positive) Naval.amber else Naval.line)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HudLabel(t(K.RESULT_RANKING_DELTA), if (positive) Naval.amberStrong else Naval.muted)
+                Text(
+                    signed(outcome.pointsDelta),
+                    style = NavalType.display,
+                    color = if (positive) Naval.amberStrong else Naval.danger
+                )
+            }
+
+            Gap(10)
+            val pointsBefore = if (fresh) outcome.seasonPoints - outcome.pointsDelta
+            else state.rankBefore?.rating ?: outcome.seasonPoints
+            StatRow(t(K.RESULT_RANKING_POINTS), "$pointsBefore → ${outcome.seasonPoints}")
+
+            val before = state.rankBefore?.position
+            val after = outcome.seasonPosition.toLong()
+            StatRow(
+                t(K.RESULT_RANKING_POSITION),
+                "${before?.let { t(K.LEADERBOARD_POSITION, it) } ?: "—"} → ${t(K.LEADERBOARD_POSITION, after)}"
+            )
+            if (before != null && after in 1 until before) {
+                HudLabel(t(K.RESULT_RANKING_UP, before - after), Naval.greenBright)
+                Gap(4)
+            }
+            StatRow(t(K.RESULT_RANKING_RECORD), "${outcome.seasonMatches} · ${outcome.seasonWins}")
+        }
+    }
+    Gap(10)
+    SecondaryButton(t(K.RESULT_RANKING_VIEW)) { state.openLeaderboardFromResult() }
+}
+
+/** Linha da composição dos pontos — sinal explícito, verde soma, vermelho tira. */
+@Composable
+private fun SignedRow(label: String, value: Int, first: Boolean = false) {
+    if (!first) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(Naval.lineSoft))
+    }
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label.uppercase(), style = NavalType.monoSmall, color = Naval.inkSoft, modifier = Modifier.weight(1f))
+        Text(
+            if (value == 0) "—" else signed(value),
+            style = NavalType.button,
+            color = when {
+                value > 0 -> Naval.greenBright
+                value < 0 -> Naval.danger
+                else -> Naval.muted
+            }
+        )
+    }
+}
+
+private fun signed(value: Int): String = if (value > 0) "+$value" else value.toString()
 
 /**
  * Revanche em rede: reaproveita a mesma ligação em vez de criar uma partida do zero —
@@ -438,8 +658,8 @@ private fun FleetRoll(match: Match, state: AppState, afloat: Int) {
         if (afloat == 0) Naval.danger else Naval.greenBright
     )
     ShipClass.fleet.forEach { type ->
-        val ship = match.playerBoard.ships.firstOrNull { it.type == type }
-        val sunk = ship == null || match.playerBoard.isSunk(ship)
+        val ship = match.board(match.mySide).ships.firstOrNull { it.type == type }
+        val sunk = ship == null || match.board(match.mySide).isSunk(ship)
         Row(
             Modifier
                 .fillMaxWidth()

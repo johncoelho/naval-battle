@@ -240,6 +240,33 @@ $$;
 
 grant execute on function public.decline_online_invite(uuid) to authenticated;
 
+-- balão "aceitar partida rápida" de qualquer tela (0.14.0): quem marcou nos
+-- Ajustes que está disponível vê salas de partida rápida esperando adversário,
+-- de qualquer modo (Clássico ou Tático), dos tipos que aceita (casual,
+-- ranqueada ou ambas). Só lê — entrar continua sendo pelo join_online_match,
+-- com a mesma trava de "guest_id ainda nulo". Sala com mais de 10 minutos é
+-- descartada pelo relógio do servidor: quem fechou o app no meio da espera
+-- deixa a sala 'waiting' para sempre, e aceitar uma dessas seria entrar numa
+-- partida sem ninguém do outro lado. Devolve algumas, mais antigas primeiro —
+-- o cliente pula as que o comandante já dispensou com "Agora não".
+create or replace function public.find_quick_offer(p_casual boolean, p_ranked boolean)
+returns setof public.online_matches
+language sql security invoker stable as $$
+  select *
+  from public.online_matches m
+  where m.status = 'waiting'
+    and m.is_quick_match
+    and m.guest_id is null
+    and m.invited_id is null
+    and m.host_id <> auth.uid()
+    and ((m.ranked and p_ranked) or (not m.ranked and p_casual))
+    and m.created_at > now() - interval '10 minutes'
+  order by m.created_at asc
+  limit 10;
+$$;
+
+grant execute on function public.find_quick_offer(boolean, boolean) to authenticated;
+
 create or replace function public.close_online_match(p_match_id uuid, p_status text)
 returns void
 language sql security invoker as $$
@@ -336,7 +363,10 @@ language sql security definer set search_path = public stable as $$
   select p.id, p.username, p.insignia, p.avatar, p.ranked_rating, p.ranked_matches, p.ranked_wins
   from public.profiles p
   where p.ranked_matches > 0
-  order by p.ranked_rating desc
+  -- desempate: pontos, depois vitórias, depois aproveitamento (vitórias/partidas)
+  -- e, por último, quem chegou primeiro àquela pontuação fica na frente
+  order by p.ranked_rating desc, p.ranked_wins desc,
+           (p.ranked_wins::numeric / greatest(p.ranked_matches, 1)) desc, p.updated_at asc
   limit p_limit;
 $$;
 
@@ -351,7 +381,9 @@ language sql security definer set search_path = public stable as $$
   from public.ranked_season_stats s
   join public.current_season() c on s.season_key = c.season_key
   left join public.profiles p on p.id = s.user_id
-  order by s.points desc
+  -- mesmo desempate do placar geral (ver leaderboard_overall)
+  order by s.points desc, s.wins desc,
+           (s.wins::numeric / greatest(s.matches, 1)) desc, s.updated_at asc
   limit p_limit;
 $$;
 
@@ -360,6 +392,7 @@ grant execute on function public.leaderboard_season(integer) to authenticated;
 
 -- posição e pontuação do próprio comandante, mesmo fora do top da lista —
 -- sem isso quem não está entre os melhores nunca saberia a própria colocação.
+-- Mesmo desempate dos placares (pontos, vitórias, aproveitamento, antiguidade).
 -- "position" é palavra reservada do SQL (usada em SUBSTRING ... FROM ... FOR
 -- ... e afins), por isso vai entre aspas em todo lugar que aparece como nome
 create or replace function public.my_rank(p_season boolean)
@@ -367,7 +400,10 @@ returns table ("position" bigint, rating integer)
 language sql security definer set search_path = public stable as $$
   select "position", rating from (
     select
-      row_number() over (order by p.ranked_rating desc) as "position",
+      row_number() over (
+        order by p.ranked_rating desc, p.ranked_wins desc,
+                 (p.ranked_wins::numeric / greatest(p.ranked_matches, 1)) desc, p.updated_at asc
+      ) as "position",
       p.ranked_rating as rating,
       p.id
     from public.profiles p
@@ -377,7 +413,10 @@ language sql security definer set search_path = public stable as $$
   union all
   select "position", rating from (
     select
-      row_number() over (order by s.points desc) as "position",
+      row_number() over (
+        order by s.points desc, s.wins desc,
+                 (s.wins::numeric / greatest(s.matches, 1)) desc, s.updated_at asc
+      ) as "position",
       s.points as rating,
       s.user_id
     from public.ranked_season_stats s, public.current_season() c
@@ -473,77 +512,219 @@ revoke all on function public.season_trophies(text) from public;
 grant execute on function public.season_trophies(text) to authenticated;
 
 -- fecha o resultado de uma partida ranqueada — cada lado chama uma vez só (as
--- flags host_result_recorded/guest_result_recorded travam contra reenvio). A
--- pontuação pesa o desempenho: vitória sempre soma (20 a 50), derrota sempre
--- desconta (-15 a -5) — nunca o contrário, verificável termo a termo — com
--- bônus por precisão de tiro nos dois casos e, só na vitória, por quanto da
--- própria frota ainda restava de pé (vencer com o casco intacto vale mais que
--- vencer raspando). Mais simples que ELO de verdade, mas justo o bastante:
--- quem joga bem e perde cai menos do que quem joga mal e perde.
-create or replace function public.record_ranked_result(
+-- flags host_result_recorded/guest_result_recorded travam contra reenvio).
+--
+-- Critérios a partir da 0.14.0 (antes o servidor confiava no cliente por inteiro
+-- e dava de 20 a 50 pontos fixos por vitória — foi assim que um convidado ficou
+-- com uma vitória que na verdade era derrota):
+-- 1. Quem decide o vencedor é o servidor: o PRIMEIRO relato da partida fixa o
+--    vencedor em `winner_id`. Um relato posterior do outro lado que discorde (os
+--    dois dizendo que venceram, ou os dois que perderam) não troca nada — esse
+--    lado é pontuado pelo resultado já gravado e a sala fica marcada em
+--    `result_conflict`, para conferência manual.
+-- 2. Pontos estilo Elo, pela força do adversário:
+--      esperado = 1 / (1 + 10^((adversário - eu) / 400))
+--      base     = round(32 * (resultado - esperado))   (resultado: 1 vitória, 0 derrota)
+--    A conta roda duas vezes: com os pontos de temporada dos dois (placar da
+--    temporada) e com o ranked_rating dos dois (placar geral).
+-- 3. Bônus de desempenho só para quem venceu, com teto de 30% do ganho:
+--      bônus = least(round(|base| * 0.3), round(precisão * 0.08) + navios_restantes)
+--    Vitória vale no mínimo +5. Derrota não desconta por desempenho, só tem um
+--    alívio pequeno: até 3 pontos a menos de perda (round(precisão * 0.03)),
+--    sem nunca virar ganho.
+-- 4. Abandono é derrota cheia: quem desiste (ou estoura os 60s em segundo
+--    plano) agora também relata, com p_won = false e precisão 0 — sem alívio.
+-- 5. Desempate dos placares: pontos, vitórias, aproveitamento, antiguidade.
+--
+-- Devolve uma linha com o que a tela de resultado mostra no bloco de ranking:
+-- pontos desta partida (e como foram compostos: base Elo + bônus/alívio),
+-- pontos e posição na temporada depois da partida, partidas e vitórias da
+-- temporada e `accepted` — falso quando este lado já tinha relatado antes
+-- (nada mudou nesta chamada, só devolve o estado atual).
+alter table public.online_matches add column if not exists winner_id uuid references auth.users(id) on delete set null;
+alter table public.online_matches add column if not exists result_conflict boolean not null default false;
+
+-- o formato de retorno mudou (void -> tabela): create or replace não troca isso
+drop function if exists public.record_ranked_result(uuid, boolean, integer, integer);
+create function public.record_ranked_result(
   p_match_id uuid, p_won boolean, p_accuracy integer, p_ships_left integer
 )
-returns void
+returns table (
+  points_delta integer, season_points integer, season_position integer, season_name text,
+  season_matches integer, season_wins integer, accepted boolean,
+  base_points integer, bonus_points integer
+)
 language plpgsql security definer set search_path = public as $$
 declare
   m public.online_matches%rowtype;
+  me uuid := auth.uid();
+  opp uuid;
   is_host boolean;
-  already boolean;
-  delta integer;
-  accuracy integer;
-  ships_left integer;
+  won boolean;
+  acc integer;
+  ships integer;
   my_username text;
   szn text;
+  szn_label text;
+  my_season integer;
+  opp_season integer;
+  my_overall integer;
+  opp_overall integer;
+  base_s integer;
+  bonus_s integer;
+  delta_s integer;
+  base_o integer;
+  bonus_o integer;
+  delta_o integer;
 begin
-  select * into m from public.online_matches where id = p_match_id;
-  if m.id is null or not m.ranked then
+  -- "for update" enfileira os dois relatos da mesma sala: os dois lados terminam
+  -- quase juntos, e sem a trava os dois podiam achar winner_id vazio ao mesmo tempo
+  select * into m from public.online_matches om where om.id = p_match_id for update;
+  if m.id is null or not m.ranked or m.guest_id is null then
     return;
   end if;
 
-  is_host := (m.host_id = auth.uid());
-  if not is_host and (m.guest_id is null or m.guest_id <> auth.uid()) then
+  is_host := (m.host_id = me);
+  if not is_host and m.guest_id <> me then
+    return;
+  end if;
+  opp := case when is_host then m.guest_id else m.host_id end;
+  my_username := case when is_host then m.host_name else m.guest_name end;
+
+  select c.season_key, c.name into szn, szn_label from public.current_season() c;
+  season_name := szn_label;
+
+  if (case when is_host then m.host_result_recorded else m.guest_result_recorded end) then
+    -- relato repetido (reabriu a tela, retomou o app): só devolve o estado atual
+    select s.points, s.matches, s.wins into season_points, season_matches, season_wins
+      from public.ranked_season_stats s where s.user_id = me and s.season_key = szn;
+    select x.pos::integer into season_position from (
+      select s.user_id, row_number() over (
+        order by s.points desc, s.wins desc,
+                 (s.wins::numeric / greatest(s.matches, 1)) desc, s.updated_at asc
+      ) as pos
+      from public.ranked_season_stats s where s.season_key = szn
+    ) x where x.user_id = me;
+    points_delta := 0;
+    base_points := 0;
+    bonus_points := 0;
+    accepted := false;
+    return next;
     return;
   end if;
 
-  already := case when is_host then m.host_result_recorded else m.guest_result_recorded end;
-  if already then
-    return;
+  -- 1. o primeiro relato fixa o vencedor; o segundo só confere
+  if m.winner_id is null then
+    m.winner_id := case when p_won then me else opp end;
+    update public.online_matches om set winner_id = m.winner_id where om.id = p_match_id;
+  elsif (m.winner_id = me) <> p_won then
+    update public.online_matches om set result_conflict = true where om.id = p_match_id;
   end if;
+  won := (m.winner_id = me);
 
   if is_host then
-    update public.online_matches set host_result_recorded = true where id = p_match_id;
-    my_username := m.host_name;
+    update public.online_matches om set host_result_recorded = true where om.id = p_match_id;
   else
-    update public.online_matches set guest_result_recorded = true where id = p_match_id;
-    my_username := m.guest_name;
+    update public.online_matches om set guest_result_recorded = true where om.id = p_match_id;
   end if;
 
-  accuracy := greatest(0, least(100, coalesce(p_accuracy, 0)));
-  ships_left := greatest(0, least(5, coalesce(p_ships_left, 0)));
+  acc := greatest(0, least(100, coalesce(p_accuracy, 0)));
+  ships := greatest(0, least(5, coalesce(p_ships_left, 0)));
 
-  if p_won then
-    delta := 20 + round(accuracy * 0.15) + ships_left * 3;
+  -- 2. força dos dois lados — quem ainda não jogou a temporada começa em 1000
+  select s.points into my_season from public.ranked_season_stats s where s.user_id = me and s.season_key = szn;
+  select s.points into opp_season from public.ranked_season_stats s where s.user_id = opp and s.season_key = szn;
+  select p.ranked_rating into my_overall from public.profiles p where p.id = me;
+  select p.ranked_rating into opp_overall from public.profiles p where p.id = opp;
+  my_season := coalesce(my_season, 1000);
+  opp_season := coalesce(opp_season, 1000);
+  my_overall := coalesce(my_overall, 1000);
+  opp_overall := coalesce(opp_overall, 1000);
+
+  base_s := round(32 * ((case when won then 1 else 0 end)
+    - 1.0 / (1 + power(10.0, (opp_season - my_season) / 400.0))));
+  base_o := round(32 * ((case when won then 1 else 0 end)
+    - 1.0 / (1 + power(10.0, (opp_overall - my_overall) / 400.0))));
+
+  -- 3. bônus de desempenho (vencedor, teto de 30%) ou alívio pequeno (perdedor)
+  if won then
+    bonus_s := least(round(abs(base_s) * 0.3), round(acc * 0.08) + ships);
+    bonus_o := least(round(abs(base_o) * 0.3), round(acc * 0.08) + ships);
+    delta_s := greatest(5, base_s + bonus_s);
+    delta_o := greatest(5, base_o + bonus_o);
   else
-    delta := -(15 - round(accuracy * 0.10));
+    bonus_s := least(3, round(acc * 0.03));
+    bonus_o := bonus_s;
+    delta_s := least(0, base_s + bonus_s);
+    delta_o := least(0, base_o + bonus_o);
   end if;
+  -- o que aparece como bônus é o que de fato entrou além da base (inclui o piso
+  -- de +5 na vitória e o corte do alívio que viraria ganho na derrota)
+  bonus_s := delta_s - base_s;
 
-  update public.profiles
-    set ranked_rating = greatest(0, ranked_rating + delta),
-        ranked_matches = ranked_matches + 1,
-        ranked_wins = ranked_wins + case when p_won then 1 else 0 end
-    where id = auth.uid();
+  update public.profiles p
+    set ranked_rating = greatest(0, p.ranked_rating + delta_o),
+        ranked_matches = p.ranked_matches + 1,
+        ranked_wins = p.ranked_wins + case when won then 1 else 0 end
+    where p.id = me;
 
-  select season_key into szn from public.current_season();
-
-  insert into public.ranked_season_stats (user_id, season_key, username, points, matches, wins)
-  values (auth.uid(), szn, my_username, greatest(0, 1000 + delta), 1, case when p_won then 1 else 0 end)
+  insert into public.ranked_season_stats as s (user_id, season_key, username, points, matches, wins)
+  values (me, szn, my_username, greatest(0, 1000 + delta_s), 1, case when won then 1 else 0 end)
   on conflict (user_id, season_key) do update
-    set points = greatest(0, public.ranked_season_stats.points + delta),
-        matches = public.ranked_season_stats.matches + 1,
-        wins = public.ranked_season_stats.wins + case when p_won then 1 else 0 end,
+    set points = greatest(0, s.points + delta_s),
+        matches = s.matches + 1,
+        wins = s.wins + case when won then 1 else 0 end,
         username = excluded.username,
         updated_at = now();
+
+  select s.points, s.matches, s.wins into season_points, season_matches, season_wins
+    from public.ranked_season_stats s where s.user_id = me and s.season_key = szn;
+  select x.pos::integer into season_position from (
+    select s.user_id, row_number() over (
+      order by s.points desc, s.wins desc,
+               (s.wins::numeric / greatest(s.matches, 1)) desc, s.updated_at asc
+    ) as pos
+    from public.ranked_season_stats s where s.season_key = szn
+  ) x where x.user_id = me;
+
+  points_delta := delta_s;
+  base_points := base_s;
+  bonus_points := bonus_s;
+  accepted := true;
+  return next;
 end $$;
 
 revoke all on function public.record_ranked_result(uuid, boolean, integer, integer) from public;
 grant execute on function public.record_ranked_result(uuid, boolean, integer, integer) to authenticated;
+
+-- ------------------------------------------------------------------ reparo manual (NÃO RODAR sem conferir)
+--
+-- Partida conhecida com resultado errado (antes da 0.14.0): o convidado
+-- "porteiro do john" ficou com uma vitória e 1050 pontos na temporada, quando na
+-- verdade perdeu (o bug do lado ENEMY corrigido na 0.43.0 do CHANGELOG). Exemplo
+-- de correção, comentado de propósito — conferir ids e valores no SQL Editor
+-- antes de descomentar. Pela regra antiga a derrota ficaria entre -15 e -5; aqui
+-- uso -15 (derrota cheia): temporada 1050 -> 985, geral -65 (desfaz +50, aplica -15).
+--
+-- begin;
+-- -- 1. ache a sala e confira quem foi o anfitrião (o vencedor de verdade)
+-- select id, host_id, host_name, guest_id, guest_name, created_at
+--   from public.online_matches
+--  where ranked and guest_name = 'porteiro do john'
+--  order by created_at desc;
+--
+-- -- 2. temporada: tira a vitória e troca o +50 por -15
+-- update public.ranked_season_stats s
+--    set points = 985, wins = greatest(0, s.wins - 1), updated_at = now()
+--   from public.current_season() c
+--  where s.season_key = c.season_key
+--    and s.username = 'porteiro do john' and s.points = 1050;
+--
+-- -- 3. geral: mesmo ajuste em profiles
+-- update public.profiles
+--    set ranked_rating = greatest(0, ranked_rating - 65), ranked_wins = greatest(0, ranked_wins - 1)
+--  where username = 'porteiro do john';
+--
+-- -- 4. grava o vencedor certo na sala (troque <match_id> pelo id do passo 1)
+-- update public.online_matches set winner_id = host_id, result_conflict = true where id = '<match_id>';
+-- commit;

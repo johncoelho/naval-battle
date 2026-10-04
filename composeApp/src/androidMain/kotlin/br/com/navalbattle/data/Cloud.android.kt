@@ -167,6 +167,21 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
     }
 
+    actual suspend fun findQuickOffer(
+        session: Session,
+        casual: Boolean,
+        ranked: Boolean,
+        ignored: Set<String>
+    ): CloudResult<OnlineMatch?> = call {
+        val body = JSONObject().put("p_casual", casual).put("p_ranked", ranked)
+        val json = post("/rest/v1/rpc/find_quick_offer", body, token = session.accessToken)
+        val arr = JSONArray(json)
+        val offer = (0 until arr.length())
+            .map { i -> matchOf(arr.getJSONObject(i)) }
+            .firstOrNull { it.id !in ignored }
+        CloudResult.Ok(offer)
+    }
+
     actual suspend fun findMatchByCode(session: Session, code: String): CloudResult<OnlineMatch?> = call {
         val json = get(
             "/rest/v1/online_matches?invite_code=eq.$code&status=eq.waiting&limit=1",
@@ -416,14 +431,31 @@ actual class CloudApi actual constructor() {
         won: Boolean,
         accuracy: Int,
         shipsLeft: Int
-    ): CloudResult<Unit> = call {
+    ): CloudResult<RankedOutcome?> = call {
         val body = JSONObject()
             .put("p_match_id", matchId)
             .put("p_won", won)
             .put("p_accuracy", accuracy)
             .put("p_ships_left", shipsLeft)
-        post("/rest/v1/rpc/record_ranked_result", body, token = session.accessToken)
-        CloudResult.Ok(Unit)
+        // função que devolve tabela: o PostgREST responde com um array (vazio
+        // quando a sala não é ranqueada ou o comandante não está nela)
+        val json = post("/rest/v1/rpc/record_ranked_result", body, token = session.accessToken)
+        val arr = runCatching { JSONArray(json) }.getOrNull()
+        if (arr == null || arr.length() == 0) return@call CloudResult.Ok(null)
+        val o = arr.getJSONObject(0)
+        CloudResult.Ok(
+            RankedOutcome(
+                pointsDelta = o.optInt("points_delta"),
+                seasonPoints = o.optInt("season_points", 1000),
+                seasonPosition = o.optInt("season_position"),
+                seasonName = o.optString("season_name"),
+                seasonMatches = o.optInt("season_matches"),
+                seasonWins = o.optInt("season_wins"),
+                accepted = o.optBoolean("accepted", false),
+                basePoints = o.optInt("base_points"),
+                bonusPoints = o.optInt("bonus_points")
+            )
+        )
     }
 
     // ------------------------------------------------------------------ feedback e badges

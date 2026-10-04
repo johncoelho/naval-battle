@@ -14,10 +14,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -38,8 +34,8 @@ import br.com.navalbattle.i18n.t
  */
 @Composable
 fun UpdatePopup(state: AppState) {
-    var dismissed by remember { mutableStateOf(false) }
-    if (!state.updateAvailable || dismissed || state.match != null) return
+    // "Depois" mora no AppState: o balão de partida rápida precisa saber se este popup está na tela
+    if (!state.updateAvailable || state.updatePopupDismissed || state.match != null) return
     if (state.pendingInvite != null) return
     if (state.onlineLinkState == LinkState.SEARCHING || state.onlineLinkState == LinkState.HOSTING) return
 
@@ -71,10 +67,10 @@ fun UpdatePopup(state: AppState) {
             HudLabel(t(K.UPDATE_POPUP_SUB), Naval.inkSoft)
             Gap(20)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SecondaryButton(t(K.UPDATE_POPUP_LATER), modifier = Modifier.weight(1f)) { dismissed = true }
+                SecondaryButton(t(K.UPDATE_POPUP_LATER), modifier = Modifier.weight(1f)) { state.updatePopupDismissed = true }
                 PrimaryButton(t(K.UPDATE_POPUP_NOW), modifier = Modifier.weight(1f)) {
                     openStoreListing()
-                    dismissed = true
+                    state.updatePopupDismissed = true
                 }
             }
         }

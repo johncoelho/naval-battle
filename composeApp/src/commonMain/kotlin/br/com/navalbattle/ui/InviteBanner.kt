@@ -59,6 +59,10 @@ fun InviteBanner(state: AppState, invite: OnlineMatch) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
+            Gap(10)
+            // convite de amigo é sempre casual, mas o selo aparece igual: quem
+            // aceita sabe na hora que não vale ranking, e em que modo vai jogar
+            MatchTags(ranked = invite.ranked, mode = invite.mode, modifier = Modifier.align(Alignment.CenterHorizontally))
             Gap(20)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SecondaryButton(t(K.FRIENDS_DECLINE), modifier = Modifier.weight(1f)) { state.declineInvite() }

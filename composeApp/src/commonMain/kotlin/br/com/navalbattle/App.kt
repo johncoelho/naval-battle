@@ -47,6 +47,7 @@ import br.com.navalbattle.data.SeasonInfo
 import br.com.navalbattle.data.SeasonTrophy
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
+import br.com.navalbattle.data.RankedOutcome
 import br.com.navalbattle.data.Session
 import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.data.checkUpdateAvailable
@@ -69,6 +70,7 @@ import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Profile
+import br.com.navalbattle.game.QuickOfferKind
 import br.com.navalbattle.i18n.I18n
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.Lang
@@ -90,6 +92,8 @@ import br.com.navalbattle.ui.NamesScreen
 import br.com.navalbattle.ui.OnlineScreen
 import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ProfileScreen
+import br.com.navalbattle.ui.QuickOfferBanner
+import br.com.navalbattle.ui.QuickOfferNotice
 import br.com.navalbattle.ui.SettingsScreen
 import br.com.navalbattle.ui.ReleaseNotesScreen
 import br.com.navalbattle.ui.ResultScreen
@@ -172,6 +176,13 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             }
 
             Opponent.ONLINE -> {
+                // sair de uma ranqueada antes do fim é derrota cheia (critério 4 de
+                // record_ranked_result) — o relato usa o id da sala já fotografado,
+                // então segue mesmo com o link fechado logo abaixo
+                val m = match
+                if (m != null && m.phase != Phase.RESULT && onlineMatchRanked && !rankedResultSent) {
+                    uiScope?.launch { reportRankedResult(victory = false, accuracy = 0, shipsLeft = 0) }
+                }
                 onlineLink.send(Protocol.QUIT)
                 onlineLink.finish("abandoned")
                 closeOnline()
@@ -365,11 +376,24 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     private fun startOnlineMatch(side: Side) {
+        // o modo é o da sala (quem a abriu escolheu) — o convite e o balão mostram
+        // esse modo antes de aceitar, então a partida tem que bater com o que foi dito
+        onlineLink.roomMode?.let { room -> GameMode.entries.firstOrNull { it.name == room }?.let { mode = it } }
         val m = Match(mode, Opponent.ONLINE, mySide = side)
         m.setName(side, profile.displayName)
         match = m
         rankedResultSent = false
+        rankedOutcome = null
+        rankedReport = RankedReport.IDLE
+        rankBefore = null
+        // a sala é fotografada aqui: quando o adversário sai, o closeOnline zera o
+        // OnlineLink (id da sala, ranqueada, adversário) antes da tela de resultado
+        // abrir — sem isso quem vencia por abandono nunca relatava a vitória
+        onlineMatchId = onlineLink.matchId
+        onlineMatchRanked = onlineLink.ranked
+        onlineOpponentId = onlineLink.opponentId
         opponentProfile = null
+        if (onlineMatchRanked) uiScope?.launch { loadRankBefore() }
         onlineLink.send(Protocol.hello(profile.displayName, mode.name))
         onlineLink.opponentId?.let { id -> uiScope?.launch { loadOpponentProfile(id) } }
         screen = Screen.PLACEMENT
@@ -452,6 +476,108 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         scope.launch { cloud.declineOnlineInvite(session, invite.id) }
     }
 
+    // ---------------- partida rápida aceita de qualquer tela (balão) ----------------
+
+    /** Sala de partida rápida alheia em exibição no balão, se houver. */
+    var quickOffer by mutableStateOf<OnlineMatch?>(null)
+        private set
+
+    /** Aviso curto depois de um "Aceitar" que chegou tarde — some sozinho. */
+    var quickOfferNotice by mutableStateOf<String?>(null)
+        private set
+
+    /** Salas dispensadas com "Agora não" (ou já tentadas) — só nesta sessão do app. */
+    private val ignoredOffers = mutableSetOf<String>()
+
+    /** "Depois" do popup de atualização — aqui para o balão saber se o popup está na tela. */
+    var updatePopupDismissed by mutableStateOf(false)
+
+    /**
+     * Algum outro popup ocupando a tela agora — o balão nunca disputa espaço com
+     * eles (mesmas condições que cada popup usa para se mostrar).
+     */
+    private val otherPopupShowing: Boolean
+        get() {
+            if (pendingInvite != null) return true
+            if (updateAvailable && !updatePopupDismissed) return true
+            if (profile.signedIn && seasonPopupNeeded) return true
+            if (feedbackReward != null) return true
+            return feedbackPopupNeeded && !updateAvailable && !seasonPopupNeeded
+        }
+
+    /** Que tipos de sala o comandante aceita agora — ranqueada só com a temporada aceita. */
+    private fun quickOfferTypes(): Pair<Boolean, Boolean> {
+        val kind = profile.quickOfferKind
+        val casual = kind == QuickOfferKind.CASUAL || kind == QuickOfferKind.BOTH
+        val ranked = (kind == QuickOfferKind.RANKED || kind == QuickOfferKind.BOTH) &&
+            currentSeason != null && !seasonPopupNeeded
+        return casual to ranked
+    }
+
+    /**
+     * Roda junto com o polling de convite (a cada 4s). Só procura com a opção ligada
+     * nos Ajustes, app em primeiro plano, fora de qualquer partida, sem estar
+     * procurando/hospedando/entrando numa sala e sem outro popup na tela. Com o
+     * balão já aberto, só confere se a sala continua esperando — se alguém entrou
+     * ou o anfitrião desistiu, o balão some sozinho.
+     */
+    suspend fun pollQuickOffer() {
+        val blocked = !profile.signedIn || !profile.quickOfferEnabled || !AppForeground.active ||
+            match != null || otherPopupShowing ||
+            onlineLinkState == LinkState.SEARCHING || onlineLinkState == LinkState.HOSTING ||
+            onlineLinkState == LinkState.CONNECTING
+        if (blocked) {
+            quickOffer = null
+            return
+        }
+        val session = profile.currentSession() ?: return
+        val shown = quickOffer
+        if (shown != null) {
+            val fresh = (cloud.getOnlineMatch(session, shown.id) as? CloudResult.Ok)?.value
+            if (fresh == null || fresh.status != "waiting" || fresh.guestId != null) quickOffer = null
+            return
+        }
+        val (casual, ranked) = quickOfferTypes()
+        if (!casual && !ranked) return
+        val found = (cloud.findQuickOffer(session, casual, ranked, ignoredOffers.toSet()) as? CloudResult.Ok)?.value ?: return
+        // o estado pode ter mudado durante a chamada (entrou numa partida, abriu popup)
+        if (match == null && !otherPopupShowing && quickOffer == null) quickOffer = found
+    }
+
+    /**
+     * Aceita a sala do balão: assume o modo dela (Clássico ou Tático, venha de onde
+     * vier) e entra pelo mesmo caminho do convidado da partida rápida. Se outra
+     * pessoa entrou primeiro, mostra "Essa partida já começou" e segue a vida.
+     */
+    fun acceptQuickOffer() {
+        val room = quickOffer ?: return
+        val session = profile.currentSession() ?: return
+        quickOffer = null
+        ignoredOffers += room.id
+        mode = GameMode.entries.firstOrNull { it.name == room.mode } ?: GameMode.CLASSIC
+        onlineLink.close()
+        onlineCode = null
+        onlineInvitedFriend = false
+        onlineLink.joinQuickOffer(
+            session = session,
+            room = room,
+            onState = { s, side -> onMain { onOnlineState(s, side) } },
+            onTaken = { onMain { quickOfferNotice = t(K.QUICK_OFFER_TAKEN) } },
+            onLine = { line -> onMain { onLine(line) } }
+        )
+    }
+
+    /** "Agora não": esconde esta sala até o app ser fechado. */
+    fun dismissQuickOffer() {
+        val room = quickOffer ?: return
+        ignoredOffers += room.id
+        quickOffer = null
+    }
+
+    fun clearQuickOfferNotice() {
+        quickOfferNotice = null
+    }
+
     // ---------------- ranqueada e temporadas ----------------
 
     /** Casual (padrão) ou ranqueada — só afeta partida rápida; convite de amigo é sempre casual. */
@@ -482,7 +608,13 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         get() = !profile.feedbackOptedOut && profile.matches >= profile.feedbackNextPromptAt
 
     /** Se a partida em andamento é ranqueada — soma pontos quando terminar. */
-    val onlineMatchRanked: Boolean get() = onlineLink.ranked
+    var onlineMatchRanked by mutableStateOf(false)
+        private set
+
+    /** Id da sala e do adversário da partida online atual, fotografados ao conectar. */
+    private var onlineMatchId: String? = null
+    var onlineOpponentId: String? = null
+        private set
 
     /** Retrato e patente do adversário da sala online atual — carregado ao conectar. */
     var opponentProfile by mutableStateOf<OpponentProfile?>(null)
@@ -495,21 +627,61 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     private var rankedResultSent = false
 
+    /** Andamento do relato ranqueado, para o bloco de ranking da tela de resultado. */
+    enum class RankedReport { IDLE, PENDING, DONE, FAILED }
+
+    var rankedReport by mutableStateOf(RankedReport.IDLE)
+        private set
+
+    /** O que o servidor devolveu ao fechar a partida ranqueada — nulo até lá. */
+    var rankedOutcome by mutableStateOf<RankedOutcome?>(null)
+        private set
+
+    /** Posição e pontos da temporada ANTES da partida, lidos ao conectar. */
+    var rankBefore by mutableStateOf<MyRank?>(null)
+        private set
+
+    private suspend fun loadRankBefore() {
+        rankBefore = (authed { session -> cloud.myRank(session, season = true) } as? CloudResult.Ok)?.value
+    }
+
     /**
      * Fecha o resultado ranqueado uma única vez por partida (a flag evita reenvio).
-     * [accuracy] e [shipsLeft] (a própria frota, não a do adversário) pesam na conta
-     * do servidor — ver `record_ranked_result` em `supabase/online.sql`.
+     * [accuracy] e [shipsLeft] (a própria frota, não a do adversário) pesam no bônus
+     * do vencedor — mas quem decide o vencedor é o servidor, pelo primeiro relato
+     * da sala (ver `record_ranked_result` em `supabase/online.sql`). Abandono
+     * (desistir ou estourar os 60s em segundo plano) relata derrota com acerto 0.
      */
     suspend fun reportRankedResult(victory: Boolean, accuracy: Int, shipsLeft: Int) {
         if (rankedResultSent || !onlineMatchRanked) return
-        val matchId = onlineLink.matchId ?: return
+        val matchId = onlineMatchId ?: return
         if (profile.currentSession() == null) return
         rankedResultSent = true
+        rankedReport = RankedReport.PENDING
         // uma partida ranqueada, turno a turno, facilmente passa da 1h de vida do
         // token — sem o `authed`, o envio falhava calado com o token vencido e o
         // placar nunca chegava a subir (nem a cair) pra ninguém
-        authed { session -> cloud.recordRankedResult(session, matchId, victory, accuracy, shipsLeft) }
+        val r = authed { session -> cloud.recordRankedResult(session, matchId, victory, accuracy, shipsLeft) }
+        val outcome = (r as? CloudResult.Ok)?.value
+        rankedOutcome = outcome
+        rankedReport = if (outcome != null) RankedReport.DONE else RankedReport.FAILED
         loadMyRank(leaderboardSeasonMode)
+    }
+
+    /** "Ver ranking" do resultado: sai da sala como o "Voltar ao deque" e abre a temporada. */
+    fun openLeaderboardFromResult() {
+        quitToMenu()
+        leaderboardSeasonMode = true
+        screen = Screen.LEADERBOARD
+    }
+
+    /**
+     * Recompensa (XP, medalhas, créditos) de uma partida online — só se ainda couber
+     * no limite diário contra este adversário (ver [Profile.claimOnlineReward]).
+     */
+    fun claimOnlineReward(): Boolean {
+        val opponent = onlineOpponentId ?: return false
+        return profile.claimOnlineReward(opponent, nowMillis() / MILLIS_PER_DAY)
     }
 
     // ---------------- placar ----------------
@@ -988,6 +1160,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         const val SYNC_DEBOUNCE_MS = 1500L
         const val PAUSE_TIMEOUT_SECONDS = 60
         const val PAUSE_TIMEOUT_MS = PAUSE_TIMEOUT_SECONDS * 1000L
+        const val MILLIS_PER_DAY = 86_400_000L
     }
 }
 
@@ -1058,9 +1231,12 @@ fun App() {
 
     // convite de amigo mirado: com o app aberto e fora de partida, checa de tempos em
     // tempos se alguém convidou — é o que alimenta o banner em qualquer tela do jogo
+    // — no mesmo laço, o balão de partida rápida para quem marcou nos Ajustes que
+    // está disponível (ver AppState.pollQuickOffer, que tem as próprias travas)
     LaunchedEffect(Unit) {
         while (true) {
             state.pollPendingInvite()
+            state.pollQuickOffer()
             delay(4000)
         }
     }
@@ -1096,6 +1272,12 @@ fun App() {
             }
             OnlineWaitingDialog(state)
             state.pendingInvite?.let { invite -> InviteBanner(state, invite) }
+            // o polling já trava o balão nas situações proibidas; a checagem aqui
+            // cobre o intervalo de até 4s entre uma rodada e outra
+            state.quickOffer?.let { offer ->
+                if (state.match == null && state.pendingInvite == null) QuickOfferBanner(state, offer)
+            }
+            state.quickOfferNotice?.let { notice -> QuickOfferNotice(state, notice) }
             if (state.screen == Screen.PLACEMENT) OpponentFoundPopup(state)
             UpdatePopup(state)
             if (state.match == null) SeasonPopup(state)

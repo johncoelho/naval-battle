@@ -162,6 +162,24 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(row?.let { matchOf(it) })
     }
 
+    actual suspend fun findQuickOffer(
+        session: Session,
+        casual: Boolean,
+        ranked: Boolean,
+        ignored: Set<String>
+    ): CloudResult<OnlineMatch?> = call {
+        val json = post(
+            "/rest/v1/rpc/find_quick_offer",
+            mapOf("p_casual" to casual, "p_ranked" to ranked),
+            token = session.accessToken
+        )
+        val rows = (json as? List<*>).orEmpty()
+        val offer = rows.mapNotNull { it as? Map<*, *> }
+            .map { matchOf(it) }
+            .firstOrNull { it.id !in ignored }
+        CloudResult.Ok(offer)
+    }
+
     actual suspend fun findMatchByCode(session: Session, code: String): CloudResult<OnlineMatch?> = call {
         val json = get(
             "/rest/v1/online_matches?invite_code=eq.$code&status=eq.waiting&limit=1",
@@ -396,8 +414,10 @@ actual class CloudApi actual constructor() {
         won: Boolean,
         accuracy: Int,
         shipsLeft: Int
-    ): CloudResult<Unit> = call {
-        post(
+    ): CloudResult<RankedOutcome?> = call {
+        // função que devolve tabela: o PostgREST responde com um array (vazio
+        // quando a sala não é ranqueada ou o comandante não está nela)
+        val json = post(
             "/rest/v1/rpc/record_ranked_result",
             mapOf(
                 "p_match_id" to matchId,
@@ -407,7 +427,22 @@ actual class CloudApi actual constructor() {
             ),
             token = session.accessToken
         )
-        CloudResult.Ok(Unit)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            row?.let {
+                RankedOutcome(
+                    pointsDelta = it.intOr("points_delta", 0),
+                    seasonPoints = it.intOr("season_points", 1000),
+                    seasonPosition = it.intOr("season_position", 0),
+                    seasonName = it.strOr("season_name", ""),
+                    seasonMatches = it.intOr("season_matches", 0),
+                    seasonWins = it.intOr("season_wins", 0),
+                    accepted = (it["accepted"] as? Boolean) ?: false,
+                    basePoints = it.intOr("base_points", 0),
+                    bonusPoints = it.intOr("bonus_points", 0)
+                )
+            }
+        )
     }
 
     // ------------------------------------------------------------------ feedback e badges

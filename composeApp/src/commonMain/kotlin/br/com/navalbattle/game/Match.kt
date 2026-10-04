@@ -233,9 +233,9 @@ class Match(
 
     /**
      * Marcado quando ESTE aparelho ficou 60s em segundo plano numa partida online
-     * sem voltar — ver [AppState.onForegroundChanged]. Diferente de uma derrota de
-     * verdade: quem passa daqui não soma nem perde pontos ranqueados por isso (só
-     * quem venceu por desistência é que registra o resultado normalmente).
+     * sem voltar — ver [AppState.onForegroundChanged]. Desde a 0.14.0 conta como
+     * abandono, e abandono na ranqueada é derrota cheia (acerto 0, sem alívio); o
+     * que quem estourou o prazo não leva é recompensa de carreira (XP, créditos).
      */
     var forfeitedBySelf by mutableStateOf(false)
         private set
@@ -488,9 +488,17 @@ class Match(
         if (callout?.sticky == true) callout = null
     }
 
+    /** Tiros e acertos de um lado — em rede, o "eu" é sempre [mySide], nunca o PLAYER fixo. */
+    fun shotsOf(side: Side): Int = if (side == Side.PLAYER) playerShots else enemyShots
+
+    fun hitsOf(side: Side): Int = if (side == Side.PLAYER) playerHits else enemyHits
+
+    /** Navios que [side] pôs no fundo — a frota inteira do outro lado menos o que sobrou dela. */
+    fun sunkBy(side: Side): Int = ShipClass.fleet.size - board(side.other()).remainingShips().size
+
     fun accuracyOf(side: Side): Int {
-        val shots = if (side == Side.PLAYER) playerShots else enemyShots
-        val hits = if (side == Side.PLAYER) playerHits else enemyHits
+        val shots = shotsOf(side)
+        val hits = hitsOf(side)
         return if (shots == 0) 0 else (hits * 100) / shots
     }
 

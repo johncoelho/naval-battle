@@ -268,6 +268,48 @@ class Profile(private val prefs: Prefs) {
         prefs.putInt(K_FEEDBACK_OPT_OUT, 1)
     }
 
+    /**
+     * Disponível para partida rápida: com isso ligado (Ajustes, só com conta), o
+     * jogo mostra em qualquer tela um balão quando alguém abre uma sala de partida
+     * rápida esperando adversário. Desligado por padrão. Fica no aparelho.
+     */
+    var quickOfferEnabled: Boolean by mutableStateOf(prefs.getInt(K_QUICK_OFFER, 0) == 1)
+        private set
+
+    /** Que tipo de sala o balão oferece: casual, ranqueada ou as duas. */
+    var quickOfferKind: QuickOfferKind by mutableStateOf(QuickOfferKind.of(prefs.getString(K_QUICK_OFFER_KIND, "")))
+        private set
+
+    fun setQuickOffer(on: Boolean) {
+        quickOfferEnabled = on
+        prefs.putInt(K_QUICK_OFFER, if (on) 1 else 0)
+    }
+
+    fun chooseQuickOfferKind(kind: QuickOfferKind) {
+        quickOfferKind = kind
+        prefs.putString(K_QUICK_OFFER_KIND, kind.id)
+    }
+
+    /**
+     * Anti-farm das recompensas online: XP, medalhas e créditos de uma partida
+     * contra outra pessoa só valem até [ONLINE_REWARDS_PER_OPPONENT] vezes por dia
+     * contra o MESMO adversário — senão dois amigos combinavam dezenas de partidas
+     * relâmpago só para encher a carreira. A contagem fica no aparelho, por dia
+     * (UTC) e por id do adversário, e zera sozinha quando o dia vira.
+     *
+     * Devolve true e já conta a partida quando ainda cabe recompensa hoje.
+     */
+    fun claimOnlineReward(opponentId: String, day: Long): Boolean {
+        val raw = prefs.getString(K_ONLINE_REWARDS, "")
+        val storedDay = raw.substringBefore('|', "").toLongOrNull()
+        val counts = if (storedDay == day) decodeCharges(raw.substringAfter('|', "")) else emptyMap()
+        val used = counts[opponentId] ?: 0
+        if (used >= ONLINE_REWARDS_PER_OPPONENT) return false
+        val next = counts + (opponentId to used + 1)
+        prefs.putString(K_ONLINE_REWARDS, "$day|" + next.entries.joinToString(",") { "${it.key}:${it.value}" })
+        return true
+    }
+
     fun rememberSession(session: Session) {
         accountId = session.userId
         accountEmail = session.email
@@ -442,8 +484,9 @@ class Profile(private val prefs: Prefs) {
     }
 
     /**
-     * Fecha uma partida contra a IA: soma XP, créditos e estatísticas. Partidas
-     * locais não valem carreira — os dois jogam no mesmo perfil do aparelho.
+     * Fecha uma partida contra a IA ou online: soma XP, créditos e estatísticas.
+     * Online passa antes pelo limite diário de [claimOnlineReward]. Partidas locais
+     * não valem carreira — os dois jogam no mesmo perfil do aparelho.
      */
     fun registerMatch(victory: Boolean, shotsFired: Int, hitsLanded: Int, shipsSunk: Int, turns: Int): Award {
         val before = rank
@@ -513,6 +556,9 @@ class Profile(private val prefs: Prefs) {
         /** Vitoria ate este numero de turnos rende o bonus de ataque relampago. */
         const val BLITZ_TURNS = 40
 
+        /** Partidas online recompensadas por dia contra o mesmo adversário (ver [claimOnlineReward]). */
+        const val ONLINE_REWARDS_PER_OPPONENT = 3
+
         private const val K_NAME = "name"
         private const val K_INSIGNIA = "insignia"
         private const val K_XP = "xp"
@@ -542,5 +588,19 @@ class Profile(private val prefs: Prefs) {
         private const val K_SEASON_ACCEPTED = "season_accepted"
         private const val K_FEEDBACK_OPT_OUT = "feedback_opt_out"
         private const val K_FEEDBACK_NEXT_AT = "feedback_next_at"
+        private const val K_QUICK_OFFER = "quick_offer"
+        private const val K_QUICK_OFFER_KIND = "quick_offer_kind"
+        private const val K_ONLINE_REWARDS = "online_rewards"
+    }
+}
+
+/** Tipos de sala que o balão de partida rápida oferece (Ajustes). */
+enum class QuickOfferKind(val id: String) {
+    CASUAL("casual"),
+    RANKED("ranked"),
+    BOTH("both");
+
+    companion object {
+        fun of(id: String): QuickOfferKind = entries.firstOrNull { it.id == id } ?: CASUAL
     }
 }

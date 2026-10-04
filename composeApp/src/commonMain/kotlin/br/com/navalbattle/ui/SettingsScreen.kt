@@ -25,6 +25,7 @@ import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.data.shareStoreListing
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.game.QuickOfferKind
 import br.com.navalbattle.i18n.I18n
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.Lang
@@ -62,6 +63,51 @@ fun SettingsScreen(state: AppState) {
                 label = t(K.SETTINGS_SFX),
                 on = profile.sfxOn
             ) { profile.setSfx(!profile.sfxOn) }
+
+            Gap(26)
+            HudLabel(t(K.SETTINGS_ONLINE))
+            Gap(10)
+            if (!profile.signedIn) {
+                // sem conta não há partida online — a opção nem aparece, só o porquê
+                HudLabel(t(K.SETTINGS_QUICK_OFFER_SIGN_IN), Naval.muted)
+            } else {
+                SettingsToggleRow(
+                    label = t(K.SETTINGS_QUICK_OFFER),
+                    on = profile.quickOfferEnabled
+                ) { profile.setQuickOffer(!profile.quickOfferEnabled) }
+                Gap(6)
+                HudLabel(t(K.SETTINGS_QUICK_OFFER_SUB), Naval.muted)
+                if (profile.quickOfferEnabled) {
+                    // ranqueada só depois de aceitar a temporada corrente — mesma trava
+                    // do seletor da tela Online
+                    val rankedOpen = !state.seasonPopupNeeded
+                    val kind = if (!rankedOpen) QuickOfferKind.CASUAL else profile.quickOfferKind
+                    Gap(10)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ModeChip(
+                            label = t(K.ONLINE_MODE_CASUAL),
+                            selected = kind == QuickOfferKind.CASUAL,
+                            modifier = Modifier.weight(1f)
+                        ) { profile.chooseQuickOfferKind(QuickOfferKind.CASUAL) }
+                        ModeChip(
+                            label = t(K.ONLINE_MODE_RANKED),
+                            selected = kind == QuickOfferKind.RANKED,
+                            enabled = rankedOpen,
+                            modifier = Modifier.weight(1f)
+                        ) { profile.chooseQuickOfferKind(QuickOfferKind.RANKED) }
+                        ModeChip(
+                            label = t(K.SETTINGS_QUICK_OFFER_BOTH),
+                            selected = kind == QuickOfferKind.BOTH,
+                            enabled = rankedOpen,
+                            modifier = Modifier.weight(1f)
+                        ) { profile.chooseQuickOfferKind(QuickOfferKind.BOTH) }
+                    }
+                    if (!rankedOpen) {
+                        Gap(6)
+                        HudLabel(t(K.ONLINE_MODE_RANKED_LOCKED), Naval.muted)
+                    }
+                }
+            }
 
             Gap(26)
             HudLabel(t(K.SETTINGS_LANGUAGE))

@@ -56,11 +56,21 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
         ranked = false
         opponentId = null
         opponentName = null
+        roomMode = null
         session = null
     }
 
+    /**
+     * Modo da sala conectada ("CLASSIC"/"TACTICAL") — quem entra por convite,
+     * código ou balão de partida rápida joga no modo de quem abriu a sala, não no
+     * que estava escolhido no próprio menu.
+     */
+    var roomMode: String? = null
+        private set
+
     /** Descobre quem é o adversário comparando os dois lados da sala com o próprio id. */
     private fun captureOpponent(match: OnlineMatch, session: Session) {
+        roomMode = match.mode
         if (match.hostId == session.userId) {
             opponentId = match.guestId
             opponentName = match.guestName
@@ -117,6 +127,40 @@ class OnlineLink(private val cloud: CloudApi, private val scope: CoroutineScope)
                 return@launch
             }
             this@OnlineLink.matchId = joined.id
+            this@OnlineLink.ranked = joined.ranked
+            captureOpponent(joined, session)
+            onState(LinkState.CONNECTED, Side.ENEMY)
+            startMessagePolling(session, joined.id, onLine)
+        }
+    }
+
+    /**
+     * Aceita, de qualquer tela, uma sala de partida rápida alheia que apareceu no
+     * balão de [CloudApi.findQuickOffer] — mesmo caminho do convidado em
+     * [quickMatch] (entrada atômica, captura do adversário, polling de jogadas),
+     * só que sem procurar: a sala já veio escolhida. Do outro lado nada muda — o
+     * anfitrião continua no [waitForGuest] dele e conecta ao ver o guest_id
+     * preenchido. Se outra pessoa entrou primeiro, [onTaken] avisa e o link volta
+     * a ficar parado, sem virar anfitrião de nada.
+     */
+    fun joinQuickOffer(
+        session: Session,
+        room: OnlineMatch,
+        onState: (LinkState, Side) -> Unit,
+        onTaken: () -> Unit,
+        onLine: (String) -> Unit
+    ) {
+        this.session = session
+        pollJob?.cancel()
+        onState(LinkState.CONNECTING, Side.ENEMY)
+        pollJob = scope.launch {
+            val joined = (cloud.joinOnlineMatch(session, room.id, session.username) as? CloudResult.Ok)?.value
+            if (joined == null) {
+                onState(LinkState.IDLE, Side.ENEMY)
+                onTaken()
+                return@launch
+            }
+            matchId = joined.id
             this@OnlineLink.ranked = joined.ranked
             captureOpponent(joined, session)
             onState(LinkState.CONNECTED, Side.ENEMY)

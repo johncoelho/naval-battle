@@ -74,6 +74,8 @@ fun OpponentFoundPopup(state: AppState) {
             Text(opponent.username.uppercase(), style = NavalType.title, color = Naval.ink)
             Gap(4)
             HudLabel(Rank.of(opponent.xp).label.uppercase(), Naval.amberStrong)
+            Gap(10)
+            MatchTags(ranked = state.onlineMatchRanked, mode = state.match?.mode?.name ?: state.mode.name)
             if (state.onlineMatchRanked) {
                 Gap(6)
                 HudLabel(t(K.LEADERBOARD_POINTS, opponent.rankedRating), Naval.inkSoft)

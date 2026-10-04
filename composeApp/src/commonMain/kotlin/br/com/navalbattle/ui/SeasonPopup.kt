@@ -84,7 +84,7 @@ fun SeasonPopup(state: AppState) {
     }
 }
 
-private fun seasonNameKey(suffix: String) = when (suffix) {
+internal fun seasonNameKey(suffix: String) = when (suffix) {
     "verao" -> K.SEASON_NAME_VERAO
     "outono" -> K.SEASON_NAME_OUTONO
     "inverno" -> K.SEASON_NAME_INVERNO

@@ -105,6 +105,25 @@ data class SeasonInfo(val seasonKey: String, val name: String)
 data class MyRank(val position: Long, val rating: Int)
 
 /**
+ * O que o servidor devolve ao fechar uma partida ranqueada (ver
+ * `record_ranked_result` em `supabase/online.sql`) — já com o vencedor decidido
+ * lá, não pelo aparelho. [pointsDelta] = [basePoints] (Elo) + [bonusPoints]
+ * (bônus de desempenho na vitória, alívio na derrota). [accepted] falso quando
+ * este lado já tinha relatado antes: nada mudou, só veio o estado atual.
+ */
+data class RankedOutcome(
+    val pointsDelta: Int,
+    val seasonPoints: Int,
+    val seasonPosition: Int,
+    val seasonName: String,
+    val seasonMatches: Int,
+    val seasonWins: Int,
+    val accepted: Boolean,
+    val basePoints: Int,
+    val bonusPoints: Int
+)
+
+/**
  * Retrato e patente públicos de um comandante qualquer — mostrado quando a
  * partida rápida encontra alguém e como nome do adversário durante o combate.
  * Não exige amizade, ao contrário de [FriendProfile].
@@ -210,6 +229,21 @@ expect class CloudApi() {
     /** Procura uma sala de partida rápida aberta por outra pessoa — do mesmo tipo (ranqueada ou não). */
     suspend fun findQuickMatch(session: Session, mode: String, ranked: Boolean): CloudResult<OnlineMatch?>
 
+    /**
+     * Sala de partida rápida esperando adversário, de QUALQUER modo, para o balão
+     * "aceitar partida rápida" fora da tela Online — [casual] e [ranked] dizem que
+     * tipos o comandante aceita (os dois juntos = "Ambas"). Nunca devolve a própria
+     * sala nem convite mirado num amigo; [ignored] são as salas que ele já
+     * dispensou com "Agora não" nesta sessão. Via `find_quick_offer` no banco,
+     * que também descarta sala parada há mais de 10 minutos pelo relógio do servidor.
+     */
+    suspend fun findQuickOffer(
+        session: Session,
+        casual: Boolean,
+        ranked: Boolean,
+        ignored: Set<String>
+    ): CloudResult<OnlineMatch?>
+
     /** Procura a sala de um código de convite, se ainda estiver esperando alguém. */
     suspend fun findMatchByCode(session: Session, code: String): CloudResult<OnlineMatch?>
 
@@ -287,7 +321,9 @@ expect class CloudApi() {
 
     /**
      * Fecha o resultado de uma partida ranqueada — idempotente por lado. [accuracy]
-     * (0–100) e [shipsLeft] (navios da própria frota ainda de pé) pesam na pontuação.
+     * (0–100) e [shipsLeft] (navios da própria frota ainda de pé) pesam no bônus do
+     * vencedor; abandono vai como [won] falso e [accuracy] 0. Nulo quando a sala
+     * não é ranqueada ou o comandante não está nela (o servidor não devolve linha).
      */
     suspend fun recordRankedResult(
         session: Session,
@@ -295,7 +331,7 @@ expect class CloudApi() {
         won: Boolean,
         accuracy: Int,
         shipsLeft: Int
-    ): CloudResult<Unit>
+    ): CloudResult<RankedOutcome?>
 
     // ---------------- feedback e badges ----------------
 
