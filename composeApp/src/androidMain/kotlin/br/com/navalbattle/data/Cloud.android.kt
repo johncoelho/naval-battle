@@ -586,7 +586,7 @@ actual class CloudApi actual constructor() {
                 SeasonEnd(
                     seasonKey = o.optString("season_key"),
                     seasonName = o.optString("season_name"),
-                    position = o.optInt("position", 0),
+                    position = o.optInt("placement", 0),
                     totalPlayers = o.optInt("total_players", 0),
                     points = o.optInt("points", 0),
                     matches = o.optInt("matches", 0),

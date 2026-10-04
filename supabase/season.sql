@@ -137,7 +137,7 @@ grant execute on function public.join_season(text) to authenticated;
 create table if not exists public.season_rewards (
   user_id    uuid        not null references auth.users(id) on delete cascade,
   season_key text        not null,
-  position   integer     not null,
+  placement  integer     not null,
   doubloons  integer     not null,
   miles      integer     not null,
   claimed_at timestamptz not null default now(),
@@ -167,7 +167,7 @@ $$;
 -- demais que jogaram levam um prêmio de participação. Milhas entram aqui; os
 -- dobrões voltam para o app creditar. Nada para resgatar = nenhuma linha.
 create or replace function public.claim_season_end()
-returns table (season_key text, season_name text, position integer, total_players integer,
+returns table (season_key text, season_name text, placement integer, total_players integer,
                points integer, matches integer, wins integer, doubloons integer, miles integer)
 language plpgsql security definer set search_path = public as $$
 declare
@@ -219,7 +219,7 @@ begin
           else public.config_int('season_reward_play_miles', 5)
         end;
 
-  insert into public.season_rewards (user_id, season_key, position, doubloons, miles)
+  insert into public.season_rewards (user_id, season_key, placement, doubloons, miles)
   values (auth.uid(), target, pos, d, mi)
   on conflict do nothing;
   if not found then

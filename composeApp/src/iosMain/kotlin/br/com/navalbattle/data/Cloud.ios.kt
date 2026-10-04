@@ -573,7 +573,7 @@ actual class CloudApi actual constructor() {
                 SeasonEnd(
                     seasonKey = it.strOr("season_key", ""),
                     seasonName = it.strOr("season_name", ""),
-                    position = it.intOr("position", 0),
+                    position = it.intOr("placement", 0),
                     totalPlayers = it.intOr("total_players", 0),
                     points = it.intOr("points", 0),
                     matches = it.intOr("matches", 0),
