@@ -137,6 +137,39 @@ data class BetaStoreStatus(
     val remainingCents: Int get() = (limitCents - spentCents).coerceAtLeast(0)
 }
 
+/**
+ * Passe da temporada corrente (ver `season_pass_status` em `supabase/season.sql`).
+ * [tier] nulo = ainda não aderiu — e sem adesão não há ranqueada.
+ */
+data class SeasonPassStatus(
+    val seasonKey: String,
+    val seasonName: String,
+    val tier: String?,
+    val entryPrice: Int,
+    val upgradePrice: Int,
+    val passDoubloons: Int,
+    val passMiles: Int
+) {
+    val joined: Boolean get() = tier != null
+    val premium: Boolean get() = tier == "premium"
+}
+
+/** Resultado da adesão ou do upgrade: tier final, milhas bônus que entraram e o saldo de milhas. */
+data class SeasonJoin(val tier: String, val milesBonus: Int, val price: Int, val miles: Int)
+
+/** Fechamento de uma temporada encerrada para este comandante (ver `claim_season_end`). */
+data class SeasonEnd(
+    val seasonKey: String,
+    val seasonName: String,
+    val position: Int,
+    val totalPlayers: Int,
+    val points: Int,
+    val matches: Int,
+    val wins: Int,
+    val doubloons: Int,
+    val miles: Int
+)
+
 /** Resultado de uma compra simulada: os dobrões que entram e o gasto do dia já somado. */
 data class BetaPurchase(val doubloons: Int, val spentCents: Int, val limitCents: Int)
 
@@ -409,4 +442,13 @@ expect class CloudApi() {
 
     /** Soma [packs] pacotes de milhas — os dobrões já foram descontados no aparelho. */
     suspend fun buyMiles(session: Session, packs: Int): CloudResult<Int>
+
+    /** Passe da temporada corrente e os preços vigentes. */
+    suspend fun seasonPassStatus(session: Session): CloudResult<SeasonPassStatus>
+
+    /** Adere à temporada ('free' ou 'premium') ou faz upgrade de free para premium. */
+    suspend fun joinSeason(session: Session, tier: String): CloudResult<SeasonJoin>
+
+    /** Resgata o resultado da última temporada encerrada ainda não vista — nulo se não houver. */
+    suspend fun claimSeasonEnd(session: Session): CloudResult<SeasonEnd?>
 }

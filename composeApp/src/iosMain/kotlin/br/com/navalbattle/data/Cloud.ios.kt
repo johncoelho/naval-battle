@@ -536,6 +536,55 @@ actual class CloudApi actual constructor() {
     actual suspend fun buyMiles(session: Session, packs: Int): CloudResult<Int> =
         milesCall("buy_miles", mapOf("p_packs" to packs), session)
 
+    actual suspend fun seasonPassStatus(session: Session): CloudResult<SeasonPassStatus> = call {
+        val json = post("/rest/v1/rpc/season_pass_status", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            SeasonPassStatus(
+                seasonKey = o.strOr("season_key", ""),
+                seasonName = o.strOr("season_name", ""),
+                tier = o["tier"] as? String,
+                entryPrice = o.intOr("entry_price", 1200),
+                upgradePrice = o.intOr("upgrade_price", 1600),
+                passDoubloons = o.intOr("pass_doubloons", 500),
+                passMiles = o.intOr("pass_miles", 20)
+            )
+        )
+    }
+
+    actual suspend fun joinSeason(session: Session, tier: String): CloudResult<SeasonJoin> = call {
+        val json = post("/rest/v1/rpc/join_season", mapOf("p_tier" to tier), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            SeasonJoin(
+                tier = o.strOr("tier", tier),
+                milesBonus = o.intOr("miles_bonus", 0),
+                price = o.intOr("price", 0),
+                miles = o.intOr("miles", 0)
+            )
+        )
+    }
+
+    actual suspend fun claimSeasonEnd(session: Session): CloudResult<SeasonEnd?> = call {
+        val json = post("/rest/v1/rpc/claim_season_end", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            o?.let {
+                SeasonEnd(
+                    seasonKey = it.strOr("season_key", ""),
+                    seasonName = it.strOr("season_name", ""),
+                    position = it.intOr("position", 0),
+                    totalPlayers = it.intOr("total_players", 0),
+                    points = it.intOr("points", 0),
+                    matches = it.intOr("matches", 0),
+                    wins = it.intOr("wins", 0),
+                    doubloons = it.intOr("doubloons", 0),
+                    miles = it.intOr("miles", 0)
+                )
+            }
+        )
+    }
+
     /** As três funções de milhas devolvem uma linha só, com o saldo em `miles`. */
     private suspend fun milesCall(fn: String, body: Map<String, Any?>, session: Session): CloudResult<Int> = call {
         val json = post("/rest/v1/rpc/" + fn, body, token = session.accessToken)

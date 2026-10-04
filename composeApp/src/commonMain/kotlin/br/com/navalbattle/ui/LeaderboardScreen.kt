@@ -77,14 +77,8 @@ fun LeaderboardScreen(state: AppState) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        val seasonSuffix = state.currentSeason?.seasonKey?.substringAfterLast('-')
-        val seasonLabel = when (seasonSuffix) {
-            "verao" -> t(K.SEASON_NAME_VERAO)
-            "outono" -> t(K.SEASON_NAME_OUTONO)
-            "inverno" -> t(K.SEASON_NAME_INVERNO)
-            "primavera" -> t(K.SEASON_NAME_PRIMAVERA)
-            else -> ""
-        }
+        // "Temporada de Primavera", não só "Primavera"
+        val seasonLabel = state.currentSeason?.seasonKey?.let { seasonTitle(it) } ?: ""
         ScreenTopBar(t(K.LEADERBOARD_TITLE), seasonLabel)
         Gap(14)
 

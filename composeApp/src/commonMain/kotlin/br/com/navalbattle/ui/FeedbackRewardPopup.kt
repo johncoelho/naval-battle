@@ -32,7 +32,7 @@ import br.com.navalbattle.i18n.t
 @Composable
 fun FeedbackRewardPopup(state: AppState) {
     val reward = state.feedbackReward ?: return
-    if (state.updateAvailable || state.seasonPopupNeeded || state.pendingInvite != null) return
+    if (state.updateAvailable || state.seasonPopupShowing || state.seasonEnd != null || state.pendingInvite != null) return
 
     val approved = reward.status == "approved"
     val accent = if (approved) Naval.amber else Naval.line

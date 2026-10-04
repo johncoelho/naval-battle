@@ -29,6 +29,8 @@ import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.BetaStoreStatus
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.MilesStatus
+import br.com.navalbattle.data.SeasonEnd
+import br.com.navalbattle.data.SeasonPassStatus
 import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.CloudResult
 import br.com.navalbattle.data.CommanderHit
@@ -88,6 +90,8 @@ import br.com.navalbattle.ui.FeedbackRewardPopup
 import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
 import br.com.navalbattle.ui.MilesPopup
+import br.com.navalbattle.ui.RankedLockedPrompt
+import br.com.navalbattle.ui.SeasonEndPopup
 import br.com.navalbattle.ui.LeaderboardScreen
 import br.com.navalbattle.ui.OnlineWaitingDialog
 import br.com.navalbattle.ui.OpponentFoundPopup
@@ -511,9 +515,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         get() {
             if (pendingInvite != null) return true
             if (updateAvailable && !updatePopupDismissed) return true
-            if (profile.signedIn && seasonPopupNeeded) return true
+            if (seasonPopupShowing || seasonEnd != null || rankedLockedPrompt) return true
             if (feedbackReward != null) return true
-            return feedbackPopupNeeded && !updateAvailable && !seasonPopupNeeded
+            return feedbackPopupNeeded && !updateAvailable && !seasonPopupShowing
         }
 
     /** Que tipos de sala o comandante aceita agora — ranqueada só com a temporada aceita. */
@@ -598,21 +602,123 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var currentSeason by mutableStateOf<SeasonInfo?>(null)
         private set
 
-    /** Verdadeiro enquanto o comandante não aceitou o popup da temporada corrente. */
+    // ---------------- passe de temporada ----------------
+
+    /** Passe da temporada corrente, vindo do servidor (ver `supabase/season.sql`). */
+    var seasonPass by mutableStateOf<SeasonPassStatus?>(null)
+        private set
+
+    /**
+     * Verdadeiro enquanto o comandante não aderiu à temporada corrente — sem adesão
+     * (passe gratuito ou do Almirante) não há ranqueada.
+     */
     val seasonPopupNeeded: Boolean
-        get() {
-            val season = currentSeason ?: return false
-            return season.seasonKey != profile.acceptedSeasonKey
-        }
+        get() = profile.signedIn && seasonPass?.joined == false
+
+    val canPlayRanked: Boolean get() = seasonPass?.joined == true
+
+    /** "Agora não" no convite da temporada nova: some até o app ser aberto de novo. */
+    var seasonPopupDismissed by mutableStateOf(false)
+
+    /** Banner aberto pelo chip "Temporada de…" do menu (para ver o passe ou fazer upgrade). */
+    var seasonPassOpen by mutableStateOf(false)
+
+    /** Aviso de que a ranqueada exige adesão — aparece ao tocar em Ranqueada sem passe. */
+    var rankedLockedPrompt by mutableStateOf(false)
+
+    val seasonPopupShowing: Boolean
+        get() = profile.signedIn && seasonPass != null &&
+            (seasonPassOpen || (seasonPopupNeeded && !seasonPopupDismissed))
+
+    var seasonBusy by mutableStateOf(false)
+        private set
+    var seasonNotice by mutableStateOf<String?>(null)
+        private set
+
+    /** Fechamento da temporada que acabou (posição e prêmio) — vira o popup de fim de temporada. */
+    var seasonEnd by mutableStateOf<SeasonEnd?>(null)
+        private set
 
     suspend fun loadSeason() {
         if (!profile.signedIn) return
         val session = profile.currentSession() ?: return
         currentSeason = (cloud.currentSeason(session) as? CloudResult.Ok)?.value
+        loadSeasonPass()
     }
 
-    fun acceptSeason() {
-        currentSeason?.let { profile.acceptSeason(it.seasonKey) }
+    suspend fun loadSeasonPass() {
+        if (!profile.signedIn) {
+            seasonPass = null
+            return
+        }
+        (authed { session -> cloud.seasonPassStatus(session) } as? CloudResult.Ok)?.value?.let { seasonPass = it }
+    }
+
+    /**
+     * Adere à temporada (gratuito ou do Almirante) ou faz upgrade para o do Almirante.
+     * O preço sai dos dobrões do aparelho antes de pedir ao servidor e volta se ele
+     * recusar; o passe pago entrega os dobrões extras e a camuflagem da estação aqui,
+     * e as milhas bônus no servidor.
+     */
+    suspend fun joinSeason(premium: Boolean) {
+        val pass = seasonPass ?: return
+        if (seasonBusy) return
+        val price = when {
+            !premium -> 0
+            pass.joined -> pass.upgradePrice
+            else -> pass.entryPrice
+        }
+        if (price > 0 && profile.credits < price) {
+            seasonNotice = t(K.SEASON_NO_DOUBLOONS, price - profile.credits)
+            return
+        }
+        seasonBusy = true
+        seasonNotice = null
+        if (price > 0) profile.spendCredits(price)
+        val r = authed { session -> cloud.joinSeason(session, if (premium) "premium" else "free") }
+        seasonBusy = false
+        val joined = (r as? CloudResult.Ok)?.value
+        if (joined == null) {
+            if (price > 0) profile.grantCredits(price)
+            seasonNotice = t(K.SEASON_JOIN_FAILED)
+            return
+        }
+        // o servidor não cobrou nada (já tinha esse passe): devolve
+        if (price > 0 && joined.price == 0) profile.grantCredits(price)
+        if (premium && joined.price > 0) {
+            profile.grantCredits(pass.passDoubloons)
+            Paint.ofSeason(pass.seasonKey)?.let { profile.buy(it.id, 0) }
+        }
+        miles = miles?.copy(miles = joined.miles)
+        seasonPass = pass.copy(tier = joined.tier)
+        seasonNotice = if (joined.tier == "premium") t(K.SEASON_JOINED_PREMIUM) else t(K.SEASON_JOINED_FREE)
+        seasonPopupDismissed = true
+    }
+
+    fun closeSeasonPopup() {
+        seasonPassOpen = false
+        seasonPopupDismissed = true
+        seasonNotice = null
+    }
+
+    /** Ranqueada sem adesão: em vez de travar calado, explica e oferece o passe. */
+    fun openSeasonFromRanked() {
+        rankedLockedPrompt = false
+        seasonNotice = null
+        seasonPassOpen = true
+    }
+
+    /** Resgata (uma vez) o resultado da temporada que acabou e credita os dobrões do prêmio. */
+    suspend fun checkSeasonEnd() {
+        if (!profile.signedIn || seasonEnd != null) return
+        val end = (authed { session -> cloud.claimSeasonEnd(session) } as? CloudResult.Ok)?.value ?: return
+        profile.grantCredits(end.doubloons)
+        seasonEnd = end
+        loadMiles()
+    }
+
+    fun ackSeasonEnd() {
+        seasonEnd = null
     }
 
     /** Lembrete de avaliação na loja — a cada tantas partidas, ver [Profile.feedbackNextPromptAt]. */
@@ -1362,6 +1468,9 @@ fun App() {
         if (AppForeground.active) {
             state.loadBadges()
             state.checkFeedbackRewards()
+            // a temporada pode virar com o app aberto: relê o passe e o fechamento
+            state.loadSeason()
+            state.checkSeasonEnd()
         }
     }
 
@@ -1422,7 +1531,9 @@ fun App() {
             state.quickOfferNotice?.let { notice -> QuickOfferNotice(state, notice) }
             if (state.screen == Screen.PLACEMENT) OpponentFoundPopup(state)
             UpdatePopup(state)
+            if (state.match == null) SeasonEndPopup(state)
             if (state.match == null) SeasonPopup(state)
+            RankedLockedPrompt(state)
             FeedbackPopup(state)
             if (state.match == null) FeedbackRewardPopup(state)
             // por último: abre por cima do convite quando falta milha para aceitar

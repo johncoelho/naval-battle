@@ -138,7 +138,7 @@ fun ShipyardScreen(state: AppState) {
                         onClick = { paint = option }
                     )
                 }
-                val missingCamos = Paint.all.count { !profile.owns(it.id) }
+                val missingCamos = Paint.all.count { it.season == null && !profile.owns(it.id) }
                 if (missingCamos > 0) {
                     MoreInStoreCard(t(K.SHIPYARD_MORE_CAMOS, missingCamos)) { state.openStore(1) }
                 }

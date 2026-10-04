@@ -42,7 +42,12 @@ data class Paint(
     /** Preço em créditos ganhos em combate. Zero para as que já vêm com o jogo. */
     val price: Int,
     val camo: Camo = Camo.LISA,
-    val ensign: Ensign? = null
+    val ensign: Ensign? = null,
+    /**
+     * Estação ("verao", "outono", "inverno", "primavera") das camuflagens exclusivas
+     * do Passe do Almirante — não se vendem na loja, só chegam pelo passe.
+     */
+    val season: String? = null
 ) {
     val name: String get() = t(key)
     val priceLabel: String get() = if (price == 0) t(K.STORE_INCLUDED) else t(K.PRICE_DOUBLOONS, price)
@@ -116,10 +121,43 @@ data class Paint(
             price = 1400, camo = Camo.DIGITAL
         )
 
+        // exclusivas do passe de cada temporada
+        val SEASON_PRIMAVERA = Paint(
+            "s_pri", K.PAINT_S_PRI,
+            hull = Color(0xFF1F4D3A), deck = Color(0xFFE58FB0),
+            trim = Color(0xFFFFD84A), dark = Color(0xFF12301F),
+            price = 0, camo = Camo.ESTILHACO, season = "primavera"
+        )
+        val SEASON_VERAO = Paint(
+            "s_ver", K.PAINT_S_VER,
+            hull = Color(0xFF0F5C6E), deck = Color(0xFF39C2C9),
+            trim = Color(0xFFFFE08A), dark = Color(0xFF08343F),
+            price = 0, camo = Camo.LISTRAS, season = "verao"
+        )
+        val SEASON_OUTONO = Paint(
+            "s_out", K.PAINT_S_OUT,
+            hull = Color(0xFF5A2E14), deck = Color(0xFFD9772B),
+            trim = Color(0xFFF2C14E), dark = Color(0xFF2E1608),
+            price = 0, camo = Camo.DAZZLE, season = "outono"
+        )
+        val SEASON_INVERNO = Paint(
+            "s_inv", K.PAINT_S_INV,
+            hull = Color(0xFF9FB3C1), deck = Color(0xFFE8F0F5),
+            trim = Color(0xFF2F5F7C), dark = Color(0xFF5C7180),
+            price = 0, camo = Camo.DIGITAL, season = "inverno"
+        )
+
         val all = listOf(
             STANDARD, BRAZIL, JAPAN, USA, UK, PORTUGAL,
-            ARCTIC, DAZZLE, SPLINTER, CORSAIR, STEALTH
+            ARCTIC, DAZZLE, SPLINTER, CORSAIR, STEALTH,
+            SEASON_PRIMAVERA, SEASON_VERAO, SEASON_OUTONO, SEASON_INVERNO
         )
+
+        /** Camuflagem exclusiva do passe da estação ("2026-primavera" ou só "primavera"). */
+        fun ofSeason(seasonKey: String): Paint? {
+            val suffix = seasonKey.substringAfterLast('-')
+            return all.firstOrNull { it.season == suffix }
+        }
 
         fun of(id: String): Paint = all.firstOrNull { it.id == id } ?: BRAZIL
     }

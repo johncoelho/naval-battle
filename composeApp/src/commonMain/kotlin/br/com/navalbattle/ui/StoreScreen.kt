@@ -175,7 +175,8 @@ fun StoreScreen(state: AppState) {
                         )
                     }
                 } else {
-                    Paint.all.forEach { paint ->
+                    // as exclusivas de temporada só aparecem para quem já tem (vêm do passe)
+                    Paint.all.filter { it.season == null || profile.owns(it.id) }.forEach { paint ->
                         StoreRow(
                             title = paint.name,
                             subtitle = paintDescription(paint),
@@ -385,7 +386,9 @@ private fun AbilityStoreRow(
 }
 
 /** Descrição curta de cada pintura; as de padrão mantêm o nome do padrão. */
-private fun paintDescription(paint: Paint): String = t(
+private fun paintDescription(paint: Paint): String = if (paint.season != null) {
+    t(K.PAINT_SEASON_DESC, t(seasonNameKey(paint.season)))
+} else t(
     when (paint.camo) {
         Camo.DAZZLE -> K.CAMO_DAZZLE
         Camo.ESTILHACO -> K.CAMO_SPLINTER

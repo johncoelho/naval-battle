@@ -88,12 +88,13 @@ fun OnlineScreen(state: AppState) {
             val idleOrFailed = state.onlineLinkState == LinkState.IDLE || state.onlineLinkState == LinkState.FAILED
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ModeChip(t(K.ONLINE_MODE_CASUAL), !state.rankedMode, Modifier.weight(1f)) { state.rankedMode = false }
+                // sempre tocável: sem adesão à temporada, explica e oferece o passe
+                // em vez de ficar apagado sem dizer por quê
                 ModeChip(
                     t(K.ONLINE_MODE_RANKED),
                     state.rankedMode,
-                    Modifier.weight(1f),
-                    enabled = !state.seasonPopupNeeded
-                ) { state.rankedMode = true }
+                    Modifier.weight(1f)
+                ) { if (state.canPlayRanked) state.rankedMode = true else state.rankedLockedPrompt = true }
             }
             if (state.seasonPopupNeeded) {
                 Gap(4)

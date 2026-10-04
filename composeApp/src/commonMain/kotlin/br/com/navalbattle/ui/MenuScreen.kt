@@ -123,7 +123,12 @@ fun MenuScreen(state: AppState) {
             }
         }
 
-        Spacer(Modifier.height(22.dp))
+        // temporada corrente no topo: "TEMPORADA DE PRIMAVERA" + o passe; tocar abre o banner
+        state.seasonPass?.let { pass ->
+            Spacer(Modifier.height(14.dp))
+            SeasonChip(pass) { state.seasonPassOpen = true }
+        }
+        Spacer(Modifier.height(18.dp))
         Text(t(K.MENU_TITLE_1).uppercase(), style = NavalType.display, color = Naval.ink)
         Text(t(K.MENU_TITLE_2).uppercase(), style = NavalType.display, color = Naval.amberStrong)
         Spacer(Modifier.height(4.dp))

@@ -36,7 +36,7 @@ import br.com.navalbattle.i18n.t
 @Composable
 fun FeedbackPopup(state: AppState) {
     if (!state.feedbackPopupNeeded || state.match != null) return
-    if (state.updateAvailable || state.seasonPopupNeeded || state.pendingInvite != null) return
+    if (state.updateAvailable || state.seasonPopupShowing || state.seasonEnd != null || state.pendingInvite != null) return
     if (state.onlineLinkState == LinkState.SEARCHING || state.onlineLinkState == LinkState.HOSTING) return
 
     Box(

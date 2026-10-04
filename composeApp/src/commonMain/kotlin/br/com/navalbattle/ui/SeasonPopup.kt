@@ -3,86 +3,56 @@ package br.com.navalbattle.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
+import br.com.navalbattle.data.SeasonEnd
+import br.com.navalbattle.data.SeasonPassStatus
+import br.com.navalbattle.design.FleetLine
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.design.Paint
+import br.com.navalbattle.design.SeasonTheme
+import br.com.navalbattle.design.Skin
+import br.com.navalbattle.design.accent
+import br.com.navalbattle.design.drawSeasonBanner
+import br.com.navalbattle.design.drawSeasonIcon
+import br.com.navalbattle.design.drawShip
+import br.com.navalbattle.game.ShipClass
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlinx.coroutines.launch
 
-/**
- * Aviso de temporada nova — só aparece se o comandante ainda não aceitou a
- * temporada corrente (comparação feita no servidor, ver [AppState.seasonPopupNeeded]).
- * Aceitar libera a partida rápida ranqueada; sem isso, o toggle fica bloqueado.
- * O ícone e a cor mudam com a estação — mais fácil de sentir que é algo novo
- * do que só trocar o texto.
- */
-@Composable
-fun SeasonPopup(state: AppState) {
-    val season = state.currentSeason ?: return
-    if (!state.profile.signedIn || !state.seasonPopupNeeded) return
-    if (state.updateAvailable || state.pendingInvite != null || state.match != null) return
-
-    // "2026-outono" -> "outono": o nome que volta do servidor só existe em
-    // português, então o sufixo da chave é o que dá pra traduzir de verdade
-    val suffix = season.seasonKey.substringAfterLast('-')
-    val accent = seasonAccent(suffix)
-    val name = t(seasonNameKey(suffix))
-
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Naval.bg.copy(alpha = 0.86f))
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .background(Naval.surface2)
-                .border(1.dp, accent)
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            SeasonIcon(suffix, accent)
-            Gap(14)
-            HudLabel(t(K.SEASON_POPUP_EYEBROW), Naval.muted)
-            Gap(8)
-            Text(
-                t(K.SEASON_POPUP_TITLE, name),
-                style = NavalType.title,
-                color = Naval.ink,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Gap(10)
-            HudLabel(t(K.SEASON_POPUP_SUB), Naval.inkSoft)
-            Gap(20)
-            PrimaryButton(t(K.SEASON_POPUP_JOIN)) { state.acceptSeason() }
-        }
-    }
-}
+/** "2026-primavera" -> "Temporada de Primavera" (nos três idiomas). */
+fun seasonTitle(seasonKey: String): String = t(K.SEASON_TITLE, t(seasonNameKey(seasonKey.substringAfterLast('-'))))
 
 internal fun seasonNameKey(suffix: String) = when (suffix) {
     "verao" -> K.SEASON_NAME_VERAO
@@ -91,97 +61,357 @@ internal fun seasonNameKey(suffix: String) = when (suffix) {
     else -> K.SEASON_NAME_PRIMAVERA
 }
 
-private fun seasonAccent(suffix: String): Color = when (suffix) {
-    "verao" -> Color(0xFFFFC95C) // sol de verão — o próprio âmbar do jogo
-    "outono" -> Color(0xFFE07A3F) // folha seca
-    "inverno" -> Color(0xFF7AD1E0) // gelo, o mesmo ciano do circuito da fábrica
-    else -> Color(0xFF8ED17A) // brotos da primavera — o verde já usado no jogo
+/**
+ * Banner da temporada com as opções de passe. Abre sozinho quando o comandante
+ * ainda não aderiu à temporada corrente (convite da temporada nova, com "Agora não")
+ * e pelo chip "Temporada de…" do menu — aí mostra o passe atual e, para quem está
+ * no gratuito, o upgrade para o do Almirante, mais caro que na adesão.
+ */
+@Composable
+fun SeasonPopup(state: AppState) {
+    val pass = state.seasonPass ?: return
+    if (!state.seasonPopupShowing) return
+    if (state.updateAvailable && !state.updatePopupDismissed) return
+    if (state.pendingInvite != null || state.match != null || state.seasonEnd != null) return
+    val theme = SeasonTheme.ofKey(pass.seasonKey)
+    val scope = rememberCoroutineScope()
+
+    Overlay(onDismiss = { state.closeSeasonPopup() }) {
+        SeasonBanner(
+            theme = theme,
+            eyebrow = if (pass.joined) t(K.SEASON_YOUR_PASS) else t(K.SEASON_POPUP_EYEBROW),
+            title = seasonTitle(pass.seasonKey)
+        )
+        Column(Modifier.padding(16.dp)) {
+            when {
+                pass.premium -> PremiumOwned(pass, theme)
+                pass.joined -> {
+                    Text(t(K.SEASON_FREE_OWNED), style = NavalType.body, color = Naval.inkSoft)
+                    Gap(12)
+                    PremiumOffer(
+                        pass = pass,
+                        theme = theme,
+                        price = pass.upgradePrice,
+                        priceNote = t(K.SEASON_UPGRADE_NOTE, formatThousands(pass.entryPrice)),
+                        cta = t(K.SEASON_UPGRADE_CTA),
+                        busy = state.seasonBusy
+                    ) { scope.launch { state.joinSeason(premium = true) } }
+                }
+                else -> {
+                    Text(t(K.SEASON_POPUP_SUB), style = NavalType.body, color = Naval.inkSoft)
+                    Gap(12)
+                    PremiumOffer(
+                        pass = pass,
+                        theme = theme,
+                        price = pass.entryPrice,
+                        priceNote = null,
+                        cta = t(K.SEASON_PREMIUM_CTA),
+                        busy = state.seasonBusy
+                    ) { scope.launch { state.joinSeason(premium = true) } }
+                    Gap(10)
+                    FreeOffer(busy = state.seasonBusy) { scope.launch { state.joinSeason(premium = false) } }
+                }
+            }
+            state.seasonNotice?.let {
+                Gap(10)
+                HudLabel(it, theme.accent)
+            }
+            Gap(14)
+            SecondaryButton(if (pass.joined) t(K.MILES_CLOSE) else t(K.SEASON_NOT_NOW)) { state.closeSeasonPopup() }
+        }
+    }
 }
 
-/** Um ícone por estação, tudo vetor — nenhuma imagem, igual ao resto do jogo. */
+/** Fundo escurecido + cartão rolável; tocar fora fecha. */
 @Composable
-private fun SeasonIcon(suffix: String, accent: Color) {
-    Canvas(Modifier.size(64.dp)) {
-        val c = Offset(size.width / 2f, size.height / 2f)
-        val r = size.minDimension / 2f
-        when (suffix) {
-            "verao" -> {
-                // sol: núcleo cheio + raios curtos ao redor
-                drawCircle(color = accent, radius = r * 0.42f, center = c)
-                repeat(8) { i ->
-                    val a = (i / 8f) * 2f * kotlin.math.PI.toFloat()
-                    val inner = r * 0.62f
-                    drawLine(
-                        color = accent,
-                        start = Offset(c.x + inner * cos(a), c.y + inner * sin(a)),
-                        end = Offset(c.x + r * cos(a), c.y + r * sin(a)),
-                        strokeWidth = 3.dp.toPx(),
-                        cap = StrokeCap.Round
-                    )
-                }
-            }
+private fun Overlay(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Naval.bg.copy(alpha = 0.88f))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onDismiss)
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(horizontal = 18.dp, vertical = 24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(Naval.surface2)
+                .border(1.dp, Naval.line)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+                .verticalScroll(rememberScrollState())
+        ) { content() }
+    }
+}
 
-            "outono" -> {
-                // folha: duas curvas formando a lâmina + nervura central + cabinho
-                val path = androidx.compose.ui.graphics.Path().apply {
-                    moveTo(c.x, c.y - r * 0.85f)
-                    quadraticTo(c.x + r * 0.95f, c.y - r * 0.2f, c.x, c.y + r * 0.75f)
-                    quadraticTo(c.x - r * 0.95f, c.y - r * 0.2f, c.x, c.y - r * 0.85f)
-                    close()
-                }
-                drawPath(path, color = accent, style = Stroke(width = 3.dp.toPx()))
-                drawLine(
-                    color = accent,
-                    start = Offset(c.x, c.y - r * 0.7f),
-                    end = Offset(c.x, c.y + r * 0.75f),
-                    strokeWidth = 2.dp.toPx()
-                )
-                drawLine(
-                    color = accent,
-                    start = Offset(c.x, c.y + r * 0.75f),
-                    end = Offset(c.x + r * 0.18f, c.y + r * 0.98f),
-                    strokeWidth = 2.5.dp.toPx(),
-                    cap = StrokeCap.Round
-                )
-            }
+/** A arte da estação com o título por cima, na faixa escura de baixo. */
+@Composable
+fun SeasonBanner(theme: SeasonTheme, eyebrow: String, title: String, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
+        Canvas(Modifier.fillMaxSize()) { drawSeasonBanner(theme) }
+        Column(
+            Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Naval.bg.copy(alpha = 0.85f))))
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+            HudLabel(eyebrow, theme.accent)
+            Text(title.uppercase(), style = NavalType.title, color = Naval.ink)
+        }
+    }
+}
 
-            "inverno" -> {
-                // floco de neve: três eixos cruzados, cada um com duas farpas
-                repeat(3) { i ->
-                    val a = (i / 3f) * kotlin.math.PI.toFloat()
-                    val dx = r * cos(a)
-                    val dy = r * sin(a)
-                    drawLine(accent, Offset(c.x - dx, c.y - dy), Offset(c.x + dx, c.y + dy), 2.5.dp.toPx(), StrokeCap.Round)
-                    listOf(0.35f, 0.7f).forEach { t ->
-                        val bx = c.x + dx * t
-                        val by = c.y + dy * t
-                        val branch = r * 0.22f
-                        val a1 = a + kotlin.math.PI.toFloat() / 4f
-                        val a2 = a - kotlin.math.PI.toFloat() / 4f
-                        drawLine(accent, Offset(bx, by), Offset(bx + branch * cos(a1), by + branch * sin(a1)), 2.dp.toPx(), StrokeCap.Round)
-                        drawLine(accent, Offset(bx, by), Offset(bx + branch * cos(a2), by + branch * sin(a2)), 2.dp.toPx(), StrokeCap.Round)
-                    }
-                }
-            }
+/** Uma linha de benefício: marcador na cor da estação e o texto. */
+@Composable
+private fun Perk(text: String, color: Color) {
+    Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(7.dp).background(color))
+        Spacer(Modifier.width(8.dp))
+        Text(text, style = NavalType.body, color = Naval.ink)
+    }
+}
 
-            else -> {
-                // primavera: broto — caule com duas folhas e uma flor de 5 pétalas no topo
-                drawLine(accent, Offset(c.x, c.y + r), Offset(c.x, c.y - r * 0.15f), 3.dp.toPx(), StrokeCap.Round)
-                listOf(-1f, 1f).forEach { side ->
-                    val leaf = androidx.compose.ui.graphics.Path().apply {
-                        moveTo(c.x, c.y + r * 0.25f)
-                        quadraticTo(c.x + side * r * 0.6f, c.y + r * 0.05f, c.x, c.y - r * 0.05f)
-                        close()
-                    }
-                    drawPath(leaf, color = accent, style = Stroke(width = 2.5.dp.toPx()))
-                }
-                repeat(5) { i ->
-                    val a = (i / 5f) * 2f * kotlin.math.PI.toFloat()
-                    val petal = Offset(c.x + r * 0.4f * cos(a), c.y - r * 0.55f + r * 0.4f * sin(a))
-                    drawCircle(color = accent, radius = r * 0.22f, center = petal)
-                }
-                drawCircle(color = Naval.amberInk, radius = r * 0.16f, center = Offset(c.x, c.y - r * 0.55f))
+/** Prévia do encouraçado com a camuflagem exclusiva da estação. */
+@Composable
+private fun SeasonCamoPreview(paint: Paint) {
+    Canvas(Modifier.fillMaxWidth().height(46.dp).background(Naval.abyss).padding(horizontal = 10.dp)) {
+        val cell = minOf(size.width * 0.9f / 4f, size.height * 1.15f)
+        drawShip(
+            type = ShipClass.BATTLESHIP,
+            center = Offset(size.width / 2f, size.height / 2f),
+            lengthPx = cell * 4,
+            thicknessPx = cell,
+            vertical = false,
+            skin = Skin(paint, FleetLine.STANDARD)
+        )
+    }
+}
+
+@Composable
+private fun PremiumOffer(
+    pass: SeasonPassStatus,
+    theme: SeasonTheme,
+    price: Int,
+    priceNote: String?,
+    cta: String,
+    busy: Boolean,
+    onBuy: () -> Unit
+) {
+    val paint = Paint.ofSeason(pass.seasonKey)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Naval.surface)
+            .border(2.dp, theme.accent)
+            .padding(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(t(K.SEASON_PREMIUM_NAME).uppercase(), style = NavalType.mono, color = theme.accent, modifier = Modifier.weight(1f))
+            Box(Modifier.background(theme.accent).padding(horizontal = 6.dp, vertical = 2.dp)) {
+                Text(t(K.SEASON_RECOMMENDED).uppercase(), style = NavalType.monoSmall, color = Naval.amberInk)
             }
         }
+        Gap(8)
+        paint?.let {
+            SeasonCamoPreview(it)
+            Gap(6)
+            Perk(t(K.SEASON_PERK_CAMO, it.name), theme.accent)
+        }
+        Perk(t(K.SEASON_PERK_DOUBLOONS, formatThousands(pass.passDoubloons)), theme.accent)
+        Perk(t(K.SEASON_PERK_MILES, pass.passMiles), theme.accent)
+        Perk(t(K.SEASON_PERK_RANKED), theme.accent)
+        Gap(10)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                CoinLabel(formatThousands(price), style = NavalType.title, iconSize = 20.dp)
+                priceNote?.let { HudLabel(it, Naval.muted) }
+            }
+            Box(
+                Modifier
+                    .background(if (busy) Naval.surface3 else theme.accent)
+                    .clickable(enabled = !busy, onClick = onBuy)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Text(cta.uppercase(), style = NavalType.mono, color = Naval.amberInk)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FreeOffer(busy: Boolean, onJoin: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Naval.surface)
+            .border(1.dp, Naval.line)
+            .padding(12.dp)
+    ) {
+        Text(t(K.SEASON_FREE_NAME).uppercase(), style = NavalType.mono, color = Naval.ink)
+        Gap(6)
+        Text(t(K.SEASON_FREE_DESC), style = NavalType.body, color = Naval.inkSoft)
+        Gap(10)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(t(K.SEASON_FREE_PRICE).uppercase(), style = NavalType.title, color = Naval.inkSoft, modifier = Modifier.weight(1f))
+            Box(
+                Modifier
+                    .border(1.dp, Naval.line)
+                    .clickable(enabled = !busy, onClick = onJoin)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Text(t(K.SEASON_FREE_CTA).uppercase(), style = NavalType.mono, color = Naval.ink)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PremiumOwned(pass: SeasonPassStatus, theme: SeasonTheme) {
+    Text(t(K.SEASON_PREMIUM_OWNED), style = NavalType.body, color = Naval.ink)
+    Gap(10)
+    Paint.ofSeason(pass.seasonKey)?.let {
+        SeasonCamoPreview(it)
+        Gap(6)
+        Perk(t(K.SEASON_PERK_CAMO, it.name), theme.accent)
+    }
+    Perk(t(K.SEASON_PERK_DOUBLOONS, formatThousands(pass.passDoubloons)), theme.accent)
+    Perk(t(K.SEASON_PERK_MILES, pass.passMiles), theme.accent)
+    Perk(t(K.SEASON_PERK_RANKED), theme.accent)
+}
+
+/** Tocou em Ranqueada sem ter aderido: explica a regra e leva ao banner do passe. */
+@Composable
+fun RankedLockedPrompt(state: AppState) {
+    if (!state.rankedLockedPrompt) return
+    val pass = state.seasonPass
+    val theme = SeasonTheme.ofKey(pass?.seasonKey ?: "")
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Naval.bg.copy(alpha = 0.86f))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { state.rankedLockedPrompt = false }
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(Naval.surface2)
+                .border(1.dp, theme.accent)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Canvas(Modifier.size(48.dp)) { drawSeasonIcon(theme, Offset(size.width / 2f, size.height / 2f), size.minDimension) }
+            Gap(10)
+            Text(t(K.SEASON_RANKED_LOCKED_TITLE), style = NavalType.title, color = Naval.ink, textAlign = TextAlign.Center)
+            Gap(8)
+            Text(
+                t(K.SEASON_RANKED_LOCKED_BODY, pass?.let { seasonTitle(it.seasonKey) } ?: ""),
+                style = NavalType.body,
+                color = Naval.inkSoft,
+                textAlign = TextAlign.Center
+            )
+            Gap(16)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecondaryButton(t(K.SEASON_NOT_NOW), modifier = Modifier.weight(1f)) { state.rankedLockedPrompt = false }
+                PrimaryButton(t(K.SEASON_SEE_PASS), modifier = Modifier.weight(1f)) { state.openSeasonFromRanked() }
+            }
+        }
+    }
+}
+
+/**
+ * Fim de temporada: posição, números e o prêmio já creditado. Os 3 primeiros ganham
+ * título e cor de pódio (ouro, prata, bronze) e o prêmio especial.
+ */
+@Composable
+fun SeasonEndPopup(state: AppState) {
+    val end = state.seasonEnd ?: return
+    if (state.match != null) return
+    val theme = SeasonTheme.ofKey(end.seasonKey)
+    val podium = podiumColor(end.position)
+
+    Overlay(onDismiss = { state.ackSeasonEnd() }) {
+        SeasonBanner(theme = theme, eyebrow = t(K.SEASON_END_EYEBROW), title = seasonTitle(end.seasonKey))
+        Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            if (podium != null) {
+                Canvas(Modifier.size(56.dp)) {
+                    val c = Offset(size.width / 2f, size.height / 2f)
+                    drawCircle(podium, radius = size.minDimension / 2f, center = c)
+                    drawCircle(Naval.amberInk.copy(alpha = 0.35f), radius = size.minDimension * 0.36f, center = c)
+                }
+                Gap(6)
+                Text(t(podiumTitle(end.position)).uppercase(), style = NavalType.title, color = podium)
+            }
+            Text(
+                t(K.SEASON_END_POSITION, "#${end.position}", end.totalPlayers),
+                style = NavalType.display,
+                color = Naval.ink
+            )
+            Gap(4)
+            HudLabel(t(K.SEASON_END_STATS, end.points, end.wins, end.matches), Naval.muted)
+            Gap(14)
+            HudLabel(t(K.SEASON_END_REWARD), Naval.muted)
+            Gap(6)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CoinLabel("+${formatThousands(end.doubloons)}", style = NavalType.title, iconSize = 22.dp)
+                Spacer(Modifier.width(18.dp))
+                MilesLabel("+${end.miles}", color = Naval.amberStrong, style = NavalType.title, iconSize = 22.dp)
+            }
+            if (podium != null) {
+                Gap(8)
+                Text(t(K.SEASON_END_PODIUM_NOTE), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+            }
+            Gap(16)
+            PrimaryButton(t(K.SEASON_END_COLLECT)) { state.ackSeasonEnd() }
+        }
+    }
+}
+
+private fun podiumColor(position: Int): Color? = when (position) {
+    1 -> Color(0xFFF2C14E)
+    2 -> Color(0xFFC9D2D9)
+    3 -> Color(0xFFCD8A4E)
+    else -> null
+}
+
+private fun podiumTitle(position: Int): K = when (position) {
+    1 -> K.SEASON_END_FIRST
+    2 -> K.SEASON_END_SECOND
+    else -> K.SEASON_END_THIRD
+}
+
+/**
+ * Chip do topo do menu: "TEMPORADA DE PRIMAVERA" com o ícone da estação e o passe
+ * do comandante. Tocar abre o banner — passe atual, upgrade ou adesão.
+ */
+@Composable
+fun SeasonChip(pass: SeasonPassStatus, onClick: () -> Unit) {
+    val theme = SeasonTheme.ofKey(pass.seasonKey)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Naval.surface)
+            .border(1.dp, theme.accent)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Canvas(Modifier.size(20.dp)) { drawSeasonIcon(theme, Offset(size.width / 2f, size.height / 2f), size.minDimension) }
+        Spacer(Modifier.width(8.dp))
+        Text(seasonTitle(pass.seasonKey).uppercase(), style = NavalType.mono, color = theme.accent, modifier = Modifier.weight(1f))
+        Text(
+            when {
+                pass.premium -> t(K.SEASON_CHIP_PREMIUM)
+                pass.joined -> t(K.SEASON_CHIP_FREE)
+                else -> t(K.SEASON_CHIP_JOIN)
+            }.uppercase(),
+            style = NavalType.monoSmall,
+            color = if (pass.joined) Naval.inkSoft else theme.accent
+        )
     }
 }

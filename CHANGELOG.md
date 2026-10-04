@@ -9,6 +9,31 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.46.0] — 2026-10-04 · Passe de temporada
+
+App 0.15.0 (versionCode 42). **Exige rodar `supabase/season.sql`** (novo) e `supabase/online.sql`
+de novo (a ranqueada passa a exigir adesão à temporada).
+
+### Adicionado
+- **Passe de temporada.** Quatro temporadas por ano, uma por estação. Para jogar ranqueada é
+  preciso aderir à temporada:
+  - **Passe Gratuito** — libera a ranqueada e o placar, sem recompensas;
+  - **Passe do Almirante** (1.200 dobrões na adesão) — camuflagem exclusiva da estação
+    (Ipê de Primavera, Maré Tropical, Folha de Outono, Banquisa), +500 dobrões e +20 milhas.
+  Quem entrou de graça pode fazer **upgrade** depois por 1.600 dobrões.
+- **Banner ilustrado por estação** (marinheiros no convés com roupa da estação), desenhado
+  em código (`design/SeasonArt.kt`), no convite da temporada, no passe e no fim de temporada.
+- **"Temporada de Primavera" no topo do menu**, com o passe do comandante; tocar abre o banner
+  com o passe, o upgrade ou a adesão. O placar também mostra "Temporada de …".
+- **Ranqueada sem adesão avisa** e oferece o passe, em vez de ficar apagada.
+- **Fim de temporada:** popup com posição, pontos e prêmio. Pódio com prêmio especial —
+  1º 3.000 dobrões + 30 milhas, 2º 2.000 + 20, 3º 1.000 + 10 — e 150 dobrões + 5 milhas
+  para quem jogou. **Temporada nova** abre o convite com o banner da estação.
+- Valores de passe e prêmios em `app_config`, ajustáveis sem versão nova. Quem já tinha
+  jogado ranqueada nesta temporada entrou automaticamente no Passe Gratuito.
+
+---
+
 ## [0.45.0] — 2026-10-04 · Interruptor de efeitos sonoros
 
 App 0.14.1 (versionCode 41).
