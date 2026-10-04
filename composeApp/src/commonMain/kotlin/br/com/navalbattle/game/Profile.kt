@@ -221,8 +221,12 @@ class Profile(private val prefs: Prefs) {
         prefs.putInt(K_MUSIC, if (on) 1 else 0)
     }
 
-    /** Preferência de efeitos sonoros (tiro, acerto, alarme) — separada da trilha. */
-    var sfxOn: Boolean = prefs.getInt(K_SFX, 1) == 1
+    /**
+     * Preferência de efeitos sonoros (tiro, acerto, alarme) — separada da trilha. É
+     * estado observável: sem isso o interruptor dos Ajustes não redesenhava ao tocar
+     * (só mudava ao sair e voltar), embora a preferência já fosse gravada.
+     */
+    var sfxOn by mutableStateOf(prefs.getInt(K_SFX, 1) == 1)
         private set
 
     fun setSfx(on: Boolean) {

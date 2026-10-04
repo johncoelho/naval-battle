@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.45.0] — 2026-10-04 · Interruptor de efeitos sonoros
+
+App 0.14.1 (versionCode 41).
+
+### Corrigido
+- **O interruptor "Efeitos sonoros" dos Ajustes não mudava ao tocar** — só aparecia
+  trocado depois de sair e voltar à tela (a preferência era gravada, mas `Profile.sfxOn`
+  não era estado observável). Relatado pelo feedback do app.
+
+---
+
 ## [0.44.0] — 2026-10-04 · Dobrões, milhas náuticas, online completo e ranking justo
 
 App 0.14.0 (versionCode 40). **Exige rodar `supabase/online.sql` de novo e
