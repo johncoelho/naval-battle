@@ -31,6 +31,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
@@ -339,11 +342,7 @@ fun SeasonEndPopup(state: AppState) {
         SeasonBanner(theme = theme, eyebrow = t(K.SEASON_END_EYEBROW), title = seasonTitle(end.seasonKey))
         Column(Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             if (podium != null) {
-                Canvas(Modifier.size(56.dp)) {
-                    val c = Offset(size.width / 2f, size.height / 2f)
-                    drawCircle(podium, radius = size.minDimension / 2f, center = c)
-                    drawCircle(Naval.amberInk.copy(alpha = 0.35f), radius = size.minDimension * 0.36f, center = c)
-                }
+                Canvas(Modifier.size(72.dp)) { drawPodiumMedal(podium, theme.accent) }
                 Gap(6)
                 Text(t(podiumTitle(end.position)).uppercase(), style = NavalType.title, color = podium)
             }
@@ -370,6 +369,53 @@ fun SeasonEndPopup(state: AppState) {
             PrimaryButton(t(K.SEASON_END_COLLECT)) { state.ackSeasonEnd() }
         }
     }
+}
+
+/**
+ * Medalha de pódio: duas pontas de fita na cor da estação, disco de metal (ouro,
+ * prata ou bronze) com brilho, aro cunhado e uma estrela no centro.
+ */
+private fun DrawScope.drawPodiumMedal(metal: Color, ribbon: Color) {
+    val w = size.width
+    val h = size.height
+    val r = w * 0.3f
+    val c = Offset(w / 2f, h - r - h * 0.04f)
+    // fita em V, atrás do disco
+    listOf(-1f, 1f).forEach { side ->
+        val p = Path().apply {
+            moveTo(w / 2f + side * w * 0.06f, c.y - r * 0.4f)
+            lineTo(w / 2f + side * w * 0.34f, 0f)
+            lineTo(w / 2f + side * w * 0.16f, 0f)
+            lineTo(w / 2f - side * w * 0.06f, c.y - r * 0.6f)
+            close()
+        }
+        drawPath(p, ribbon)
+        drawPath(p, Color.Black.copy(alpha = 0.25f), style = Stroke(width = w * 0.012f))
+    }
+    // disco com brilho no alto à esquerda
+    drawCircle(metal.copy(red = metal.red * 0.6f, green = metal.green * 0.6f, blue = metal.blue * 0.6f), radius = r, center = c)
+    drawCircle(
+        Brush.radialGradient(
+            listOf(Color.White.copy(alpha = 0.85f), metal, metal.copy(red = metal.red * 0.75f, green = metal.green * 0.75f, blue = metal.blue * 0.75f)),
+            center = Offset(c.x - r * 0.35f, c.y - r * 0.4f),
+            radius = r * 1.5f
+        ),
+        radius = r * 0.88f,
+        center = c
+    )
+    drawCircle(Color.Black.copy(alpha = 0.22f), radius = r * 0.66f, center = c, style = Stroke(width = r * 0.06f))
+    // estrela de cinco pontas
+    val star = Path().apply {
+        for (i in 0 until 10) {
+            val a = -kotlin.math.PI.toFloat() / 2f + i * kotlin.math.PI.toFloat() / 5f
+            val rr = if (i % 2 == 0) r * 0.46f else r * 0.2f
+            val pt = Offset(c.x + kotlin.math.cos(a) * rr, c.y + kotlin.math.sin(a) * rr)
+            if (i == 0) moveTo(pt.x, pt.y) else lineTo(pt.x, pt.y)
+        }
+        close()
+    }
+    drawPath(star, Color.White.copy(alpha = 0.9f))
+    drawPath(star, Color.Black.copy(alpha = 0.25f), style = Stroke(width = r * 0.04f))
 }
 
 private fun podiumColor(position: Int): Color? = when (position) {
