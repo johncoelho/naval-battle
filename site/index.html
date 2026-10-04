@@ -116,11 +116,8 @@
   .card h3{margin-top:10px}
   .card p{margin:0;font-size:14.5px}
 
-  .ships{display:flex;flex-direction:column;gap:14px;border:1px solid var(--line);
-         background:linear-gradient(180deg,var(--abyss2),var(--abyss));padding:26px 20px}
-  .ships svg{width:100%;height:auto;display:block}
-  .swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-  .sw{width:38px;height:38px;border:1px solid var(--line)}
+  .fleet-captures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;max-width:760px}
+  @media (max-width:640px){.fleet-captures{grid-template-columns:1fr;max-width:380px}}
 
   .steps{counter-reset:s;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
   .step{border-left:2px solid var(--green);padding:4px 0 4px 16px}
@@ -287,48 +284,17 @@
   <div class="wrap">
     <div class="sechead">
       <h2>Sua frota, do seu jeito</h2>
-      <p>Na Loja do Arsenal, os dobrões conquistados em combate compram a <b style="color:var(--ink)">linha
-         de casco</b>, que muda a silhueta das cinco embarcações, e a
-         <b style="color:var(--ink)">camuflagem</b>, que muda pintura e padrão. O Estaleiro combina as peças que você já tem. A arte das embarcações é desenhada em vetor.</p>
+      <p>Na Loja do Arsenal, escolha linhas de casco e camuflagens para personalizar as cinco embarcações. No Estaleiro, combine as peças que já fazem parte da sua coleção.</p>
     </div>
-
-    <div class="ships">
-      <svg viewBox="0 0 250 50" aria-label="Porta-aviões">
-        <path d="M10 25C10 15 17 10 27 10L196 10C222 10 242 17 247 25C242 33 222 40 196 40L27 40C17 40 10 35 10 25Z" fill="#2C3624" stroke="#12180E" stroke-width="1.4"/>
-        <path d="M22 15L198 15C214 15 228 19 234 25C228 31 214 35 198 35L22 35Z" fill="#46583A"/>
-        <g fill="#8ED17A" opacity=".85">
-          <rect x="34" y="24.2" width="9" height="1.8"/><rect x="50" y="24.2" width="9" height="1.8"/>
-          <rect x="66" y="24.2" width="9" height="1.8"/><rect x="82" y="24.2" width="9" height="1.8"/>
-          <rect x="98" y="24.2" width="9" height="1.8"/><rect x="114" y="24.2" width="9" height="1.8"/>
-          <rect x="130" y="24.2" width="9" height="1.8"/><rect x="146" y="24.2" width="9" height="1.8"/>
-        </g>
-        <rect x="176" y="7" width="30" height="9" fill="#1A2115"/>
-        <rect x="182" y="3.5" width="8" height="4" fill="#8ED17A"/>
-      </svg>
-      <svg viewBox="0 0 200 50" aria-label="Encouraçado">
-        <path d="M8 25C8 16 14 11 23 11L158 11C180 11 194 18 198 25C194 32 180 39 158 39L23 39C14 39 8 34 8 25Z" fill="#2C3624" stroke="#12180E" stroke-width="1.4"/>
-        <path d="M20 16L156 16C172 16 184 20 189 25C184 30 172 34 156 34L20 34Z" fill="#46583A"/>
-        <circle cx="44" cy="25" r="8" fill="#1A2115"/><rect x="50" y="23.2" width="18" height="3.6" fill="#1A2115"/>
-        <circle cx="150" cy="25" r="7.5" fill="#1A2115"/><rect x="130" y="23.4" width="17" height="3.2" fill="#1A2115"/>
-        <rect x="96" y="16" width="26" height="18" fill="#1A2115"/><rect x="102" y="19" width="14" height="12" fill="#46583A"/>
-      </svg>
-      <svg viewBox="0 0 100 50" aria-label="Destróier">
-        <path d="M6 25C6 18 10 14 18 14L74 14C90 14 96 19.5 98.5 25C96 30.5 90 36 74 36L18 36C10 36 6 32 6 25Z" fill="#2C3624" stroke="#12180E" stroke-width="1.2"/>
-        <path d="M15 18L72 18C84 18 90 21.5 93 25C90 28.5 84 32 72 32L15 32Z" fill="#46583A"/>
-        <circle cx="28" cy="25" r="5.6" fill="#1A2115"/><rect x="32" y="23.7" width="12" height="2.6" fill="#1A2115"/>
-        <rect x="50" y="19" width="16" height="12" fill="#1A2115"/><rect x="54" y="21.5" width="8" height="7" fill="#46583A"/>
-      </svg>
-      <div class="swatches" aria-label="Camuflagens">
-        <span class="sw" style="background:#2C3624" title="Padrão Naval"></span>
-        <span class="sw" style="background:#123A1D" title="Frota Brasil"></span>
-        <span class="sw" style="background:#393F44" title="Frota Japão"></span>
-        <span class="sw" style="background:#2B3740" title="Frota EUA"></span>
-        <span class="sw" style="background:#1E4436" title="Frota Portugal"></span>
-        <span class="sw" style="background:#59626B" title="Camuflagem Ártica"></span>
-        <span class="sw" style="background:repeating-linear-gradient(115deg,#2A3138 0 6px,#B9C3CB 6px 12px)" title="Dazzle 1918"></span>
-        <span class="sw" style="background:#2A1F2E" title="Corsária"></span>
-        <span class="sw" style="background:#121412" title="Furtiva"></span>
-      </div>
+    <div class="fleet-captures">
+      <figure class="capture">
+        <img src="media/screenshot-02-estaleiro.png" width="1080" height="1920" loading="lazy" alt="Estaleiro do jogo com frota, linhas de casco e camuflagens">
+        <figcaption><b>Estaleiro</b><span>Combine casco e camuflagem da frota.</span></figcaption>
+      </figure>
+      <figure class="capture">
+        <img src="media/screenshot-03-loja-cascos.png" width="1080" height="1920" loading="lazy" alt="Loja do Arsenal do jogo com linhas de casco disponíveis">
+        <figcaption><b>Loja do Arsenal</b><span>Conheça as linhas de casco disponíveis.</span></figcaption>
+      </figure>
     </div>
   </div>
 </section>
