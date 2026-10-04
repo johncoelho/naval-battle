@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Naval Battle — batalha naval tática para Android</title>
-<meta name="description" content="Batalha naval tática para Android: modo clássico e tático, dois jogadores no mesmo aparelho, partida na rede local, carreira com patentes e estaleiro. Download direto do APK.">
+<title>Naval Battle — batalha naval tática para Android e iOS</title>
+<meta name="description" content="Naval Battle: batalha naval clássica e tática para Android e iOS em teste. Jogue contra IA, no mesmo aparelho, em rede local ou online, com ranqueadas e temporadas.">
 <meta name="theme-color" content="#080B07">
 
 <meta property="og:title" content="Naval Battle">
-<meta property="og:description" content="Batalha naval tática para Android. Clássico, tático, dois jogadores e rede local.">
+<meta property="og:description" content="Batalha naval clássica e tática. Jogue contra IA, localmente ou online; dispute temporadas e personalize sua frota. Android em teste fechado e iOS em beta.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://johncoelho.github.io/naval-battle/">
 
@@ -160,7 +160,8 @@
     </div>
     <nav class="navlinks">
       <a href="#jogo">O jogo</a>
-      <a href="#rede">Rede local</a>
+      <a href="#formas">Como jogar</a>
+      <a href="#temporadas">Temporadas</a>
       <a href="#frota">Frota</a>
       <a href="#baixar">Baixar</a>
       <a href="https://github.com/johncoelho/naval-battle">GitHub</a>
@@ -187,6 +188,7 @@
         <span class="tag">Tático</span>
         <span class="tag">Dois no mesmo aparelho</span>
         <span class="tag">Rede local</span>
+        <span class="tag">Online · casual e ranqueada</span>
         <span class="tag">PT · EN · ES</span>
       </div>
 
@@ -197,7 +199,7 @@
         </a>
         <a class="btn btn-ghost" href="#baixar">↓ Baixar para iPhone</a>
       </div>
-      <p class="meta" id="release-meta">Versão de teste · sempre a última compilação</p>
+      <p class="meta" id="release-meta">Android em teste fechado · iOS em beta</p>
     </div>
 
     <!-- maquete da tela de batalha, desenhada em HTML como no jogo -->
@@ -237,8 +239,8 @@
   <div class="wrap">
     <div class="sechead">
       <h2>Dois modos, cinco embarcações</h2>
-      <p>Acertou, atira de novo — a regra clássica da batalha naval, nos dois modos. No tático
-         cada classe entrega uma habilidade com recarga própria — e a partida vira decisão, não sorte.</p>
+      <p>Acertou, atira de novo — a regra clássica da batalha naval, nos dois modos. No Tático, quatro classes têm habilidades com recarga própria. O Submarino recebe tiros
+         normalmente; a escolha da habilidade muda a estratégia de cada turno.</p>
     </div>
     <div class="grid">
       <div class="card"><div class="k">Porta-aviões · 5</div><h3>Reconhecimento aéreo</h3>
@@ -247,23 +249,27 @@
         <p>Dois disparos no mesmo turno.</p></div>
       <div class="card"><div class="k">Cruzador · 3</div><h3>Ping de sonar</h3>
         <p>Varre um setor 3×3 e diz se há metal ali.</p></div>
-      <div class="card"><div class="k">Submarino · 3</div><h3>Imersão</h3>
-        <p>Absorve o primeiro acerto — uma vez só.</p></div>
+      <div class="card"><div class="k">Submarino · 3</div><h3>Posicionamento é defesa</h3>
+        <p>Não tem habilidade própria e recebe tiros normalmente.</p></div>
       <div class="card"><div class="k">Destróier · 2</div><h3>Cortina de fumaça</h3>
         <p>Bloqueia a próxima varredura do inimigo.</p></div>
       <div class="card"><div class="k">Carreira</div><h3>Patentes e dobrões</h3>
-        <p>De Recruta a Almirante. Cada partida rende XP e dobrões para o estaleiro.</p></div>
+        <p>De Recruta a Almirante. Partidas contra IA e online rendem XP e dobrões; o Estaleiro combina itens conquistados.</p></div>
     </div>
   </div>
 </section>
 
-<section id="rede">
+<section id="formas">
   <div class="wrap">
     <div class="sechead">
-      <h2>Jogue com quem está do seu lado</h2>
-      <p>Dois jeitos de enfrentar gente de verdade, sem depender de internet nem de servidor.</p>
+      <h2>Escolha como entrar em combate</h2>
+      <p>Enfrente a IA, divida um aparelho, conecte dois celulares na mesma rede ou jogue online com uma conta.</p>
     </div>
     <div class="grid" style="margin-bottom:30px">
+      <div class="card">
+        <div class="k">Partida rápida</div><h3>Contra a IA</h3>
+        <p>Jogue Clássico ou Tático contra uma IA que procura contatos e persegue acertos. As partidas avançam sua carreira.</p>
+      </div>
       <div class="card">
         <div class="k">Mesmo aparelho</div><h3>Passa e joga</h3>
         <p>Cada comandante posiciona a frota em sigilo e a batalha corre numa tela só.
@@ -277,7 +283,12 @@
            batalha dá para pedir revanche na mesma ligação, e durante o jogo dá para
            mandar emoji e grito de guerra pelo rádio.</p>
       </div>
+      <div class="card">
+        <div class="k">Online · exige conta</div><h3>Amigos, casual e ranqueada</h3>
+        <p>Crie uma sala para um amigo ou encontre um adversário na partida rápida. No casual, jogue sem pontuação de ranking; na ranqueada, dispute pontos e posição na temporada.</p>
+      </div>
     </div>
+    <h3>Na rede local</h3>
     <div class="steps">
       <div class="step"><b>Passo 1</b><p>Um comandante toca em <b style="color:var(--ink)">criar partida</b>.</p></div>
       <div class="step"><b>Passo 2</b><p>O outro toca em <b style="color:var(--ink)">procurar</b> e escolhe o nome que aparecer.</p></div>
@@ -286,14 +297,32 @@
   </div>
 </section>
 
+<section id="temporadas">
+  <div class="wrap">
+    <div class="sechead">
+      <h2>Carreira, ranking e temporadas</h2>
+      <p>Ganhe XP e dobrões nas partidas contra IA e online, suba de Recruta a Almirante e acompanhe seu desempenho no Perfil. Partidas ranqueadas contam para o placar; as casuais não alteram a posição.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="k">Ranqueada</div><h3>Dispute o placar</h3>
+        <p>Enfrente jogadores pela internet e acompanhe pontos, posição e troféus da temporada. É preciso entrar na temporada antes de jogar ranqueada.</p></div>
+      <div class="card"><div class="k">Passe de temporada</div><h3>Quatro estações por ano</h3>
+        <p>O Passe Gratuito libera a competição. O Passe de Temporada usa dobrões e oferece camuflagem da estação, dobrões e milhas; no fim, há prêmios conforme a colocação.</p></div>
+      <div class="card"><div class="k">Economia de teste</div><h3>Dobrões e milhas náuticas</h3>
+        <p>Partidas online gastam milhas, com recarga diária. A loja de dobrões no beta simula compras: não cobra dinheiro real. Compras reais ainda não estão disponíveis.</p></div>
+      <div class="card"><div class="k">Seu feedback</div><h3>Ajude a melhorar</h3>
+        <p>Envie bugs ou sugestões pelo jogo. Feedback aprovado pode render dobrões ou cargas de habilidade, além da condecoração de Colaborador.</p></div>
+    </div>
+  </div>
+</section>
+
 <section id="frota">
   <div class="wrap">
     <div class="sechead">
       <h2>Sua frota, do seu jeito</h2>
-      <p>Duas coisas se compram com os dobrões ganhos em combate: a <b style="color:var(--ink)">linha
+      <p>Na Loja do Arsenal, os dobrões conquistados em combate compram a <b style="color:var(--ink)">linha
          de casco</b>, que muda a silhueta das cinco embarcações, e a
-         <b style="color:var(--ink)">camuflagem</b>, que muda pintura e padrão. Tudo é desenhado
-         em vetor — não há uma única imagem no aplicativo.</p>
+         <b style="color:var(--ink)">camuflagem</b>, que muda pintura e padrão. O Estaleiro combina as peças que você já tem. A arte das embarcações é desenhada em vetor.</p>
     </div>
 
     <div class="ships">
@@ -341,8 +370,7 @@
   <div class="wrap">
     <div class="sechead">
       <h2>Baixar</h2>
-      <p>Os dois links apontam sempre para a compilação mais recente — a cada versão nova,
-         o mesmo endereço passa a servir o build atualizado.</p>
+      <p>O Android está em teste fechado na Play Store, com APK de teste direto. O iPhone tem um .ipa de beta para instalação manual. Os arquivos diretos são atualizados na release do GitHub.</p>
     </div>
 
     <div class="grid">
@@ -377,8 +405,7 @@
           <li>Instale por cima da versão anterior — o progresso é preservado.</li>
         </ol>
         <p style="margin:14px 0 0;font-size:13.5px;color:var(--muted)">
-          Android 8.0 ou superior. Disponível em teste fechado na Play Store (Alpha) e, sem convite
-          nenhum, como APK de depuração direto — os dois sempre na versão mais recente.
+          Android 8.0 ou superior. O APK direto é uma compilação de depuração para testes; a versão distribuída pela Play Store segue o canal fechado.
         </p>
       </div>
 
@@ -436,8 +463,7 @@
     </div>
     <div>
       <div class="foothead">Áudio</div>
-      <p style="margin:0">Efeitos e trilha vêm de gravações em domínio público e CC0 do
-         Wikimedia Commons, com os créditos no
+      <p style="margin:0">Efeitos usam gravações em domínio público e CC0; a trilha de combate atual é sintetizada no projeto. Créditos no
          <a href="https://github.com/johncoelho/naval-battle#créditos-de-áudio">README</a>.</p>
     </div>
   </div>
@@ -472,7 +498,7 @@
       androidAlvos.forEach(el => { if (el && apk) el.innerHTML = 'Última compilação: <b>' + formata(apk.updated_at) + '</b>' + detalhe(apk); });
       iosAlvos.forEach(el => { if (el && ipa) el.innerHTML = 'Última compilação: <b>' + formata(ipa.updated_at) + '</b>' + detalhe(ipa); });
     } catch (e) {
-      todos.forEach(el => { if (el) el.textContent = 'Versão de teste · sempre a última compilação'; });
+      todos.forEach(el => { if (el) el.textContent = 'Versão de teste · consulte a release para conferir o build'; });
     }
   })();
 </script>
