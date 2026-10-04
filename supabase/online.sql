@@ -594,7 +594,7 @@ begin
   select c.season_key, c.name into szn, szn_label from public.current_season() c;
   season_name := szn_label;
 
-  -- ranqueada só para quem aderiu à temporada (passe gratuito ou do Almirante,
+  -- ranqueada só para quem aderiu à temporada (Passe Gratuito ou Passe de Temporada,
   -- ver supabase/season.sql) — o app já barra antes; aqui é a garantia
   if to_regclass('public.season_passes') is not null
      and not exists (select 1 from public.season_passes sp where sp.user_id = me and sp.season_key = szn) then

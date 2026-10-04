@@ -27,7 +27,7 @@ O APK sai em `composeApp/build/outputs/apk/debug/`.
 > temporário para uma pasta comum resolve:
 >
 > ```bash
-> export TMP='D:	mp' TEMP='D:	mp' JAVA_TOOL_OPTIONS='-Djdk.net.unixdomain.tmpdir=D:	mp -Djava.io.tmpdir=D:	mp'
+> export TMP='D:\tmp' TEMP='D:\tmp' JAVA_TOOL_OPTIONS='-Djdk.net.unixdomain.tmpdir=D:\tmp -Djava.io.tmpdir=D:\tmp'
 > ```
 >
 > O CI continua sendo a fonte de verdade do APK entregue.
@@ -122,18 +122,17 @@ sem versão nova. Feedback e badges vêm de [`supabase/feedback.sql`](../supabas
 
 **Projeto pausado.** No plano gratuito, o Supabase pausa o projeto depois de ~7 dias sem
 requisições — login, nuvem, ranqueada, Online e feedback param até alguém clicar em
-*Resume project* no painel (os dados ficam guardados). Para evitar, o
-[`tools/supabase-keepalive.ps1`](../tools/supabase-keepalive.ps1) faz uma leitura simples
-na API e registra o resultado em `%LOCALAPPDATA%
-aval-battle-keepalive.log`. Agendado no
-Windows a cada 2 dias (roda quando o PC estiver ligado; se perdeu o horário, roda ao ligar):
+*Resume project* no painel (os dados ficam guardados). Para evitar, o Agendador de Tarefas do
+Windows roda a tarefa **"NavalBattle Supabase keepalive"** todo dia às 12:00 (se o PC estava
+desligado, roda ao ligar): um `curl` com a chave anônima pública lê `app_config` na API e
+anota data e código HTTP em `tools/keepalive.log` (fora do git, via `.git/info/exclude`).
 
-```powershell
-$a = New-ScheduledTaskAction -Execute "powershell.exe" -Argument '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File "D:\sourcecodeatalha-naval	ools\supabase-keepalive.ps1"'
-$t = New-ScheduledTaskTrigger -Daily -DaysInterval 2 -At "12:00"
-$s = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-Register-ScheduledTask -TaskName "NavalBattle Supabase keepalive" -Action $a -Trigger $t -Settings $s
-```
+A ação da tarefa é o próprio comando, em `cmd.exe /c "..."` — um `.cmd` ou `.ps1` chamado pelo
+agendador nesta máquina roda e sai sem fazer nada, e gravar em `%LOCALAPPDATA%` também falha
+nesse contexto. Para checar: abrir o Agendador de Tarefas ou rodar
+`Get-ScheduledTaskInfo -TaskName "NavalBattle Supabase keepalive"` e ver `tools/keepalive.log`.
+Para um teste manual, [`tools/supabase-keepalive.ps1`](../tools/supabase-keepalive.ps1) faz a
+mesma leitura e anota em `%LOCALAPPDATA%\naval-battle-keepalive.log`.
 
 ## Feedback, badges e beta testers
 

@@ -158,7 +158,7 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
 - **Dobrões** (a moeda do jogo) compram na loja. Beta testers têm uma aba Dobrões com compra
   simulada (até R$ 50/dia, sem cobrança real); a Google Play Billing entra depois.
 - **Passe de temporada**: para jogar ranqueada é preciso aderir à temporada da estação —
-  Passe Gratuito (só participa) ou Passe do Almirante (dobrões: camuflagem exclusiva da
+  Passe Gratuito (só participa) ou Passe de Temporada (dobrões: camuflagem exclusiva da
   estação, dobrões e milhas bônus; upgrade depois sai mais caro). Fim de temporada premia
   o pódio. Regras em `supabase/season.sql`.
 - **Milhas náuticas**: 10 por dia; cada partida online custa 1, vitória ranqueada rende +5 e

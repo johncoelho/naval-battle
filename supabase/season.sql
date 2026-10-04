@@ -4,7 +4,7 @@
 -- Quatro temporadas por ano, uma por estação (hemisfério sul, ver current_season
 -- em online.sql). Para jogar ranqueada o comandante precisa ADERIR à temporada:
 --   · Passe Gratuito — só participa da ranqueada, sem recompensa extra;
---   · Passe do Almirante — pago em dobrões: camuflagem exclusiva da estação,
+--   · Passe de Temporada — pago em dobrões: camuflagem exclusiva da estação,
 --     dobrões extras e milhas náuticas bônus. Quem aderiu de graça pode fazer
 --     upgrade depois, por um preço maior que o da adesão.
 -- Os dobrões ainda vivem no aparelho: o app desconta o preço e entrega os dobrões

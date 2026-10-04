@@ -18,7 +18,7 @@ de novo (a ranqueada passa a exigir adesão à temporada).
 - **Passe de temporada.** Quatro temporadas por ano, uma por estação. Para jogar ranqueada é
   preciso aderir à temporada:
   - **Passe Gratuito** — libera a ranqueada e o placar, sem recompensas;
-  - **Passe do Almirante** (1.200 dobrões na adesão) — camuflagem exclusiva da estação
+  - **Passe de Temporada** (1.200 dobrões na adesão) — camuflagem exclusiva da estação
     (Ipê de Primavera, Maré Tropical, Folha de Outono, Banquisa), +500 dobrões e +20 milhas.
   Quem entrou de graça pode fazer **upgrade** depois por 1.600 dobrões.
 - **Banner ilustrado por estação** (marinheiros no convés com roupa da estação), desenhado

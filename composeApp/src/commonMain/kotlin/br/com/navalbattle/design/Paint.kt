@@ -45,7 +45,7 @@ data class Paint(
     val ensign: Ensign? = null,
     /**
      * Estação ("verao", "outono", "inverno", "primavera") das camuflagens exclusivas
-     * do Passe do Almirante — não se vendem na loja, só chegam pelo passe.
+     * do Passe de Temporada — não se vendem na loja, só chegam pelo passe.
      */
     val season: String? = null
 ) {

@@ -68,7 +68,7 @@ internal fun seasonNameKey(suffix: String) = when (suffix) {
  * Banner da temporada com as opções de passe. Abre sozinho quando o comandante
  * ainda não aderiu à temporada corrente (convite da temporada nova, com "Agora não")
  * e pelo chip "Temporada de…" do menu — aí mostra o passe atual e, para quem está
- * no gratuito, o upgrade para o do Almirante, mais caro que na adesão.
+ * no gratuito, o upgrade para o Passe de Temporada, mais caro que na adesão.
  */
 @Composable
 fun SeasonPopup(state: AppState) {

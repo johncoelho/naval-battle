@@ -610,7 +610,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /**
      * Verdadeiro enquanto o comandante não aderiu à temporada corrente — sem adesão
-     * (passe gratuito ou do Almirante) não há ranqueada.
+     * (Passe Gratuito ou Passe de Temporada) não há ranqueada.
      */
     val seasonPopupNeeded: Boolean
         get() = profile.signedIn && seasonPass?.joined == false
@@ -655,7 +655,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /**
-     * Adere à temporada (gratuito ou do Almirante) ou faz upgrade para o do Almirante.
+     * Adere à temporada (Passe Gratuito ou de Temporada) ou faz upgrade para o de Temporada.
      * O preço sai dos dobrões do aparelho antes de pedir ao servidor e volta se ele
      * recusar; o passe pago entrega os dobrões extras e a camuflagem da estação aqui,
      * e as milhas bônus no servidor.
