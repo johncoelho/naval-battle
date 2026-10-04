@@ -9,6 +9,57 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.44.0] — 2026-10-04 · Online completo: relatório, convites claros, partida rápida de qualquer tela e ranking justo
+
+App 0.14.0 (versionCode 40). **Exige rodar `supabase/online.sql` de novo** no SQL Editor
+(idempotente): troca o retorno de `record_ranked_result`, cria `find_quick_offer` e as
+colunas `winner_id`/`result_conflict` em `online_matches`.
+
+### Alterado
+- **Estaleiro mostra só o que o comandante já tem** (linhas de casco e pinturas), com um
+  cartão no fim de cada fileira que leva direto à aba certa da loja.
+- **Novos critérios da ranqueada** (`record_ranked_result`):
+  1. O **servidor decide o vencedor**: o primeiro relato da sala fixa `winner_id`; relato
+     posterior que discorde não muda nada — esse lado é pontuado pelo resultado gravado
+     e a sala fica marcada em `result_conflict`.
+  2. **Pontos estilo Elo** pela força do adversário (esperado = 1/(1+10^((adv−eu)/400)),
+     base = round(32 × (resultado − esperado))), com os pontos de temporada dos dois no
+     placar da temporada e o `ranked_rating` no geral.
+  3. **Bônus de desempenho só para o vencedor**, com teto de 30% do ganho
+     (precisão × 0,08 + navios restantes); vitória vale no mínimo +5. Derrota só tem um
+     alívio de até 3 pontos pela precisão, sem nunca virar ganho.
+  4. **Abandono é derrota cheia**: sair no meio de uma ranqueada ou estourar os 60s em
+     segundo plano agora relata derrota com acerto 0 (antes não relatava nada).
+  5. **Desempate** em `leaderboard_season`, `leaderboard_overall` e `my_rank`: pontos,
+     vitórias, aproveitamento, antiguidade.
+  A função agora devolve pontos da partida (base + bônus/alívio), pontos e posição na
+  temporada, partidas e vitórias — Android e iOS leem a linha nova. Reparo manual da
+  partida conhecida com resultado errado ("porteiro do john") deixado comentado no SQL.
+
+### Adicionado
+- **Convites dizem quem chama e o que é**: convite de amigo, balão de partida rápida e
+  "adversário encontrado" mostram o nome, um selo **Ranqueada** (âmbar) ou **Casual** e o
+  modo (Clássico/Tático). Quem entra numa sala joga no modo de quem a abriu.
+- **Relatório de combate completo também online** (casual e ranqueada): vitória/derrota do
+  ponto de vista de quem está no aparelho, carta com as duas frotas, comparativo lado a lado
+  (tiros, acertos, precisão, navios restantes e afundados, turnos), apuração do XP,
+  condecorações, carreira e a própria frota. **Online passa a render XP, medalhas e
+  créditos** como contra a IA, com anti-farm de 3 partidas recompensadas por dia contra o
+  mesmo adversário. Ranqueada ganha o bloco de ranking (pontos e composição, pontos e
+  posição na temporada antes → depois, retrospecto, "Ver ranking"); casual avisa que não
+  conta para o ranking.
+- **Aceitar partida rápida de qualquer tela**: em Ajustes → Online, "Disponível para
+  partida rápida" (desligado por padrão) com Casual / Ranqueada / Ambas. Um balão aparece
+  quando alguém abre sala esperando adversário, de qualquer modo, com Aceitar / Agora não.
+  Nunca aparece durante partida, com outro popup ou enquanto o próprio comandante procura.
+
+### Corrigido
+- Quem vencia porque o adversário saiu da sala não relatava a vitória ranqueada: o link
+  fechava antes da tela de resultado e levava junto o id da sala. Agora a sala é
+  fotografada ao conectar.
+
+---
+
 ## [0.43.0] — 2026-10-04 · Ranqueada: convidado reportava o resultado do anfitrião
 
 ### Corrigido

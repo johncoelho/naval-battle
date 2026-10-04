@@ -82,14 +82,52 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   por novidades a cada 1-2 segundos, sem precisar dos dois na mesma rede.
   - Convidar um amigo ou procurar partida rápida abre um popup com radar de espera
     e botão de cancelar; quem é convidado vê um popup de aceitar/recusar.
+  - Todo balão de partida (convite de amigo, partida rápida, adversário encontrado)
+    mostra quem chama, um selo **Ranqueada** (âmbar) ou **Casual** e o modo
+    (Clássico/Tático) — "Bina te convidou · Casual · Tático". Quem entra numa sala
+    joga no modo de quem a abriu (`OnlineLink.roomMode`).
+  - **Aceitar partida rápida de qualquer tela** — em Ajustes → Online, "Disponível
+    para partida rápida" (desligado por padrão, só com conta) e a escolha Casual /
+    Ranqueada / Ambas (ranqueada só depois de aceitar a temporada). Ligado, o mesmo
+    polling de 4s do convite procura salas de partida rápida esperando adversário, de
+    qualquer modo (`find_quick_offer` no banco, que ignora sala parada há mais de 10
+    minutos), e mostra um balão (`ui/QuickOfferBanner.kt`) com Aceitar / Agora não.
+    Nunca aparece durante partida, enquanto o próprio comandante procura/hospeda, com
+    outro popup na tela ou com o app em segundo plano. Aceitar entra pelo mesmo
+    caminho do convidado da partida rápida (`OnlineLink.joinQuickOffer`); se alguém
+    entrou antes, aparece "Essa partida já começou". "Agora não" esconde aquela sala
+    até fechar o app.
+  - **Relatório completo também online** — vitória/derrota do ponto de vista de quem
+    está no aparelho, a carta com as duas frotas reveladas, comparativo lado a lado
+    (tiros, acertos, precisão, navios restantes e afundados, turnos), apuração do XP,
+    condecorações, carreira e a própria frota. Partida online (casual ou ranqueada)
+    rende XP, medalhas e créditos como contra a IA, com limite anti-farm: no máximo
+    3 partidas recompensadas por dia contra o mesmo adversário (contagem local em
+    `Profile.claimOnlineReward`). Casual mostra "não conta para o ranking"; ranqueada
+    ganha um bloco de ranking (pontos da partida e como foram compostos, pontos e
+    posição na temporada antes → depois, partidas e vitórias, botão "Ver ranking").
   - **Amigos** — tela própria (`ui/FriendsScreen.kt`) com busca por nome de
     comandante, pedidos pendentes, lista de amigos e perfil de cada um (patente,
     XP, pontuação ranqueada, vitórias/derrotas/sequência); convidar um amigo da
     lista abre uma sala do mesmo jeito que criar uma manualmente.
 - **Ranqueada** — alternância Casual/Ranqueada na partida rápida (convite de amigo
-  continua sempre casual, de propósito). Pontuação pesa desempenho: vitória soma de
-  20 a 50 pontos (base + precisão de tiro + navios da própria frota que sobraram de
-  pé), derrota sempre desconta de 5 a 15 — nunca o contrário. Temporadas por estação
+  continua sempre casual, de propósito). Critérios desde a 0.14.0
+  (`record_ranked_result` em `supabase/online.sql`):
+  1. **O servidor decide o vencedor** — o primeiro relato da sala fixa `winner_id`;
+     relato posterior que discorde não muda nada (esse lado é pontuado pelo resultado
+     gravado) e a sala fica marcada em `result_conflict`.
+  2. **Pontos estilo Elo** pela força do adversário: esperado = 1/(1+10^((adv−eu)/400)),
+     base = round(32 × (resultado − esperado)) — com os pontos de temporada dos dois
+     no placar da temporada e com o `ranked_rating` no geral.
+  3. **Bônus de desempenho só para quem vence**, com teto de 30% do ganho
+     (precisão × 0,08 + navios restantes); vitória vale no mínimo +5. Derrota só tem
+     um alívio de até 3 pontos pela precisão, sem nunca virar ganho.
+  4. **Abandono é derrota cheia** — sair no meio ou estourar os 60s em segundo plano
+     relata derrota com acerto 0.
+  5. **Desempate** no placar e na posição própria: pontos, vitórias, aproveitamento,
+     antiguidade.
+
+  Temporadas por estação
   do ano, calculadas no servidor sem tabela nem cron (`current_season()`); a cada
   temporada nova, um popup com ícone e cor da estação pede aceite antes de liberar a
   ranqueada. Tela de **Placar** (`ui/LeaderboardScreen.kt`) mostra ranking geral e
@@ -97,21 +135,22 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   sempre com a posição do próprio comandante mesmo fora do topo, mais uma aba de
   **Troféus** com o pódio final da última temporada encerrada. O placar geral e a
   posição própria só contam `ranked_matches`/`ranked_wins` (colunas dedicadas,
-  atualizadas só por `record_ranked_result`) — partida contra IA, local ou LAN
-  seguem valendo XP e patente na Carreira, mas não entram no ranking.
+  atualizadas só por `record_ranked_result`) — partida contra IA ou online casual
+  vale XP e patente na Carreira, mas não entra no ranking.
 - **Pausa por ausência (Online)** — se o app for para segundo plano numa partida
   online, ela pausa e o adversário vê um aviso com contagem regressiva de 60s
   (`Protocol.PAUSE`/`RESUME` em `data/LanLink.kt`, cada lado mede o prazo pelo
   próprio relógio via `data/Clock.kt`, sem sincronizar nada entre os aparelhos).
-  Se não voltar a tempo, o outro lado vence por desistência e quem ficou ausente
-  não soma nem perde pontos ranqueados (`Match.forfeitByTimeout`). Nas demais
+  Se não voltar a tempo, o outro lado vence por desistência; na ranqueada, quem
+  ficou ausente leva derrota cheia, e não ganha XP nem créditos (`Match.forfeitByTimeout`). Nas demais
   variantes de partida o próprio sistema já suspende os turnos em segundo plano,
   então não precisa de aviso nenhum.
 
 ### Carreira
 
-Partidas contra a IA rendem **XP** e **créditos**: base por jogar, dobro por vencer, mais
-bônus por precisão, por navio afundado e por fechar em até 40 turnos.
+Partidas contra a IA e online rendem **XP** e **créditos**: base por jogar, dobro por
+vencer, mais bônus por precisão, por navio afundado e por fechar em até 40 turnos. Online
+vale até 3 partidas recompensadas por dia contra o mesmo adversário.
 
 - **Patentes**, de Recruta a Almirante, em dez degraus de XP.
 - **Perfil** com nome de guerra, insígnia (seis brasões vetoriais) e folha de serviço
@@ -148,8 +187,9 @@ Loja ficam logo abaixo. Sem barra de abas no rodapé: só o número da versão.
 ### Configurações
 
 Tela própria (`ui/SettingsScreen.kt`, ícone de engrenagem no menu): trilha sonora e
-efeitos sonoros com toggles separados, e o seletor de idioma — que saiu do Perfil para
-não ficar duplicado. Cor do oceano, espessura da grade, cor do alvo e notificações push
+efeitos sonoros com toggles separados, a seção **Online** ("Disponível para partida
+rápida" e o tipo aceito: Casual, Ranqueada ou Ambas) e o seletor de idioma — que saiu do
+Perfil para não ficar duplicado. Cor do oceano, espessura da grade, cor do alvo e notificações push
 ainda não têm preferência própria (ficam no backlog).
 
 Uma seção **Sobre** mostra a versão instalada, um botão para compartilhar o link da
@@ -162,7 +202,9 @@ joga; o changelog técnico completo continua só em `CHANGELOG.md`.
 Português do Brasil, inglês e espanhol, trocáveis em Configurações e aplicados na hora.
 Todo o texto vive em `i18n/Strings.kt`, com as três versões de cada frase na mesma linha.
 
-A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado. Toda compra
+A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado — mostra só
+as linhas de casco e as pinturas que o comandante já tem, com um cartão que leva direto à
+aba certa da loja para conseguir mais. Toda compra
 passa por um cartão de confirmação (preço, saldo e saldo depois); item sem saldo aparece
 apagado, com cadeado e "faltam ◆ X". A prévia de cada casco/pintura desliza pelas cinco
 classes de navio.
