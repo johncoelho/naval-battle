@@ -97,7 +97,7 @@
   .hero-shot img{display:block;width:100%;height:auto}
   .hero-shot figcaption{font:10px var(--mono);letter-spacing:.12em;text-transform:uppercase;
     color:var(--muted);padding:9px 5px 3px;text-align:center}
-  .screens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  .screens{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:760px}
   .capture{margin:0;border:1px solid var(--line);background:var(--surface);padding:8px}
   .capture img{display:block;width:100%;height:auto}
   .capture figcaption{padding:14px 5px 8px}
@@ -116,8 +116,24 @@
   .card h3{margin-top:10px}
   .card p{margin:0;font-size:14.5px}
 
-  .fleet-captures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;max-width:760px}
-  @media (max-width:640px){.fleet-captures{grid-template-columns:1fr;max-width:380px}}
+  .season-showcase{margin-top:38px}
+  .season-showcase h3{margin-bottom:8px}
+  .season-showcase p{max-width:68ch}
+  .season-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:1000px;margin-top:22px}
+  .season-card{display:block;text-decoration:none;border:1px solid var(--line);background:var(--surface);padding:8px}
+  .season-card .season-preview{display:block;aspect-ratio:410/814;background-image:url('media/passes-temporada.png');background-size:500% 100%;background-position:var(--season-position) center}
+  .season-card b{display:block;padding:12px 5px 5px}
+  .season-card:hover{border-color:var(--amber)}
+  @media (max-width:680px){.season-cards{grid-template-columns:1fr;max-width:380px}}
+
+  .camouflage-figure{margin:0;border:1px solid var(--line);background:var(--surface);padding:10px}
+  .camouflage-figure img{display:block;width:100%;height:auto}
+  .camouflage-figure figcaption{padding:14px 8px 8px;color:var(--inkSoft);font-size:14px;line-height:1.5}
+  .camouflage-figure figcaption b{display:block;color:var(--ink);font-size:17px}
+  .source-art{margin-top:18px;border:1px solid var(--line);background:var(--surface);padding:16px}
+  .source-art summary{cursor:pointer;color:var(--amberStrong);font-weight:700}
+  .source-art p{font-size:13px;margin:10px 0 14px}
+  .source-art img{display:block;width:100%;height:auto}
 
   .steps{counter-reset:s;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
   .step{border-left:2px solid var(--green);padding:4px 0 4px 16px}
@@ -183,7 +199,7 @@
 
       <div class="cta">
         <a class="btn btn-primary" id="download"
-           href="https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk">
+           href="#baixar">
           ↓ Baixar para Android
         </a>
         <a class="btn btn-ghost" href="#baixar">↓ Baixar para iPhone</a>
@@ -277,6 +293,22 @@
       <div class="card"><div class="k">Seu feedback</div><h3>Ajude a melhorar</h3>
         <p>Envie bugs ou sugestões pelo jogo. Feedback aprovado pode render dobrões ou cargas de habilidade, além da condecoração de Colaborador.</p></div>
     </div>
+    <div class="season-showcase">
+      <h3>Passes das estações</h3>
+      <p>As telas mostram as pinturas exclusivas da primavera, do verão e do outono. Cada estação apresenta a opção gratuita e o Passe do Almirante; a arte enviada também mostra um exemplo de premiação de inverno.</p>
+      <div class="season-cards">
+        <a class="season-card" href="media/passes-temporada.png" target="_blank" rel="noopener" aria-label="Abrir a arte original do passe de primavera" style="--season-position:25%">
+          <span class="season-preview" aria-hidden="true"></span><b>Primavera</b>
+        </a>
+        <a class="season-card" href="media/passes-temporada.png" target="_blank" rel="noopener" aria-label="Abrir a arte original do passe de verão" style="--season-position:50%">
+          <span class="season-preview" aria-hidden="true"></span><b>Verão</b>
+        </a>
+        <a class="season-card" href="media/passes-temporada.png" target="_blank" rel="noopener" aria-label="Abrir a arte original do passe de outono" style="--season-position:75%">
+          <span class="season-preview" aria-hidden="true"></span><b>Outono</b>
+        </a>
+      </div>
+      <p class="meta">Toque em uma estação para abrir a arte completa, incluindo a premiação de inverno.</p>
+    </div>
   </div>
 </section>
 
@@ -284,18 +316,19 @@
   <div class="wrap">
     <div class="sechead">
       <h2>Sua frota, do seu jeito</h2>
-      <p>Na Loja do Arsenal, escolha linhas de casco e camuflagens para personalizar as cinco embarcações. No Estaleiro, combine as peças que já fazem parte da sua coleção.</p>
+      <p>As novas pinturas dão identidade à frota inteira: Padrão Naval, Brasil, Japão, EUA, Reino Unido, Portugal e Ártica. Veja as embarcações ampliadas e compare os detalhes da nova arte de personalização.</p>
     </div>
-    <div class="fleet-captures">
-      <figure class="capture">
-        <img src="media/screenshot-02-estaleiro.png" width="1080" height="1920" loading="lazy" alt="Estaleiro do jogo com frota, linhas de casco e camuflagens">
-        <figcaption><b>Estaleiro</b><span>Combine casco e camuflagem da frota.</span></figcaption>
-      </figure>
-      <figure class="capture">
-        <img src="media/screenshot-03-loja-cascos.png" width="1080" height="1920" loading="lazy" alt="Loja do Arsenal do jogo com linhas de casco disponíveis">
-        <figcaption><b>Loja do Arsenal</b><span>Conheça as linhas de casco disponíveis.</span></figcaption>
-      </figure>
-    </div>
+    <figure class="camouflage-figure">
+      <img src="media/frotas-camuflagens-zoom.webp" width="1678" height="937" loading="lazy" alt="Ampliação ilustrativa das sete pinturas navais e suas cinco embarcações, com destaque para cores e insígnias">
+      <figcaption><b>Novas camuflagens da frota</b>Ampliação ilustrativa baseada na arte de desenvolvimento. As formas e os detalhes oficiais estão no comparativo original abaixo.</figcaption>
+    </figure>
+    <details class="source-art">
+      <summary>Ver o comparativo original: antes × depois</summary>
+      <p>Arte de desenvolvimento do jogo com as sete pinturas e as cinco classes de embarcação em cada linha. Abra a imagem em outra aba para conferir no tamanho original.</p>
+      <a href="media/frotas-camuflagens-comparativo.png" target="_blank" rel="noopener">
+        <img src="media/frotas-camuflagens-comparativo.png" width="1560" height="1540" loading="lazy" alt="Comparativo original antes e depois das sete pinturas navais, com as cinco classes de navio">
+      </a>
+    </details>
   </div>
 </section>
 
@@ -310,8 +343,6 @@
         <figcaption><b>Posicionamento</b><span>Organize a frota antes de abrir fogo.</span></figcaption></figure>
       <figure class="capture"><img src="media/screenshot-05-online.png" width="1080" height="1920" loading="lazy" alt="Tela de partidas pela internet com partida rápida e sala de amigo">
         <figcaption><b>Online</b><span>Encontre um rival ou convide um amigo.</span></figcaption></figure>
-      <figure class="capture"><img src="media/screenshot-02-estaleiro.png" width="1080" height="1920" loading="lazy" alt="Estaleiro com opções de casco e camuflagem da frota">
-        <figcaption><b>Estaleiro</b><span>Escolha casco e camuflagem da sua frota.</span></figcaption></figure>
     </div>
   </div>
 </section>
