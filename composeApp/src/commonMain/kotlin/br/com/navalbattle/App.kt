@@ -26,7 +26,9 @@ import br.com.navalbattle.audio.AppForeground
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.audio.THEME_PLAYLIST
+import br.com.navalbattle.data.BetaStoreStatus
 import br.com.navalbattle.data.CloudApi
+import br.com.navalbattle.data.MilesStatus
 import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.CloudResult
 import br.com.navalbattle.data.CommanderHit
@@ -60,6 +62,7 @@ import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
 import br.com.navalbattle.game.Ability
+import br.com.navalbattle.game.DoubloonPack
 import br.com.navalbattle.game.Badge
 import br.com.navalbattle.game.EarnedBadge
 import br.com.navalbattle.game.Coord
@@ -84,6 +87,7 @@ import br.com.navalbattle.ui.FeedbackPopup
 import br.com.navalbattle.ui.FeedbackRewardPopup
 import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
+import br.com.navalbattle.ui.MilesPopup
 import br.com.navalbattle.ui.LeaderboardScreen
 import br.com.navalbattle.ui.OnlineWaitingDialog
 import br.com.navalbattle.ui.OpponentFoundPopup
@@ -307,6 +311,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      */
     fun createOnlineRoom(invitedId: String? = null) {
         val session = profile.currentSession() ?: return
+        if (!hasMileOrPrompt()) return
         onlineLink.close()
         onlineCode = null
         onlineInvitedFriend = invitedId != null
@@ -327,6 +332,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      */
     fun startQuickMatchOnline() {
         val session = profile.currentSession() ?: return
+        if (!hasMileOrPrompt()) return
         onlineLink.close()
         onlineCode = null
         onlineInvitedFriend = false
@@ -342,6 +348,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Entra numa sala de amigo pelo código que ele compartilhou por fora do jogo. */
     fun joinOnlineByCode(code: String) {
         val session = profile.currentSession() ?: return
+        if (!hasMileOrPrompt()) return
         onlineLink.close()
         onlineLink.joinByCode(
             session = session,
@@ -393,6 +400,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineMatchRanked = onlineLink.ranked
         onlineOpponentId = onlineLink.opponentId
         opponentProfile = null
+        milesGained = null
+        spendMileFor(onlineMatchId)
         if (onlineMatchRanked) uiScope?.launch { loadRankBefore() }
         onlineLink.send(Protocol.hello(profile.displayName, mode.name))
         onlineLink.opponentId?.let { id -> uiScope?.launch { loadOpponentProfile(id) } }
@@ -456,6 +465,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     fun acceptInvite() {
         val invite = pendingInvite ?: return
         val session = profile.currentSession() ?: return
+        // sem milha o convite continua na tela: dá pra comprar no popup e aceitar
+        if (!hasMileOrPrompt()) return
         pendingInvite = null
         onlineLink.close()
         onlineCode = null
@@ -552,6 +563,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     fun acceptQuickOffer() {
         val room = quickOffer ?: return
         val session = profile.currentSession() ?: return
+        if (!hasMileOrPrompt()) return
         quickOffer = null
         ignoredOffers += room.id
         mode = GameMode.entries.firstOrNull { it.name == room.mode } ?: GameMode.CLASSIC
@@ -682,6 +694,130 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     fun claimOnlineReward(): Boolean {
         val opponent = onlineOpponentId ?: return false
         return profile.claimOnlineReward(opponent, nowMillis() / MILLIS_PER_DAY)
+    }
+
+    // ---------------- milhas náuticas ----------------
+
+    /** Saldo e regras das milhas, vindos do servidor (ver `supabase/economy.sql`). Nulo sem conta. */
+    var miles by mutableStateOf<MilesStatus?>(null)
+        private set
+
+    /** Popup de milhas aberto: pelo selo do topo do menu ou por falta de milha ao entrar online. */
+    var milesPopup by mutableStateOf(false)
+
+    /** Milhas ganhas na última vitória online — a tela de resultado mostra. */
+    var milesGained by mutableStateOf<Int?>(null)
+        private set
+
+    var milesNotice by mutableStateOf<String?>(null)
+        private set
+
+    suspend fun loadMiles() {
+        if (profile.currentSession() == null) {
+            miles = null
+            return
+        }
+        (authed { session -> cloud.milesStatus(session) } as? CloudResult.Ok)?.value?.let { miles = it }
+    }
+
+    /**
+     * Toda partida online custa 1 milha. Sem milha, abre o popup (com a compra) em vez
+     * de entrar. Sem saldo carregado ainda (rede lenta), deixa passar — o servidor
+     * cobra na entrada de qualquer jeito.
+     */
+    private fun hasMileOrPrompt(): Boolean {
+        val m = miles ?: return true
+        if (m.miles >= 1) return true
+        milesNotice = null
+        milesPopup = true
+        return false
+    }
+
+    private fun spendMileFor(matchId: String?) {
+        val id = matchId ?: return
+        uiScope?.launch {
+            (authed { session -> cloud.spendMile(session, id) } as? CloudResult.Ok)?.value?.let { left ->
+                miles = miles?.copy(miles = left)
+            }
+        }
+    }
+
+    /** Milhas da vitória online — chamado pela tela de resultado depois do relato ranqueado. */
+    suspend fun awardWinMiles() {
+        val id = onlineMatchId ?: return
+        val before = miles?.miles
+        val r = authed { session -> cloud.awardWinMiles(session, id) }
+        val after = (r as? CloudResult.Ok)?.value ?: return
+        miles = miles?.copy(miles = after)
+        milesGained = before?.let { (after - it).coerceAtLeast(0) }
+    }
+
+    /** Compra um pacote de milhas com dobrões; devolve os dobrões se o servidor recusar. */
+    suspend fun buyMilesPack() {
+        val m = miles ?: return
+        if (profile.credits < m.packPrice) {
+            milesNotice = t(K.MILES_NO_DOUBLOONS, m.packPrice - profile.credits)
+            return
+        }
+        if (m.miles + m.packSize > m.cap) {
+            milesNotice = t(K.MILES_CAP_REACHED, m.cap)
+            return
+        }
+        profile.spendCredits(m.packPrice)
+        val r = authed { session -> cloud.buyMiles(session, 1) }
+        val after = (r as? CloudResult.Ok)?.value
+        if (after == null) {
+            profile.grantCredits(m.packPrice)
+            milesNotice = t(K.MILES_BUY_FAILED)
+        } else {
+            miles = m.copy(miles = after)
+            milesNotice = t(K.MILES_BOUGHT, m.packSize)
+        }
+    }
+
+    // ---------------- loja de dobrões (simulada para beta testers) ----------------
+
+    var betaStore by mutableStateOf<BetaStoreStatus?>(null)
+        private set
+
+    var betaStoreNotice by mutableStateOf<String?>(null)
+        private set
+
+    var betaStoreBusy by mutableStateOf(false)
+        private set
+
+    suspend fun loadBetaStore() {
+        if (profile.currentSession() == null) {
+            betaStore = null
+            return
+        }
+        (authed { session -> cloud.betaStoreStatus(session) } as? CloudResult.Ok)?.value?.let { betaStore = it }
+    }
+
+    /**
+     * Compra simulada: o servidor confere badge e limite do dia e registra; só os
+     * dobrões que voltam de lá entram no saldo (mesmo padrão do feedback).
+     */
+    suspend fun buyBetaPack(pack: DoubloonPack) {
+        if (betaStoreBusy) return
+        betaStoreBusy = true
+        val r = authed { session -> cloud.buyBetaPack(session, pack.code) }
+        betaStoreBusy = false
+        when (r) {
+            is CloudResult.Ok -> {
+                profile.grantCredits(r.value.doubloons)
+                betaStore = betaStore?.copy(spentCents = r.value.spentCents, limitCents = r.value.limitCents)
+                betaStoreNotice = t(K.DOUBLOON_BOUGHT, r.value.doubloons)
+            }
+            is CloudResult.Fail -> {
+                betaStoreNotice = when {
+                    r.message.contains("store_limit") -> t(K.DOUBLOON_LIMIT_REACHED)
+                    r.message.contains("store_not_beta") -> t(K.DOUBLOON_BETA_ONLY)
+                    else -> t(K.DOUBLOON_BUY_FAILED)
+                }
+                loadBetaStore()
+            }
+        }
     }
 
     // ---------------- placar ----------------
@@ -1229,6 +1365,12 @@ fun App() {
         }
     }
 
+    // milhas náuticas: recarga do dia vem do servidor — relê ao abrir, ao voltar do
+    // segundo plano, ao entrar/sair da conta e ao voltar ao deque depois de partida
+    LaunchedEffect(AppForeground.active, state.profile.signedIn, state.screen == Screen.MENU) {
+        if (AppForeground.active) state.loadMiles()
+    }
+
     // convite de amigo mirado: com o app aberto e fora de partida, checa de tempos em
     // tempos se alguém convidou — é o que alimenta o banner em qualquer tela do jogo
     // — no mesmo laço, o balão de partida rápida para quem marcou nos Ajustes que
@@ -1283,6 +1425,8 @@ fun App() {
             if (state.match == null) SeasonPopup(state)
             FeedbackPopup(state)
             if (state.match == null) FeedbackRewardPopup(state)
+            // por último: abre por cima do convite quando falta milha para aceitar
+            MilesPopup(state)
         }
     }
 }

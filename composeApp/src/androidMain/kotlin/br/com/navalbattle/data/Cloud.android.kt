@@ -496,6 +496,66 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(if (arr.length() == 0) null else feedbackOf(arr.getJSONObject(0)))
     }
 
+    // ------------------------------------------------------------------ economia
+
+    actual suspend fun betaStoreStatus(session: Session): CloudResult<BetaStoreStatus> = call {
+        val json = post("/rest/v1/rpc/beta_store_status", JSONObject(), token = session.accessToken)
+        val o = JSONArray(json).getJSONObject(0)
+        CloudResult.Ok(
+            BetaStoreStatus(
+                eligible = o.optBoolean("eligible", false),
+                spentCents = o.optInt("spent_cents", 0),
+                limitCents = o.optInt("limit_cents", 5000),
+                resetsInSeconds = o.optInt("resets_in_seconds", 0)
+            )
+        )
+    }
+
+    actual suspend fun buyBetaPack(session: Session, pack: String): CloudResult<BetaPurchase> = call {
+        val json = post("/rest/v1/rpc/buy_beta_pack", JSONObject().put("p_pack", pack), token = session.accessToken)
+        val o = JSONArray(json).getJSONObject(0)
+        CloudResult.Ok(
+            BetaPurchase(
+                doubloons = o.optInt("doubloons", 0),
+                spentCents = o.optInt("spent_cents", 0),
+                limitCents = o.optInt("limit_cents", 5000)
+            )
+        )
+    }
+
+    actual suspend fun milesStatus(session: Session): CloudResult<MilesStatus> = call {
+        val json = post("/rest/v1/rpc/miles_status", JSONObject(), token = session.accessToken)
+        val o = JSONArray(json).getJSONObject(0)
+        CloudResult.Ok(
+            MilesStatus(
+                miles = o.optInt("miles", 0),
+                daily = o.optInt("daily", 10),
+                cap = o.optInt("cap", 50),
+                resetsInSeconds = o.optInt("resets_in_seconds", 0),
+                packSize = o.optInt("pack_size", 5),
+                packPrice = o.optInt("pack_price", 100),
+                rankedWin = o.optInt("ranked_win", 5),
+                casualWin = o.optInt("casual_win", 1)
+            )
+        )
+    }
+
+    actual suspend fun spendMile(session: Session, matchId: String): CloudResult<Int> =
+        milesCall("spend_mile", JSONObject().put("p_match_id", matchId), session)
+
+    actual suspend fun awardWinMiles(session: Session, matchId: String): CloudResult<Int> =
+        milesCall("award_win_miles", JSONObject().put("p_match_id", matchId), session)
+
+    actual suspend fun buyMiles(session: Session, packs: Int): CloudResult<Int> =
+        milesCall("buy_miles", JSONObject().put("p_packs", packs), session)
+
+    /** As três funções de milhas devolvem uma linha só, com o saldo em `miles`. */
+    private suspend fun milesCall(fn: String, body: JSONObject, session: Session): CloudResult<Int> = call {
+        val json = post("/rest/v1/rpc/" + fn, body, token = session.accessToken)
+        val arr = JSONArray(json)
+        CloudResult.Ok(if (arr.length() == 0) 0 else arr.getJSONObject(0).optInt("miles", 0))
+    }
+
     private fun feedbackOf(o: JSONObject): FeedbackUpdate = FeedbackUpdate(
         id = o.getString("id"),
         kind = o.optString("kind"),

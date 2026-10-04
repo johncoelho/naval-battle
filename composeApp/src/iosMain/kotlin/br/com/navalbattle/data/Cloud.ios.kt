@@ -483,6 +483,66 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(row?.let { feedbackOf(it) })
     }
 
+    // ------------------------------------------------------------------ economia
+
+    actual suspend fun betaStoreStatus(session: Session): CloudResult<BetaStoreStatus> = call {
+        val json = post("/rest/v1/rpc/beta_store_status", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            BetaStoreStatus(
+                eligible = (o["eligible"] as? Boolean) ?: false,
+                spentCents = o.intOr("spent_cents", 0),
+                limitCents = o.intOr("limit_cents", 5000),
+                resetsInSeconds = o.intOr("resets_in_seconds", 0)
+            )
+        )
+    }
+
+    actual suspend fun buyBetaPack(session: Session, pack: String): CloudResult<BetaPurchase> = call {
+        val json = post("/rest/v1/rpc/buy_beta_pack", mapOf("p_pack" to pack), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            BetaPurchase(
+                doubloons = o.intOr("doubloons", 0),
+                spentCents = o.intOr("spent_cents", 0),
+                limitCents = o.intOr("limit_cents", 5000)
+            )
+        )
+    }
+
+    actual suspend fun milesStatus(session: Session): CloudResult<MilesStatus> = call {
+        val json = post("/rest/v1/rpc/miles_status", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            MilesStatus(
+                miles = o.intOr("miles", 0),
+                daily = o.intOr("daily", 10),
+                cap = o.intOr("cap", 50),
+                resetsInSeconds = o.intOr("resets_in_seconds", 0),
+                packSize = o.intOr("pack_size", 5),
+                packPrice = o.intOr("pack_price", 100),
+                rankedWin = o.intOr("ranked_win", 5),
+                casualWin = o.intOr("casual_win", 1)
+            )
+        )
+    }
+
+    actual suspend fun spendMile(session: Session, matchId: String): CloudResult<Int> =
+        milesCall("spend_mile", mapOf("p_match_id" to matchId), session)
+
+    actual suspend fun awardWinMiles(session: Session, matchId: String): CloudResult<Int> =
+        milesCall("award_win_miles", mapOf("p_match_id" to matchId), session)
+
+    actual suspend fun buyMiles(session: Session, packs: Int): CloudResult<Int> =
+        milesCall("buy_miles", mapOf("p_packs" to packs), session)
+
+    /** As três funções de milhas devolvem uma linha só, com o saldo em `miles`. */
+    private suspend fun milesCall(fn: String, body: Map<String, Any?>, session: Session): CloudResult<Int> = call {
+        val json = post("/rest/v1/rpc/" + fn, body, token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(row?.intOr("miles", 0) ?: 0)
+    }
+
     private fun feedbackOf(o: Map<*, *>): FeedbackUpdate = FeedbackUpdate(
         id = o.strOr("id", ""),
         kind = o.strOr("kind", ""),

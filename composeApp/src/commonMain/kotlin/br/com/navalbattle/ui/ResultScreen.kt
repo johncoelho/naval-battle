@@ -102,6 +102,9 @@ fun ResultScreen(state: AppState, match: Match) {
             } else {
                 state.reportRankedResult(victory, match.accuracyOf(me), match.board(me).remainingShips().size)
             }
+            // milhas da vitória: depois do relato, porque na ranqueada o servidor só
+            // paga a quem ele mesmo registrou como vencedor
+            if (victory && !match.forfeitedBySelf) state.awardWinMiles()
         }
     }
 
@@ -195,6 +198,15 @@ fun ResultScreen(state: AppState, match: Match) {
                     RankingBlock(state, match)
                 } else {
                     HudLabel(t(K.RESULT_CASUAL_NOTE), Naval.muted)
+                }
+
+                // milhas náuticas: o custo da partida e, na vitória, o que entrou
+                Gap(16)
+                val gained = state.milesGained
+                if (gained != null && gained > 0) {
+                    MilesLabel(t(K.MILES_GAINED, gained), color = Naval.amberStrong, style = NavalType.mono, iconSize = 18.dp)
+                } else {
+                    MilesLabel(t(K.MILES_SPENT), color = Naval.muted)
                 }
 
                 if (rewardCapped) {
@@ -517,7 +529,7 @@ private fun ScoreTally(a: Award) {
         Column(horizontalAlignment = Alignment.End) {
             HudLabel(t(K.RESULT_TALLY_CREDITS), Naval.muted)
             Gap(2)
-            Text("◆ +${a.credits}", style = NavalType.title, color = Naval.amberStrong)
+            CoinLabel("+${a.credits}", style = NavalType.title, iconSize = 20.dp)
         }
     }
 }

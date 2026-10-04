@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -61,7 +60,7 @@ fun ShipyardScreen(state: AppState) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        ScreenTopBar(t(K.MENU_SHIPYARD), "◆ ${profile.credits}")
+        ScreenTopBar(t(K.MENU_SHIPYARD), profile.credits)
         Gap(12)
 
         // as três silhuetas mais características, na combinação escolhida
@@ -221,7 +220,7 @@ private fun MoreInStoreCard(note: String, onClick: () -> Unit) {
     Column(
         Modifier
             .width(132.dp)
-            .height(IntrinsicSize.Min)
+            .height(92.dp)
             .background(Naval.surface)
             .border(1.dp, Naval.amber)
             .clickable(onClick = onClick)

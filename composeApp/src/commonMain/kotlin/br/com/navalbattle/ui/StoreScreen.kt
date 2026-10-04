@@ -25,6 +25,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,9 +53,13 @@ import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.drawAbilityIcon
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.Ability
+import br.com.navalbattle.game.DoubloonPack
+import kotlinx.coroutines.launch
 import br.com.navalbattle.game.ShipClass
 
-private enum class Aisle(val key: K) { FLEETS(K.STORE_HULLS), CAMOS(K.STORE_CAMOS), ABILITIES(K.STORE_ABILITIES) }
+private enum class Aisle(val key: K) {
+    FLEETS(K.STORE_HULLS), CAMOS(K.STORE_CAMOS), ABILITIES(K.STORE_ABILITIES), DOUBLOONS(K.STORE_DOUBLOONS)
+}
 
 /** Preço do cartucho avulso de cada habilidade — mais caro quanto mais decisivo o efeito. */
 private fun abilityPrice(ability: Ability): Int = when (ability) {
@@ -78,6 +84,9 @@ fun StoreScreen(state: AppState) {
     var aisle by remember { mutableStateOf(Aisle.entries.getOrElse(state.storeAisle) { Aisle.FLEETS }) }
     var notice by remember { mutableStateOf<String?>(null) }
     var pending by remember { mutableStateOf<PendingBuy?>(null) }
+    var pendingPack by remember { mutableStateOf<DoubloonPack?>(null) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(aisle) { if (aisle == Aisle.DOUBLOONS) state.loadBetaStore() }
 
     // item fora do alcance: explica como chegar lá em vez de não fazer nada
     val locked: (Int) -> Unit = { price -> notice = t(K.STORE_EARN_HINT, price - profile.credits) }
@@ -89,7 +98,7 @@ fun StoreScreen(state: AppState) {
                 .windowInsetsPadding(WindowInsets.systemBars)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            ScreenTopBar(t(K.STORE_TITLE), "◆ ${profile.credits}")
+            ScreenTopBar(t(K.STORE_TITLE), profile.credits)
             Gap(8)
 
             Row(Modifier.fillMaxWidth()) {
@@ -107,6 +116,7 @@ fun StoreScreen(state: AppState) {
                     Aisle.FLEETS -> t(K.STORE_HULLS_SUB)
                     Aisle.CAMOS -> t(K.STORE_CAMOS_SUB)
                     Aisle.ABILITIES -> t(K.STORE_ABILITIES_SUB)
+                    Aisle.DOUBLOONS -> t(K.STORE_DOUBLOONS_SUB)
                 },
                 style = NavalType.body,
                 color = Naval.inkSoft
@@ -119,7 +129,9 @@ fun StoreScreen(state: AppState) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (aisle == Aisle.ABILITIES) {
+                if (aisle == Aisle.DOUBLOONS) {
+                    DoubloonAisle(state, onPick = { pendingPack = it })
+                } else if (aisle == Aisle.ABILITIES) {
                     Ability.entries.filter { it.active }.forEach { ability ->
                         val price = abilityPrice(ability)
                         AbilityStoreRow(
@@ -205,6 +217,15 @@ fun StoreScreen(state: AppState) {
             }
         }
 
+        pendingPack?.let { pack ->
+            PackConfirm(
+                pack = pack,
+                credits = profile.credits,
+                onConfirm = { pendingPack = null; scope.launch { state.buyBetaPack(pack) } },
+                onCancel = { pendingPack = null }
+            )
+        }
+
         pending?.let { buy ->
             PurchaseConfirm(
                 buy = buy,
@@ -244,9 +265,9 @@ private fun PurchaseConfirm(buy: PendingBuy, credits: Int, onConfirm: () -> Unit
             Gap(8)
             Text(buy.name.uppercase(), style = NavalType.title, color = Naval.ink)
             Gap(14)
-            ConfirmLine(t(K.STORE_CONFIRM_PRICE), "◆ ${buy.price}", Naval.amberStrong)
-            ConfirmLine(t(K.STORE_CONFIRM_BALANCE), "◆ $credits", Naval.inkSoft)
-            ConfirmLine(t(K.STORE_CONFIRM_AFTER), "◆ ${credits - buy.price}", Naval.ink)
+            ConfirmLine(t(K.STORE_CONFIRM_PRICE), buy.price.toString(), Naval.amberStrong, coin = true)
+            ConfirmLine(t(K.STORE_CONFIRM_BALANCE), credits.toString(), Naval.inkSoft, coin = true)
+            ConfirmLine(t(K.STORE_CONFIRM_AFTER), (credits - buy.price).toString(), Naval.ink, coin = true)
             Gap(18)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SecondaryButton(t(K.CANCEL), modifier = Modifier.weight(1f), onClick = onCancel)
@@ -257,19 +278,19 @@ private fun PurchaseConfirm(buy: PendingBuy, credits: Int, onConfirm: () -> Unit
 }
 
 @Composable
-private fun ConfirmLine(label: String, value: String, valueColor: Color) {
+private fun ConfirmLine(label: String, value: String, valueColor: Color, coin: Boolean = false) {
     Row(
         Modifier.fillMaxWidth().padding(vertical = 3.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         HudLabel(label, Naval.muted)
-        Text(value, style = NavalType.mono, color = valueColor)
+        if (coin) CoinLabel(value, valueColor, NavalType.mono) else Text(value, style = NavalType.mono, color = valueColor)
     }
 }
 
 /**
  * Selo do botão de preço: sem saldo, o item fica a meia opacidade com cadeado e
- * "faltam ◆ X"; tocar explica como ganhar créditos.
+ * "faltam X dobrões"; tocar explica como ganhar dobrões.
  */
 @Composable
 private fun PriceTag(price: Int, credits: Int, onBuy: () -> Unit, onLocked: () -> Unit) {
@@ -286,10 +307,9 @@ private fun PriceTag(price: Int, credits: Int, onBuy: () -> Unit, onLocked: () -
             Spacer(Modifier.width(6.dp))
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(
-                "◆ $price",
-                style = NavalType.monoSmall,
-                color = if (affordable) Naval.amberStrong else Naval.muted
+            CoinLabel(
+                price.toString(),
+                if (affordable) Naval.amberStrong else Naval.muted
             )
             if (!affordable) {
                 HudLabel(t(K.STORE_LOCKED, price - credits), Naval.muted)

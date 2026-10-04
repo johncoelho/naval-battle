@@ -9,11 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
-## [0.44.0] — 2026-10-04 · Online completo: relatório, convites claros, partida rápida de qualquer tela e ranking justo
+## [0.44.0] — 2026-10-04 · Dobrões, milhas náuticas, online completo e ranking justo
 
-App 0.14.0 (versionCode 40). **Exige rodar `supabase/online.sql` de novo** no SQL Editor
-(idempotente): troca o retorno de `record_ranked_result`, cria `find_quick_offer` e as
-colunas `winner_id`/`result_conflict` em `online_matches`.
+App 0.14.0 (versionCode 40). **Exige rodar `supabase/online.sql` de novo e
+`supabase/economy.sql`** no SQL Editor (os dois idempotentes; já aplicados em 04/10):
+troca o retorno de `record_ranked_result`, cria `find_quick_offer`, as colunas
+`winner_id`/`result_conflict` em `online_matches`, a loja simulada e as milhas.
+
+### Adicionado — economia
+- **Moeda Dobrões** (Doubloons / Doblones) no lugar de "créditos" em todo o app, com ícone
+  desenhado de moeda de ouro com âncora no lugar do ◆ (`design/DoubloonArt.kt`).
+- **Aba Dobrões na Loja — compra simulada para beta testers**: pacotes Bolsa (R$ 4,90 · 500),
+  Baú (R$ 9,90 · 1.100, +10%), Cofre (R$ 24,90 · 3.000, +20%) e Tesouro do Almirante
+  (R$ 49,90 · 6.500, +30%), cada um com arte própria. Limite de R$ 50 por dia controlado no
+  servidor (`buy_beta_pack`, vira à meia-noite de Brasília), aviso fixo de que nenhum
+  cartão real é usado, cartão de confirmação com o saldo depois. Funciona no iPhone. A
+  Google Play Billing entra depois, reaproveitando o mesmo histórico (`beta_purchases`).
+- **Milhas náuticas**: 10 por dia grátis; cada partida online (casual ou ranqueada) custa 1;
+  vitória ranqueada rende +5 (só se o servidor registrou a vitória) e casual +1. A recarga
+  diária completa até 10; ganhas e compradas acumulam até 50. Compra de 5 milhas por 100
+  dobrões. Selo de milhas no topo do menu, popup com regras e contador até a recarga, e o
+  resultado online mostra o custo ou o ganho. Contra a IA, local e rede local seguem
+  grátis. Números ajustáveis em `app_config` sem versão nova.
 
 ### Alterado
 - **Estaleiro mostra só o que o comandante já tem** (linhas de casco e pinturas), com um
@@ -54,6 +71,8 @@ colunas `winner_id`/`result_conflict` em `online_matches`.
   Nunca aparece durante partida, com outro popup ou enquanto o próprio comandante procura.
 
 ### Corrigido
+- Placar da partida ranqueada em que o convidado tinha recebido a vitória do anfitrião
+  corrigido no banco ("porteiro do john": 1050 → 985 pontos, 0 vitórias).
 - Quem vencia porque o adversário saiu da sala não relatava a vitória ranqueada: o link
   fechava antes da tela de resultado e levava junto o id da sala. Agora a sala é
   fotografada ao conectar.

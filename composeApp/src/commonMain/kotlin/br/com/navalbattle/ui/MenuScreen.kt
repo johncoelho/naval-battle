@@ -39,6 +39,11 @@ import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawAvatar
+import br.com.navalbattle.design.drawCompassRose
+import br.com.navalbattle.design.drawDoubloon
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Opponent
@@ -106,8 +111,14 @@ fun MenuScreen(state: AppState) {
                 HudLabel(state.profile.displayName.uppercase(), Naval.inkSoft)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                HudLabel("◆ ${state.profile.credits}", Naval.amberStrong)
-                Spacer(Modifier.width(12.dp))
+                // milhas (só com conta — são do servidor) e dobrões: tocar abre o
+                // popup das milhas e a aba Dobrões da loja
+                state.miles?.let { m ->
+                    MilesLabel(m.miles.toString(), modifier = Modifier.clickable { state.milesPopup = true }.padding(4.dp))
+                    Spacer(Modifier.width(8.dp))
+                }
+                CoinLabel(state.profile.credits.toString(), modifier = Modifier.clickable { state.openStore(3) }.padding(4.dp))
+                Spacer(Modifier.width(8.dp))
                 GearButton { state.screen = Screen.SETTINGS }
             }
         }
@@ -142,7 +153,7 @@ fun MenuScreen(state: AppState) {
         Spacer(Modifier.height(14.dp))
         Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
             SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name) { state.screen = Screen.SHIPYARD }
-            SecondaryButton(t(K.MENU_STORE), "◆ ${state.profile.credits}") { state.openStore(0) }
+            SecondaryButton(t(K.MENU_STORE), t(K.PRICE_DOUBLOONS, state.profile.credits)) { state.openStore(0) }
         }
 
         Spacer(Modifier.weight(1f))
@@ -255,6 +266,58 @@ private fun FleetPreview(state: AppState) {
         }
         Spacer(Modifier.height(8.dp))
         HudLabel("${state.skin.fleet.name.uppercase()} · ${state.skin.paint.name.uppercase()}")
+    }
+}
+
+/** Barra de topo com o saldo de dobrões (ícone da moeda + número) à direita. */
+@Composable
+fun ScreenTopBar(left: String, coins: Int, modifier: Modifier = Modifier) {
+    Row(
+        modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        HudLabel(left, Naval.inkSoft)
+        CoinLabel(coins.toString())
+    }
+}
+
+/**
+ * Valor em dobrões: a moeda desenhada seguida do número — substitui o antigo "◆ 450"
+ * em todo lugar que mostra preço ou saldo.
+ */
+@Composable
+fun CoinLabel(
+    amount: String,
+    color: Color = Naval.amberStrong,
+    style: TextStyle = NavalType.monoSmall,
+    iconSize: Dp = 14.dp,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Canvas(Modifier.size(iconSize)) {
+            drawDoubloon(Offset(size.width / 2f, size.height / 2f), size.minDimension)
+        }
+        Spacer(Modifier.width(5.dp))
+        Text(amount, style = style, color = color)
+    }
+}
+
+/** Saldo de milhas náuticas: rosa dos ventos + número. */
+@Composable
+fun MilesLabel(
+    amount: String,
+    color: Color = Naval.inkSoft,
+    style: TextStyle = NavalType.monoSmall,
+    iconSize: Dp = 14.dp,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Canvas(Modifier.size(iconSize)) {
+            drawCompassRose(Offset(size.width / 2f, size.height / 2f), size.minDimension)
+        }
+        Spacer(Modifier.width(5.dp))
+        Text(amount, style = style, color = color)
     }
 }
 

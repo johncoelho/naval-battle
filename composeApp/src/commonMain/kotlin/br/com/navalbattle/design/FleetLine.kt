@@ -28,7 +28,7 @@ data class FleetLine(
 ) {
     val name: String get() = t(key)
     val description: String get() = t(descriptionKey)
-    val priceLabel: String get() = if (price == 0) t(K.STORE_INCLUDED) else "◆ $price"
+    val priceLabel: String get() = if (price == 0) t(K.STORE_INCLUDED) else t(K.PRICE_DOUBLOONS, price)
 
     companion object {
         val STANDARD = FleetLine(

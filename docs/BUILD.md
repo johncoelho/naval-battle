@@ -113,7 +113,10 @@ entra no repositório, no app ou em conversa.
 Para recriar a base do zero em outro projeto: rodar [`supabase/schema.sql`](../supabase/schema.sql)
 no SQL Editor e desligar *Confirm email* em Authentication → Sign In / Providers enquanto
 estiver em teste. O modo online (salas, amigos, ranqueada) vem de
-[`supabase/online.sql`](../supabase/online.sql), rodado depois. Feedback e badges vêm de [`supabase/feedback.sql`](../supabase/feedback.sql), rodado por
+[`supabase/online.sql`](../supabase/online.sql), rodado depois. A economia (loja de dobrões simulada e milhas
+náuticas) vem de [`supabase/economy.sql`](../supabase/economy.sql), rodado depois do feedback; os números
+(limite diário da loja, milhas por dia, teto, prêmio por vitória, pacote) ficam em `app_config` e mudam
+sem versão nova. Feedback e badges vêm de [`supabase/feedback.sql`](../supabase/feedback.sql), rodado por
 último — nenhum desses três scripts roda sozinho em CI, é sempre manual no SQL Editor.
 
 **Projeto pausado.** No plano gratuito, o Supabase pausa o projeto depois de ~7 dias sem

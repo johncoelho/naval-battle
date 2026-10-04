@@ -35,6 +35,9 @@ fun t(key: K, arg: Any): String = t(key).replace("%s", arg.toString())
 
 fun t(key: K, a: Any, b: Any): String = t(key).replace("%1", a.toString()).replace("%2", b.toString())
 
+fun t(key: K, a: Any, b: Any, c: Any): String =
+    t(key).replace("%1", a.toString()).replace("%2", b.toString()).replace("%3", c.toString())
+
 /**
  * Todo texto que o comandante lê, nos três idiomas lado a lado — juntos de propósito:
  * é o que impede uma tradução de ficar para trás quando a frase muda.
@@ -234,7 +237,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_HITS("Acertos", "Hits", "Impactos"),
     RESULT_CAREER("Carreira", "Career", "Carrera"),
     RESULT_PROMOTED("Promovido a %s", "Promoted to %s", "Ascendido a %s"),
-    RESULT_CREDITS_HINT("Créditos valem novas frotas no estaleiro", "Credits buy new fleets in the shipyard", "Los créditos compran nuevas flotas en el astillero"),
+    RESULT_CREDITS_HINT("Dobrões valem novas frotas no estaleiro", "Doubloons buy new fleets in the shipyard", "Los doblones compran nuevas flotas en el astillero"),
 
     // apuração de pontos: a conta do XP, parcela por parcela
     RESULT_TALLY("Apuração de pontos", "Score tally", "Cómputo de puntos"),
@@ -246,7 +249,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_TALLY_BLITZ("Ataque relâmpago", "Blitz attack", "Ataque relámpago"),
     RESULT_TALLY_BLITZ_CALC("%1 turnos · só em vitória", "%1 turns · victory only", "%1 turnos · solo en victoria"),
     RESULT_TALLY_XP("Experiência ganha", "Experience earned", "Experiencia ganada"),
-    RESULT_TALLY_CREDITS("Créditos", "Credits", "Créditos"),
+    RESULT_TALLY_CREDITS("Dobrões", "Doubloons", "Doblones"),
 
     // condecorações
     RESULT_MEDALS("Condecorações", "Decorations", "Condecoraciones"),
@@ -274,7 +277,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_REMATCH_WAITING("Aguardando o adversário aceitar…", "Waiting for the opponent to accept…", "Esperando a que el adversario acepte…"),
     RESULT_REMATCH_INVITE("%s quer uma revanche", "%s wants a rematch", "%s quiere la revancha"),
     RESULT_COMPARE("Comparativo", "Head to head", "Comparativa"),
-    RESULT_NO_REWARD_TODAY("Já foram %s partidas recompensadas contra este adversário hoje — esta não rende XP, medalhas nem créditos.", "You've already had %s rewarded matches against this opponent today — this one gives no XP, medals or credits.", "Ya hubo %s partidas recompensadas contra este adversario hoy — esta no da XP, medallas ni créditos."),
+    RESULT_NO_REWARD_TODAY("Já foram %s partidas recompensadas contra este adversário hoje — esta não rende XP, medalhas nem dobrões.", "You've already had %s rewarded matches against this opponent today — this one gives no XP, medals or doubloons.", "Ya hubo %s partidas recompensadas contra este adversario hoy — esta no da XP, medallas ni doblones."),
     RESULT_CASUAL_NOTE("Partida casual — não conta para o ranking", "Casual match — doesn't count for the ranking", "Partida casual — no cuenta para la clasificación"),
     RESULT_RANKING("Ranking da temporada", "Season ranking", "Clasificación de la temporada"),
     RESULT_RANKING_SEASON("Temporada de %s", "%s season", "Temporada de %s"),
@@ -316,20 +319,20 @@ enum class K(val pt: String, val en: String, val es: String) {
     STORE_CONFIRM_BALANCE("Seu saldo", "Your balance", "Tu saldo"),
     STORE_CONFIRM_AFTER("Saldo depois", "Balance after", "Saldo después"),
     STORE_CONFIRM_BUY("Comprar", "Buy", "Comprar"),
-    STORE_LOCKED("Faltam ◆ %s", "◆ %s short", "Faltan ◆ %s"),
+    STORE_LOCKED("Faltam %s dobrões", "%s doubloons short", "Faltan %s doblones"),
     STORE_ABILITY_BOUGHT("Cartucho de %s no estoque", "%s charge in stock", "Cartucho de %s en stock"),
     STORE_USE("Usar", "Use", "Usar"),
     STORE_IN_USE("Em uso", "In use", "En uso"),
-    STORE_MISSING("Faltam ◆ %1 para a %2", "◆ %1 short for %2", "Faltan ◆ %1 para %2"),
+    STORE_MISSING("Faltam %1 dobrões para a %2", "%1 doubloons short for %2", "Faltan %1 doblones para %2"),
     STORE_COMMISSIONED("%s entrou em serviço", "%s is in service", "%s entró en servicio"),
     STORE_PAINTED("%s aplicada na frota", "%s applied to the fleet", "%s aplicada a la flota"),
-    STORE_CREDITS_HINT("Créditos se ganham em combate · pagamento real entra na publicação", "Credits are earned in battle · real payment comes at launch", "Los créditos se ganan en combate · el pago real llega al publicar"),
+    STORE_CREDITS_HINT("Dobrões se ganham em combate e na aba Dobrões da loja", "Doubloons are earned in battle and in the store's Doubloons tab", "Los doblones se ganan en combate y en la pestaña Doblones de la tienda"),
     STORE_INCLUDED("Inclusa", "Included", "Incluida"),
     STORE_OWNED("Conquistada", "Owned", "Conseguida"),
-    STORE_COST("Custa %1 · você tem ◆ %2", "Costs %1 · you have ◆ %2", "Cuesta %1 · tienes ◆ %2"),
+    STORE_COST("Custa %1 · você tem %2 dobrões", "Costs %1 · you have %2 doubloons", "Cuesta %1 · tienes %2 doblones"),
     STORE_IN_YARD("No seu estaleiro", "In your shipyard", "En tu astillero"),
     STORE_IN_FLEET("Em serviço na sua frota", "Serving in your fleet", "En servicio en tu flota"),
-    STORE_EARN_HINT("Faltam ◆ %s — ganhe créditos em combate", "◆ %s short — earn credits in battle", "Faltan ◆ %s — gana créditos en combate"),
+    STORE_EARN_HINT("Faltam %s dobrões — ganhe dobrões em combate ou na aba Dobrões", "%s doubloons short — earn them in battle or in the Doubloons tab", "Faltan %s doblones — gánalos en combate o en la pestaña Doblones"),
 
     // ---------------------------------------------------------------- perfil
     PROFILE_TITLE("Perfil", "Profile", "Perfil"),
@@ -354,7 +357,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     PROFILE_RESET("Zerar carreira", "Reset career", "Reiniciar carrera"),
     PROFILE_RESET_TITLE("Zerar a carreira?", "Reset the career?", "¿Reiniciar la carrera?"),
     PROFILE_RESET_EYEBROW("Baixa definitiva", "Permanent discharge", "Baja definitiva"),
-    PROFILE_RESET_WARN("Patente, créditos, estatísticas e frotas voltam ao início", "Rank, credits, stats and fleets go back to zero", "Rango, créditos, estadísticas y flotas vuelven a cero"),
+    PROFILE_RESET_WARN("Patente, dobrões, estatísticas e frotas voltam ao início", "Rank, doubloons, stats and fleets go back to zero", "Rango, doblones, estadísticas y flotas vuelven a cero"),
     PROFILE_RESET_KEEP("Manter carreira", "Keep career", "Mantener carrera"),
     PROFILE_RESET_DO("Zerar tudo", "Reset everything", "Reiniciar todo"),
     PROFILE_WINS_SUFFIX("vitórias", "wins", "victorias"),
@@ -389,9 +392,9 @@ enum class K(val pt: String, val en: String, val es: String) {
     FEEDBACK_FORM_TITLE_1("Fale", "Send", "Enviar"),
     FEEDBACK_FORM_TITLE_2("Conosco", "Feedback", "Comentario"),
     FEEDBACK_FORM_SUB(
-        "Bug confirmado rende crédito na loja. Melhoria aceita rende uma carga de habilidade.",
+        "Bug confirmado rende dobrões na loja. Melhoria aceita rende uma carga de habilidade.",
         "A confirmed bug earns store credit. An accepted improvement earns an ability charge.",
-        "Un error confirmado da crédito en la tienda. Una mejora aceptada da una carga de habilidad."
+        "Un error confirmado da doblones en la tienda. Una mejora aceptada da una carga de habilidad."
     ),
     FEEDBACK_FORM_KIND("O que você quer relatar?", "What do you want to report?", "¿Qué quieres reportar?"),
     FEEDBACK_FORM_KIND_BUG("Bug", "Bug", "Error"),
@@ -418,7 +421,7 @@ enum class K(val pt: String, val en: String, val es: String) {
         "Couldn't send it right now — try again",
         "No pude enviarlo ahora — inténtalo de nuevo"
     ),
-    PROFILE_FEEDBACK_CTA("Achou um bug? Ganhe créditos", "Found a bug? Earn credits", "¿Encontraste un error? Gana créditos"),
+    PROFILE_FEEDBACK_CTA("Achou um bug? Ganhe dobrões", "Found a bug? Earn doubloons", "¿Encontraste un error? Gana doblones"),
     FEEDBACK_FORM_NEEDS_ACCOUNT(
         "Entre com uma conta para enviar feedback",
         "Sign in with an account to send feedback",
@@ -429,9 +432,9 @@ enum class K(val pt: String, val en: String, val es: String) {
     FEEDBACK_REWARD_EYEBROW("Feedback aprovado", "Feedback approved", "Comentario aprobado"),
     FEEDBACK_REWARD_TITLE("Seu feedback foi aceito!", "Your feedback was accepted!", "¡Tu comentario fue aceptado!"),
     FEEDBACK_REWARD_CREDITS(
-        "Você ganhou %s créditos na loja",
-        "You earned %s store credits",
-        "Ganaste %s créditos en la tienda"
+        "Você ganhou %s dobrões na loja",
+        "You earned %s doubloons",
+        "Ganaste %s doblones en la tienda"
     ),
     FEEDBACK_REWARD_ABILITY(
         "Você ganhou uma carga de %s",
@@ -484,7 +487,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     AUTH_LOCAL("Local", "Local", "Local"),
     AUTH_HEAD_1("Sua carreira", "Your career", "Tu carrera"),
     AUTH_HEAD_2("em qualquer mar", "on any sea", "en cualquier mar"),
-    AUTH_SUB("Patente, créditos e frotas guardados na base do jogo", "Rank, credits and fleets kept in the game's database", "Rango, créditos y flotas guardados en la base del juego"),
+    AUTH_SUB("Patente, dobrões e frotas guardados na base do jogo", "Rank, doubloons and fleets kept in the game's database", "Rango, doblones y flotas guardados en la base del juego"),
     AUTH_CONNECTED_AS("Conectado como", "Connected as", "Conectado como"),
     AUTH_AUTO_SYNC("Tudo salvo na nuvem automaticamente", "Everything saved to the cloud automatically", "Todo guardado en la nube automáticamente"),
     AUTH_SIGN_OUT("Sair da conta", "Sign out", "Cerrar sesión"),
@@ -679,7 +682,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     // ---------------------------------------------------------------- boas-vindas
     WELCOME_TITLE_1("Bem-vindo a", "Welcome to", "Bienvenido a"),
     WELCOME_TITLE_2("bordo", "the fleet", "bordo"),
-    WELCOME_SUB("Entre na conta para guardar patente, créditos e amigos na nuvem — ou jogue agora mesmo como convidado.", "Sign in to keep your rank, credits and friends in the cloud — or jump in right away as a guest.", "Entra en la cuenta para guardar rango, créditos y amigos en la nube — o juega ya mismo como invitado."),
+    WELCOME_SUB("Entre na conta para guardar patente, dobrões e amigos na nuvem — ou jogue agora mesmo como convidado.", "Sign in to keep your rank, doubloons and friends in the cloud — or jump in right away as a guest.", "Entra en la cuenta para guardar rango, doblones y amigos en la nube — o juega ya mismo como invitado."),
     WELCOME_LOGIN("Entrar ou criar conta", "Sign in or create account", "Entrar o crear cuenta"),
     WELCOME_GUEST("Jogar como convidado", "Play as guest", "Jugar como invitado"),
     WELCOME_GUEST_SUB("Sem nuvem, sem amigos, sem modo online", "No cloud, no friends, no online mode", "Sin nube, sin amigos, sin modo en línea"),
@@ -715,5 +718,45 @@ enum class K(val pt: String, val en: String, val es: String) {
     FLEET_ATL("Linha Atlântica", "Atlantic Line", "Línea Atlántica"),
     FLEET_ATL_SUB("Cascos largos, proa bulbosa e superestrutura em bloco.", "Wide hulls, bulbous bow and block superstructure.", "Cascos anchos, proa bulbosa y superestructura en bloque."),
     FLEET_GHO("Linha Fantasma", "Ghost Line", "Línea Fantasma"),
-    FLEET_GHO_SUB("Cascos facetados de baixa assinatura, sem chaminés.", "Faceted low-signature hulls, no funnels.", "Cascos facetados de baja firma, sin chimeneas.")
+    FLEET_GHO_SUB("Cascos facetados de baixa assinatura, sem chaminés.", "Faceted low-signature hulls, no funnels.", "Cascos facetados de baja firma, sin chimeneas."),
+    PRICE_DOUBLOONS("%s dobrões", "%s doubloons", "%s doblones"),
+    STORE_DOUBLOONS("Dobrões", "Doubloons", "Doblones"),
+    STORE_DOUBLOONS_SUB("Pacotes de dobrões para cascos, camuflagens, habilidades e milhas náuticas.", "Doubloon packs for hulls, camouflages, abilities and nautical miles.", "Paquetes de doblones para cascos, camuflajes, habilidades y millas náuticas."),
+    DOUBLOON_TEST_TITLE("Compra de teste", "Test purchase", "Compra de prueba"),
+    DOUBLOON_TEST_BODY("Como você é beta tester, tem direito a comprar dobrões até %s por dia. Esta compra não usa seu cartão de crédito real e nada é cobrado.", "As a beta tester you can buy up to %s of doubloons per day. This purchase does not use your real credit card and nothing is charged.", "Como eres beta tester, puedes comprar doblones hasta %s por día. Esta compra no usa tu tarjeta de crédito real y no se cobra nada."),
+    DOUBLOON_REMAINING("Restam hoje: %s", "Left today: %s", "Quedan hoy: %s"),
+    DOUBLOON_RESETS("O limite renova em %s", "The limit renews in %s", "El límite se renueva en %s"),
+    DOUBLOON_PACK_POUCH("Bolsa", "Pouch", "Bolsa"),
+    DOUBLOON_PACK_CHEST("Baú", "Chest", "Baúl"),
+    DOUBLOON_PACK_STRONGBOX("Cofre", "Strongbox", "Caja fuerte"),
+    DOUBLOON_PACK_TREASURE("Tesouro do Almirante", "Admiral's Treasure", "Tesoro del Almirante"),
+    DOUBLOON_BONUS("+%s% de bônus", "+%s% bonus", "+%s% de bono"),
+    DOUBLOON_BEST("Melhor valor", "Best value", "Mejor valor"),
+    DOUBLOON_LOCKED("Limite de hoje atingido", "Today's limit reached", "Límite de hoy alcanzado"),
+    DOUBLOON_NO_CHARGE("Nenhum valor será cobrado", "Nothing will be charged", "No se cobrará nada"),
+    DOUBLOON_CONFIRM_GET("Você recebe", "You get", "Recibes"),
+    DOUBLOON_CONFIRM_PRICE("Preço (simulado)", "Price (simulated)", "Precio (simulado)"),
+    DOUBLOON_SIGN_IN("Entre na conta para comprar dobrões.", "Sign in to buy doubloons.", "Entra en la cuenta para comprar doblones."),
+    DOUBLOON_SIGN_IN_CTA("Entrar na conta", "Sign in", "Entrar en la cuenta"),
+    DOUBLOON_BETA_ONLY("Por enquanto a loja de dobrões é só para beta testers.", "For now the doubloon store is for beta testers only.", "Por ahora la tienda de doblones es solo para beta testers."),
+    DOUBLOON_BOUGHT("%s dobrões entraram no seu cofre", "%s doubloons added to your vault", "%s doblones entraron en tu cofre"),
+    DOUBLOON_LIMIT_REACHED("Limite de hoje atingido — renova à meia-noite", "Today's limit reached — it renews at midnight", "Límite de hoy alcanzado — se renueva a medianoche"),
+    DOUBLOON_BUY_FAILED("Não foi possível concluir agora. Tente de novo.", "Couldn't complete it now. Try again.", "No se pudo completar ahora. Inténtalo de nuevo."),
+    DOUBLOON_LOADING("Abrindo o cofre…", "Opening the vault…", "Abriendo el cofre…"),
+    MILES_TITLE("Milhas náuticas", "Nautical miles", "Millas náuticas"),
+    MILES_EXPLAIN("Cada partida online custa 1 milha. Todo dia sua reserva volta a %1 milhas grátis. Vitória ranqueada rende +%2 e vitória casual +%3.", "Each online match costs 1 mile. Every day your reserve refills to %1 free miles. A ranked win gives +%2 and a casual win +%3.", "Cada partida en línea cuesta 1 milla. Cada día tu reserva vuelve a %1 millas gratis. Una victoria clasificatoria da +%2 y una casual +%3."),
+    MILES_OFFLINE_FREE("Contra a IA, no mesmo aparelho e na rede local é sempre grátis.", "Against the AI, on the same device and on the local network it is always free.", "Contra la IA, en el mismo dispositivo y en la red local siempre es gratis."),
+    MILES_BALANCE("Você tem %s milhas", "You have %s miles", "Tienes %s millas"),
+    MILES_EMPTY("Suas milhas acabaram. Compre mais ou espere a recarga.", "You are out of miles. Buy more or wait for the refill.", "Te quedaste sin millas. Compra más o espera la recarga."),
+    MILES_RESETS("Recarga em %s", "Refill in %s", "Recarga en %s"),
+    MILES_BUY("Comprar %1 milhas", "Buy %1 miles", "Comprar %1 millas"),
+    MILES_BUY_SUB("por %s dobrões", "for %s doubloons", "por %s doblones"),
+    MILES_NO_DOUBLOONS("Faltam %s dobrões para o pacote de milhas", "%s doubloons short for the mile pack", "Faltan %s doblones para el paquete de millas"),
+    MILES_CAP_REACHED("O máximo é %s milhas guardadas", "You can hold at most %s miles", "El máximo es %s millas guardadas"),
+    MILES_BUY_FAILED("Não foi possível comprar milhas agora", "Couldn't buy miles now", "No se pudieron comprar millas ahora"),
+    MILES_BOUGHT("+%s milhas na reserva", "+%s miles in reserve", "+%s millas en la reserva"),
+    MILES_GAINED("+%s milhas náuticas", "+%s nautical miles", "+%s millas náuticas"),
+    MILES_SPENT("Esta partida custou 1 milha náutica", "This match cost 1 nautical mile", "Esta partida costó 1 milla náutica"),
+    MILES_CLOSE("Fechar", "Close", "Cerrar"),
+    MILES_CARD_SUB("1 milha por partida online · recarga diária", "1 mile per online match · daily refill", "1 milla por partida en línea · recarga diaria")
 }

@@ -169,7 +169,8 @@ fun UnderlineTab(label: String, selected: Boolean, modifier: Modifier = Modifier
     ) {
         Text(
             label.uppercase(),
-            style = NavalType.mono,
+            style = NavalType.monoSmall,
+            textAlign = TextAlign.Center,
             color = if (selected) Naval.amberStrong else Naval.muted,
             modifier = Modifier.padding(vertical = 10.dp)
         )

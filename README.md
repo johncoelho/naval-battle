@@ -40,7 +40,7 @@ só passa a vez para o adversário no primeiro erro.
 | Destróier | 2 | Cortina de fumaça | Bloqueia a próxima varredura inimiga |
 
 Cada habilidade também tem um **cartucho avulso** na Loja do Arsenal: comprado com
-créditos, fica guardado no aparelho e libera um uso mesmo com a habilidade em recarga
+dobrões, fica guardado no aparelho e libera um uso mesmo com a habilidade em recarga
 na próxima partida tática — some ao ser usado, a recarga normal segue igual.
 
 Os ícones de cada habilidade são vetores desenhados a traço (`design/AbilityArt.kt`,
@@ -101,7 +101,7 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     está no aparelho, a carta com as duas frotas reveladas, comparativo lado a lado
     (tiros, acertos, precisão, navios restantes e afundados, turnos), apuração do XP,
     condecorações, carreira e a própria frota. Partida online (casual ou ranqueada)
-    rende XP, medalhas e créditos como contra a IA, com limite anti-farm: no máximo
+    rende XP, medalhas e dobrões como contra a IA, com limite anti-farm: no máximo
     3 partidas recompensadas por dia contra o mesmo adversário (contagem local em
     `Profile.claimOnlineReward`). Casual mostra "não conta para o ranking"; ranqueada
     ganha um bloco de ranking (pontos da partida e como foram compostos, pontos e
@@ -142,34 +142,36 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   (`Protocol.PAUSE`/`RESUME` em `data/LanLink.kt`, cada lado mede o prazo pelo
   próprio relógio via `data/Clock.kt`, sem sincronizar nada entre os aparelhos).
   Se não voltar a tempo, o outro lado vence por desistência; na ranqueada, quem
-  ficou ausente leva derrota cheia, e não ganha XP nem créditos (`Match.forfeitByTimeout`). Nas demais
+  ficou ausente leva derrota cheia, e não ganha XP nem dobrões (`Match.forfeitByTimeout`). Nas demais
   variantes de partida o próprio sistema já suspende os turnos em segundo plano,
   então não precisa de aviso nenhum.
 
 ### Carreira
 
-Partidas contra a IA e online rendem **XP** e **créditos**: base por jogar, dobro por
+Partidas contra a IA e online rendem **XP** e **dobrões**: base por jogar, dobro por
 vencer, mais bônus por precisão, por navio afundado e por fechar em até 40 turnos. Online
 vale até 3 partidas recompensadas por dia contra o mesmo adversário.
 
 - **Patentes**, de Recruta a Almirante, em dez degraus de XP.
 - **Perfil** com nome de guerra, insígnia (seis brasões vetoriais) e folha de serviço
   completa: partidas, vitórias, aproveitamento, precisão, navios afundados e sequências.
-- **Créditos** compram na loja. Nada de dinheiro real por enquanto — pagamento entra
-  na publicação, e a forma natural de encaixá-lo é vender créditos.
+- **Dobrões** (a moeda do jogo) compram na loja. Beta testers têm uma aba Dobrões com compra
+  simulada (até R$ 50/dia, sem cobrança real); a Google Play Billing entra depois.
+- **Milhas náuticas**: 10 por dia; cada partida online custa 1, vitória ranqueada rende +5 e
+  casual +1 (regras em `supabase/economy.sql`, ajustáveis em `app_config`).
 
 ### Feedback e badges
 
 Em Ajustes → "Enviar feedback" (ou no atalho do Perfil), o comandante manda um bug ou uma
 sugestão direto pro servidor. A avaliação é manual — bug confirmado rende 150 a 600
-créditos, melhoria aceita rende 1 ou 3 cargas de habilidade — mas o aviso é automático: o
+dobrões, melhoria aceita rende 1 ou 3 cargas de habilidade — mas o aviso é automático: o
 app checa na abertura e mostra um popup quando algo foi avaliado. **Badges** são
 condecorações permanentes no Perfil — "Beta Tester" para quem criou conta durante o teste
 fechado, e "Colaborador" para quem já teve um feedback aprovado.
 
 ### Personalização
 
-Dois eixos independentes, ambos comprados com créditos:
+Dois eixos independentes, ambos comprados com dobrões:
 
 - **Linha de casco** — muda a silhueta das cinco embarcações (boca, proa, superestrutura,
   chaminés): Padrão (inclusa), Imperial, Atlântica e Fantasma.
@@ -357,7 +359,7 @@ as duas faixas de combate precisam ter o mesmo andamento e duração para a troc
 - [x] Ranqueada com temporadas por estação do ano e tela de Placar (geral e por
       temporada)
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
-- [ ] Compras com pagamento real (Google Play Billing) vendendo créditos
+- [ ] Compras com pagamento real (Google Play Billing) vendendo dobrões
 - [~] Alvo iOS: preferências, nuvem, modo Online e áudio já têm `actual` de verdade;
       rede local e login com Google ainda são pendências (mudos/desativados por
       enquanto, para o resto do jogo compilar) — ver [docs/BUILD.md](docs/BUILD.md#ios--em-andamento).

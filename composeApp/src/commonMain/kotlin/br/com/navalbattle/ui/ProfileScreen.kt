@@ -117,7 +117,7 @@ fun ProfileScreen(state: AppState) {
                 .windowInsetsPadding(WindowInsets.systemBars)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            ScreenTopBar(t(K.PROFILE_TITLE), "◆ ${profile.credits}")
+            ScreenTopBar(t(K.PROFILE_TITLE), profile.credits)
             Gap(14)
 
             Column(

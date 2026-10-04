@@ -124,6 +124,38 @@ data class RankedOutcome(
 )
 
 /**
+ * Situação da loja de dobrões simulada (ver `beta_store_status` em
+ * `supabase/economy.sql`): só beta tester compra, até [limitCents] por dia
+ * (Brasília), e o dia vira em [resetsInSeconds].
+ */
+data class BetaStoreStatus(
+    val eligible: Boolean,
+    val spentCents: Int,
+    val limitCents: Int,
+    val resetsInSeconds: Int
+) {
+    val remainingCents: Int get() = (limitCents - spentCents).coerceAtLeast(0)
+}
+
+/** Resultado de uma compra simulada: os dobrões que entram e o gasto do dia já somado. */
+data class BetaPurchase(val doubloons: Int, val spentCents: Int, val limitCents: Int)
+
+/**
+ * Saldo de milhas náuticas e as regras vigentes (ver `miles_status` em
+ * `supabase/economy.sql`) — os números vêm do servidor, ajustáveis sem versão nova.
+ */
+data class MilesStatus(
+    val miles: Int,
+    val daily: Int,
+    val cap: Int,
+    val resetsInSeconds: Int,
+    val packSize: Int,
+    val packPrice: Int,
+    val rankedWin: Int,
+    val casualWin: Int
+)
+
+/**
  * Retrato e patente públicos de um comandante qualquer — mostrado quando a
  * partida rápida encontra alguém e como nome do adversário durante o combate.
  * Não exige amizade, ao contrário de [FriendProfile].
@@ -359,4 +391,22 @@ expect class CloudApi() {
 
     /** Badges conquistados pelo comandante — concedidos só pelo servidor. */
     suspend fun myBadges(session: Session): CloudResult<List<UserBadge>>
+
+    /** Loja simulada: quem pode comprar, quanto já gastou hoje e quando o dia vira. */
+    suspend fun betaStoreStatus(session: Session): CloudResult<BetaStoreStatus>
+
+    /** Compra simulada de um pacote — o servidor confere badge e limite; o app credita o que voltar. */
+    suspend fun buyBetaPack(session: Session, pack: String): CloudResult<BetaPurchase>
+
+    /** Saldo de milhas (já com a recarga do dia aplicada) e as regras. */
+    suspend fun milesStatus(session: Session): CloudResult<MilesStatus>
+
+    /** Gasta 1 milha ao começar a partida online [matchId] — uma vez por sala. Devolve o saldo. */
+    suspend fun spendMile(session: Session, matchId: String): CloudResult<Int>
+
+    /** Milhas da vitória na partida [matchId] (ranqueada só se o servidor registrou a vitória). */
+    suspend fun awardWinMiles(session: Session, matchId: String): CloudResult<Int>
+
+    /** Soma [packs] pacotes de milhas — os dobrões já foram descontados no aparelho. */
+    suspend fun buyMiles(session: Session, packs: Int): CloudResult<Int>
 }

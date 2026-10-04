@@ -151,7 +151,15 @@ class Profile(private val prefs: Prefs) {
         return true
     }
 
-    /** Recompensa por feedback aprovado (bug confirmado) — não desconta nada, só soma. */
+    /** Desconta dobrões gastos fora da loja de itens (ex.: pacote de milhas). */
+    fun spendCredits(amount: Int): Boolean {
+        if (credits < amount) return false
+        credits -= amount
+        prefs.putInt(K_CREDITS, credits)
+        return true
+    }
+
+    /** Soma dobrões: recompensa de feedback, compra na loja de dobrões, estorno. */
     fun grantCredits(amount: Int) {
         credits += amount
         prefs.putInt(K_CREDITS, credits)
