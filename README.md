@@ -173,6 +173,10 @@ app checa na abertura e mostra um popup quando algo foi avaliado. **Badges** sã
 condecorações permanentes no Perfil — "Beta Tester" para quem criou conta durante o teste
 fechado, e "Colaborador" para quem já teve um feedback aprovado.
 
+Quem quer entrar no teste fechado deixa o e-mail em **Quero testar**, no
+[site do jogo](https://johncoelho.github.io/naval-battle/#testador); a fila fica no Supabase
+(`supabase/beta_waitlist.sql`) e os e-mails são levados à mão para o Play Console.
+
 ### Personalização
 
 Dois eixos independentes, ambos comprados com dobrões:

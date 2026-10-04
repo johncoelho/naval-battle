@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.46.1] — 2026-10-04 · Fila de testadores de volta no site
+
+App 0.15.1 (versionCode 43), sem mudança no jogo. **Exige rodar `supabase/beta_waitlist.sql`** (novo).
+
+### Adicionado
+- **"Quero testar" volta ao site**: e-mail + celular (Android ou iPhone) entram na fila de
+  testadores, pela função `join_beta_waitlist` (valida o e-mail, não duplica, tabela sem
+  leitura pública). O aviso da Play Store aponta para o formulário em vez de pedir contato
+  direto. Atendimento da fila em [docs/BUILD.md](docs/BUILD.md#feedback-badges-e-beta-testers).
+
+---
+
 ## [0.46.0] — 2026-10-04 · Passe de temporada
 
 App 0.15.0 (versionCode 42). **Exige rodar `supabase/season.sql`** (novo) e `supabase/online.sql`
