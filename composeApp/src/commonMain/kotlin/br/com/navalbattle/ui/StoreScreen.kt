@@ -75,7 +75,7 @@ private class PendingBuy(val name: String, val price: Int, val confirm: () -> Un
 @Composable
 fun StoreScreen(state: AppState) {
     val profile = state.profile
-    var aisle by remember { mutableStateOf(Aisle.FLEETS) }
+    var aisle by remember { mutableStateOf(Aisle.entries.getOrElse(state.storeAisle) { Aisle.FLEETS }) }
     var notice by remember { mutableStateOf<String?>(null) }
     var pending by remember { mutableStateOf<PendingBuy?>(null) }
 

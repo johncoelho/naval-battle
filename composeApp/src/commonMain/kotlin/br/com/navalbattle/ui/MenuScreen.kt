@@ -142,7 +142,7 @@ fun MenuScreen(state: AppState) {
         Spacer(Modifier.height(14.dp))
         Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
             SecondaryButton(t(K.MENU_SHIPYARD), state.skin.paint.name) { state.screen = Screen.SHIPYARD }
-            SecondaryButton(t(K.MENU_STORE), "◆ ${state.profile.credits}") { state.screen = Screen.STORE }
+            SecondaryButton(t(K.MENU_STORE), "◆ ${state.profile.credits}") { state.openStore(0) }
         }
 
         Spacer(Modifier.weight(1f))

@@ -107,6 +107,14 @@ enum class Screen {
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
+
+    /** Aba em que a Loja abre: 0 cascos, 1 camuflagens, 2 habilidades (o Estaleiro manda direto pra aba certa). */
+    var storeAisle by mutableStateOf(0)
+
+    fun openStore(aisle: Int = 0) {
+        storeAisle = aisle
+        screen = Screen.STORE
+    }
     var mode by mutableStateOf(GameMode.CLASSIC)
     var match by mutableStateOf<Match?>(null)
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -106,15 +107,19 @@ fun ShipyardScreen(state: AppState) {
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FleetLine.all.forEach { line ->
+                // só o que é seu: comprar é assunto da loja, e o cartão do fim leva até ela
+                FleetLine.all.filter { profile.ownsFleet(it.id) }.forEach { line ->
                     OptionCard(
                         label = line.name,
-                        note = if (profile.ownsFleet(line.id)) t(K.SHIPYARD_YOURS) else line.priceLabel,
+                        note = t(K.SHIPYARD_YOURS),
                         selected = fleet.id == line.id,
-                        owned = profile.ownsFleet(line.id),
                         skin = Skin(paint, line),
-                        onClick = { if (profile.ownsFleet(line.id)) fleet = line }
+                        onClick = { fleet = line }
                     )
+                }
+                val missingHulls = FleetLine.all.count { !profile.ownsFleet(it.id) }
+                if (missingHulls > 0) {
+                    MoreInStoreCard(t(K.SHIPYARD_MORE_HULLS, missingHulls)) { state.openStore(0) }
                 }
             }
 
@@ -125,15 +130,18 @@ fun ShipyardScreen(state: AppState) {
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Paint.all.forEach { option ->
+                Paint.all.filter { profile.owns(it.id) }.forEach { option ->
                     OptionCard(
                         label = option.name,
-                        note = if (profile.owns(option.id)) t(K.SHIPYARD_YOURS) else option.priceLabel,
+                        note = t(K.SHIPYARD_YOURS),
                         selected = paint.id == option.id,
-                        owned = profile.owns(option.id),
                         skin = Skin(option, fleet),
-                        onClick = { if (profile.owns(option.id)) paint = option }
+                        onClick = { paint = option }
                     )
+                }
+                val missingCamos = Paint.all.count { !profile.owns(it.id) }
+                if (missingCamos > 0) {
+                    MoreInStoreCard(t(K.SHIPYARD_MORE_CAMOS, missingCamos)) { state.openStore(1) }
                 }
             }
             Gap(12)
@@ -144,7 +152,7 @@ fun ShipyardScreen(state: AppState) {
         Gap(8)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SecondaryButton(t(K.BACK), modifier = Modifier.weight(1f)) { state.screen = Screen.MENU }
-            SecondaryButton(t(K.MENU_TAB_STORE), modifier = Modifier.weight(1f)) { state.screen = Screen.STORE }
+            SecondaryButton(t(K.MENU_TAB_STORE), modifier = Modifier.weight(1f)) { state.openStore(0) }
         }
         Gap(8)
         PrimaryButton(
@@ -162,7 +170,6 @@ private fun OptionCard(
     label: String,
     note: String,
     selected: Boolean,
-    owned: Boolean,
     skin: Skin,
     onClick: () -> Unit
 ) {
@@ -186,15 +193,14 @@ private fun OptionCard(
                 lengthPx = size.width,
                 thicknessPx = size.width / 4f,
                 vertical = false,
-                skin = skin,
-                alpha = if (owned) 1f else 0.4f
+                skin = skin
             )
         }
         Column(Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
             Text(
                 label.uppercase(),
                 style = NavalType.monoSmall,
-                color = if (selected) Naval.amberStrong else if (owned) Naval.ink else Naval.muted,
+                color = if (selected) Naval.amberStrong else Naval.ink,
                 maxLines = 1
             )
             Spacer(Modifier.height(3.dp))
@@ -202,9 +208,28 @@ private fun OptionCard(
                 Text(
                     note,
                     style = NavalType.monoSmall,
-                    color = if (owned) Naval.muted else Naval.amberStrong
+                    color = Naval.muted
                 )
             }
         }
+    }
+}
+
+/** Último cartão da fileira: quantos itens faltam e um atalho direto para a aba certa da loja. */
+@Composable
+private fun MoreInStoreCard(note: String, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .width(132.dp)
+            .height(IntrinsicSize.Min)
+            .background(Naval.surface)
+            .border(1.dp, Naval.amber)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(t(K.SHIPYARD_MORE_TITLE).uppercase(), style = NavalType.monoSmall, color = Naval.amberStrong)
+        Spacer(Modifier.height(6.dp))
+        Text(note, style = NavalType.monoSmall, color = Naval.inkSoft)
     }
 }
