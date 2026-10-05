@@ -83,7 +83,7 @@ fun MenuScreen(state: AppState) {
                 Modifier
                     .fillMaxWidth()
                     .background(Naval.amber)
-                    .clickable { openStoreListing() }
+                    .clickable { state.updatePopupDismissed = false }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             )
             Spacer(Modifier.height(10.dp))

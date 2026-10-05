@@ -10,5 +10,8 @@ actual val appVersionLabel: String
         return "$shortVersion ($build)"
     }
 
+actual val appVersionName: String
+    get() = NSBundle.mainBundle.infoDictionary?.get("CFBundleShortVersionString") as? String ?: "0"
+
 actual val platformName: String = "ios"
 

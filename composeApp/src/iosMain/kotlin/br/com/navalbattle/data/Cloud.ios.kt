@@ -532,6 +532,25 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun recentReleases(platform: String): CloudResult<List<AppRelease>> = call {
+        val live = if (platform == "ios") "ios_live" else "android_live"
+        val json = get(
+            "/rest/v1/app_releases?$live=is.true&order=version_code.desc&limit=10" +
+                "&select=version_name,version_code,notes_pt,notes_en,notes_es",
+            SupabaseConfig.ANON_KEY
+        )
+        val rows = (json as? List<*>).orEmpty().mapNotNull { it as? Map<*, *> }
+        CloudResult.Ok(rows.map { o ->
+            AppRelease(
+                versionName = o.strOr("version_name", ""),
+                versionCode = o.intOr("version_code", 0),
+                notesPt = o.strOr("notes_pt", ""),
+                notesEn = o.strOr("notes_en", ""),
+                notesEs = o.strOr("notes_es", "")
+            )
+        })
+    }
+
     actual suspend fun dailyStatus(session: Session): CloudResult<DailyStatus> = call {
         val json = post("/rest/v1/rpc/daily_status", emptyMap<String, Any?>(), token = session.accessToken)
         val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()

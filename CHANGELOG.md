@@ -9,6 +9,20 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.49.0] — 2026-10-05 · Janela de versão nova com novidades
+
+App 0.18.0 (versionCode 47). **Exige rodar `supabase/releases.sql`** (novo) e registrar
+cada versão nova em `app_releases` (passo 4b do skill de release).
+
+### Adicionado
+- **Janela "Versão X disponível" com as novidades** de cada versão publicada depois da
+  instalada, vindas do servidor (`app_releases`, em PT/EN/ES). Android: aparece quando a
+  Play confirma a atualização para o aparelho e leva à Play Store. **iPhone passa a ser
+  avisado** (antes nunca era): leva à parte do iPhone na página do jogo (`#ios`) com a
+  dica de instalar o .ipa por cima. A faixa "Nova versão" do menu reabre a janela.
+
+---
+
 ## [0.48.0] — 2026-10-05 · Diário de bordo
 
 App 0.17.0 (versionCode 46). **Exige rodar `supabase/daily.sql`** (novo).

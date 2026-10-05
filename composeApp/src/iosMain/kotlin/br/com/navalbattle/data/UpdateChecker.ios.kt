@@ -1,9 +1,17 @@
 package br.com.navalbattle.data
 
-// Sem equivalente à Play Core In-App Update API configurado para o alvo iOS ainda —
-// nunca acusa versão nova, para não mostrar um aviso que não leva a lugar nenhum.
-actual suspend fun checkUpdateAvailable(): Boolean = false
+import platform.Foundation.NSURL
+import platform.UIKit.UIApplication
 
-actual fun openStoreListing() {}
+// O iPhone instala o .ipa pelo site (sem App Store ainda): não há loja para perguntar,
+// então a novidade vem só da tabela app_releases e o botão leva à página do jogo.
+private const val IOS_DOWNLOAD_URL = "https://johncoelho.github.io/naval-battle/#ios"
+
+actual suspend fun checkUpdateAvailable(): Boolean? = null
+
+actual fun openStoreListing() {
+    val url = NSURL.URLWithString(IOS_DOWNLOAD_URL) ?: return
+    UIApplication.sharedApplication.openURL(url, options = emptyMap<Any?, Any>(), completionHandler = null)
+}
 
 actual fun shareStoreListing() {}

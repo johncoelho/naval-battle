@@ -97,6 +97,25 @@ access:
    `./gradlew :composeApp:tracks` (from the plugin) to list the real API track names before
    assuming "alpha" still applies.
 
+## 4b. Register the release's "what's new" (in-app update window)
+
+Since 0.18.0 the app shows a "Versão X disponível" window listing the notes of every
+version newer than the installed one, read from the Supabase table `app_releases`
+(`supabase/releases.sql`). **Every release must insert its row** (Supabase MCP
+`execute_sql`, project `cwtslesnthbenxswdcbv`), in the same push:
+
+```sql
+insert into public.app_releases (version_name, version_code, notes_pt, notes_en, notes_es, android_live)
+values ('<versionName>', <versionCode>, '<pt>', '<en>', '<es>', true);
+```
+- `android_live = true` right away: the app still asks the Play In-App Update API whether
+  the update reached that device, so the window waits for Google's review by itself.
+- After the **iOS CI is green** (the new `.ipa` is on release `latest`):
+  `update public.app_releases set ios_live = true where version_name = '<versionName>';`
+  — on iPhone the table alone decides, and the button opens the site's `#ios` section.
+- Notes: user-facing, 1–3 short sentences per language (accents allowed here, unlike the
+  Play release notes file).
+
 ## 5. Manual upload path (fallback only — normally not needed anymore)
 
 Only do this if the automatic publish step in CI fails or the service account isn't set up yet:

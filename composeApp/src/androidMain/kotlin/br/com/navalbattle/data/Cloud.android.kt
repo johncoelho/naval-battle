@@ -542,6 +542,27 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun recentReleases(platform: String): CloudResult<List<AppRelease>> = call {
+        val live = if (platform == "ios") "ios_live" else "android_live"
+        val arr = JSONArray(
+            get(
+                "/rest/v1/app_releases?$live=is.true&order=version_code.desc&limit=10" +
+                    "&select=version_name,version_code,notes_pt,notes_en,notes_es",
+                SupabaseConfig.ANON_KEY
+            )
+        )
+        CloudResult.Ok((0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            AppRelease(
+                versionName = o.optString("version_name"),
+                versionCode = o.optInt("version_code", 0),
+                notesPt = o.optString("notes_pt"),
+                notesEn = o.optString("notes_en"),
+                notesEs = o.optString("notes_es")
+            )
+        })
+    }
+
     actual suspend fun dailyStatus(session: Session): CloudResult<DailyStatus> = call {
         val o = JSONArray(post("/rest/v1/rpc/daily_status", JSONObject(), token = session.accessToken)).getJSONObject(0)
         CloudResult.Ok(

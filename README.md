@@ -145,6 +145,12 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   ficou ausente leva derrota cheia, e não ganha XP nem dobrões (`Match.forfeitByTimeout`). Nas demais
   variantes de partida o próprio sistema já suspende os turnos em segundo plano,
   então não precisa de aviso nenhum.
+- **Janela de versão nova** — a cada abertura e volta do segundo plano o app compara a
+  versão instalada com a tabela `app_releases` do servidor (`supabase/releases.sql`) e
+  mostra "Versão X disponível" com as novidades de cada versão publicada depois dela.
+  Android: só avisa quando a Play confirma a atualização para o aparelho (In-App Update
+  API) e o botão abre a Play Store; iPhone: o botão abre a parte do iPhone na página do
+  jogo (`#ios`), onde está o .ipa novo. A faixa do menu reabre a janela.
 - **Diário de bordo** (com conta) — balão que abre sozinho a cada entrada no app com
   prêmio esperando, e pelo chip do menu. **Check-in diário** +25 dobrões numa trilha de
   7 dias seguidos (pulou um dia, volta ao 1; o 7º dia paga +300 de bônus da semana) e

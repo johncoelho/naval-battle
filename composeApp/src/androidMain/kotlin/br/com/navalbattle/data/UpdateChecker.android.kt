@@ -13,16 +13,15 @@ import com.google.android.play.core.ktx.requestAppUpdateInfo
 
 private const val PACKAGE_NAME = "aigamesfactory.navalbattleclassic"
 
-actual suspend fun checkUpdateAvailable(): Boolean {
+actual suspend fun checkUpdateAvailable(): Boolean? {
     return try {
         val info = AppUpdateManagerFactory.create(AudioContextHolder.appContext).requestAppUpdateInfo()
         info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
             info.isUpdateTypeAllowed(AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build())
     } catch (e: Exception) {
-        // sem Play Services, sem instalação via Play Store (ex: build de depuração
-        // instalado direto), ou qualquer outra falha de rede — sem alarde, sem versão
-        // nova avisada é melhor que travar o app por causa de uma checagem opcional
-        false
+        // sem Play Services, sem instalação via Play Store (ex: APK direto) ou falha de
+        // rede — não dá para saber; quem decide é a tabela de novidades do servidor
+        null
     }
 }
 

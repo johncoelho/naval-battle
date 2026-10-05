@@ -29,6 +29,9 @@ import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.BetaStoreStatus
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.MilesStatus
+import br.com.navalbattle.data.AppRelease
+import br.com.navalbattle.data.appVersionName
+import br.com.navalbattle.data.isNewerVersion
 import br.com.navalbattle.data.DailyReminder
 import br.com.navalbattle.data.DailyStatus
 import br.com.navalbattle.data.SeasonEnd
@@ -145,6 +148,27 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Já existe uma versão mais nova publicada na faixa em que o comandante está. */
     var updateAvailable by mutableStateOf(false)
+
+    /** Novidades das versões publicadas depois da instalada — a janela de atualização lista. */
+    var updateNotes by mutableStateOf<List<AppRelease>>(emptyList())
+        private set
+
+    /**
+     * Junta a tabela de novidades do servidor com a loja. Android: avisa quando a Play
+     * confirma a atualização para este aparelho (a janela não aparece enquanto o
+     * Google revisa) — ou, instalado fora da Play, quando a tabela tem versão nova.
+     * iPhone: a tabela decide (o .ipa já está no site quando a versão é marcada lá).
+     */
+    suspend fun checkForUpdate() {
+        val notes = (cloud.recentReleases(platformName) as? CloudResult.Ok)?.value.orEmpty()
+            .filter { isNewerVersion(it.versionName, appVersionName) }
+        val store = checkUpdateAvailable()
+        updateNotes = notes
+        updateAvailable = when {
+            store != null -> store
+            else -> notes.isNotEmpty()
+        }
+    }
 
     /**
      * Para onde ir depois da abertura: direto ao deque para quem já tem conta ou já
@@ -1633,7 +1657,7 @@ fun App() {
     // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push —
     // também ao voltar do segundo plano, senão quem deixa o app aberto nunca via o aviso
     LaunchedEffect(AppForeground.active) {
-        if (AppForeground.active) state.updateAvailable = checkUpdateAvailable()
+        if (AppForeground.active) state.checkForUpdate()
     }
 
     // temporada ranqueada corrente — vem do servidor pra não depender do relógio

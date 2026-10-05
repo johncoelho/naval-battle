@@ -97,6 +97,11 @@ enum class K(val pt: String, val en: String, val es: String) {
     UPDATE_POPUP_TITLE("Tem uma versão nova do jogo", "There's a new version of the game", "Hay una versión nueva del juego"),
     UPDATE_POPUP_SUB("Melhorias e correções já publicadas — atualize para não ficar de fora.", "Improvements and fixes already published — update so you don't miss out.", "Mejoras y correcciones ya publicadas — actualiza para no quedarte afuera."),
     UPDATE_POPUP_NOW("Atualizar agora", "Update now", "Actualizar ahora"),
+    UPDATE_POPUP_VERSION("Versão %s disponível", "Version %s available", "Versión %s disponible"),
+    UPDATE_POPUP_NEWS("Novidades", "What's new", "Novedades"),
+    UPDATE_POPUP_STORE("Atualizar na loja", "Update in the store", "Actualizar en la tienda"),
+    UPDATE_POPUP_SITE("Baixar no site", "Download on the site", "Descargar en el sitio"),
+    UPDATE_POPUP_IOS_HINT("Baixe o .ipa novo na página do jogo e instale por cima, como da primeira vez.", "Download the new .ipa on the game page and install over the old one, like the first time.", "Descarga el nuevo .ipa en la página del juego e instálalo encima, como la primera vez."),
     UPDATE_POPUP_LATER("Depois", "Later", "Después"),
 
     FEEDBACK_POPUP_EYEBROW("Gostando do jogo?", "Enjoying the game?", "¿Te está gustando el juego?"),

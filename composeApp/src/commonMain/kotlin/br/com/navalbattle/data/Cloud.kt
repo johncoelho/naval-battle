@@ -198,6 +198,15 @@ data class DailyStatus(
 /** Resultado do check-in: dia da trilha e dobrões a creditar (0 se já tinha feito). */
 data class DailyCheckin(val streak: Int, val doubloons: Int, val weekCompleted: Boolean)
 
+/** Novidades de uma versão publicada (tabela `app_releases`, ver `supabase/releases.sql`). */
+data class AppRelease(
+    val versionName: String,
+    val versionCode: Int,
+    val notesPt: String,
+    val notesEn: String,
+    val notesEs: String
+)
+
 data class MilesStatus(
     val miles: Int,
     val daily: Int,
@@ -463,6 +472,12 @@ expect class CloudApi() {
 
     /** Saldo de milhas (já com a recarga do dia aplicada) e as regras. */
     suspend fun milesStatus(session: Session): CloudResult<MilesStatus>
+
+    /**
+     * Últimas versões publicadas para [platform] ("android"/"ios"), da mais nova para a
+     * mais antiga. Leitura pública — funciona também sem conta.
+     */
+    suspend fun recentReleases(platform: String): CloudResult<List<AppRelease>>
 
     /** Diário de bordo de hoje: trilha de check-in e desafio do dia. */
     suspend fun dailyStatus(session: Session): CloudResult<DailyStatus>
