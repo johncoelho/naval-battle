@@ -1,1 +1,1 @@
-Tela de Amigos nova: cartoes mais claros, pedidos recebidos em destaque, pedidos enviados separados, busca enquanto digita e folha de servico com estatisticas ao tocar no amigo. Botao Jogar direto em cada amigo.
+A lista de amigos agora mostra o avatar escolhido por cada comandante, tambem nos pedidos, na busca e na folha de servico. Inclui a nova tela de Amigos com botao Jogar direto e busca enquanto digita.

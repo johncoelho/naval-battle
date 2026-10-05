@@ -53,7 +53,9 @@ import br.com.navalbattle.data.FriendProfile
 import br.com.navalbattle.data.Friendship
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.design.drawAvatar
 import br.com.navalbattle.design.drawInsignia
+import br.com.navalbattle.game.Avatar
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -123,7 +125,7 @@ fun FriendsScreen(state: AppState) {
                                 (it.requesterId == myId && it.addresseeId == hit.id) ||
                                     (it.addresseeId == myId && it.requesterId == hit.id)
                             }
-                            PersonCard(hit.username, subtitle = null) {
+                            PersonCard(hit.username, subtitle = null, avatarId = hit.avatar) {
                                 if (known || hit.id in sentTo) {
                                     HudLabel(t(K.FRIENDS_REQUEST_SENT), Naval.muted)
                                 } else {
@@ -142,7 +144,7 @@ fun FriendsScreen(state: AppState) {
                 SectionHeader(t(K.FRIENDS_REQUESTS), incoming.size, Naval.amberStrong)
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     incoming.forEach { e ->
-                        PersonCard(e.name, subtitle = t(K.FRIENDS_WANTS_TO_ADD), highlight = true) {
+                        PersonCard(e.name, subtitle = t(K.FRIENDS_WANTS_TO_ADD), avatarId = state.friendAvatars[e.id], highlight = true) {
                             PillButton(t(K.FRIENDS_DECLINE), Naval.surface, Naval.inkSoft, border = Naval.line) {
                                 scope.launch { state.respondFriendRequest(e.friendship, false) }
                             }
@@ -164,6 +166,7 @@ fun FriendsScreen(state: AppState) {
                         PersonCard(
                             e.name,
                             subtitle = t(K.FRIENDS_TAP_PROFILE),
+                            avatarId = state.friendAvatars[e.id],
                             onClick = {
                                 viewed = e
                                 scope.launch { state.loadFriendProfile(e.id) }
@@ -182,7 +185,7 @@ fun FriendsScreen(state: AppState) {
                 SectionHeader(t(K.FRIENDS_SENT), outgoing.size, Naval.muted)
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     outgoing.forEach { e ->
-                        PersonCard(e.name, subtitle = t(K.FRIENDS_WAITING), dim = true) {
+                        PersonCard(e.name, subtitle = t(K.FRIENDS_WAITING), avatarId = state.friendAvatars[e.id], dim = true) {
                             PillButton(t(K.FRIENDS_CANCEL), Naval.surface, Naval.inkSoft, border = Naval.line) {
                                 scope.launch { state.removeFriendship(e.friendship) }
                             }
@@ -200,6 +203,7 @@ fun FriendsScreen(state: AppState) {
     viewed?.let { e ->
         FriendProfileDialog(
             name = e.name,
+            avatarId = state.viewedFriendProfile?.avatar?.ifBlank { null } ?: state.friendAvatars[e.id],
             loading = state.friendProfileLoading,
             profile = state.viewedFriendProfile,
             onInvite = {
@@ -235,12 +239,44 @@ private fun monogramColor(name: String): Color {
     return palette[(name.lowercase().hashCode() and 0x7fffffff) % palette.size]
 }
 
+/**
+ * Rosto do comandante: o avatar que ele escolheu no perfil (vem do servidor) dentro
+ * do círculo com a cor dele; enquanto não carregou, ou sem avatar, a inicial do nome.
+ */
 @Composable
-private fun Monogram(name: String, dim: Boolean = false) {
+private fun PlayerBadge(name: String, avatarId: String?, dim: Boolean = false, size: Int = 40) {
+    if (avatarId.isNullOrBlank()) {
+        Monogram(name, dim, size)
+        return
+    }
     val color = monogramColor(name)
     Box(
         Modifier
-            .size(40.dp)
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(color.copy(alpha = if (dim) 0.06f else 0.12f))
+            .border(1.5.dp, color.copy(alpha = if (dim) 0.4f else 0.9f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(Modifier.size((size * 0.78f).dp)) {
+            drawAvatar(
+                avatar = Avatar.of(avatarId),
+                center = Offset(this.size.width / 2f, this.size.height / 2f),
+                size = this.size.minDimension,
+                // mesma cor de destaque do menu e do perfil — tingir com a cor do anel
+                // deixava o rosto esverdeado; a cor de cada um fica no anel
+                color = Naval.amberStrong.copy(alpha = if (dim) 0.5f else 1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun Monogram(name: String, dim: Boolean = false, size: Int = 40) {
+    val color = monogramColor(name)
+    Box(
+        Modifier
+            .size(size.dp)
             .clip(CircleShape)
             .background(color.copy(alpha = if (dim) 0.08f else 0.16f))
             .border(1.5.dp, color.copy(alpha = if (dim) 0.4f else 0.9f), CircleShape),
@@ -262,6 +298,7 @@ private fun Monogram(name: String, dim: Boolean = false) {
 private fun PersonCard(
     name: String,
     subtitle: String?,
+    avatarId: String? = null,
     highlight: Boolean = false,
     dim: Boolean = false,
     onClick: (() -> Unit)? = null,
@@ -276,7 +313,7 @@ private fun PersonCard(
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Monogram(name, dim)
+        PlayerBadge(name, avatarId, dim)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -389,6 +426,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, onClear: () -
 @Composable
 private fun FriendProfileDialog(
     name: String,
+    avatarId: String?,
     loading: Boolean,
     profile: FriendProfile?,
     onInvite: () -> Unit,
@@ -415,23 +453,24 @@ private fun FriendProfileDialog(
             HudLabel(t(K.FRIENDS_PROFILE_TITLE).uppercase(), Naval.muted)
             Gap(10)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (profile != null) {
-                    Canvas(Modifier.size(48.dp)) {
-                        drawInsignia(
-                            insignia = Insignia.of(profile.insignia),
-                            center = Offset(size.width / 2f, size.height / 2f),
-                            size = size.minDimension * 0.75f,
-                            color = Naval.amberStrong
-                        )
-                    }
-                } else {
-                    Monogram(name)
-                }
+                PlayerBadge(name, avatarId, size = 56)
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(name, style = NavalType.title, color = Naval.amberStrong, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     profile?.let {
-                        HudLabel("${it.xp} XP · ${t(K.LEADERBOARD_TITLE)} ${it.rankedRating}", Naval.muted)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // patente (insígnia) ao lado do XP
+                            Canvas(Modifier.size(16.dp)) {
+                                drawInsignia(
+                                    insignia = Insignia.of(it.insignia),
+                                    center = Offset(size.width / 2f, size.height / 2f),
+                                    size = size.minDimension,
+                                    color = Naval.amberStrong
+                                )
+                            }
+                            Spacer(Modifier.width(6.dp))
+                            HudLabel("${it.xp} XP · ${t(K.LEADERBOARD_TITLE)} ${it.rankedRating}", Naval.muted)
+                        }
                     }
                 }
             }

@@ -281,7 +281,7 @@ actual class CloudApi actual constructor() {
         val json = post("/rest/v1/rpc/search_commander", mapOf("query" to query), token = session.accessToken)
         val rows = (json as? List<*>).orEmpty()
         val list = rows.mapNotNull { it as? Map<*, *> }
-            .map { o -> CommanderHit(id = o.strOr("id", ""), username = o.strOr("username", "")) }
+            .map { o -> CommanderHit(id = o.strOr("id", ""), username = o.strOr("username", ""), avatar = o.strOr("avatar", "")) }
         CloudResult.Ok(list)
     }
 
@@ -326,6 +326,12 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(list)
     }
 
+    actual suspend fun friendAvatars(session: Session): CloudResult<Map<String, String>> = call {
+        val json = post("/rest/v1/rpc/friend_avatars", emptyMap<String, Any?>(), token = session.accessToken)
+        val rows = (json as? List<*>).orEmpty().mapNotNull { it as? Map<*, *> }
+        CloudResult.Ok(rows.associate { it.strOr("user_id", "") to it.strOr("avatar", "") })
+    }
+
     actual suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?> = call {
         val json = post("/rest/v1/rpc/friend_profile", mapOf("p_friend_id" to friendId), token = session.accessToken)
         val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
@@ -338,7 +344,8 @@ actual class CloudApi actual constructor() {
                     matches = it.intOr("matches", 0),
                     wins = it.intOr("wins", 0),
                     bestStreak = it.intOr("best_streak", 0),
-                    rankedRating = it.intOr("ranked_rating", 1000)
+                    rankedRating = it.intOr("ranked_rating", 1000),
+                    avatar = it.strOr("avatar", "")
                 )
             }
         )

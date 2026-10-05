@@ -468,10 +468,15 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         refreshFriendships()
     }
 
+    /** Avatar escolhido por cada pessoa da lista de amigos, por id — vazio até carregar. */
+    var friendAvatars by mutableStateOf<Map<String, String>>(mapOf("u1" to "of1", "u3" to "avm", "u4" to "om2", "u5" to "cpf", "u6" to "om1", "u7" to "avf"))
+        private set
+
     suspend fun refreshFriendships() {
         val session = profile.currentSession() ?: return
         val r = cloud.listFriendships(session)
         friendships = (r as? CloudResult.Ok)?.value.orEmpty()
+        (cloud.friendAvatars(session) as? CloudResult.Ok)?.value?.let { friendAvatars = it }
     }
 
     // ---------------- convite de amigo mirado (banner fora da tela Online) ----------------

@@ -233,10 +233,12 @@ create trigger friendships_touch
 -- busca de comandante por nome, para mandar pedido de amizade — `profiles` é
 -- trancada por RLS a "só a própria linha", então a busca precisa de uma função
 -- com `security definer` que devolve só o mínimo (id e nome), nunca e-mail
-create or replace function public.search_commander(query text)
-returns table (id uuid, username text)
+-- o avatar vai junto para a busca mostrar o rosto de cada comandante (0.20.0)
+drop function if exists public.search_commander(text);
+create function public.search_commander(query text)
+returns table (id uuid, username text, avatar text)
 language sql security definer set search_path = public stable as $$
-  select p.id, p.username
+  select p.id, p.username, p.avatar
   from public.profiles p
   where p.username ilike query || '%'
     and p.id <> auth.uid()
@@ -478,13 +480,14 @@ grant execute on function public.my_rank(boolean) to authenticated;
 -- amigos — só devolve algo se já existir amizade aceita entre os dois lados,
 -- e só os campos públicos (sem e-mail); avatar fica de fora porque é local
 -- só do aparelho de cada um, nunca sincronizado com a nuvem
-create or replace function public.friend_profile(p_friend_id uuid)
+drop function if exists public.friend_profile(uuid);
+create function public.friend_profile(p_friend_id uuid)
 returns table (
   username text, insignia text, xp integer, matches integer,
-  wins integer, best_streak integer, ranked_rating integer
+  wins integer, best_streak integer, ranked_rating integer, avatar text
 )
 language sql security definer set search_path = public stable as $$
-  select p.username, p.insignia, p.xp, p.matches, p.wins, p.best_streak, p.ranked_rating
+  select p.username, p.insignia, p.xp, p.matches, p.wins, p.best_streak, p.ranked_rating, p.avatar
   from public.profiles p
   where p.id = p_friend_id
     and exists (
@@ -494,6 +497,21 @@ language sql security definer set search_path = public stable as $$
           or (f.addressee_id = auth.uid() and f.requester_id = p_friend_id))
     );
 $$;
+
+-- avatar de cada pessoa da lista de amigos (aceitos e pedidos) — a tela de amigos
+-- mostra o rosto escolhido por cada comandante em vez de só a inicial
+create or replace function public.friend_avatars()
+returns table (user_id uuid, avatar text)
+language sql security definer set search_path = public stable as $$
+  select p.id, p.avatar
+  from public.friendships f
+  join public.profiles p
+    on p.id = case when f.requester_id = auth.uid() then f.addressee_id else f.requester_id end
+  where f.requester_id = auth.uid() or f.addressee_id = auth.uid();
+$$;
+
+revoke all on function public.friend_avatars() from public;
+grant execute on function public.friend_avatars() to authenticated;
 
 revoke all on function public.friend_profile(uuid) from public;
 grant execute on function public.friend_profile(uuid) to authenticated;

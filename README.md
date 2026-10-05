@@ -106,7 +106,8 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     `Profile.claimOnlineReward`). Casual mostra "não conta para o ranking"; ranqueada
     ganha um bloco de ranking (pontos da partida e como foram compostos, pontos e
     posição na temporada antes → depois, partidas e vitórias, botão "Ver ranking").
-  - **Amigos** — tela própria (`ui/FriendsScreen.kt`): cartões com monograma, nome e
+  - **Amigos** — tela própria (`ui/FriendsScreen.kt`): cartões com o avatar que cada
+    comandante escolheu no perfil (`friend_avatars`; inicial do nome como reserva), nome e
     uma ação principal; busca enquanto digita; seções Pedidos recebidos (em destaque),
     Seus amigos (com **Jogar** direto) e Pedidos enviados (com Cancelar). Tocar no
     cartão abre a folha de serviço (insígnia, XP, pontos, partidas, vitórias, % e

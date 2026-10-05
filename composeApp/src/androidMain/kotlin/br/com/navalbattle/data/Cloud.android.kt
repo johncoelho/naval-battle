@@ -289,7 +289,7 @@ actual class CloudApi actual constructor() {
         val arr = JSONArray(json)
         val list = (0 until arr.length()).map { i ->
             val o = arr.getJSONObject(i)
-            CommanderHit(id = o.getString("id"), username = o.getString("username"))
+            CommanderHit(id = o.getString("id"), username = o.getString("username"), avatar = o.optString("avatar"))
         }
         CloudResult.Ok(list)
     }
@@ -334,6 +334,14 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(list)
     }
 
+    actual suspend fun friendAvatars(session: Session): CloudResult<Map<String, String>> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/friend_avatars", JSONObject(), token = session.accessToken))
+        CloudResult.Ok((0 until arr.length()).associate { i ->
+            val o = arr.getJSONObject(i)
+            o.optString("user_id") to o.optString("avatar")
+        })
+    }
+
     actual suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?> = call {
         val body = JSONObject().put("p_friend_id", friendId)
         val json = post("/rest/v1/rpc/friend_profile", body, token = session.accessToken)
@@ -348,7 +356,8 @@ actual class CloudApi actual constructor() {
                 matches = o.optInt("matches"),
                 wins = o.optInt("wins"),
                 bestStreak = o.optInt("best_streak"),
-                rankedRating = o.optInt("ranked_rating", 1000)
+                rankedRating = o.optInt("ranked_rating", 1000),
+                avatar = o.optString("avatar")
             )
         )
     }

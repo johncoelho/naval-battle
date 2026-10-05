@@ -76,7 +76,7 @@ data class OnlineMatch(
     val ranked: Boolean
 )
 
-/** A folha de serviço pública de um amigo — sem e-mail, sem avatar (esse é só local). */
+/** A folha de serviço pública de um amigo — sem e-mail; com o avatar que ele escolheu. */
 data class FriendProfile(
     val username: String,
     val insignia: String,
@@ -84,7 +84,8 @@ data class FriendProfile(
     val matches: Int,
     val wins: Int,
     val bestStreak: Int,
-    val rankedRating: Int
+    val rankedRating: Int,
+    val avatar: String = ""
 )
 
 /** Uma linha do placar — geral ou de temporada, a mesma forma para os dois. */
@@ -268,7 +269,7 @@ data class FeedbackUpdate(
 data class UserBadge(val code: String, val earnedAt: String)
 
 /** Resultado de uma busca por nome de comandante, para mandar pedido de amizade. */
-data class CommanderHit(val id: String, val username: String)
+data class CommanderHit(val id: String, val username: String, val avatar: String = "")
 
 /** Pedido de amizade — pendente, aceito ou recusado. */
 data class Friendship(
@@ -398,6 +399,9 @@ expect class CloudApi() {
     suspend fun listFriendships(session: Session): CloudResult<List<Friendship>>
 
     /** Folha de serviço pública de um amigo (exige amizade aceita) — para a tela de perfil dele. */
+    /** Avatar de cada pessoa da lista de amigos (aceitos e pedidos), por id. */
+    suspend fun friendAvatars(session: Session): CloudResult<Map<String, String>>
+
     suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?>
 
     /** Retrato e patente públicos de qualquer comandante — não exige amizade. */

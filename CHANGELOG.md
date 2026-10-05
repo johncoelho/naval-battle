@@ -9,6 +9,19 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.51.0] — 2026-10-05 · Avatar de cada jogador na lista de amigos
+
+App 0.20.0 (versionCode 49). **Exige rodar `supabase/online.sql` de novo** (`search_commander`
+e `friend_profile` passam a devolver o avatar; nova `friend_avatars`).
+
+### Alterado
+- **Lista de amigos mostra o avatar que cada comandante escolheu no perfil** (vindo do
+  servidor), dentro do anel com a cor dele — nos amigos, nos pedidos recebidos e enviados,
+  nos resultados da busca e na folha de serviço (com a insígnia da patente ao lado do XP).
+  Sem avatar carregado, fica a inicial do nome.
+
+---
+
 ## [0.50.0] — 2026-10-05 · Tela de amigos nova
 
 App 0.19.0 (versionCode 48).
