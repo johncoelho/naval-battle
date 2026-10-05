@@ -1,1 +1,1 @@
-Novo aviso de versao nova: quando sair uma atualizacao, o jogo mostra uma janela com as novidades e leva direto para a loja (no iPhone, para a pagina do jogo). Inclui o Diario de bordo com check-in diario, bonus da semana e desafio do dia.
+Tela de Amigos nova: cartoes mais claros, pedidos recebidos em destaque, pedidos enviados separados, busca enquanto digita e folha de servico com estatisticas ao tocar no amigo. Botao Jogar direto em cada amigo.

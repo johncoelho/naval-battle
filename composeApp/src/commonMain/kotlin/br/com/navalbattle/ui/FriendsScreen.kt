@@ -4,26 +4,32 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,34 +37,65 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.FriendProfile
+import br.com.navalbattle.data.Friendship
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawInsignia
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/** Um amigo (ou pedido) já resolvido para a tela: quem é o outro lado e a amizade em si. */
+private data class FriendEntry(val id: String, val name: String, val friendship: Friendship)
+
 /**
- * Tela dedicada de amigos — antes vivia espremida dentro da tela Online, sem
- * botão de busca (disparava a cada tecla) nem jeito de ver o perfil de quem já
- * é amigo. Agora tem busca de verdade, seções claras e um popup de folha de
- * serviço pra cada amigo.
+ * Tela de amigos. Cada amigo é um cartão com monograma, nome e uma ação principal
+ * clara (Jogar); o resto (perfil, remover) fica na folha de serviço, que abre ao
+ * tocar no cartão — antes as quatro ações dividiam a linha com o nome, quebravam
+ * no meio da palavra e empurravam o "Remover" para fora da tela. Pedidos recebidos
+ * vêm primeiro, com destaque; os enviados ficam numa seção própria, separados dos
+ * amigos. A busca roda sozinha enquanto digita (com uma pausa curta).
  */
 @Composable
 fun FriendsScreen(state: AppState) {
     val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf("") }
-    var viewedName by remember { mutableStateOf("") }
+    var viewed by remember { mutableStateOf<FriendEntry?>(null) }
+    var confirmRemove by remember { mutableStateOf<FriendEntry?>(null) }
+    var sentTo by remember { mutableStateOf(setOf<String>()) }
 
-    fun search() = scope.launch { state.searchCommander(query) }
+    LaunchedEffect(Unit) { state.refreshFriendships() }
+    LaunchedEffect(query) {
+        if (query.trim().length < 2) {
+            state.searchCommander("")
+            return@LaunchedEffect
+        }
+        delay(350)
+        state.searchCommander(query.trim())
+    }
+
+    val myId = state.profile.accountId
+    fun other(f: Friendship) = if (f.requesterId == myId)
+        FriendEntry(f.addresseeId, f.addresseeUsername, f) else FriendEntry(f.requesterId, f.requesterUsername, f)
+
+    val incoming = state.friendships.filter { it.status == "pending" && it.addresseeId == myId }.map { other(it) }
+    val outgoing = state.friendships.filter { it.status == "pending" && it.requesterId == myId }.map { other(it) }
+    val friends = state.friendships.filter { it.status == "accepted" }.map { other(it) }.sortedBy { it.name.lowercase() }
 
     Column(
         Modifier
@@ -66,117 +103,90 @@ fun FriendsScreen(state: AppState) {
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
-        ScreenTopBar(t(K.FRIENDS_TITLE), "")
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+            Text(t(K.FRIENDS_TITLE).uppercase(), style = NavalType.title, color = Naval.ink, modifier = Modifier.weight(1f))
+            HudLabel(t(K.FRIENDS_COUNT, friends.size), Naval.amberStrong)
+        }
+        Gap(14)
+        SearchField(query, onChange = { query = it }, onClear = { query = "" })
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            Gap(18)
-            HudLabel(t(K.FRIENDS_SEARCH_HINT))
-            Gap(8)
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                CodeField(
-                    value = query,
-                    enabled = true,
-                    placeholder = t(K.FRIENDS_SEARCH_HINT),
-                    uppercase = false,
-                    onChange = { query = it }
-                )
-            }
-            Gap(8)
-            SecondaryButton(t(K.FRIENDS_SEARCH_BUTTON), enabled = query.isNotBlank()) { search() }
-
-            if (query.isNotBlank()) {
-                Gap(14)
+            // resultados da busca, logo abaixo do campo
+            if (query.trim().length >= 2) {
+                Gap(10)
                 if (state.friendResults.isEmpty()) {
                     HudLabel(t(K.FRIENDS_SEARCH_EMPTY), Naval.muted)
                 } else {
-                    val myId = state.profile.accountId
-                    state.friendResults.forEach { hit ->
-                        val alreadyKnown = state.friendships.any {
-                            (it.requesterId == myId && it.addresseeId == hit.id) ||
-                                (it.addresseeId == myId && it.requesterId == hit.id)
-                        }
-                        FriendRow(hit.username) {
-                            if (alreadyKnown) {
-                                HudLabel(t(K.FRIENDS_REQUEST_SENT), Naval.muted)
-                            } else {
-                                HudLabel(
-                                    t(K.FRIENDS_ADD),
-                                    Naval.amberStrong,
-                                    Modifier.clickable {
-                                        scope.launch {
-                                            state.sendFriendRequest(hit)
-                                            query = ""
-                                        }
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        state.friendResults.filter { it.id != myId }.forEach { hit ->
+                            val known = state.friendships.any {
+                                (it.requesterId == myId && it.addresseeId == hit.id) ||
+                                    (it.addresseeId == myId && it.requesterId == hit.id)
+                            }
+                            PersonCard(hit.username, subtitle = null) {
+                                if (known || hit.id in sentTo) {
+                                    HudLabel(t(K.FRIENDS_REQUEST_SENT), Naval.muted)
+                                } else {
+                                    PillButton(t(K.FRIENDS_ADD), Naval.amber, Naval.amberInk) {
+                                        sentTo = sentTo + hit.id
+                                        scope.launch { state.sendFriendRequest(hit) }
                                     }
-                                )
+                                }
                             }
                         }
                     }
                 }
             }
 
-            val myId = state.profile.accountId
-            val incoming = state.friendships.filter { it.status == "pending" && it.addresseeId == myId }
             if (incoming.isNotEmpty()) {
-                Gap(22)
-                HudLabel(t(K.FRIENDS_REQUESTS), Naval.muted)
-                Gap(8)
-                incoming.forEach { f ->
-                    FriendRow(f.requesterUsername) {
-                        HudLabel(
-                            t(K.FRIENDS_ACCEPT),
-                            Naval.greenBright,
-                            Modifier.clickable { scope.launch { state.respondFriendRequest(f, true) } }
-                        )
-                        GapW(14)
-                        HudLabel(
-                            t(K.FRIENDS_DECLINE),
-                            Naval.danger,
-                            Modifier.clickable { scope.launch { state.respondFriendRequest(f, false) } }
-                        )
+                SectionHeader(t(K.FRIENDS_REQUESTS), incoming.size, Naval.amberStrong)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    incoming.forEach { e ->
+                        PersonCard(e.name, subtitle = t(K.FRIENDS_WANTS_TO_ADD), highlight = true) {
+                            PillButton(t(K.FRIENDS_DECLINE), Naval.surface, Naval.inkSoft, border = Naval.line) {
+                                scope.launch { state.respondFriendRequest(e.friendship, false) }
+                            }
+                            Spacer(Modifier.width(6.dp))
+                            PillButton(t(K.FRIENDS_ACCEPT), Naval.greenBright, Naval.bg) {
+                                scope.launch { state.respondFriendRequest(e.friendship, true) }
+                            }
+                        }
                     }
                 }
             }
 
-            val accepted = state.friendships.filter { it.status == "accepted" }
-            val outgoing = state.friendships.filter { it.status == "pending" && it.requesterId == myId }
-            Gap(22)
-            HudLabel(t(K.FRIENDS_LIST), Naval.muted)
-            Gap(8)
-            if (accepted.isEmpty() && outgoing.isEmpty()) {
-                HudLabel(t(K.FRIENDS_EMPTY), Naval.muted)
+            SectionHeader(t(K.FRIENDS_LIST), friends.size, Naval.muted)
+            if (friends.isEmpty()) {
+                EmptyFleet()
             } else {
-                outgoing.forEach { f ->
-                    val name = if (f.requesterId == myId) f.addresseeUsername else f.requesterUsername
-                    FriendRow(name) { HudLabel("(${t(K.FRIENDS_SENT_TAG)})", Naval.muted) }
-                }
-                accepted.forEach { f ->
-                    val friendId = if (f.requesterId == myId) f.addresseeId else f.requesterId
-                    val name = if (f.requesterId == myId) f.addresseeUsername else f.requesterUsername
-                    FriendRow(name) {
-                        HudLabel(
-                            t(K.FRIENDS_VIEW_PROFILE),
-                            Naval.inkSoft,
-                            Modifier.clickable {
-                                viewedName = name
-                                scope.launch { state.loadFriendProfile(friendId) }
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    friends.forEach { e ->
+                        PersonCard(
+                            e.name,
+                            subtitle = t(K.FRIENDS_TAP_PROFILE),
+                            onClick = {
+                                viewed = e
+                                scope.launch { state.loadFriendProfile(e.id) }
                             }
-                        )
-                        GapW(14)
-                        HudLabel(
-                            t(K.FRIENDS_INVITE),
-                            Naval.amberStrong,
-                            Modifier.clickable {
-                                state.createOnlineRoom(invitedId = friendId)
+                        ) {
+                            PillButton(t(K.FRIENDS_PLAY), Naval.amber, Naval.amberInk) {
+                                state.createOnlineRoom(invitedId = e.id)
                                 state.screen = Screen.ONLINE
                             }
-                        )
-                        GapW(14)
-                        HudLabel(
-                            t(K.FRIENDS_REMOVE),
-                            Naval.danger,
-                            Modifier.clickable { scope.launch { state.removeFriendship(f) } }
-                        )
+                        }
+                    }
+                }
+            }
+
+            if (outgoing.isNotEmpty()) {
+                SectionHeader(t(K.FRIENDS_SENT), outgoing.size, Naval.muted)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    outgoing.forEach { e ->
+                        PersonCard(e.name, subtitle = t(K.FRIENDS_WAITING), dim = true) {
+                            PillButton(t(K.FRIENDS_CANCEL), Naval.surface, Naval.inkSoft, border = Naval.line) {
+                                scope.launch { state.removeFriendship(e.friendship) }
+                            }
+                        }
                     }
                 }
             }
@@ -187,22 +197,209 @@ fun FriendsScreen(state: AppState) {
         SecondaryButton(t(K.BACK_TO_DECK)) { state.screen = Screen.MENU }
     }
 
-    if (viewedName.isNotBlank()) {
+    viewed?.let { e ->
         FriendProfileDialog(
-            name = viewedName,
+            name = e.name,
             loading = state.friendProfileLoading,
             profile = state.viewedFriendProfile,
-            onClose = { viewedName = ""; state.closeFriendProfile() }
+            onInvite = {
+                viewed = null
+                state.closeFriendProfile()
+                state.createOnlineRoom(invitedId = e.id)
+                state.screen = Screen.ONLINE
+            },
+            onRemove = { confirmRemove = e },
+            onClose = { viewed = null; state.closeFriendProfile() }
+        )
+    }
+
+    confirmRemove?.let { e ->
+        ConfirmRemoveDialog(
+            name = e.name,
+            onKeep = { confirmRemove = null },
+            onRemove = {
+                confirmRemove = null
+                viewed = null
+                state.closeFriendProfile()
+                scope.launch { state.removeFriendship(e.friendship) }
+            }
         )
     }
 }
 
+// ------------------------------------------------------------------ peças
+
+/** Cor do monograma, fixa por nome — cada amigo sempre com a mesma. */
+private fun monogramColor(name: String): Color {
+    val palette = listOf(Naval.amberStrong, Naval.commanderOne, Naval.commanderTwo, Naval.greenBright, Naval.danger, Naval.inkSoft)
+    return palette[(name.lowercase().hashCode() and 0x7fffffff) % palette.size]
+}
+
 @Composable
-private fun FriendProfileDialog(name: String, loading: Boolean, profile: FriendProfile?, onClose: () -> Unit) {
+private fun Monogram(name: String, dim: Boolean = false) {
+    val color = monogramColor(name)
+    Box(
+        Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(color.copy(alpha = if (dim) 0.08f else 0.16f))
+            .border(1.5.dp, color.copy(alpha = if (dim) 0.4f else 0.9f), CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            name.trim().firstOrNull()?.uppercase() ?: "?",
+            style = NavalType.title,
+            color = color.copy(alpha = if (dim) 0.5f else 1f)
+        )
+    }
+}
+
+/**
+ * Cartão de uma pessoa: monograma, nome em cima e legenda embaixo (empilhados, nunca
+ * lado a lado), ações à direita. Nome longo corta com reticências em vez de quebrar.
+ */
+@Composable
+private fun PersonCard(
+    name: String,
+    subtitle: String?,
+    highlight: Boolean = false,
+    dim: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    actions: @Composable () -> Unit
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(if (highlight) Naval.amber.copy(alpha = 0.08f) else Naval.surface2)
+            .border(1.dp, if (highlight) Naval.amber else Naval.line)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Monogram(name, dim)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                name,
+                style = NavalType.mono,
+                color = if (dim) Naval.inkSoft else Naval.ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            subtitle?.let {
+                Gap(2)
+                Text(it, style = NavalType.monoSmall, color = Naval.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) { actions() }
+    }
+}
+
+/** Botão compacto do cartão — texto numa linha só, nunca quebrado no meio. */
+@Composable
+private fun PillButton(text: String, background: Color, content: Color, border: Color? = null, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .background(background)
+            .then(if (border != null) Modifier.border(1.dp, border) else Modifier)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text.uppercase(), style = NavalType.monoSmall, color = content, maxLines = 1, softWrap = false)
+    }
+}
+
+@Composable
+private fun SectionHeader(title: String, count: Int, color: Color) {
+    Gap(22)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        HudLabel(title.uppercase(), color)
+        Spacer(Modifier.width(8.dp))
+        Box(Modifier.background(Naval.surface).border(1.dp, Naval.lineSoft).padding(horizontal = 6.dp, vertical = 1.dp)) {
+            Text(count.toString(), style = NavalType.monoSmall, color = Naval.inkSoft)
+        }
+    }
+    Gap(8)
+}
+
+@Composable
+private fun EmptyFleet() {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .border(1.dp, Naval.lineSoft)
+            .padding(vertical = 24.dp, horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // radar vazio: nenhum contato no alcance
+        Canvas(Modifier.size(56.dp)) {
+            val c = Offset(size.width / 2f, size.height / 2f)
+            val r = size.minDimension / 2f
+            drawCircle(Naval.green.copy(alpha = 0.6f), r - 1f, c, style = Stroke(1.5f))
+            drawCircle(Naval.green.copy(alpha = 0.35f), r * 0.55f, c, style = Stroke(1.2f))
+            drawLine(Naval.greenBright, c, Offset(c.x + r * 0.8f, c.y - r * 0.45f), strokeWidth = 2f, cap = StrokeCap.Round)
+        }
+        Gap(10)
+        Text(t(K.FRIENDS_EMPTY), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun SearchField(value: String, onChange: (String) -> Unit, onClear: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Naval.surface2)
+            .border(1.dp, if (value.isBlank()) Naval.line else Naval.amber)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // lupa desenhada
+        Canvas(Modifier.size(18.dp)) {
+            val r = size.minDimension * 0.32f
+            val c = Offset(size.width * 0.42f, size.height * 0.42f)
+            drawCircle(Naval.muted, r, c, style = Stroke(2f))
+            drawLine(Naval.muted, Offset(c.x + r * 0.72f, c.y + r * 0.72f), Offset(size.width * 0.92f, size.height * 0.92f), strokeWidth = 2.4f, cap = StrokeCap.Round)
+        }
+        Spacer(Modifier.width(10.dp))
+        BasicTextField(
+            value = value,
+            onValueChange = { onChange(it.take(24)) },
+            singleLine = true,
+            textStyle = NavalType.mono.copy(color = Naval.ink),
+            cursorBrush = SolidColor(Naval.amberStrong),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = {}),
+            modifier = Modifier.weight(1f)
+        ) { inner ->
+            Box(Modifier.fillMaxWidth()) {
+                if (value.isEmpty()) Text(t(K.FRIENDS_SEARCH_HINT), style = NavalType.mono, color = Naval.muted)
+                inner()
+            }
+        }
+        if (value.isNotEmpty()) {
+            Spacer(Modifier.width(8.dp))
+            HudLabel("✕", Naval.inkSoft, Modifier.clickable(onClick = onClear).padding(4.dp))
+        }
+    }
+}
+
+@Composable
+private fun FriendProfileDialog(
+    name: String,
+    loading: Boolean,
+    profile: FriendProfile?,
+    onInvite: () -> Unit,
+    onRemove: () -> Unit,
+    onClose: () -> Unit
+) {
     Box(
         Modifier
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.88f))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClose() }
             .windowInsetsPadding(WindowInsets.systemBars)
             .padding(24.dp),
         contentAlignment = Alignment.Center
@@ -211,49 +408,106 @@ private fun FriendProfileDialog(name: String, loading: Boolean, profile: FriendP
             Modifier
                 .fillMaxWidth()
                 .background(Naval.surface2)
-                .border(1.dp, Naval.line)
+                .border(1.dp, Naval.amber)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
                 .padding(20.dp)
         ) {
-            HudLabel(t(K.FRIENDS_PROFILE_TITLE), Naval.muted)
-            Gap(6)
-            Text(name.uppercase(), style = NavalType.title, color = Naval.amberStrong)
+            HudLabel(t(K.FRIENDS_PROFILE_TITLE).uppercase(), Naval.muted)
+            Gap(10)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (profile != null) {
+                    Canvas(Modifier.size(48.dp)) {
+                        drawInsignia(
+                            insignia = Insignia.of(profile.insignia),
+                            center = Offset(size.width / 2f, size.height / 2f),
+                            size = size.minDimension * 0.75f,
+                            color = Naval.amberStrong
+                        )
+                    }
+                } else {
+                    Monogram(name)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(name, style = NavalType.title, color = Naval.amberStrong, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    profile?.let {
+                        HudLabel("${it.xp} XP · ${t(K.LEADERBOARD_TITLE)} ${it.rankedRating}", Naval.muted)
+                    }
+                }
+            }
             Gap(16)
             when {
                 loading -> HudLabel(t(K.FRIENDS_PROFILE_LOADING), Naval.muted)
                 profile == null -> HudLabel(t(K.FRIENDS_PROFILE_NOT_FOUND), Naval.danger)
                 else -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Canvas(Modifier.size(52.dp)) {
-                            drawInsignia(
-                                insignia = Insignia.of(profile.insignia),
-                                center = Offset(size.width / 2f, size.height / 2f),
-                                size = size.minDimension * 0.7f,
-                                color = Naval.amberStrong
-                            )
-                        }
-                        Spacer(Modifier.width(14.dp))
-                        Column {
-                            HudLabel("${profile.xp} XP", Naval.muted)
-                            Gap(2)
-                            HudLabel("${t(K.LEADERBOARD_TITLE)}: ${profile.rankedRating}", Naval.muted)
-                        }
-                    }
-                    Gap(16)
+                    val rate = if (profile.matches == 0) 0 else profile.wins * 100 / profile.matches
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         BigStatChip(t(K.PROFILE_MATCHES), profile.matches.toString(), Modifier.weight(1f))
                         BigStatChip(t(K.PROFILE_WINS), profile.wins.toString(), Modifier.weight(1f), Naval.greenBright)
-                        BigStatChip(t(K.PROFILE_BEST_STREAK), profile.bestStreak.toString(), Modifier.weight(1f))
+                        BigStatChip(t(K.FRIENDS_WIN_RATE), "$rate%", Modifier.weight(1f))
                     }
+                    Gap(8)
+                    HudLabel("${t(K.PROFILE_BEST_STREAK)}: ${profile.bestStreak}", Naval.muted)
                 }
             }
             Gap(20)
-            PrimaryButton(t(K.BACK_TO_DECK)) { onClose() }
+            PrimaryButton(t(K.FRIENDS_INVITE), modifier = Modifier.fillMaxWidth()) { onInvite() }
+            Gap(8)
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecondaryButton(t(K.FRIENDS_CLOSE), modifier = Modifier.weight(1f).fillMaxHeight()) { onClose() }
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .border(1.dp, Naval.danger.copy(alpha = 0.6f))
+                        .clickable(onClick = onRemove),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(t(K.FRIENDS_REMOVE).uppercase(), style = NavalType.button, color = Naval.danger)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun BigStatChip(label: String, value: String, modifier: Modifier = Modifier, color: androidx.compose.ui.graphics.Color = Naval.ink) {
+private fun ConfirmRemoveDialog(name: String, onKeep: () -> Unit, onRemove: () -> Unit) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Naval.bg.copy(alpha = 0.9f))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onKeep() }
+            .windowInsetsPadding(WindowInsets.systemBars)
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .background(Naval.surface2)
+                .border(1.dp, Naval.danger)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+                .padding(20.dp)
+        ) {
+            Text(t(K.FRIENDS_REMOVE_CONFIRM, name), style = NavalType.mono, color = Naval.ink)
+            Gap(6)
+            HudLabel(t(K.FRIENDS_REMOVE_CONFIRM_SUB), Naval.muted)
+            Gap(18)
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SecondaryButton(t(K.FRIENDS_KEEP), modifier = Modifier.weight(1f).fillMaxHeight()) { onKeep() }
+                Box(
+                    Modifier.weight(1f).fillMaxHeight().background(Naval.danger).clickable(onClick = onRemove),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(t(K.FRIENDS_REMOVE).uppercase(), style = NavalType.button, color = Naval.bg)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BigStatChip(label: String, value: String, modifier: Modifier = Modifier, color: Color = Naval.ink) {
     Column(
         modifier
             .background(Naval.surface)
@@ -263,56 +517,5 @@ private fun BigStatChip(label: String, value: String, modifier: Modifier = Modif
         Text(value, style = NavalType.title, color = color)
         Gap(2)
         HudLabel(label, Naval.muted)
-    }
-}
-
-@Composable
-private fun FriendRow(name: String, actions: @Composable RowScope.() -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
-            .background(Naval.surface2)
-            .border(1.dp, Naval.line)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(name.uppercase(), style = NavalType.mono, color = Naval.ink)
-        Row(content = actions)
-    }
-}
-
-@Composable
-private fun CodeField(
-    value: String,
-    enabled: Boolean,
-    placeholder: String,
-    uppercase: Boolean,
-    onChange: (String) -> Unit
-) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .background(Naval.surface2)
-            .border(1.dp, if (value.isBlank()) Naval.line else Naval.green)
-            .padding(horizontal = 14.dp, vertical = 14.dp)
-    ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onChange,
-            enabled = enabled,
-            singleLine = true,
-            textStyle = (if (uppercase) NavalType.mono else NavalType.button).copy(color = Naval.ink),
-            cursorBrush = SolidColor(Naval.amberStrong),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            modifier = Modifier.fillMaxWidth()
-        ) { inner ->
-            Box(Modifier.fillMaxWidth()) {
-                if (value.isEmpty()) {
-                    Text(placeholder, style = NavalType.button, color = Naval.muted)
-                }
-                inner()
-            }
-        }
     }
 }

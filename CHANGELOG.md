@@ -9,6 +9,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.50.0] — 2026-10-05 · Tela de amigos nova
+
+App 0.19.0 (versionCode 48).
+
+### Alterado
+- **Tela de Amigos redesenhada.** Cada pessoa é um cartão com monograma colorido, nome em
+  cima e legenda embaixo, e uma ação principal só (Jogar / Aceitar e Recusar / Cancelar) —
+  antes as quatro ações dividiam a linha com o nome, quebravam no meio da palavra
+  ("REMOVE/R") e o Remover sumia da tela em nomes longos. Nome longo agora corta com "…".
+- Seções separadas e com contagem: **Pedidos recebidos** (em destaque, no topo), **Seus
+  amigos** (em ordem alfabética) e **Pedidos enviados** (com Cancelar) — o pedido enviado
+  não aparece mais misturado com os amigos.
+- **Busca enquanto digita** (a partir de 2 letras), com lupa e botão de limpar; resultado
+  já marca "Pedido enviado" na hora.
+- **Folha de serviço** abre ao tocar no cartão: insígnia, XP, pontos, partidas, vitórias,
+  % de vitórias e melhor sequência, com Convidar para jogar e Remover (pede confirmação).
+
+---
+
 ## [0.49.0] — 2026-10-05 · Janela de versão nova com novidades
 
 App 0.18.0 (versionCode 47). **Exige rodar `supabase/releases.sql`** (novo) e registrar

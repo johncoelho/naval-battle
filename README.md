@@ -106,10 +106,12 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     `Profile.claimOnlineReward`). Casual mostra "não conta para o ranking"; ranqueada
     ganha um bloco de ranking (pontos da partida e como foram compostos, pontos e
     posição na temporada antes → depois, partidas e vitórias, botão "Ver ranking").
-  - **Amigos** — tela própria (`ui/FriendsScreen.kt`) com busca por nome de
-    comandante, pedidos pendentes, lista de amigos e perfil de cada um (patente,
-    XP, pontuação ranqueada, vitórias/derrotas/sequência); convidar um amigo da
-    lista abre uma sala do mesmo jeito que criar uma manualmente.
+  - **Amigos** — tela própria (`ui/FriendsScreen.kt`): cartões com monograma, nome e
+    uma ação principal; busca enquanto digita; seções Pedidos recebidos (em destaque),
+    Seus amigos (com **Jogar** direto) e Pedidos enviados (com Cancelar). Tocar no
+    cartão abre a folha de serviço (insígnia, XP, pontos, partidas, vitórias, % e
+    sequência) com Convidar e Remover (com confirmação); convidar abre uma sala do
+    mesmo jeito que criar uma manualmente.
 - **Ranqueada** — alternância Casual/Ranqueada na partida rápida (convite de amigo
   continua sempre casual, de propósito). Critérios desde a 0.14.0
   (`record_ranked_result` em `supabase/online.sql`):
