@@ -9,6 +9,16 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.51.1] — 2026-10-05 · Limpeza da prévia
+
+App 0.20.1 (versionCode 50).
+
+### Corrigido
+- Remove um mapa de avatares de exemplo (da prévia local) que entrou por engano na 0.20.0 —
+  sem efeito visível (ids falsos, substituídos na primeira carga da lista de amigos).
+
+---
+
 ## [0.51.0] — 2026-10-05 · Avatar de cada jogador na lista de amigos
 
 App 0.20.0 (versionCode 49). **Exige rodar `supabase/online.sql` de novo** (`search_commander`

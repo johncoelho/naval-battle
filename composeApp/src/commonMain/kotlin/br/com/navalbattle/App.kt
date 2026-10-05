@@ -469,7 +469,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** Avatar escolhido por cada pessoa da lista de amigos, por id — vazio até carregar. */
-    var friendAvatars by mutableStateOf<Map<String, String>>(mapOf("u1" to "of1", "u3" to "avm", "u4" to "om2", "u5" to "cpf", "u6" to "om1", "u7" to "avf"))
+    var friendAvatars by mutableStateOf<Map<String, String>>(emptyMap())
         private set
 
     suspend fun refreshFriendships() {
