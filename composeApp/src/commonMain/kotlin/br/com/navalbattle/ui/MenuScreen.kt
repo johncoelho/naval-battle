@@ -128,6 +128,11 @@ fun MenuScreen(state: AppState) {
             Spacer(Modifier.height(14.dp))
             SeasonChip(pass) { state.seasonPassOpen = true }
         }
+        // Diário de bordo: trilha do check-in e desafio do dia; tocar abre o balão
+        state.daily?.let { daily ->
+            Spacer(Modifier.height(8.dp))
+            DailyChip(daily, pending = state.dailyPending) { state.dailyPopupOpen = true }
+        }
         Spacer(Modifier.height(18.dp))
         Text(t(K.MENU_TITLE_1).uppercase(), style = NavalType.display, color = Naval.ink)
         Text(t(K.MENU_TITLE_2).uppercase(), style = NavalType.display, color = Naval.amberStrong)

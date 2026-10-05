@@ -532,6 +532,47 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun dailyStatus(session: Session): CloudResult<DailyStatus> = call {
+        val json = post("/rest/v1/rpc/daily_status", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            DailyStatus(
+                today = o.strOr("today", ""),
+                streak = o.intOr("streak", 0),
+                checkedIn = (o["checked_in"] as? Boolean) ?: false,
+                checkinReward = o.intOr("checkin_reward", 25),
+                weekBonus = o.intOr("week_bonus", 300),
+                mission = o.strOr("mission", ""),
+                missionTarget = o.intOr("mission_target", 1),
+                challengeClaimed = (o["challenge_claimed"] as? Boolean) ?: false,
+                challengeReward = o.intOr("challenge_reward", 50),
+                resetsInSeconds = o.intOr("resets_in_seconds", 0)
+            )
+        )
+    }
+
+    actual suspend fun dailyCheckin(session: Session): CloudResult<DailyCheckin> = call {
+        val json = post("/rest/v1/rpc/daily_checkin", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            DailyCheckin(
+                streak = o.intOr("streak", 0),
+                doubloons = o.intOr("doubloons", 0),
+                weekCompleted = (o["week_completed"] as? Boolean) ?: false
+            )
+        )
+    }
+
+    actual suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int> = call {
+        val json = post(
+            "/rest/v1/rpc/claim_daily_challenge",
+            mapOf("p_mission" to mission, "p_progress" to progress),
+            token = session.accessToken
+        )
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(o.intOr("doubloons", 0))
+    }
+
     actual suspend fun milesStatus(session: Session): CloudResult<MilesStatus> = call {
         val json = post("/rest/v1/rpc/miles_status", emptyMap<String, Any?>(), token = session.accessToken)
         val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()

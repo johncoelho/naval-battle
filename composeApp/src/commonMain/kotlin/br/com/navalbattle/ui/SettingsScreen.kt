@@ -63,6 +63,14 @@ fun SettingsScreen(state: AppState) {
                 label = t(K.SETTINGS_SFX),
                 on = profile.sfxOn
             ) { profile.setSfx(!profile.sfxOn) }
+            if (profile.signedIn) {
+                Gap(8)
+                SettingsToggleRow(
+                    label = t(K.SETTINGS_REMINDER),
+                    on = profile.reminderOn
+                ) { state.setReminder(!profile.reminderOn) }
+                HudLabel(t(K.SETTINGS_REMINDER_SUB), Naval.muted)
+            }
 
             Gap(26)
             HudLabel(t(K.SETTINGS_ONLINE))

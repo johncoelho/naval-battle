@@ -542,6 +542,41 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun dailyStatus(session: Session): CloudResult<DailyStatus> = call {
+        val o = JSONArray(post("/rest/v1/rpc/daily_status", JSONObject(), token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(
+            DailyStatus(
+                today = o.optString("today"),
+                streak = o.optInt("streak", 0),
+                checkedIn = o.optBoolean("checked_in", false),
+                checkinReward = o.optInt("checkin_reward", 25),
+                weekBonus = o.optInt("week_bonus", 300),
+                mission = o.optString("mission"),
+                missionTarget = o.optInt("mission_target", 1),
+                challengeClaimed = o.optBoolean("challenge_claimed", false),
+                challengeReward = o.optInt("challenge_reward", 50),
+                resetsInSeconds = o.optInt("resets_in_seconds", 0)
+            )
+        )
+    }
+
+    actual suspend fun dailyCheckin(session: Session): CloudResult<DailyCheckin> = call {
+        val o = JSONArray(post("/rest/v1/rpc/daily_checkin", JSONObject(), token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(
+            DailyCheckin(
+                streak = o.optInt("streak", 0),
+                doubloons = o.optInt("doubloons", 0),
+                weekCompleted = o.optBoolean("week_completed", false)
+            )
+        )
+    }
+
+    actual suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int> = call {
+        val body = JSONObject().put("p_mission", mission).put("p_progress", progress)
+        val o = JSONArray(post("/rest/v1/rpc/claim_daily_challenge", body, token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(o.optInt("doubloons", 0))
+    }
+
     actual suspend fun milesStatus(session: Session): CloudResult<MilesStatus> = call {
         val json = post("/rest/v1/rpc/miles_status", JSONObject(), token = session.accessToken)
         val o = JSONArray(json).getJSONObject(0)

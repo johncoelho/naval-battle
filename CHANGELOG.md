@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.0] — 2026-10-05 · Diário de bordo
+
+App 0.17.0 (versionCode 46). **Exige rodar `supabase/daily.sql`** (novo).
+
+### Adicionado
+- **Diário de bordo:** balão que aparece a cada entrada no app enquanto houver prêmio
+  esperando (e pelo chip do menu). Check-in diário +25 dobrões numa trilha de 7 dias
+  seguidos — o 7º dia paga +300 de bônus da semana; pular um dia volta ao dia 1. Desafio
+  do dia +50 dobrões: missão em rodízio igual para todos (jogue 1 partida, vença 1,
+  afunde 5 navios, use 2 habilidades, termine com 60% de acerto), contada contra a IA e
+  online e resgatada depois do check-in. Servidor trava cada prêmio uma vez por dia
+  (`daily_status`, `daily_checkin`, `claim_daily_challenge`; valores em `app_config`).
+- **Lembrete diário às 19h** (notificação local, sem push): pede permissão no primeiro
+  check-in, pula o dia com o check-in feito, desliga em Ajustes → Lembrete diário.
+
+### Alterado
+- A checagem de versão nova roda também ao voltar do segundo plano, não só na abertura
+  (item do backlog).
+
+---
+
 ## [0.47.0] — 2026-10-04 · Habilidades em rede e partida online estável
 
 App 0.16.0 (versionCode 45). **Exige rodar `supabase/online.sql` de novo** (presença e

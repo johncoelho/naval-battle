@@ -113,7 +113,7 @@ entra no repositório, no app ou em conversa.
 Para recriar a base do zero em outro projeto: rodar [`supabase/schema.sql`](../supabase/schema.sql)
 no SQL Editor e desligar *Confirm email* em Authentication → Sign In / Providers enquanto
 estiver em teste. O modo online (salas, amigos, ranqueada) vem de
-[`supabase/online.sql`](../supabase/online.sql), rodado depois. A economia (loja de dobrões simulada e milhas
+[`supabase/online.sql`](../supabase/online.sql), rodado depois. O Diário de bordo ([`supabase/daily.sql`](../supabase/daily.sql)) roda depois de `economy.sql`. A economia (loja de dobrões simulada e milhas
 náuticas) vem de [`supabase/economy.sql`](../supabase/economy.sql), rodado depois do feedback, e o passe
 de temporada e os prêmios de fim de temporada de [`supabase/season.sql`](../supabase/season.sql), rodado por último; os números
 (limite diário da loja, milhas por dia, teto, prêmio por vitória, pacote) ficam em `app_config` e mudam

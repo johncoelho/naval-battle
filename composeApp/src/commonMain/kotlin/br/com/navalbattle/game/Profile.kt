@@ -344,6 +344,53 @@ class Profile(private val prefs: Prefs) {
         return Session(accountId, accountEmail, displayName, accessToken, refreshToken)
     }
 
+    // ---------------- desafio do dia (Diário de bordo) ----------------
+
+    /**
+     * Progresso do desafio do dia, contado no aparelho a cada partida (contra a IA e
+     * online) e zerado quando a data de Brasília vinda do servidor muda. [dailyVersion]
+     * é o que a tela observa — os números em si moram nas preferências.
+     */
+    var dailyVersion by mutableStateOf(0)
+        private set
+
+    fun dailyProgress(day: String, mission: String): Int {
+        dailyVersion
+        if (day.isBlank() || prefs.getString(K_DAILY_DAY, "") != day) return 0
+        return when (mission) {
+            "PLAY_1" -> prefs.getInt(K_DAILY_PLAYED, 0)
+            "WIN_1" -> prefs.getInt(K_DAILY_WON, 0)
+            "SINK_5" -> prefs.getInt(K_DAILY_SUNK, 0)
+            "ABILITY_2" -> prefs.getInt(K_DAILY_ABILITIES, 0)
+            "ACCURACY_60" -> prefs.getInt(K_DAILY_BEST_ACCURACY, 0)
+            else -> 0
+        }
+    }
+
+    fun recordDailyMatch(day: String, won: Boolean, sunk: Int, abilities: Int, accuracy: Int) {
+        if (day.isBlank()) return
+        if (prefs.getString(K_DAILY_DAY, "") != day) {
+            prefs.putString(K_DAILY_DAY, day)
+            listOf(K_DAILY_PLAYED, K_DAILY_WON, K_DAILY_SUNK, K_DAILY_ABILITIES, K_DAILY_BEST_ACCURACY)
+                .forEach { prefs.putInt(it, 0) }
+        }
+        prefs.putInt(K_DAILY_PLAYED, prefs.getInt(K_DAILY_PLAYED, 0) + 1)
+        if (won) prefs.putInt(K_DAILY_WON, prefs.getInt(K_DAILY_WON, 0) + 1)
+        prefs.putInt(K_DAILY_SUNK, prefs.getInt(K_DAILY_SUNK, 0) + sunk)
+        prefs.putInt(K_DAILY_ABILITIES, prefs.getInt(K_DAILY_ABILITIES, 0) + abilities)
+        prefs.putInt(K_DAILY_BEST_ACCURACY, maxOf(prefs.getInt(K_DAILY_BEST_ACCURACY, 0), accuracy))
+        dailyVersion++
+    }
+
+    /** Lembrete diário às 19h (notificação local) — ligado por padrão, desliga nos Ajustes. */
+    var reminderOn by mutableStateOf(prefs.getInt(K_REMINDER, 1) == 1)
+        private set
+
+    fun setReminder(on: Boolean) {
+        reminderOn = on
+        prefs.putInt(K_REMINDER, if (on) 1 else 0)
+    }
+
     fun signOut() {
         accountId = ""; accountEmail = ""; accessToken = ""; refreshToken = ""
         prefs.putString(K_UID, ""); prefs.putString(K_EMAIL, "")
@@ -593,6 +640,13 @@ class Profile(private val prefs: Prefs) {
         private const val K_REFRESH = "refresh"
         private const val K_MUSIC = "music"
         private const val K_SFX = "sfx"
+        private const val K_REMINDER = "daily_reminder"
+        private const val K_DAILY_DAY = "daily_day"
+        private const val K_DAILY_PLAYED = "daily_played"
+        private const val K_DAILY_WON = "daily_won"
+        private const val K_DAILY_SUNK = "daily_sunk"
+        private const val K_DAILY_ABILITIES = "daily_abilities"
+        private const val K_DAILY_BEST_ACCURACY = "daily_best_accuracy"
         private const val K_LANG = "lang"
         private const val K_AVATAR = "avatar"
         private const val K_WELCOME_DONE = "welcome_done"

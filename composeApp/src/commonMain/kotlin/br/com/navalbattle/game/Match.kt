@@ -129,6 +129,14 @@ class Match(
         private set
     private var extraShots by mutableStateOf(0)
     private val cooldowns = mutableMapOf<Side, MutableMap<Ability, Int>>()
+    private val abilitiesUsed = mutableMapOf<Side, Int>()
+
+    /** Habilidades que [side] usou na partida — conta para o desafio do dia. */
+    fun abilitiesUsedBy(side: Side): Int = abilitiesUsed[side] ?: 0
+
+    private fun countAbility(side: Side) {
+        abilitiesUsed[side] = abilitiesUsedBy(side) + 1
+    }
 
     var playerShots by mutableStateOf(0)
         private set
@@ -305,6 +313,7 @@ class Match(
         dismissSticky()
         when (ability) {
             Ability.SMOKE -> {
+                countAbility(turnOwner)
                 board(turnOwner).smokeActive = true
                 cooldownsOf(turnOwner)[ability] = ability.cooldown
                 say(t(K.CALL_SMOKE), t(K.CALL_SMOKE_SUB), Tone.SCAN)
@@ -312,6 +321,7 @@ class Match(
             }
 
             Ability.DOUBLE_BARRAGE -> {
+                countAbility(turnOwner)
                 cooldownsOf(turnOwner)[ability] = ability.cooldown
                 extraShots = 1
                 pendingAbility = null
@@ -335,6 +345,7 @@ class Match(
 
         when (val ability = pendingAbility) {
             Ability.AIR_RECON -> {
+                countAbility(attacker)
                 val worked = target.revealRow(coord.y)
                 cooldownsOf(attacker)[ability] = ability.cooldown
                 pendingAbility = null
@@ -349,6 +360,7 @@ class Match(
             }
 
             Ability.SONAR_PING -> {
+                countAbility(attacker)
                 val worked = target.sonarPing(coord)
                 cooldownsOf(attacker)[ability] = ability.cooldown
                 pendingAbility = null

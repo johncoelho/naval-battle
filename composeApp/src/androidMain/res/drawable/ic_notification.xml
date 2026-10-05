@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ícone da notificação do Diário de bordo: radar (anel, eixo e contato), monocromático -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M12,3a9,9 0,1 1,0 18a9,9 0,1 1,0 -18z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M12,7.5a4.5,4.5 0,1 1,0 9a4.5,4.5 0,1 1,0 -9z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M12,12L19,8.5" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16,6.5a1.8,1.8 0,1 1,0 3.6a1.8,1.8 0,1 1,0 -3.6z" />
+</vector>

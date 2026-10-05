@@ -106,6 +106,8 @@ fun ResultScreen(state: AppState, match: Match) {
             // paga a quem ele mesmo registrou como vencedor
             if (victory && !match.forfeitedBySelf) state.awardWinMiles()
         }
+        // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
+        if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf) state.recordDailyMatch(match)
     }
 
     Column(

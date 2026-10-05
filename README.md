@@ -145,6 +145,15 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   ficou ausente leva derrota cheia, e não ganha XP nem dobrões (`Match.forfeitByTimeout`). Nas demais
   variantes de partida o próprio sistema já suspende os turnos em segundo plano,
   então não precisa de aviso nenhum.
+- **Diário de bordo** (com conta) — balão que abre sozinho a cada entrada no app com
+  prêmio esperando, e pelo chip do menu. **Check-in diário** +25 dobrões numa trilha de
+  7 dias seguidos (pulou um dia, volta ao 1; o 7º dia paga +300 de bônus da semana) e
+  **desafio do dia** +50, uma missão em rodízio igual para todos (jogar, vencer, afundar
+  5 navios, usar 2 habilidades, 60% de acerto), contado nas partidas contra a IA e online
+  e resgatado depois do check-in. O servidor trava cada prêmio uma vez por dia
+  (`supabase/daily.sql`, valores em `app_config`). **Lembrete diário** às 19h por
+  notificação local (sem push; desliga nos Ajustes): Android agenda pelo AlarmManager e
+  reagenda ao disparar, iPhone deixa a semana agendada (`data/DailyReminder.kt`).
 - **Conexão instável (Online)** — cada jogada entra numa fila e é reenviada até o
   servidor confirmar, numerada para não duplicar (`client_seq`); a sessão se renova
   sozinha se o token vencer no meio da partida; e os dois lados batem o ponto de

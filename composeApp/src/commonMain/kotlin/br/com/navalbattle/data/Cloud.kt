@@ -177,6 +177,27 @@ data class BetaPurchase(val doubloons: Int, val spentCents: Int, val limitCents:
  * Saldo de milhas náuticas e as regras vigentes (ver `miles_status` em
  * `supabase/economy.sql`) — os números vêm do servidor, ajustáveis sem versão nova.
  */
+/**
+ * Diário de bordo do dia (ver `supabase/daily.sql`): trilha de 7 dias de check-in e
+ * o desafio do dia. [today] é a data de Brasília vinda do servidor — é a chave do
+ * progresso do desafio guardado no aparelho.
+ */
+data class DailyStatus(
+    val today: String,
+    val streak: Int,
+    val checkedIn: Boolean,
+    val checkinReward: Int,
+    val weekBonus: Int,
+    val mission: String,
+    val missionTarget: Int,
+    val challengeClaimed: Boolean,
+    val challengeReward: Int,
+    val resetsInSeconds: Int
+)
+
+/** Resultado do check-in: dia da trilha e dobrões a creditar (0 se já tinha feito). */
+data class DailyCheckin(val streak: Int, val doubloons: Int, val weekCompleted: Boolean)
+
 data class MilesStatus(
     val miles: Int,
     val daily: Int,
@@ -442,6 +463,15 @@ expect class CloudApi() {
 
     /** Saldo de milhas (já com a recarga do dia aplicada) e as regras. */
     suspend fun milesStatus(session: Session): CloudResult<MilesStatus>
+
+    /** Diário de bordo de hoje: trilha de check-in e desafio do dia. */
+    suspend fun dailyStatus(session: Session): CloudResult<DailyStatus>
+
+    /** Faz o check-in do dia (uma vez por dia, travado no servidor). */
+    suspend fun dailyCheckin(session: Session): CloudResult<DailyCheckin>
+
+    /** Resgata o desafio do dia — devolve os dobrões (0 se já tinha resgatado). */
+    suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int>
 
     /** Gasta 1 milha ao começar a partida online [matchId] — uma vez por sala. Devolve o saldo. */
     suspend fun spendMile(session: Session, matchId: String): CloudResult<Int>

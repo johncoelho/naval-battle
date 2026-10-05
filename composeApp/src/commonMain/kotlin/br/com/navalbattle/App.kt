@@ -29,6 +29,8 @@ import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.BetaStoreStatus
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.MilesStatus
+import br.com.navalbattle.data.DailyReminder
+import br.com.navalbattle.data.DailyStatus
 import br.com.navalbattle.data.SeasonEnd
 import br.com.navalbattle.data.SeasonPassStatus
 import br.com.navalbattle.data.CloudProfile
@@ -86,6 +88,7 @@ import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
 import br.com.navalbattle.ui.FeedbackFormScreen
 import br.com.navalbattle.ui.FeedbackPopup
+import br.com.navalbattle.ui.DailyPopup
 import br.com.navalbattle.ui.FeedbackRewardPopup
 import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
@@ -512,6 +515,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * eles (mesmas condições que cada popup usa para se mostrar).
      */
     private val otherPopupShowing: Boolean
+        get() = blockingPopupShowing || dailyPopupShowing
+
+    /** Os popups que sempre têm a vez — o Diário de bordo espera eles saírem. */
+    private val blockingPopupShowing: Boolean
         get() {
             if (pendingInvite != null) return true
             if (updateAvailable && !updatePopupDismissed) return true
@@ -817,6 +824,137 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     var milesNotice by mutableStateOf<String?>(null)
         private set
+
+    // ---------------- Diário de bordo (check-in e desafio do dia) ----------------
+
+    /** Trilha de check-in e desafio de hoje, vindos do servidor (ver `supabase/daily.sql`). */
+    var daily by mutableStateOf<DailyStatus?>(null)
+        private set
+
+    /** Balão aberto pelo chip do menu. */
+    var dailyPopupOpen by mutableStateOf(false)
+
+    /** Fechado nesta entrada do app — volta a aparecer na próxima vez que ele abrir. */
+    private var dailyAutoDismissed by mutableStateOf(false)
+
+    var dailyBusy by mutableStateOf(false)
+        private set
+    var dailyNotice by mutableStateOf<String?>(null)
+        private set
+
+    val dailyProgress: Int
+        get() = daily?.let { profile.dailyProgress(it.today, it.mission) } ?: 0
+
+    val dailyChallengeDone: Boolean
+        get() = daily?.let { dailyProgress >= it.missionTarget } ?: false
+
+    /** Tem prêmio esperando: check-in de hoje ou desafio cumprido e não resgatado. */
+    val dailyPending: Boolean
+        get() {
+            val d = daily ?: return false
+            return !d.checkedIn || (!d.challengeClaimed && dailyChallengeDone)
+        }
+
+    /**
+     * O balão aparece sozinho toda vez que o comandante entra no app com prêmio
+     * esperando (só no menu e sem outro popup na frente), ou quando ele toca no chip.
+     */
+    val dailyPopupShowing: Boolean
+        get() = profile.signedIn && daily != null && match == null &&
+            (dailyPopupOpen || (dailyPending && !dailyAutoDismissed && screen == Screen.MENU && !blockingPopupShowing))
+
+    suspend fun loadDaily() {
+        if (!profile.signedIn) {
+            daily = null
+            DailyReminder.cancel()
+            return
+        }
+        (authed { session -> cloud.dailyStatus(session) } as? CloudResult.Ok)?.value?.let { daily = it }
+        scheduleReminder()
+    }
+
+    /** App voltou ao primeiro plano: o balão pode aparecer de novo. */
+    fun onAppEntered() {
+        dailyAutoDismissed = false
+    }
+
+    suspend fun dailyCheckin() {
+        if (dailyBusy || daily?.checkedIn != false) return
+        dailyBusy = true
+        dailyNotice = null
+        val r = authed { session -> cloud.dailyCheckin(session) }
+        dailyBusy = false
+        val done = (r as? CloudResult.Ok)?.value
+        if (done == null) {
+            dailyNotice = t(K.DAILY_FAILED)
+            return
+        }
+        profile.grantCredits(done.doubloons)
+        daily = daily?.copy(checkedIn = true, streak = done.streak)
+        dailyNotice = when {
+            done.weekCompleted -> t(K.DAILY_WEEK_DONE, done.doubloons)
+            done.doubloons > 0 -> t(K.DAILY_GOT, done.doubloons)
+            else -> null
+        }
+        // momento em que o comandante está engajado: pede a notificação aqui, não na abertura
+        if (profile.reminderOn) DailyReminder.requestPermission()
+        scheduleReminder()
+    }
+
+    suspend fun claimDailyChallenge() {
+        val d = daily ?: return
+        if (dailyBusy || !d.checkedIn || d.challengeClaimed || !dailyChallengeDone) return
+        dailyBusy = true
+        dailyNotice = null
+        val r = authed { session -> cloud.claimDailyChallenge(session, d.mission, dailyProgress) }
+        dailyBusy = false
+        val pay = (r as? CloudResult.Ok)?.value
+        if (pay == null) {
+            dailyNotice = t(K.DAILY_FAILED)
+            return
+        }
+        profile.grantCredits(pay)
+        daily = d.copy(challengeClaimed = true)
+        if (pay > 0) dailyNotice = t(K.DAILY_GOT, pay)
+    }
+
+    fun closeDailyPopup() {
+        dailyPopupOpen = false
+        dailyAutoDismissed = true
+        dailyNotice = null
+    }
+
+    /** Fim de partida: soma ao desafio do dia (com a data de hoje fresca do servidor). */
+    suspend fun recordDailyMatch(m: Match) {
+        loadDaily()
+        val d = daily ?: return
+        val wasDone = dailyChallengeDone
+        val me = m.mySide
+        profile.recordDailyMatch(
+            day = d.today,
+            won = m.winner == me,
+            sunk = m.sunkBy(me),
+            abilities = m.abilitiesUsedBy(me),
+            accuracy = m.accuracyOf(me)
+        )
+        // acabou de cumprir: o balão volta a aparecer no menu com o "Resgatar"
+        if (!wasDone && dailyChallengeDone && !d.challengeClaimed) dailyAutoDismissed = false
+    }
+
+    fun setReminder(on: Boolean) {
+        profile.setReminder(on)
+        if (on) DailyReminder.requestPermission()
+        scheduleReminder()
+    }
+
+    private fun scheduleReminder() {
+        val d = daily
+        if (!profile.reminderOn || !profile.signedIn || d == null) {
+            if (!profile.reminderOn || !profile.signedIn) DailyReminder.cancel()
+            return
+        }
+        DailyReminder.schedule(t(K.REMINDER_TITLE), t(K.REMINDER_BODY, d.checkinReward), skipToday = d.checkedIn)
+    }
 
     suspend fun loadMiles() {
         if (profile.currentSession() == null) {
@@ -1492,8 +1630,11 @@ fun App() {
     // em primeiro plano, então não precisa de aviso nenhum
     LaunchedEffect(AppForeground.active) { state.onForegroundChanged(AppForeground.active) }
 
-    // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push
-    LaunchedEffect(Unit) { state.updateAvailable = checkUpdateAvailable() }
+    // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push —
+    // também ao voltar do segundo plano, senão quem deixa o app aberto nunca via o aviso
+    LaunchedEffect(AppForeground.active) {
+        if (AppForeground.active) state.updateAvailable = checkUpdateAvailable()
+    }
 
     // temporada ranqueada corrente — vem do servidor pra não depender do relógio
     // do aparelho; se for diferente da última aceita, o popup de nova temporada aparece
@@ -1509,13 +1650,18 @@ fun App() {
             // a temporada pode virar com o app aberto: relê o passe e o fechamento
             state.loadSeason()
             state.checkSeasonEnd()
+            // Diário de bordo: toda entrada no app pode mostrar o balão de novo
+            state.onAppEntered()
         }
     }
 
     // milhas náuticas: recarga do dia vem do servidor — relê ao abrir, ao voltar do
     // segundo plano, ao entrar/sair da conta e ao voltar ao deque depois de partida
     LaunchedEffect(AppForeground.active, state.profile.signedIn, state.screen == Screen.MENU) {
-        if (AppForeground.active) state.loadMiles()
+        if (AppForeground.active) {
+            state.loadMiles()
+            state.loadDaily()
+        }
     }
 
     // convite de amigo mirado: com o app aberto e fora de partida, checa de tempos em
@@ -1572,6 +1718,7 @@ fun App() {
             if (state.match == null) SeasonEndPopup(state)
             if (state.match == null) SeasonPopup(state)
             RankedLockedPrompt(state)
+            DailyPopup(state)
             FeedbackPopup(state)
             if (state.match == null) FeedbackRewardPopup(state)
             // por último: abre por cima do convite quando falta milha para aceitar

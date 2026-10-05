@@ -3,6 +3,8 @@
 
     <!-- conta do comandante e sincronização da carreira com a base do jogo -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- lembrete diário do Diário de bordo (notificação local, sem push) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -23,6 +25,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".data.DailyReminderReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>
