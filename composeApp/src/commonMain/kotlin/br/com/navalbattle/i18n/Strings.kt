@@ -92,7 +92,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     MENU_SHORT_FRIENDS("Amigos", "Friends", "Amigos"),
     MENU_SHORT_LEADERBOARD("Placar", "Ranking", "Ranking"),
     MENU_SHORT_STORE("Loja", "Store", "Tienda"),
-    MENU_SHORT_PROFILE("Perfil", "Profile", "Perfil"),
+    MENU_SHORT_FEEDBACK("Feedback", "Feedback", "Opinión"),
     MENU_RANK_NEXT("%1 em %2 XP", "%1 in %2 XP", "%1 en %2 XP"),
     MENU_RANK_MAX("Patente máxima", "Top rank", "Rango máximo"),
     MENU_FLEET_TAP("Trocar", "Change", "Cambiar"),

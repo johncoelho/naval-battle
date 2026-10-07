@@ -9,6 +9,16 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.53.1] — 2026-10-06 · Atalho de Feedback no lugar do Perfil
+
+App 0.22.1 (versionCode 53).
+
+### Alterado
+- O 4º atalho do deque era Perfil, que já abre pelo avatar do topo; agora é **Feedback**
+  (enviar bug ou ideia, que rende dobrões quando aprovado).
+
+---
+
 ## [0.53.0] — 2026-10-06 · Oferta do dia e deque ajustado
 
 App 0.22.0 (versionCode 52).

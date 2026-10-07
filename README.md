@@ -224,7 +224,8 @@ O deque de comando (`ui/MenuScreen.kt`), de cima para baixo:
 - Clássico/Tático, **Jogar online** como ação principal e, abaixo, vs. IA, 2 jogadores e
   Rede local lado a lado (o carrossel de um cartão por vez saiu — o Online era o 4º).
 - **Atalhos** Amigos (com selo de pedidos recebidos), Placar, Loja (selo "-30%" com a
-  oferta do dia, abre direto nas camuflagens) e Perfil.
+  oferta do dia, abre direto nas camuflagens) e Feedback (bug ou ideia, rende dobrões) —
+  o Perfil abre pelo avatar do topo.
 - Os blocos se espalham para ocupar a altura do celular; a regra do modo (Clássico/Tático)
   fica no botão "?".
 

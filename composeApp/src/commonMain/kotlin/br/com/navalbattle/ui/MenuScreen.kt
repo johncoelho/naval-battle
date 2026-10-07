@@ -150,9 +150,10 @@ fun MenuScreen(state: AppState) {
                     modifier = Modifier.weight(1f),
                     icon = { drawDoubloon(Offset(size.width / 2f, size.height / 2f), size.minDimension * 0.85f) }
                 ) { state.openStore(if (offer != null) 1 else 0) }
-                Shortcut(t(K.MENU_SHORT_PROFILE), modifier = Modifier.weight(1f), icon = {
-                    drawAvatar(state.profile.avatar, Offset(size.width / 2f, size.height / 2f), size.minDimension, Naval.amberStrong)
-                }) { state.screen = Screen.PROFILE }
+                // Perfil já abre pelo avatar do topo — o 4º atalho vira o feedback, que rende dobrões
+                Shortcut(t(K.MENU_SHORT_FEEDBACK), modifier = Modifier.weight(1f), icon = { drawFeedbackIcon(it) }) {
+                    state.openFeedback(Screen.MENU)
+                }
             }
             Column {
                 Gap(16)
@@ -545,6 +546,21 @@ private fun DrawScope.drawFriendsIcon(color: Color) {
             topLeft = Offset(w * (cx - 0.24f), h * 0.58f), size = Size(w * 0.48f, h * 0.5f), style = stroke
         )
     }
+}
+
+/** Balão de conversa com um ponto de exclamação — bug ou ideia. */
+private fun DrawScope.drawFeedbackIcon(color: Color) {
+    val w = size.width
+    val h = size.height
+    val stroke = Stroke(width = w * 0.07f, cap = StrokeCap.Round)
+    drawRoundRect(
+        color, topLeft = Offset(w * 0.1f, h * 0.12f), size = Size(w * 0.8f, h * 0.58f),
+        cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.12f), style = stroke
+    )
+    drawLine(color, Offset(w * 0.3f, h * 0.7f), Offset(w * 0.22f, h * 0.9f), strokeWidth = w * 0.07f, cap = StrokeCap.Round)
+    drawLine(color, Offset(w * 0.22f, h * 0.9f), Offset(w * 0.46f, h * 0.7f), strokeWidth = w * 0.07f, cap = StrokeCap.Round)
+    drawLine(Naval.amberStrong, Offset(w * 0.5f, h * 0.26f), Offset(w * 0.5f, h * 0.46f), strokeWidth = w * 0.08f, cap = StrokeCap.Round)
+    drawCircle(Naval.amberStrong, radius = w * 0.045f, center = Offset(w * 0.5f, h * 0.57f))
 }
 
 /** Pódio de três degraus, o do meio em dourado. */
