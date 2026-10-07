@@ -34,6 +34,7 @@ import br.com.navalbattle.Screen
 import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 
@@ -86,6 +87,20 @@ fun OnlineScreen(state: AppState) {
 
             Gap(20)
             val idleOrFailed = state.onlineLinkState == LinkState.IDLE || state.onlineLinkState == LinkState.FAILED
+            // modo da partida: vale para a partida rápida (pareia só com o mesmo modo) e
+            // para a sala que você abrir; quem entra por código joga no modo da sala
+            HudLabel(t(K.ONLINE_MODE_LABEL).uppercase(), Naval.muted)
+            Gap(6)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GameMode.entries.forEach { m ->
+                    ModeChip(m.label, state.mode == m, Modifier.weight(1f), enabled = idleOrFailed) { state.chooseMode(m) }
+                }
+            }
+            Gap(4)
+            HudLabel(state.mode.description, Naval.muted)
+            Gap(14)
+            HudLabel(t(K.ONLINE_MATCH_LABEL).uppercase(), Naval.muted)
+            Gap(6)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ModeChip(t(K.ONLINE_MODE_CASUAL), !state.rankedMode, Modifier.weight(1f)) { state.rankedMode = false }
                 // sempre tocável: sem adesão à temporada, explica e oferece o passe

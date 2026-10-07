@@ -9,6 +9,26 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.54.0] — 2026-10-07 · Modo vira etapa do fluxo e deque reorganizado
+
+App 0.23.0 (versionCode 54).
+
+### Alterado
+- **Clássico/Tático saiu do deque e virou etapa do fluxo:** vs. IA, 2 jogadores, Rede local e
+  "Jogar" na lista de amigos abrem "Escolha o modo", com dois cartões explicativos (o Tático
+  mostra os ícones das 4 habilidades) e o último modo usado marcado. No Online, o modo fica
+  na própria tela, junto de Casual/Ranqueada. O "?" do deque saiu.
+- **Deque reorganizado:** a frota inteira em formação, com **ondas passando** e cada navio
+  subindo e descendo com a crista que passa sob ele, ocupa o espaço livre (antes, vãos
+  vazios entre os blocos); Jogar online, as outras formas de jogar e os atalhos ficam juntos
+  no pé da tela. "Trocar ›" da frota virou **"Estaleiro ›"**.
+
+### Corrigido
+- Rede local: quem entra joga no modo de quem abriu a partida (antes cada aparelho usava o
+  próprio modo e as partidas podiam divergir).
+
+---
+
 ## [0.53.1] — 2026-10-06 · Atalho de Feedback no lugar do Perfil
 
 App 0.22.1 (versionCode 53).

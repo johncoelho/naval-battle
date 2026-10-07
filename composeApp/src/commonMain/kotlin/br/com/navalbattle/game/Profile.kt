@@ -391,6 +391,13 @@ class Profile(private val prefs: Prefs) {
         dailyVersion++
     }
 
+    /** Último modo escolhido (Clássico/Tático) — vem marcado na próxima escolha. */
+    val lastMode: String get() = prefs.getString(K_LAST_MODE, "")
+
+    fun setLastMode(mode: String) {
+        prefs.putString(K_LAST_MODE, mode)
+    }
+
     /** Lembrete diário às 19h (notificação local) — ligado por padrão, desliga nos Ajustes. */
     var reminderOn by mutableStateOf(prefs.getInt(K_REMINDER, 1) == 1)
         private set
@@ -651,6 +658,7 @@ class Profile(private val prefs: Prefs) {
         private const val K_SFX = "sfx"
         private const val K_CURRENCY_TIP = "currency_tip_seen"
         private const val K_REMINDER = "daily_reminder"
+        private const val K_LAST_MODE = "last_mode"
         private const val K_DAILY_DAY = "daily_day"
         private const val K_DAILY_PLAYED = "daily_played"
         private const val K_DAILY_WON = "daily_won"

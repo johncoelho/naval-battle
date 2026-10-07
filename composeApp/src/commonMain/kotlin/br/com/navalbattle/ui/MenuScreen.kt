@@ -1,6 +1,7 @@
 package br.com.navalbattle.ui
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -41,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -109,31 +111,50 @@ fun MenuScreen(state: AppState) {
             CurrencyTip { state.profile.markCurrencyTipSeen() }
         }
 
+        // tela alta: a frota vira o herói e ocupa a sobra, jogar e atalhos ficam no pé
+        // (zona do polegar); tela baixa: tudo rola, com a frota no tamanho compacto.
+        // Antes o SpaceBetween espalhava a sobra em vãos vazios entre os blocos
         BoxWithConstraints(Modifier.weight(1f)) {
-        val viewport = maxHeight
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Column(Modifier.fillMaxWidth().heightIn(min = viewport), verticalArrangement = Arrangement.SpaceBetween) {
-            if (state.seasonPass != null || state.daily != null) {
-                Gap(14)
-                DayCard(state)
+            if (maxHeight >= 600.dp) {
+                Column(Modifier.fillMaxSize()) {
+                    if (state.seasonPass != null || state.daily != null) {
+                        Gap(14)
+                        DayCard(state)
+                    }
+                    Gap(14)
+                    FleetPreview(state, Modifier.weight(1f), hero = true)
+                    MenuActions(state)
+                }
+            } else {
+                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                    if (state.seasonPass != null || state.daily != null) {
+                        Gap(14)
+                        DayCard(state)
+                    }
+                    Gap(14)
+                    FleetPreview(state)
+                    MenuActions(state)
+                }
             }
+        }
+    }
+}
 
-            Gap(14)
-            FleetPreview(state)
-
-            Gap(14)
-            ModeSelector(state)
-
-            Gap(12)
+/** Jogar online, as outras formas de jogar e os atalhos — o bloco do pé do deque. */
+@Composable
+private fun MenuActions(state: AppState) {
+        Column(Modifier.fillMaxWidth()) {
+            Gap(16)
             PlayOnlineButton(state)
             Gap(8)
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ModeTile(t(K.MENU_TILE_AI), t(K.MENU_TILE_AI_SUB), Modifier.weight(1f).fillMaxHeight()) { state.newMatch(Opponent.AI) }
-                ModeTile(t(K.MENU_TILE_LOCAL), t(K.MENU_TILE_LOCAL_SUB), Modifier.weight(1f).fillMaxHeight()) { state.newMatch(Opponent.LOCAL) }
-                ModeTile(t(K.MENU_TILE_LAN), t(K.MENU_TILE_LAN_SUB), Modifier.weight(1f).fillMaxHeight()) { state.screen = Screen.LAN }
+                // o modo (Clássico/Tático) é a etapa seguinte, não um seletor aqui no deque
+                ModeTile(t(K.MENU_TILE_AI), t(K.MENU_TILE_AI_SUB), Modifier.weight(1f).fillMaxHeight()) { state.pickMode(ModePick.Ai) }
+                ModeTile(t(K.MENU_TILE_LOCAL), t(K.MENU_TILE_LOCAL_SUB), Modifier.weight(1f).fillMaxHeight()) { state.pickMode(ModePick.Local) }
+                ModeTile(t(K.MENU_TILE_LAN), t(K.MENU_TILE_LAN_SUB), Modifier.weight(1f).fillMaxHeight()) { state.pickMode(ModePick.LAN) }
             }
 
-            Gap(14)
+            Gap(12)
             val signedIn = state.profile.signedIn
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Shortcut(t(K.MENU_SHORT_FRIENDS), badge = state.incomingFriendRequests, modifier = Modifier.weight(1f), icon = { drawFriendsIcon(it) }) {
@@ -155,16 +176,11 @@ fun MenuScreen(state: AppState) {
                     state.openFeedback(Screen.MENU)
                 }
             }
-            Column {
-                Gap(16)
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    HudLabel("v$appVersionLabel", Naval.line)
-                }
+            Gap(12)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                HudLabel("v$appVersionLabel", Naval.line)
             }
         }
-        }
-        }
-    }
 }
 
 // ------------------------------------------------------------------ cabeçalho
@@ -381,31 +397,84 @@ private fun DayCard(state: AppState) {
 
 /** Frota ativa balançando de leve no mar; tocar abre o Estaleiro (o botão próprio saiu). */
 @Composable
-private fun FleetPreview(state: AppState) {
+private fun FleetPreview(state: AppState, modifier: Modifier = Modifier, hero: Boolean = false) {
     val swell = rememberInfiniteTransition()
     val bob by swell.animateFloat(
         initialValue = -1.5f,
         targetValue = 1.5f,
         animationSpec = infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse)
     )
+    // fase das ondas: uma volta completa a cada 6s, deslocando as cristas para a esquerda
+    val wavePhase by swell.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * kotlin.math.PI).toFloat(),
+        animationSpec = infiniteRepeatable(tween(6000, easing = LinearEasing), RepeatMode.Restart)
+    )
     Column(
-        Modifier
+        modifier
             .fillMaxWidth()
-            .background(Brush.radialGradient(colors = listOf(Naval.abyss2, Naval.abyss), center = Offset.Unspecified, radius = 600f))
+            .background(Brush.radialGradient(colors = listOf(Naval.abyss2, Naval.abyss), center = Offset.Unspecified, radius = 900f))
+            .clipToBounds()
             .border(1.dp, Naval.lineSoft)
             .clickable { state.screen = Screen.SHIPYARD }
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Canvas(Modifier.fillMaxWidth().height(42.dp).offset(y = bob.dp)) {
-            drawShip(
-                type = ShipClass.CARRIER,
-                center = Offset(size.width / 2f, size.height / 2f),
-                lengthPx = size.width * 0.94f,
-                thicknessPx = size.width * 0.94f / 5f,
-                vertical = false,
-                skin = state.skin
-            )
+        if (hero) {
+            // tela alta: a frota inteira em formação sobre a carta náutica, do maior ao
+            // menor — preenche o espaço com o que é do jogador, em vez de um vazio
+            Canvas(Modifier.fillMaxWidth().weight(1f).clipToBounds()) {
+                val ships = ShipClass.fleet
+                val cell = minOf(size.width / 5.6f, size.height / (ships.size * 1.45f))
+                val rowH = size.height / ships.size
+                val step = cell
+                var gx = (size.width / 2f) % step
+                while (gx < size.width) { drawLine(Naval.gridLine.copy(alpha = 0.09f), Offset(gx, 0f), Offset(gx, size.height), 1f); gx += step }
+                var gy = (size.height / 2f) % step
+                while (gy < size.height) { drawLine(Naval.gridLine.copy(alpha = 0.09f), Offset(0f, gy), Offset(size.width, gy), 1f); gy += step }
+                // ondas passando em cada faixa: a crista que corre pela linha d'água é a mesma
+                // que sobe e desce o navio, então o balanço acompanha o mar
+                val waveLen = size.width / 2.2f
+                val amp = cell * 0.10f
+                fun waveY(x: Float, baseY: Float, phase: Float) =
+                    baseY + kotlin.math.sin(x / waveLen * 2f * kotlin.math.PI.toFloat() + phase) * amp
+                ships.forEachIndexed { i, ship ->
+                    val baseY = rowH * (i + 0.5f)
+                    val phase = wavePhase + i * 1.3f
+                    // duas linhas de onda: uma na linha d'água, outra mais fraca abaixo
+                    listOf(cell * 0.52f to 0.22f, cell * 0.78f to 0.12f).forEach { (dy, alpha) ->
+                        val path = androidx.compose.ui.graphics.Path()
+                        var x = 0f
+                        path.moveTo(0f, waveY(0f, baseY + dy, phase))
+                        while (x <= size.width) {
+                            path.lineTo(x, waveY(x, baseY + dy, phase))
+                            x += 6f
+                        }
+                        drawPath(path, Naval.commanderOne.copy(alpha = alpha), style = Stroke(width = 1.4f * density, cap = StrokeCap.Round))
+                    }
+                    // o navio sobe e desce com a crista que passa sob o meio dele
+                    val bobY = kotlin.math.sin(size.width / 2f / waveLen * 2f * kotlin.math.PI.toFloat() + phase) * amp
+                    drawShip(
+                        type = ship,
+                        center = Offset(size.width / 2f, baseY + bobY),
+                        lengthPx = cell * ship.size,
+                        thicknessPx = cell * 0.82f,
+                        vertical = false,
+                        skin = state.skin
+                    )
+                }
+            }
+        } else {
+            Canvas(Modifier.fillMaxWidth().height(42.dp).offset(y = bob.dp)) {
+                drawShip(
+                    type = ShipClass.CARRIER,
+                    center = Offset(size.width / 2f, size.height / 2f),
+                    lengthPx = size.width * 0.94f,
+                    thicknessPx = size.width * 0.94f / 5f,
+                    vertical = false,
+                    skin = state.skin
+                )
+            }
         }
         Gap(8)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -424,32 +493,6 @@ private fun FleetPreview(state: AppState) {
 }
 
 // ------------------------------------------------------------------ jogar
-
-/** Clássico ou Tático — vale para todas as formas de jogar abaixo. */
-@Composable
-private fun ModeSelector(state: AppState) {
-    var help by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        GameMode.entries.forEach { mode ->
-            ModeChip(label = mode.label, selected = state.mode == mode, modifier = Modifier.weight(1f)) { state.mode = mode }
-        }
-        // a regra de cada modo fica a um toque, em vez de ocupar uma linha o tempo todo
-        Box(
-            Modifier
-                .fillMaxHeight()
-                .width(40.dp)
-                .border(1.dp, if (help) Naval.amber else Naval.line)
-                .clickable { help = !help },
-            contentAlignment = Alignment.Center
-        ) {
-            Text("?", style = NavalType.mono, color = if (help) Naval.amberStrong else Naval.inkSoft)
-        }
-    }
-    if (help) {
-        Gap(4)
-        HudLabel(state.mode.description, Naval.muted)
-    }
-}
 
 @Composable
 private fun PlayOnlineButton(state: AppState) {

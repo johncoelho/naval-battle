@@ -173,8 +173,7 @@ fun FriendsScreen(state: AppState) {
                             }
                         ) {
                             PillButton(t(K.FRIENDS_PLAY), Naval.amber, Naval.amberInk) {
-                                state.createOnlineRoom(invitedId = e.id)
-                                state.screen = Screen.ONLINE
+                                state.pickMode(ModePick.Friend(e.id))
                             }
                         }
                     }
@@ -209,8 +208,7 @@ fun FriendsScreen(state: AppState) {
             onInvite = {
                 viewed = null
                 state.closeFriendProfile()
-                state.createOnlineRoom(invitedId = e.id)
-                state.screen = Screen.ONLINE
+                state.pickMode(ModePick.Friend(e.id))
             },
             onRemove = { confirmRemove = e },
             onClose = { viewed = null; state.closeFriendProfile() }

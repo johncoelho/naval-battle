@@ -1,1 +1,1 @@
-Atalho de Feedback na tela inicial: mande um bug ou uma ideia e ganhe dobroes quando for aprovado. Inclui a oferta do dia na loja, com uma camuflagem por dia a 30% de desconto.
+Tela inicial reorganizada: sua frota inteira em formacao, jogar e atalhos juntos na parte de baixo. Classico ou Tatico agora e escolhido depois de tocar em como jogar, com explicacao de cada modo. Na rede local, quem entra joga no modo de quem abriu a partida.

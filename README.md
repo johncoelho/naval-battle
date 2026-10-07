@@ -220,14 +220,21 @@ O deque de comando (`ui/MenuScreen.kt`), de cima para baixo:
   explica milhas e dobrões na primeira vez.
 - **Cartão do dia** — temporada (posição no placar ou o convite para aderir) e Diário de
   bordo (check-in pendente, desafio em andamento com barra, ou "tudo feito").
-- **Frota** balançando no mar; tocar abre o Estaleiro (o botão próprio saiu).
-- Clássico/Tático, **Jogar online** como ação principal e, abaixo, vs. IA, 2 jogadores e
-  Rede local lado a lado (o carrossel de um cartão por vez saiu — o Online era o 4º).
+- **Frota** — em tela alta, a frota inteira em formação (os 5 navios da linha e
+  camuflagem equipadas) sobre a carta náutica, com ondas passando e cada navio balançando
+  com a crista que passa sob ele, ocupando o espaço livre; em tela baixa, só o
+  porta-aviões. Tocar (ou "Estaleiro ›") abre o Estaleiro.
+- **Jogar online** como ação principal e, abaixo, vs. IA, 2 jogadores e Rede local lado a
+  lado — jogar e atalhos ficam juntos no pé da tela (zona do polegar).
+- **Clássico/Tático é uma etapa do fluxo, não um seletor no deque**: tocar em vs. IA, 2
+  jogadores, Rede local ou em Jogar (amigo) abre "Escolha o modo" (`ui/ModePicker.kt`),
+  com o último modo usado marcado; no Online o modo fica na própria tela, junto de
+  Casual/Ranqueada (pareia só com o mesmo modo). Quem entra por convite ou código joga no
+  modo da sala — na rede local também (o convidado adota o modo do HELLO de quem abriu).
 - **Atalhos** Amigos (com selo de pedidos recebidos), Placar, Loja (selo "-30%" com a
   oferta do dia, abre direto nas camuflagens) e Feedback (bug ou ideia, rende dobrões) —
   o Perfil abre pelo avatar do topo.
-- Os blocos se espalham para ocupar a altura do celular; a regra do modo (Clássico/Tático)
-  fica no botão "?".
+- Sem vãos entre os blocos: a sobra da tela vai para a frota, não para espaços vazios.
 
 **Oferta do dia** (`Paint.dailyOffer`): uma camuflagem por dia, igual para todos, em
 rodízio pela data de Brasília, com 30% de desconto — no topo do corredor de camuflagens;

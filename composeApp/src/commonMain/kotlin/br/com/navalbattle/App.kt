@@ -92,6 +92,8 @@ import br.com.navalbattle.ui.HandoffScreen
 import br.com.navalbattle.ui.FeedbackFormScreen
 import br.com.navalbattle.ui.FeedbackPopup
 import br.com.navalbattle.ui.DailyPopup
+import br.com.navalbattle.ui.ModePick
+import br.com.navalbattle.ui.ModePickerSheet
 import br.com.navalbattle.ui.FeedbackRewardPopup
 import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
@@ -140,7 +142,36 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         storeAisle = aisle
         screen = Screen.STORE
     }
-    var mode by mutableStateOf(GameMode.CLASSIC)
+    var mode by mutableStateOf(GameMode.entries.firstOrNull { it.name == profile.lastMode } ?: GameMode.CLASSIC)
+
+    /** Etapa "Escolha o modo" aberta — de onde veio decide o que acontece depois. */
+    var modePick by mutableStateOf<ModePick?>(null)
+
+    /** Abre a escolha de modo antes de começar a forma de jogar escolhida no deque. */
+    fun pickMode(target: ModePick) {
+        modePick = target
+    }
+
+    /** Muda o modo e guarda como o último usado (vem marcado da próxima vez). */
+    fun chooseMode(value: GameMode) {
+        mode = value
+        profile.setLastMode(value.name)
+    }
+
+    fun confirmMode(value: GameMode) {
+        val target = modePick ?: return
+        modePick = null
+        chooseMode(value)
+        when (target) {
+            ModePick.Ai -> newMatch(Opponent.AI)
+            ModePick.Local -> newMatch(Opponent.LOCAL)
+            ModePick.LAN -> screen = Screen.LAN
+            is ModePick.Friend -> {
+                createOnlineRoom(invitedId = target.friendId)
+                screen = Screen.ONLINE
+            }
+        }
+    }
     var match by mutableStateOf<Match?>(null)
 
     /** O visual em uso — linha de casco e camuflagem — vem do perfil gravado no aparelho. */
@@ -1284,7 +1315,20 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val m = match ?: return
         val parts = Protocol.parts(line)
         when (parts.firstOrNull()) {
-            Protocol.HELLO -> parts.getOrNull(1)?.let { m.setName(m.mySide.other(), it) }
+            Protocol.HELLO -> {
+                parts.getOrNull(1)?.let { m.setName(m.mySide.other(), it) }
+                // rede local: quem entra joga no modo de quem abriu a partida (no online
+                // isso já vem da sala). Só troca antes de qualquer frota ir a bordo
+                val hostMode = parts.getOrNull(2)?.let { code -> GameMode.entries.firstOrNull { it.name == code } }
+                if (hostMode != null && hostMode != m.mode && m.opponent == Opponent.LAN &&
+                    m.mySide == Side.ENEMY && m.phase == Phase.PLACEMENT && m.fleetsReady == 0
+                ) {
+                    val hostName = parts.getOrNull(1)
+                    mode = hostMode
+                    startLanMatch(Side.ENEMY)
+                    hostName?.let { match?.setName(Side.PLAYER, it) }
+                }
+            }
 
             Protocol.FLEET -> parts.getOrNull(1)
                 ?.let { m.applyRemoteFleet(FleetCodec.decode(it)) }
@@ -1775,6 +1819,7 @@ fun App() {
             if (state.match == null) SeasonEndPopup(state)
             if (state.match == null) SeasonPopup(state)
             RankedLockedPrompt(state)
+            ModePickerSheet(state)
             DailyPopup(state)
             FeedbackPopup(state)
             if (state.match == null) FeedbackRewardPopup(state)
