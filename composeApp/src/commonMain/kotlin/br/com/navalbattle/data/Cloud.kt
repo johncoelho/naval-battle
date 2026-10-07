@@ -349,8 +349,11 @@ expect class CloudApi() {
      */
     suspend fun findPendingInvite(session: Session): CloudResult<OnlineMatch?>
 
-    /** Guarda o token de push deste aparelho na conta (supabase/push.sql). */
-    suspend fun registerPushToken(session: Session, token: String, platform: String): CloudResult<Unit>
+    /**
+     * Guarda o token de push deste aparelho (supabase/push.sql). Sem sessão o aparelho
+     * fica anônimo e recebe só os avisos gerais; com sessão, também os da conta.
+     */
+    suspend fun registerPushToken(session: Session?, token: String, platform: String): CloudResult<Unit>
 
     /** Tira o token deste aparelho da conta (ao sair dela). */
     suspend fun unregisterPushToken(session: Session, token: String): CloudResult<Unit>

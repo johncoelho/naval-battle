@@ -179,8 +179,10 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   conexão"** com 60s de contagem; no fim, vitória por abandono, e a linha `DROP` fica na
   sala para o outro lado fechar a partida quando reconectar (`Match.lostByDisconnect`).
 
-- **Push (Android)** — convite de amigo para partida, pedido de amizade, pedido aceito e
-  adversário encontrado na partida rápida chegam como notificação mesmo com o jogo fechado
+- **Push (Android)** — a permissão é pedida ao chegar no menu e todo aparelho recebe os
+  avisos gerais (versão nova, novidades), com ou sem conta; com conta, também convite de
+  amigo para partida, pedido de amizade, pedido aceito e adversário encontrado na partida
+  rápida — tudo como notificação mesmo com o jogo fechado
   (Firebase Cloud Messaging; envio pelo Supabase em `supabase/push.sql` e na Edge Function
   `push`). Com o jogo aberto os balões do próprio jogo avisam. iPhone ainda sem push (APNs
   exige conta paga da Apple). Configuração em [docs/BUILD.md](docs/BUILD.md#push-firebase).

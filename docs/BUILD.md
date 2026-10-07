@@ -427,3 +427,6 @@ sem depender da memória de ninguém.
   (`adb logcat -s NavalPush`); insira-o em `push_tokens` para uma conta de teste e chame
   `select public.queue_push(<uuid>, 'test', 'Título', 'Texto')`. O resultado do envio fica
   em `push_outbox.result` (200 = entregue ao Firebase). Apague o token de teste depois.
+- Avisos gerais: `select public.push_broadcast('Título', 'Texto');` vai para todos os aparelhos
+  (com e sem conta). Versão nova: `update public.app_releases set notify = true where
+  version_name = 'X';` depois de publicada no Android (ver `supabase/push_broadcast.sql`).

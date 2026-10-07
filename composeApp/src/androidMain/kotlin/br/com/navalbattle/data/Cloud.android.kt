@@ -201,9 +201,9 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
     }
 
-    actual suspend fun registerPushToken(session: Session, token: String, platform: String): CloudResult<Unit> = call {
+    actual suspend fun registerPushToken(session: Session?, token: String, platform: String): CloudResult<Unit> = call {
         val body = JSONObject().put("p_token", token).put("p_platform", platform)
-        post("/rest/v1/rpc/register_push_token", body, token = session.accessToken)
+        post("/rest/v1/rpc/register_push_token", body, token = session?.accessToken)
         CloudResult.Ok(Unit)
     }
 

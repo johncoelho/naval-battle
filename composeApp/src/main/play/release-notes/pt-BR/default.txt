@@ -1,1 +1,1 @@
-Notificacoes de verdade no Android: receba aviso de convite de amigo para batalha, pedido de amizade, pedido aceito e adversario encontrado na partida rapida, mesmo com o jogo fechado. Libere as notificacoes quando o jogo pedir na tela de Amigos.
+Notificacoes para todos: o jogo pede a permissao logo no menu, funciona mesmo sem conta e passa a avisar tambem sobre versao nova e novidades. Com conta, continuam chegando convites, pedidos de amizade e adversario encontrado.

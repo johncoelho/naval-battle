@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.61.0] — 2026-10-07 · Push genérico
+
+App 0.27.1 (versionCode 64).
+
+### Alterado
+- **Permissão de notificação pedida ao chegar no menu**, para todos (antes só na tela de
+  Amigos). O push não é só de amizade.
+- **Push sem conta**: todo aparelho Android registra o token, anônimo até entrar na conta;
+  sair da conta devolve o aparelho ao anonimato em vez de apagá-lo. Canal renomeado para
+  "Avisos do jogo".
+
+### Adicionado
+- **Avisos gerais** (`supabase/push_broadcast.sql`): `select public.push_broadcast('Título',
+  'Texto')` no SQL do painel manda para todos os aparelhos — novidades, eventos, qualquer
+  assunto.
+- **Aviso de versão nova**: `update app_releases set notify = true where version_name = 'X'`
+  numa versão já publicada no Android manda "Versão X disponível" com as novidades. Fica
+  desligado por padrão para correções pequenas não virarem spam.
+
+---
+
 ## [0.60.0] — 2026-10-07 · Push de verdade no Android
 
 App 0.27.0 (versionCode 63).

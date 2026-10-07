@@ -558,23 +558,35 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** Recusa sem entrar — o anfitrião para de esperar em vez de ficar preso na sala. */
-    /** Último token de push salvo na conta — evita regravar a cada volta ao app. */
+    /** Último token de push salvo e a conta de então — evita regravar a cada volta ao app. */
     private var pushRegistered: String? = null
+    private var pushRegisteredFor: String? = null
 
-    /** Liga o push deste aparelho à conta (Android; no iPhone o token é nulo e nada acontece). */
+    /**
+     * Registra o push deste aparelho (Android; no iPhone o token é nulo e nada acontece).
+     * Sem conta o aparelho recebe os avisos gerais (versão nova, novidades); entrando,
+     * passa a receber também convites e amizade.
+     */
     suspend fun registerPush() {
-        if (!profile.signedIn) return
         val token = PushMessaging.token() ?: return
-        if (token == pushRegistered) return
-        val r = authed { session -> cloud.registerPushToken(session, token, PushMessaging.platform) }
-        if (r is CloudResult.Ok) pushRegistered = token
+        val account = if (profile.signedIn) profile.accountId else ""
+        if (token == pushRegistered && account == pushRegisteredFor) return
+        val r = if (profile.signedIn) {
+            authed { session -> cloud.registerPushToken(session, token, PushMessaging.platform) }
+        } else {
+            cloud.registerPushToken(null, token, PushMessaging.platform)
+        }
+        if (r is CloudResult.Ok) {
+            pushRegistered = token
+            pushRegisteredFor = account
+        }
     }
 
     /** Sai da conta e para de receber os avisos dela neste aparelho. */
     fun signOut() {
         val session = profile.currentSession()
         val token = pushRegistered
-        pushRegistered = null
+        pushRegisteredFor = null
         if (session != null && token != null) uiScope?.launch { cloud.unregisterPushToken(session, token) }
         profile.signOut()
     }
@@ -1785,6 +1797,12 @@ fun App() {
             // Diário de bordo: toda entrada no app pode mostrar o balão de novo
             state.onAppEntered()
         }
+    }
+
+    // notificações (push e lembrete): pede a permissão uma vez, ao chegar no menu — o
+    // sistema só mostra o pedido enquanto a pessoa não respondeu
+    LaunchedEffect(state.screen == Screen.MENU) {
+        if (state.screen == Screen.MENU) DailyReminder.requestPermission()
     }
 
     // milhas náuticas: recarga do dia vem do servidor — relê ao abrir, ao voltar do

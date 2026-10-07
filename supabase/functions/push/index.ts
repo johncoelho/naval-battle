@@ -1,6 +1,7 @@
 // Envia um aviso da fila push_outbox para os aparelhos do destinatário (Firebase
 // Cloud Messaging, API HTTP v1). Chamada pelo próprio banco (supabase/push.sql)
 // com { id } — só envia o que já está na fila, uma vez, então pode ficar sem JWT.
+// Linha sem user_id é aviso geral (versão nova, novidades): vai para todos os tokens.
 //
 // Segredo necessário na função: FCM_SERVICE_ACCOUNT = JSON da conta de serviço do
 // projeto Firebase "Naval Battle" (Configurações do projeto → Contas de serviço).
@@ -75,8 +76,10 @@ Deno.serve(async (req) => {
   if (!raw) return finish("no FCM_SERVICE_ACCOUNT");
   const sa = JSON.parse(raw) as ServiceAccount;
 
-  const { data: tokens } = await sb.from("push_tokens")
-    .select("token").eq("user_id", msg.user_id).eq("platform", "android");
+  // sem destinatário = aviso geral: vai para todos os aparelhos (com ou sem conta)
+  let query = sb.from("push_tokens").select("token").eq("platform", "android");
+  if (msg.user_id) query = query.eq("user_id", msg.user_id);
+  const { data: tokens } = await query;
   if (!tokens?.length) return finish("no tokens");
 
   const auth = await accessToken(sa);
