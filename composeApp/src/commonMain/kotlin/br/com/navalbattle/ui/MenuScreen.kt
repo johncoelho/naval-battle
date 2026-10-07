@@ -12,6 +12,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -33,6 +35,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +57,7 @@ import br.com.navalbattle.Screen
 import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
+import br.com.navalbattle.design.Paint
 import br.com.navalbattle.design.SeasonTheme
 import br.com.navalbattle.design.accent
 import br.com.navalbattle.design.drawAvatar
@@ -103,7 +109,10 @@ fun MenuScreen(state: AppState) {
             CurrencyTip { state.profile.markCurrencyTipSeen() }
         }
 
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+        BoxWithConstraints(Modifier.weight(1f)) {
+        val viewport = maxHeight
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Column(Modifier.fillMaxWidth().heightIn(min = viewport), verticalArrangement = Arrangement.SpaceBetween) {
             if (state.seasonPass != null || state.daily != null) {
                 Gap(14)
                 DayCard(state)
@@ -133,17 +142,26 @@ fun MenuScreen(state: AppState) {
                 Shortcut(t(K.MENU_SHORT_LEADERBOARD), modifier = Modifier.weight(1f), icon = { drawPodiumIcon(it) }) {
                     if (signedIn) state.screen = Screen.LEADERBOARD else state.openLogin(Screen.MENU)
                 }
-                Shortcut(t(K.MENU_SHORT_STORE), modifier = Modifier.weight(1f), icon = {
-                    drawDoubloon(Offset(size.width / 2f, size.height / 2f), size.minDimension * 0.85f)
-                }) { state.openStore(0) }
+                // com oferta do dia, o selo mostra o desconto e o toque cai direto nas camuflagens
+                val offer = state.dailyOffer
+                Shortcut(
+                    t(K.MENU_SHORT_STORE),
+                    tag = if (offer != null) "-${Paint.DAILY_OFFER_OFF}%" else null,
+                    modifier = Modifier.weight(1f),
+                    icon = { drawDoubloon(Offset(size.width / 2f, size.height / 2f), size.minDimension * 0.85f) }
+                ) { state.openStore(if (offer != null) 1 else 0) }
                 Shortcut(t(K.MENU_SHORT_PROFILE), modifier = Modifier.weight(1f), icon = {
                     drawAvatar(state.profile.avatar, Offset(size.width / 2f, size.height / 2f), size.minDimension, Naval.amberStrong)
                 }) { state.screen = Screen.PROFILE }
             }
-            Gap(16)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                HudLabel("v$appVersionLabel", Naval.line)
+            Column {
+                Gap(16)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    HudLabel("v$appVersionLabel", Naval.line)
+                }
             }
+        }
+        }
         }
     }
 }
@@ -172,20 +190,6 @@ private fun CommanderHeader(state: AppState) {
                 Text(profile.displayName, style = NavalType.mono, color = Naval.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Gap(2)
                 HudLabel(profile.rank.label.uppercase(), Naval.amberStrong)
-                Gap(4)
-                // barra até a próxima patente: o "só mais uma partida"
-                Box(Modifier.fillMaxWidth().height(4.dp).background(Naval.surface2)) {
-                    Box(Modifier.fillMaxWidth(profile.rankProgress).height(4.dp).background(Naval.amber))
-                }
-                Gap(3)
-                val next = Rank.next(profile.xp)
-                Text(
-                    if (next == null) t(K.MENU_RANK_MAX) else t(K.MENU_RANK_NEXT, next.label, next.xp - profile.xp),
-                    style = NavalType.monoSmall,
-                    color = Naval.muted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
         }
         Spacer(Modifier.width(10.dp))
@@ -203,6 +207,22 @@ private fun CommanderHeader(state: AppState) {
             Spacer(Modifier.width(6.dp))
             GearButton { state.screen = Screen.SETTINGS }
         }
+    }
+    // barra até a próxima patente na largura toda — na coluna do nome o texto cortava
+    // ("Capitão de Corveta em …"): é o "só mais uma partida"
+    Gap(8)
+    val next = Rank.next(profile.xp)
+    Row(Modifier.fillMaxWidth().clickable { state.screen = Screen.PROFILE }, verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.weight(1f).height(5.dp).background(Naval.surface2)) {
+            Box(Modifier.fillMaxWidth(profile.rankProgress).height(5.dp).background(Naval.amber))
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(
+            if (next == null) t(K.MENU_RANK_MAX) else t(K.MENU_RANK_NEXT, next.label, next.xp - profile.xp),
+            style = NavalType.monoSmall,
+            color = Naval.muted,
+            maxLines = 1
+        )
     }
 }
 
@@ -407,13 +427,27 @@ private fun FleetPreview(state: AppState) {
 /** Clássico ou Tático — vale para todas as formas de jogar abaixo. */
 @Composable
 private fun ModeSelector(state: AppState) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    var help by remember { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         GameMode.entries.forEach { mode ->
             ModeChip(label = mode.label, selected = state.mode == mode, modifier = Modifier.weight(1f)) { state.mode = mode }
         }
+        // a regra de cada modo fica a um toque, em vez de ocupar uma linha o tempo todo
+        Box(
+            Modifier
+                .fillMaxHeight()
+                .width(40.dp)
+                .border(1.dp, if (help) Naval.amber else Naval.line)
+                .clickable { help = !help },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("?", style = NavalType.mono, color = if (help) Naval.amberStrong else Naval.inkSoft)
+        }
     }
-    Gap(4)
-    HudLabel(state.mode.description, Naval.muted)
+    if (help) {
+        Gap(4)
+        HudLabel(state.mode.description, Naval.muted)
+    }
 }
 
 @Composable
@@ -452,6 +486,7 @@ private fun ModeTile(title: String, subtitle: String, modifier: Modifier = Modif
 private fun Shortcut(
     label: String,
     badge: Int = 0,
+    tag: String? = null,
     modifier: Modifier = Modifier,
     icon: DrawScope.(Color) -> Unit,
     onClick: () -> Unit
@@ -469,6 +504,17 @@ private fun Shortcut(
             Canvas(Modifier.size(26.dp)) { icon(Naval.inkSoft) }
             Gap(6)
             Text(label.uppercase(), style = NavalType.monoSmall, color = Naval.inkSoft, maxLines = 1)
+        }
+        if (tag != null) {
+            Box(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+                    .background(Naval.amber)
+                    .padding(horizontal = 4.dp, vertical = 1.dp)
+            ) {
+                Text(tag, style = NavalType.monoSmall, color = Naval.amberInk)
+            }
         }
         if (badge > 0) {
             Box(

@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.53.0] — 2026-10-06 · Oferta do dia e deque ajustado
+
+App 0.22.0 (versionCode 52).
+
+### Adicionado
+- **Oferta do dia na loja:** uma camuflagem por dia com 30% de desconto, igual para todos,
+  em rodízio pela data — destaque no topo das camuflagens. O atalho Loja do deque ganha o
+  selo "-30%" e abre direto nesse corredor.
+
+### Alterado
+- Barra até a próxima patente agora ocupa a largura toda, com o texto inteiro ("Capitão de
+  Corveta em 1020 XP") — na coluna do nome ele cortava.
+- Os blocos do deque se espalham pela altura da tela (sobrava uma faixa vazia embaixo).
+- A explicação do modo Clássico/Tático virou um botão "?" ao lado da escolha.
+
+---
+
 ## [0.52.0] — 2026-10-06 · Deque de comando novo
 
 App 0.21.0 (versionCode 51).

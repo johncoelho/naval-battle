@@ -223,7 +223,14 @@ O deque de comando (`ui/MenuScreen.kt`), de cima para baixo:
 - **Frota** balançando no mar; tocar abre o Estaleiro (o botão próprio saiu).
 - Clássico/Tático, **Jogar online** como ação principal e, abaixo, vs. IA, 2 jogadores e
   Rede local lado a lado (o carrossel de um cartão por vez saiu — o Online era o 4º).
-- **Atalhos** Amigos (com selo de pedidos recebidos), Placar, Loja e Perfil.
+- **Atalhos** Amigos (com selo de pedidos recebidos), Placar, Loja (selo "-30%" com a
+  oferta do dia, abre direto nas camuflagens) e Perfil.
+- Os blocos se espalham para ocupar a altura do celular; a regra do modo (Clássico/Tático)
+  fica no botão "?".
+
+**Oferta do dia** (`Paint.dailyOffer`): uma camuflagem por dia, igual para todos, em
+rodízio pela data de Brasília, com 30% de desconto — no topo do corredor de camuflagens;
+pula as já compradas, as inclusas e as exclusivas do passe.
 
 ### Configurações
 

@@ -104,6 +104,8 @@ enum class K(val pt: String, val en: String, val es: String) {
     MENU_DAY_DONE("Tudo feito hoje", "All done today", "Todo hecho hoy"),
     MENU_TIP_CURRENCY("Rosa dos ventos = milhas (1 por partida online). Moeda = dobrões (loja e passe).", "Compass = miles (1 per online match). Coin = doubloons (store and pass).", "Rosa de los vientos = millas (1 por partida en línea). Moneda = doblones (tienda y pase)."),
     MENU_TIP_OK("Entendi", "Got it", "Entendido"),
+    STORE_OFFER_TITLE("Oferta do dia", "Deal of the day", "Oferta del día"),
+    STORE_OFFER_SUB("%1% de desconto até a meia-noite · era %2", "%1% off until midnight · was %2", "%1% de descuento hasta medianoche · antes %2"),
     MENU_STORE("Loja do arsenal", "Arsenal store", "Tienda del arsenal"),
     MENU_PROFILE("Perfil", "Profile", "Perfil"),
     MENU_ACCOUNT("Conta", "Account", "Cuenta"),

@@ -129,6 +129,13 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Aba em que a Loja abre: 0 cascos, 1 camuflagens, 2 habilidades (o Estaleiro manda direto pra aba certa). */
     var storeAisle by mutableStateOf(0)
 
+    /** Dia corrido de Brasília (UTC-3) — chave da oferta do dia, a mesma o dia todo. */
+    private val brtDay: Long get() = (nowMillis() - 3 * 3_600_000L) / 86_400_000L
+
+    /** Camuflagem com desconto hoje (nula se o comandante já tem todas). */
+    val dailyOffer: Paint?
+        get() = Paint.dailyOffer(brtDay) { profile.owns(it) }
+
     fun openStore(aisle: Int = 0) {
         storeAisle = aisle
         screen = Screen.STORE

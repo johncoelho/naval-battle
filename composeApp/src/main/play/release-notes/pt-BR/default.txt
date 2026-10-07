@@ -1,1 +1,1 @@
-Tela inicial nova: Jogar online em destaque, barra de progresso ate a proxima patente, cartao do dia com temporada e Diario de bordo, e atalhos para Amigos (com aviso de pedidos), Placar, Loja e Perfil. Toque na frota para trocar no Estaleiro.
+Nova oferta do dia: uma camuflagem por dia com 30% de desconto na loja. Tela inicial ajustada: barra da proxima patente com o texto completo, blocos ocupando a tela toda e ajuda do modo de combate no botao ?.

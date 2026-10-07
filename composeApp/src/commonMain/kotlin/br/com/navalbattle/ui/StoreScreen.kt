@@ -175,8 +175,34 @@ fun StoreScreen(state: AppState) {
                         )
                     }
                 } else {
+                    // oferta do dia no topo: a mesma camuflagem com desconto, só hoje
+                    val offer = state.dailyOffer
+                    offer?.let { paint ->
+                        val price = Paint.offerPrice(paint)
+                        HudLabel(t(K.STORE_OFFER_TITLE).uppercase(), Naval.amberStrong)
+                        StoreRow(
+                            title = paint.name,
+                            subtitle = t(K.STORE_OFFER_SUB, Paint.DAILY_OFFER_OFF, paint.price),
+                            price = price,
+                            owned = false,
+                            equipped = false,
+                            credits = profile.credits,
+                            preview = Skin(paint, state.skin.fleet),
+                            highlight = true,
+                            onLocked = { locked(price) },
+                            onBuy = {
+                                pending = PendingBuy(paint.name, price) {
+                                    if (profile.buy(paint.id, price)) {
+                                        profile.equip(paint.id)
+                                        notice = t(K.STORE_PAINTED, paint.name)
+                                    }
+                                }
+                            },
+                            onEquip = {}
+                        )
+                    }
                     // as exclusivas de temporada só aparecem para quem já tem (vêm do passe)
-                    Paint.all.filter { it.season == null || profile.owns(it.id) }.forEach { paint ->
+                    Paint.all.filter { (it.season == null || profile.owns(it.id)) && it != offer }.forEach { paint ->
                         StoreRow(
                             title = paint.name,
                             subtitle = paintDescription(paint),
@@ -421,15 +447,16 @@ private fun StoreRow(
     preview: Skin,
     onBuy: () -> Unit,
     onEquip: () -> Unit,
-    onLocked: () -> Unit
+    onLocked: () -> Unit,
+    highlight: Boolean = false
 ) {
     val affordable = credits >= price
     val dim = !owned && !affordable
     Column(
         Modifier
             .fillMaxWidth()
-            .background(Naval.surface)
-            .border(1.dp, if (equipped) Naval.amber else Naval.line)
+            .background(if (highlight) Naval.amber.copy(alpha = 0.08f) else Naval.surface)
+            .border(1.dp, if (equipped || highlight) Naval.amber else Naval.line)
     ) {
         ShipCarousel(preview, alpha = if (owned) 1f else if (dim) 0.4f else 0.7f)
         Row(

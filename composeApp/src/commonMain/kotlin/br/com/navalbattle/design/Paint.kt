@@ -147,6 +147,23 @@ data class Paint(
             price = 0, camo = Camo.DIGITAL, season = "inverno"
         )
 
+        /** Desconto da oferta do dia da loja, em %. */
+        const val DAILY_OFFER_OFF = 30
+
+        /**
+         * Camuflagem em oferta hoje: uma por dia, igual para todos, em rodízio pela data
+         * (dia corrido de Brasília). Pula as já compradas, as que vêm com o jogo e as
+         * exclusivas do passe; nula quando não sobrou nenhuma para comprar.
+         */
+        fun dailyOffer(day: Long, owns: (String) -> Boolean): Paint? {
+            val forSale = all.filter { it.price > 0 && it.season == null }
+            if (forSale.isEmpty()) return null
+            val start = (day % forSale.size).toInt()
+            return (forSale.indices).map { forSale[(start + it) % forSale.size] }.firstOrNull { !owns(it.id) }
+        }
+
+        fun offerPrice(paint: Paint): Int = paint.price * (100 - DAILY_OFFER_OFF) / 100
+
         val all = listOf(
             STANDARD, BRAZIL, JAPAN, USA, UK, PORTUGAL,
             ARCTIC, DAZZLE, SPLINTER, CORSAIR, STEALTH,
