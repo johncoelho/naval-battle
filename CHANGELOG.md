@@ -9,6 +9,31 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.55.0] — 2026-10-07 · Dois jogadores na horizontal
+
+App 0.24.0 (versionCode 57). Inclui a 0.23.2, que não chegou a sair (queda do GitHub Actions).
+
+### Alterado
+- **Dois jogadores no mesmo aparelho, na horizontal:** um quadro para cada comandante, com o
+  nome no topo, frota restante, precisão e o relógio na vez dele. Só o quadro da vez fica
+  aceso e tocável; sem tela de passar o aparelho entre turnos. A coluna do meio mostra de
+  quem é a vez (seta para o lado dele, nome na cor dele, acende quando troca), o turno,
+  **⇄ Inverter** lados e Sair. No Tático, habilidades embaixo de cada quadro. O anúncio do
+  tiro virou uma linha embaixo do quadro (o balão cobria a carta). O conteúdo gira em
+  Compose — funciona igual no Android e no iPhone.
+- **Posicionamento (todos os modos):** painel "Sua frota" com cada navio em escala, nome e
+  tamanho — a linha de nomes quebrava "DESTRÓIER" letra por letra e deixava um vão.
+- Ondas do deque: borda de espuma definida na frente da onda; saem os dois riscos fixos nas
+  pontas dos navios.
+
+### Corrigido
+- Mesmo aparelho: o topo dizia "vez do jogador 1" enquanto a parte de baixo já mostrava o
+  outro — agora tudo troca junto, depois da animação.
+- Mesmo aparelho: no último tiro a tela escurecia sem mensagem; agora o quadro do vencedor
+  segue aceso e aparece "Vitória de Fulano" no centro antes do relatório.
+
+---
+
 ## [0.54.2] — 2026-10-07 · Ondas do mar passando pela frota
 
 App 0.23.2 (versionCode 56).

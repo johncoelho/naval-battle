@@ -4,6 +4,10 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,6 +46,7 @@ import br.com.navalbattle.design.Naval
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.Skin
+import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.BOARD_SIZE
 import br.com.navalbattle.game.Board
@@ -81,7 +86,7 @@ fun PlacementScreen(state: AppState, match: Match) {
         Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         ScreenTopBar(
             if (match.opponent == Opponent.LOCAL) {
@@ -205,20 +210,18 @@ fun PlacementScreen(state: AppState, match: Match) {
             }
         }
 
-        Gap(10)
+        Gap(8)
         HudLabel(
             error ?: t(K.PLACEMENT_HINT),
-            if (error != null) Naval.danger else Naval.muted
+            if (error != null) Naval.danger else Naval.muted,
+            Modifier.fillMaxWidth()
         )
 
-        Gap(10)
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ShipClass.fleet.forEach { type ->
-                HudLabel("${type.label.uppercase()} ${type.size}", Naval.muted)
-            }
-        }
-
-        Spacer(Modifier.weight(1f))
+        // a frota em escala, um navio por linha (antes os cinco nomes dividiam uma linha
+        // só e o último quebrava letra por letra); ocupa o espaço até os botões
+        Gap(14)
+        FleetLegend(state, Modifier.fillMaxWidth().weight(1f))
+        Gap(14)
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SecondaryButton(t(K.RANDOM), modifier = Modifier.weight(1f)) {
@@ -328,6 +331,38 @@ private suspend fun PointerInputScope.awaitEachDrag(
                 onMove(coord)
             }
             change.consume()
+        }
+    }
+}
+
+/** "Sua frota": cada navio desenhado no tamanho relativo, com nome e casas. */
+@Composable
+private fun FleetLegend(state: AppState, modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .background(Naval.surface)
+            .border(1.dp, Naval.lineSoft)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        HudLabel(t(K.PLACEMENT_FLEET).uppercase(), Naval.muted)
+        ShipClass.fleet.forEach { type ->
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Canvas(Modifier.weight(1f).height(18.dp)) {
+                    val unit = size.width / 5f
+                    drawShip(
+                        type = type,
+                        center = Offset(unit * type.size / 2f, size.height / 2f),
+                        lengthPx = unit * type.size * 0.96f,
+                        thicknessPx = size.height,
+                        vertical = false,
+                        skin = state.skin
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(type.label.uppercase(), style = NavalType.monoSmall, color = Naval.inkSoft, maxLines = 1, modifier = Modifier.width(120.dp))
+                Text("${type.size}", style = NavalType.mono, color = Naval.amberStrong)
+            }
         }
     }
 }

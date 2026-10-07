@@ -227,6 +227,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * Única troca de mãos do jogo: cobre a tela entre o posicionamento de um
      * comandante e o do outro. A batalha em si corre toda na mesma tela.
      */
+    /** Mesmo aparelho, horizontal: troca o quadro de cada comandante de lado ("⇄"). */
+    var localSidesSwapped by mutableStateOf(false)
+
     fun handoffToPlacement(side: Side) {
         handoffSide = side
         screen = Screen.HANDOFF

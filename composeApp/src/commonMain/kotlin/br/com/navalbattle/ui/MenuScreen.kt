@@ -569,6 +569,23 @@ private fun SeaFormation(state: AppState, modifier: Modifier = Modifier) {
                 )
                 fx += strip
             }
+            // borda da espuma: linha branca definida bem na frente da onda, mais forte e
+            // mais fraca ao longo dela, mudando com o tempo
+            var cx0 = 0f
+            val seg = 4f
+            while (cx0 < size.width) {
+                val y0 = w.frontY(cx0, size.width, size.height, band, now)
+                val y1 = w.frontY(cx0 + seg, size.width, size.height, band, now)
+                val n = 0.55f + 0.45f * kotlin.math.sin(cx0 * 0.06f + tSec * 1.8f + ph) *
+                    kotlin.math.sin(cx0 * 0.021f - tSec * 0.9f + ph * 1.7f)
+                drawLine(
+                    Color.White.copy(alpha = 0.55f * n * fade),
+                    Offset(cx0, y0), Offset(cx0 + seg, y1),
+                    strokeWidth = (1.2f + n * 1.0f) * density,
+                    cap = StrokeCap.Round
+                )
+                cx0 += seg
+            }
         }
 
         ships.forEachIndexed { i, ship ->
@@ -611,19 +628,6 @@ private fun SeaFormation(state: AppState, modifier: Modifier = Modifier) {
                             Color.White.copy(alpha = (1f - t) * a0 * (0.5f + fade * 0.5f)),
                             radius = r * density * (1f - t * 0.4f),
                             center = Offset(px0 + kotlin.math.cos(angle) * reach * t, hullTop + kotlin.math.sin(angle) * reach * t)
-                        )
-                    }
-                }
-                // espuma escorrendo pelas pontas enquanto a crista atravessa o navio
-                val fyMid = w.frontY(cx, size.width, size.height, band, now)
-                if (fyMid > shipY - half && fyMid < shipY + half + cell * 0.3f) {
-                    listOf(cx - len / 2f, cx + len / 2f).forEachIndexed { e, ex ->
-                        val dir = if (e == 0) -1f else 1f
-                        drawLine(
-                            Color.White.copy(alpha = 0.4f * fade),
-                            Offset(ex + dir * 2f * density, fyMid),
-                            Offset(ex + dir * cell * 0.3f, fyMid - cell * 0.18f),
-                            strokeWidth = 1.8f * density, cap = StrokeCap.Round
                         )
                     }
                 }

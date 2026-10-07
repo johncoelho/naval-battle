@@ -172,6 +172,7 @@ enum class K(val pt: String, val en: String, val es: String) {
 
     // ---------------------------------------------------------------- posicionamento
     PLACEMENT("Posicionamento", "Deployment", "Despliegue"),
+    PLACEMENT_FLEET("Sua frota", "Your fleet", "Tu flota"),
     PLACEMENT_HINT("Toque no navio para girar · arraste para reposicionar", "Tap a ship to rotate · drag to move", "Toca un barco para girar · arrastra para mover"),
     PLACEMENT_INVALID("Posição inválida", "Invalid position", "Posición inválida"),
     PLACEMENT_NO_ROOM("Sem espaço para girar aqui", "No room to rotate here", "Sin espacio para girar aquí"),
@@ -199,6 +200,13 @@ enum class K(val pt: String, val en: String, val es: String) {
     BATTLE_ABILITY_AIM("%s: toque no alvo", "%s: tap the target", "%s: toca el objetivo"),
     BATTLE_ABILITY_CHARGE("Cartucho avulso: %s em estoque", "Spare charge: %s in stock", "Cartucho suelto: %s en stock"),
     BATTLE_TURN_OF("Vez de %s", "%s's turn", "Turno de %s"),
+    LOCAL_YOUR_TURN("%s, sua vez!", "%s, your turn!", "¡%s, tu turno!"),
+    LOCAL_SWAP("Inverter", "Swap", "Invertir"),
+    LOCAL_EXIT("Sair", "Exit", "Salir"),
+    LOCAL_TURN_SHORT("Sua vez", "Your turn", "Tu turno"),
+    LOCAL_VICTORY_EYEBROW("Fim de batalha", "Battle over", "Fin de la batalla"),
+    LOCAL_VICTORY("Vitória de %s", "%s wins", "Victoria de %s"),
+    LOCAL_VICTORY_SUB("Frota de %s afundada", "%s's fleet sunk", "Flota de %s hundida"),
     BATTLE_VS("Vs. %s", "Vs. %s", "Vs. %s"),
     BATTLE_MEMORY("Sua memória de tiro na frota de %s", "Your firing record on %s's fleet", "Tu registro de disparos en la flota de %s"),
     BATTLE_PASSING("Passando para %s", "Passing to %s", "Pasando a %s"),

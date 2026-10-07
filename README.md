@@ -61,10 +61,14 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
 
 - **Partida rápida** — contra a IA, que caça em padrão de paridade e persegue contatos.
   É a única modalidade que conta para a carreira.
-- **Dois jogadores no mesmo aparelho** — cada comandante põe o nome, posiciona a frota
-  em sigilo (com tela de passagem entre os dois) e a batalha corre toda numa tela só.
-  Cada um enxerga apenas a **própria memória de tiro**; ao fim, a carta se revela inteira,
-  com as duas frotas e todos os tiros, cada um na cor do seu dono.
+- **Dois jogadores no mesmo aparelho** — cada comandante põe o nome e posiciona a frota
+  em sigilo (em pé, com tela de passagem entre os dois). A batalha é **na horizontal**
+  (`ui/LocalBattle.kt`; o conteúdo gira, a orientação do sistema não muda): um quadro
+  para cada um, com o nome no topo, mostrando o mar inimigo que ele ataca. Só o quadro da
+  vez fica aceso e tocável; a vez troca em tudo junto quando a animação do tiro termina,
+  e a coluna do meio mostra de quem é a vez (seta e nome na cor dele), o turno, **⇄
+  Inverter** (troca os quadros de lado) e Sair. No Tático, cada quadro tem as próprias
+  habilidades. No fim, "Vitória de Fulano" no centro antes do relatório.
 - **Rede local** — dois celulares no mesmo Wi-Fi. Um dá um nome à partida e a cria, o
   outro encontra esse nome na busca e entra; cada um posiciona a própria frota no seu
   aparelho. A partir daí a tela é igual à do modo solo: tabuleiro alvo, frota própria

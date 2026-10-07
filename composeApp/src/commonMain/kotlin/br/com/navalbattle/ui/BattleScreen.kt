@@ -170,9 +170,32 @@ fun BattleScreen(state: AppState, match: Match) {
 
     LaunchedEffect(match.phase) {
         if (match.phase == Phase.RESULT) {
-            delay(3800)
+            // no mesmo aparelho o cartão "Vitória de…" fica um pouco mais na tela
+            delay(if (local) 5200 else 3800)
             state.screen = Screen.RESULT
         }
+    }
+
+    // mesmo aparelho: horizontal, um quadro para cada comandante (ver LocalBattle.kt)
+    if (local) {
+        LocalBattleLandscape(
+            state = state,
+            match = match,
+            viewSide = viewSide,
+            myTurn = myTurn,
+            secondsLeft = secondsLeft,
+            playerImpact = playerImpact,
+            enemyImpact = enemyImpact,
+            onQuit = { confirmQuit = true }
+        ) {
+            if (confirmQuit) {
+                QuitOverlay(
+                    onKeep = { confirmQuit = false },
+                    onQuit = { state.quitToMenu() }
+                )
+            }
+        }
+        return
     }
 
     Box(Modifier.fillMaxSize()) {
