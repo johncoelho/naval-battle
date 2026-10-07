@@ -411,6 +411,15 @@ expect class CloudApi() {
     /** Avatar de cada pessoa da lista de amigos (aceitos e pedidos), por id. */
     suspend fun friendAvatars(session: Session): CloudResult<Map<String, String>>
 
+    /** Bate o ponto de presença (supabase/presence.sql) — amigos veem quem está online. */
+    suspend fun touchPresence(session: Session): CloudResult<Unit>
+
+    /** Segundos desde que cada amigo foi visto no jogo, por id (-1 = nunca registrado). */
+    suspend fun friendPresence(session: Session): CloudResult<Map<String, Int>>
+
+    /** Ranqueada entre amigos liberada (chave do servidor, ligada no teste fechado). */
+    suspend fun friendRankedAllowed(session: Session): CloudResult<Boolean>
+
     suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?>
 
     /** Retrato e patente públicos de qualquer comandante — não exige amizade. */

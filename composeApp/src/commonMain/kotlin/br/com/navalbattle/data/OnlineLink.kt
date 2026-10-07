@@ -175,17 +175,20 @@ class OnlineLink(
         session: Session,
         mode: String,
         invitedId: String? = null,
+        ranked: Boolean = false,
         onState: (LinkState, Side) -> Unit,
         onCode: (String) -> Unit,
         onLine: (String) -> Unit
     ) {
         this.session = session
+        this.ranked = ranked
         pollJob?.cancel()
         onState(LinkState.HOSTING, Side.PLAYER)
         pollJob = scope.launch {
             val code = randomCode()
             val result = cloud.createOnlineMatch(
-                session, mode, quick = false, inviteCode = code, hostName = session.username, invitedId = invitedId
+                session, mode, quick = false, inviteCode = code, hostName = session.username,
+                invitedId = invitedId, ranked = ranked
             )
             val match = (result as? CloudResult.Ok)?.value
             if (match == null) {

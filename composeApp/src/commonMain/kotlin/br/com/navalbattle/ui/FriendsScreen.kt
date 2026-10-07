@@ -47,6 +47,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import br.com.navalbattle.ONLINE_SECS
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.FriendProfile
@@ -81,7 +82,14 @@ fun FriendsScreen(state: AppState) {
     var confirmRemove by remember { mutableStateOf<FriendEntry?>(null) }
     var sentTo by remember { mutableStateOf(setOf<String>()) }
 
-    LaunchedEffect(Unit) { state.refreshFriendships() }
+    LaunchedEffect(Unit) {
+        state.refreshFriendships()
+        // presença muda com a tela aberta: relê a cada 20s
+        while (true) {
+            delay(20_000)
+            state.refreshFriendPresence()
+        }
+    }
     LaunchedEffect(query) {
         if (query.trim().length < 2) {
             state.searchCommander("")
@@ -97,7 +105,12 @@ fun FriendsScreen(state: AppState) {
 
     val incoming = state.friendships.filter { it.status == "pending" && it.addresseeId == myId }.map { other(it) }
     val outgoing = state.friendships.filter { it.status == "pending" && it.requesterId == myId }.map { other(it) }
-    val friends = state.friendships.filter { it.status == "accepted" }.map { other(it) }.sortedBy { it.name.lowercase() }
+    // online primeiro (quem pode receber convite agora), depois por quem foi visto há menos tempo
+    val friends = state.friendships.filter { it.status == "accepted" }.map { other(it) }
+        .sortedWith(compareBy<FriendEntry>({ !state.friendOnline(it.id) }, {
+            state.friendSeenSecs[it.id]?.takeIf { s -> s >= 0 } ?: Int.MAX_VALUE
+        }, { it.name.lowercase() }))
+    val onlineCount = friends.count { state.friendOnline(it.id) }
 
     Column(
         Modifier
@@ -158,22 +171,33 @@ fun FriendsScreen(state: AppState) {
             }
 
             SectionHeader(t(K.FRIENDS_LIST), friends.size, Naval.muted)
+            if (friends.isNotEmpty()) {
+                HudLabel(t(K.FRIENDS_ONLINE_COUNT, onlineCount), if (onlineCount > 0) Naval.greenBright else Naval.muted)
+                Gap(6)
+            }
             if (friends.isEmpty()) {
                 EmptyFleet()
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     friends.forEach { e ->
+                        val online = state.friendOnline(e.id)
                         PersonCard(
                             e.name,
-                            subtitle = t(K.FRIENDS_TAP_PROFILE),
+                            subtitle = presenceLabel(state.friendSeenSecs[e.id]),
                             avatarId = state.friendAvatars[e.id],
+                            online = online,
+                            dim = !online,
                             onClick = {
                                 viewed = e
                                 scope.launch { state.loadFriendProfile(e.id) }
                             }
                         ) {
-                            PillButton(t(K.FRIENDS_PLAY), Naval.amber, Naval.amberInk) {
-                                state.pickMode(ModePick.Friend(e.id))
+                            if (online) {
+                                PillButton(t(K.FRIENDS_PLAY), Naval.amber, Naval.amberInk) {
+                                    state.pickMode(ModePick.Friend(e.id))
+                                }
+                            } else {
+                                HudLabel(t(K.FRIENDS_OFFLINE), Naval.muted)
                             }
                         }
                     }
@@ -205,11 +229,13 @@ fun FriendsScreen(state: AppState) {
             avatarId = state.viewedFriendProfile?.avatar?.ifBlank { null } ?: state.friendAvatars[e.id],
             loading = state.friendProfileLoading,
             profile = state.viewedFriendProfile,
-            onInvite = {
-                viewed = null
-                state.closeFriendProfile()
-                state.pickMode(ModePick.Friend(e.id))
-            },
+            onInvite = if (state.friendOnline(e.id)) {
+                {
+                    viewed = null
+                    state.closeFriendProfile()
+                    state.pickMode(ModePick.Friend(e.id))
+                }
+            } else null,
             onRemove = { confirmRemove = e },
             onClose = { viewed = null; state.closeFriendProfile() }
         )
@@ -230,6 +256,16 @@ fun FriendsScreen(state: AppState) {
 }
 
 // ------------------------------------------------------------------ peças
+
+/** "Online agora", "Visto há 5 min", "Visto há 3 h"... ou "Offline" quando nunca foi visto. */
+@Composable
+private fun presenceLabel(seenSecs: Int?): String = when {
+    seenSecs == null || seenSecs < 0 -> t(K.FRIENDS_OFFLINE)
+    seenSecs <= ONLINE_SECS -> t(K.FRIENDS_ONLINE_NOW)
+    seenSecs < 3600 -> t(K.FRIENDS_SEEN_MIN, seenSecs / 60)
+    seenSecs < 86_400 -> t(K.FRIENDS_SEEN_HOURS, seenSecs / 3600)
+    else -> t(K.FRIENDS_SEEN_DAYS, seenSecs / 86_400)
+}
 
 /** Cor do monograma, fixa por nome — cada amigo sempre com a mesma. */
 private fun monogramColor(name: String): Color {
@@ -299,6 +335,7 @@ private fun PersonCard(
     avatarId: String? = null,
     highlight: Boolean = false,
     dim: Boolean = false,
+    online: Boolean = false,
     onClick: (() -> Unit)? = null,
     actions: @Composable () -> Unit
 ) {
@@ -311,7 +348,20 @@ private fun PersonCard(
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        PlayerBadge(name, avatarId, dim)
+        Box {
+            PlayerBadge(name, avatarId, dim)
+            if (online) {
+                // bolinha de "online agora" no canto do retrato
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(Naval.greenBright)
+                        .border(2.dp, Naval.surface2, CircleShape)
+                )
+            }
+        }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
@@ -323,7 +373,13 @@ private fun PersonCard(
             )
             subtitle?.let {
                 Gap(2)
-                Text(it, style = NavalType.monoSmall, color = Naval.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    it,
+                    style = NavalType.monoSmall,
+                    color = if (online) Naval.greenBright else Naval.muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
         Spacer(Modifier.width(8.dp))
@@ -427,7 +483,7 @@ private fun FriendProfileDialog(
     avatarId: String?,
     loading: Boolean,
     profile: FriendProfile?,
-    onInvite: () -> Unit,
+    onInvite: (() -> Unit)?,
     onRemove: () -> Unit,
     onClose: () -> Unit
 ) {
@@ -488,7 +544,11 @@ private fun FriendProfileDialog(
                 }
             }
             Gap(20)
-            PrimaryButton(t(K.FRIENDS_INVITE), modifier = Modifier.fillMaxWidth()) { onInvite() }
+            if (onInvite != null) {
+                PrimaryButton(t(K.FRIENDS_INVITE), modifier = Modifier.fillMaxWidth()) { onInvite() }
+            } else {
+                HudLabel(t(K.FRIENDS_INVITE_OFFLINE), Naval.muted)
+            }
             Gap(8)
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SecondaryButton(t(K.FRIENDS_CLOSE), modifier = Modifier.weight(1f).fillMaxHeight()) { onClose() }

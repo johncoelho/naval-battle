@@ -353,6 +353,24 @@ actual class CloudApi actual constructor() {
         })
     }
 
+    actual suspend fun touchPresence(session: Session): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/touch_presence", JSONObject(), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun friendPresence(session: Session): CloudResult<Map<String, Int>> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/friend_presence", JSONObject(), token = session.accessToken))
+        CloudResult.Ok((0 until arr.length()).associate { i ->
+            val o = arr.getJSONObject(i)
+            o.optString("user_id") to (if (o.isNull("seen_secs")) -1 else o.optInt("seen_secs", -1))
+        })
+    }
+
+    actual suspend fun friendRankedAllowed(session: Session): CloudResult<Boolean> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/friend_ranked_allowed", JSONObject(), token = session.accessToken))
+        CloudResult.Ok(arr.length() > 0 && arr.getJSONObject(0).optBoolean("allowed", false))
+    }
+
     actual suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?> = call {
         val body = JSONObject().put("p_friend_id", friendId)
         val json = post("/rest/v1/rpc/friend_profile", body, token = session.accessToken)

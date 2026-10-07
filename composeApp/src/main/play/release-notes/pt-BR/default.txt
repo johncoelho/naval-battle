@@ -1,1 +1,1 @@
-Notificacoes para todos: o jogo pede a permissao logo no menu, funciona mesmo sem conta e passa a avisar tambem sobre versao nova e novidades. Com conta, continuam chegando convites, pedidos de amizade e adversario encontrado.
+Amigos online: a lista mostra quem esta no jogo agora (bolinha verde, online primeiro) e o convite vai so para quem esta online. No teste fechado, convite de amigo pode ser Casual ou Ranqueada. Feedback sem conta ganhou o botao Entrar ou criar conta.

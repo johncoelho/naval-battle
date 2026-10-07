@@ -9,6 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.62.0] — 2026-10-07 · Amigos online e ranqueada entre amigos
+
+App 0.28.0 (versionCode 65).
+
+### Adicionado
+- **Amigos online** (`supabase/presence.sql`): o app bate o ponto de presença a cada minuto
+  enquanto está aberto (`touch_presence`) e a lista de Amigos lê `friend_presence`. Quem foi
+  visto há até 2 minutos aparece com bolinha verde e "Online agora", no topo da lista; os
+  outros mostram "Visto há X min/h/dias" ou "Offline". Contador "N online" na seção.
+- **Convite só para quem está online**: o botão Jogar (e o Convidar no perfil do amigo) só
+  aparece para amigos online — convite para quem está fora nunca seria visto.
+- **Ranqueada entre amigos no teste fechado**: na escolha de modo do convite, Casual ou
+  Ranqueada além de Clássico/Tático. Controlada pela chave `friend_ranked_enabled` em
+  `app_config` (ligada agora; desligar no lançamento). Sem adesão à temporada, abre o aviso
+  da temporada em vez de criar a sala.
+
+### Corrigido
+- **Feedback sem conta** não tinha saída: agora mostra "Entrar ou criar conta", que leva ao
+  login do Perfil.
+
+---
+
 ## [0.61.0] — 2026-10-07 · Push genérico
 
 App 0.27.1 (versionCode 64).

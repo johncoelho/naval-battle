@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
+import br.com.navalbattle.Screen
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.i18n.K
@@ -66,6 +67,9 @@ fun FeedbackFormScreen(state: AppState) {
 
         if (needsAccount) {
             HudLabel(t(K.FEEDBACK_FORM_NEEDS_ACCOUNT), Naval.danger)
+            Gap(14)
+            // sem conta não há como recompensar o feedback: leva direto ao login
+            PrimaryButton(t(K.WELCOME_LOGIN)) { state.screen = Screen.PROFILE }
         } else if (state.feedbackSent) {
             HudLabel(t(K.FEEDBACK_FORM_SENT), Naval.greenBright)
         } else {

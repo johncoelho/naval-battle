@@ -342,6 +342,23 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(rows.associate { it.strOr("user_id", "") to it.strOr("avatar", "") })
     }
 
+    actual suspend fun touchPresence(session: Session): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/touch_presence", emptyMap<String, Any?>(), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun friendPresence(session: Session): CloudResult<Map<String, Int>> = call {
+        val json = post("/rest/v1/rpc/friend_presence", emptyMap<String, Any?>(), token = session.accessToken)
+        val rows = (json as? List<*>).orEmpty().mapNotNull { it as? Map<*, *> }
+        CloudResult.Ok(rows.associate { it.strOr("user_id", "") to it.intOr("seen_secs", -1) })
+    }
+
+    actual suspend fun friendRankedAllowed(session: Session): CloudResult<Boolean> = call {
+        val json = post("/rest/v1/rpc/friend_ranked_allowed", emptyMap<String, Any?>(), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok((row?.get("allowed") as? Boolean) ?: false)
+    }
+
     actual suspend fun friendProfile(session: Session, friendId: String): CloudResult<FriendProfile?> = call {
         val json = post("/rest/v1/rpc/friend_profile", mapOf("p_friend_id" to friendId), token = session.accessToken)
         val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>

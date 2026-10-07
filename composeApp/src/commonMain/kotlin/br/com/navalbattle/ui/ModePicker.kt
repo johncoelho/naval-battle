@@ -67,6 +67,24 @@ fun ModePickerSheet(state: AppState) {
                 Gap(4)
                 HudLabel(t(K.MODE_PICK_LAN_HINT), Naval.muted)
             }
+            // convite de amigo: Casual ou Ranqueada (só enquanto o servidor liberar, no beta)
+            if (target is ModePick.Friend && state.friendRankedAllowed) {
+                Gap(14)
+                HudLabel(t(K.MODE_PICK_FRIEND_TYPE).uppercase(), Naval.muted)
+                Gap(6)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ModeChip(t(K.ONLINE_MODE_CASUAL), selected = !state.friendRanked, modifier = Modifier.weight(1f)) {
+                        state.friendRanked = false
+                    }
+                    ModeChip(t(K.ONLINE_MODE_RANKED), selected = state.friendRanked, modifier = Modifier.weight(1f)) {
+                        state.friendRanked = true
+                    }
+                }
+                if (state.friendRanked) {
+                    Gap(6)
+                    HudLabel(t(K.MODE_PICK_RANKED_BETA), Naval.amberStrong)
+                }
+            }
             Gap(16)
             ModeCard(
                 mode = GameMode.CLASSIC,

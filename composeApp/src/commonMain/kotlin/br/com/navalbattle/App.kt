@@ -122,6 +122,9 @@ import br.com.navalbattle.ui.SplashScreen
 import br.com.navalbattle.ui.UpdatePopup
 import br.com.navalbattle.ui.WelcomeScreen
 
+/** Amigo visto há até 2 minutos conta como online (o app bate o ponto a cada minuto). */
+const val ONLINE_SECS = 120
+
 enum class Screen {
     SPLASH, WELCOME, MENU, SHIPYARD, STORE, PROFILE, SETTINGS, RELEASE_NOTES, LAN, ONLINE, NAMES,
     PLACEMENT, HANDOFF, BATTLE, RESULT, FRIENDS, LEADERBOARD, FEEDBACK
@@ -169,7 +172,13 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             ModePick.Local -> newMatch(Opponent.LOCAL)
             ModePick.LAN -> screen = Screen.LAN
             is ModePick.Friend -> {
-                createOnlineRoom(invitedId = target.friendId)
+                val ranked = friendRanked && friendRankedAllowed
+                // ranqueada exige adesão à temporada: sem passe, mostra o aviso da temporada
+                if (ranked && !canPlayRanked) {
+                    rankedLockedPrompt = true
+                    return
+                }
+                createOnlineRoom(invitedId = target.friendId, ranked = ranked)
                 screen = Screen.ONLINE
             }
         }
@@ -383,7 +392,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * a sala num amigo específico: ele vê o convite como banner em qualquer tela do
      * jogo, em vez de precisar digitar um código.
      */
-    fun createOnlineRoom(invitedId: String? = null) {
+    fun createOnlineRoom(invitedId: String? = null, ranked: Boolean = false) {
         val session = profile.currentSession() ?: return
         if (!hasMileOrPrompt()) return
         onlineLink.close()
@@ -393,6 +402,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             session = session,
             mode = mode.name,
             invitedId = invitedId,
+            ranked = ranked,
             onState = { s, side -> onMain { onOnlineState(s, side) } },
             onCode = { code -> onMain { onlineCode = code } },
             onLine = { line -> onMain { onLine(line) } }
@@ -520,7 +530,33 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val r = cloud.listFriendships(session)
         friendships = (r as? CloudResult.Ok)?.value.orEmpty()
         (cloud.friendAvatars(session) as? CloudResult.Ok)?.value?.let { friendAvatars = it }
+        (cloud.friendRankedAllowed(session) as? CloudResult.Ok)?.value?.let { friendRankedAllowed = it }
+        refreshFriendPresence()
     }
+
+    /** Segundos desde que cada amigo foi visto no jogo (-1 = nunca); online = até [ONLINE_SECS]. */
+    var friendSeenSecs by mutableStateOf<Map<String, Int>>(emptyMap())
+        private set
+
+    fun friendOnline(id: String): Boolean = friendSeenSecs[id]?.let { it in 0..ONLINE_SECS } == true
+
+    suspend fun refreshFriendPresence() {
+        val session = profile.currentSession() ?: return
+        (cloud.friendPresence(session) as? CloudResult.Ok)?.value?.let { friendSeenSecs = it }
+    }
+
+    /** Bate o ponto de presença: os amigos veem este comandante como online. */
+    suspend fun touchPresence() {
+        val session = profile.currentSession() ?: return
+        cloud.touchPresence(session)
+    }
+
+    /** Servidor libera ranqueada entre amigos (teste fechado) — chave friend_ranked_enabled. */
+    var friendRankedAllowed by mutableStateOf(false)
+        private set
+
+    /** Escolha Casual/Ranqueada do convite de amigo, na etapa "Escolha o modo". */
+    var friendRanked by mutableStateOf(false)
 
     // ---------------- convite de amigo mirado (banner fora da tela Online) ----------------
 
@@ -1803,6 +1839,14 @@ fun App() {
     // sistema só mostra o pedido enquanto a pessoa não respondeu
     LaunchedEffect(state.screen == Screen.MENU) {
         if (state.screen == Screen.MENU) DailyReminder.requestPermission()
+    }
+
+    // presença para a lista de amigos: bate o ponto a cada minuto com o app aberto
+    LaunchedEffect(AppForeground.active, state.profile.signedIn) {
+        while (AppForeground.active && state.profile.signedIn) {
+            state.touchPresence()
+            delay(60_000)
+        }
     }
 
     // milhas náuticas: recarga do dia vem do servidor — relê ao abrir, ao voltar do
