@@ -9,6 +9,20 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.56.0] — 2026-10-07 · Ícone novo
+
+App 0.25.0 (versionCode 59).
+
+### Alterado
+- **Ícone do app novo** ("Acerto no casco", escolhido no Claude Design): cruzador e destróier do
+  próprio jogo em perspectiva 3D sobre a carta de tiro, com radar, tiros na água, contatos
+  inimigos e o acerto em chamas. Android: ícone adaptativo (`drawable-xxxhdpi/ic_launcher_art.png`
+  na camada da frente, do tamanho da área visível da máscara; o vetor antigo fica como ícone
+  monocromático dos temas do Android 13+). iPhone: `AppIcon-1024.png`. Para a ficha da Play:
+  `docs/store/icon-512.png` (e o original em `docs/store/icon-1024.png`).
+
+---
+
 ## [0.55.1] — 2026-10-07 · Frota viva na tela inicial
 
 App 0.24.1 (versionCode 58).

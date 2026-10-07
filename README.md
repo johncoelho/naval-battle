@@ -216,6 +216,13 @@ Dois eixos independentes, ambos comprados com dobrões:
 - **Camuflagem** — muda a pintura e o padrão recortado no casco: lisa, dazzle, estilhaço,
   faixas de linha d'água e retículo digital. Onze pinturas, duas inclusas.
 
+### Ícone e materiais da loja
+
+Ícone "Acerto no casco" (cruzador e destróier do jogo em perspectiva 3D sobre a carta de tiro).
+Android: ícone adaptativo com a arte em `drawable-xxxhdpi/ic_launcher_art.png`; iPhone:
+`AppIcon-1024.png`; ficha da Play: `docs/store/icon-512.png`. As alternativas de ícone, banner
+da loja e tela de abertura ficam no quadro do Claude Design do projeto.
+
 ### Menu inicial
 
 O deque de comando (`ui/MenuScreen.kt`), de cima para baixo:

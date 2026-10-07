@@ -1,1 +1,1 @@
-Frota viva na tela inicial: canhoes girando, cacas decolando e pousando no porta-avioes e esteira de espuma atras dos navios. Corrigido o desenho na frente das embarcacoes. Inclui o modo 2 jogadores na horizontal e a tela de posicionar mais organizada.
+Icone novo do jogo, com os navios da frota em 3D. Inclui a frota viva na tela inicial, o modo 2 jogadores na horizontal e a tela de posicionar mais organizada.
