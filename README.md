@@ -214,11 +214,16 @@ Dois eixos independentes, ambos comprados com dobrões:
 
 ### Menu inicial
 
-O deque de comando (`ui/MenuScreen.kt`) mostra a prévia da frota (visão de cima, sempre
-a linha/pintura equipadas), o modo de combate (Clássico/Tático) e um **carrossel
-horizontal** para escolher como jogar — um cartão por vez, com setas nas laterais e
-pontos indicando a posição, no lugar da antiga lista vertical de botões. Estaleiro e
-Loja ficam logo abaixo. Sem barra de abas no rodapé: só o número da versão.
+O deque de comando (`ui/MenuScreen.kt`), de cima para baixo:
+- **Comandante** — avatar, nome, patente e a **barra até a próxima patente** ("Marinheiro
+  em 300 XP"); milhas (em vermelho com 2 ou menos), dobrões e ajustes. Uma dica única
+  explica milhas e dobrões na primeira vez.
+- **Cartão do dia** — temporada (posição no placar ou o convite para aderir) e Diário de
+  bordo (check-in pendente, desafio em andamento com barra, ou "tudo feito").
+- **Frota** balançando no mar; tocar abre o Estaleiro (o botão próprio saiu).
+- Clássico/Tático, **Jogar online** como ação principal e, abaixo, vs. IA, 2 jogadores e
+  Rede local lado a lado (o carrossel de um cartão por vez saiu — o Online era o 4º).
+- **Atalhos** Amigos (com selo de pedidos recebidos), Placar, Loja e Perfil.
 
 ### Configurações
 

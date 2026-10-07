@@ -229,6 +229,15 @@ class Profile(private val prefs: Prefs) {
     var sfxOn by mutableStateOf(prefs.getInt(K_SFX, 1) == 1)
         private set
 
+    /** A dica de milhas e dobrões do deque já foi dispensada (aparece uma única vez). */
+    var currencyTipSeen by mutableStateOf(prefs.getInt(K_CURRENCY_TIP, 0) == 1)
+        private set
+
+    fun markCurrencyTipSeen() {
+        currencyTipSeen = true
+        prefs.putInt(K_CURRENCY_TIP, 1)
+    }
+
     fun setSfx(on: Boolean) {
         sfxOn = on
         prefs.putInt(K_SFX, if (on) 1 else 0)
@@ -640,6 +649,7 @@ class Profile(private val prefs: Prefs) {
         private const val K_REFRESH = "refresh"
         private const val K_MUSIC = "music"
         private const val K_SFX = "sfx"
+        private const val K_CURRENCY_TIP = "currency_tip_seen"
         private const val K_REMINDER = "daily_reminder"
         private const val K_DAILY_DAY = "daily_day"
         private const val K_DAILY_PLAYED = "daily_played"

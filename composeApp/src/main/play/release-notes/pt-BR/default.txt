@@ -1,1 +1,1 @@
-A lista de amigos agora mostra o avatar escolhido por cada comandante, tambem nos pedidos, na busca e na folha de servico. Inclui a nova tela de Amigos com botao Jogar direto e busca enquanto digita.
+Tela inicial nova: Jogar online em destaque, barra de progresso ate a proxima patente, cartao do dia com temporada e Diario de bordo, e atalhos para Amigos (com aviso de pedidos), Placar, Loja e Perfil. Toque na frota para trocar no Estaleiro.

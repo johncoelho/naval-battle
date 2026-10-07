@@ -9,6 +9,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.52.0] — 2026-10-06 · Deque de comando novo
+
+App 0.21.0 (versionCode 51).
+
+### Alterado
+- **Tela inicial reorganizada pelo que mais engaja.** "Jogar online" virou o botão
+  principal (antes era o 4º cartão de um carrossel), com vs. IA, 2 jogadores e Rede local
+  lado a lado logo abaixo; o carrossel saiu.
+- **Barra de progresso até a próxima patente** no cabeçalho, com quanto XP falta.
+- **Cartão do dia** junta temporada (posição no placar) e Diário de bordo (check-in,
+  desafio com progresso ou "tudo feito") — antes eram duas faixas iguais.
+- **Atalhos com ícone** para Amigos (com selo de pedidos recebidos), Placar, Loja e Perfil —
+  Amigos e Placar antes só se alcançavam pela tela Online.
+- A frota balança de leve e abre o Estaleiro ao toque; o título "Deque de comando" e os
+  botões Estaleiro e Loja saíram para dar espaço.
+- Milhas ficam vermelhas com 2 ou menos; dica única explica milhas e dobrões.
+
+---
+
 ## [0.51.1] — 2026-10-05 · Limpeza da prévia
 
 App 0.20.1 (versionCode 50).

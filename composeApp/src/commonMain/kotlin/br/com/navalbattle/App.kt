@@ -1116,6 +1116,27 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         seasonTrophies = (cloud.seasonTrophies(session) as? CloudResult.Ok)?.value.orEmpty()
     }
 
+    /** Posição na temporada para o cartão do dia do deque (nula sem partida na temporada). */
+    var menuSeasonPosition by mutableStateOf<Long?>(null)
+        private set
+
+    /** Pedidos de amizade esperando resposta — selo do atalho Amigos no deque. */
+    val incomingFriendRequests: Int
+        get() = friendships.count { it.status == "pending" && it.addresseeId == profile.accountId }
+
+    /** O que o deque mostra além do perfil: posição na temporada e pedidos de amizade. */
+    suspend fun loadMenuExtras() {
+        if (!profile.signedIn) {
+            menuSeasonPosition = null
+            return
+        }
+        refreshFriendships()
+        if (seasonPass?.joined == true) {
+            menuSeasonPosition = (authed { session -> cloud.myRank(session, season = true) } as? CloudResult.Ok)
+                ?.value?.position?.takeIf { it > 0 }
+        }
+    }
+
     private suspend fun loadMyRank(season: Boolean) {
         val session = profile.currentSession() ?: return
         myRank = (cloud.myRank(session, season) as? CloudResult.Ok)?.value
