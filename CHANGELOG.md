@@ -9,6 +9,29 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.59.0] — 2026-10-07 · Notificações testáveis
+
+App 0.26.2 (versionCode 62).
+
+### Adicionado
+- **Ajustes → Testar notificação**: dispara uma notificação do jogo em 5 segundos (pede a
+  permissão na hora, se faltar, e espera a resposta). Serve para confirmar em cada aparelho
+  que o lembrete diário consegue chegar.
+- **Aviso de notificações bloqueadas** nos Ajustes, com botão para a tela de notificações do
+  app no sistema. "Ainda não perguntado" não conta como bloqueio.
+
+### Corrigido
+- **Android: lembrete diário sumia depois de reiniciar o celular ou atualizar o app** (o
+  sistema apaga os alarmes nos dois casos). Agora o receptor escuta `BOOT_COMPLETED` e
+  `MY_PACKAGE_REPLACED` e refaz o próximo lembrete com o último texto agendado.
+
+### Observação
+- O lembrete continua sendo notificação **local** (sem servidor) e só sai às 19h nos dias em
+  que o check-in ainda não foi feito — quem abre o jogo todo dia antes disso não o recebe.
+  Push de verdade (convites com o app fechado) é o próximo passo, pelo Firebase no Android.
+
+---
+
 ## [0.58.0] — 2026-10-07 · Voltar do Android, loja e site atualizados
 
 App 0.26.1 (versionCode 61).

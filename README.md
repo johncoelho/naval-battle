@@ -166,7 +166,10 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   e resgatado depois do check-in. O servidor trava cada prêmio uma vez por dia
   (`supabase/daily.sql`, valores em `app_config`). **Lembrete diário** às 19h por
   notificação local (sem push; desliga nos Ajustes): Android agenda pelo AlarmManager e
-  reagenda ao disparar, iPhone deixa a semana agendada (`data/DailyReminder.kt`).
+  reagenda ao disparar e refaz o lembrete depois de reiniciar o aparelho ou atualizar o app,
+  iPhone deixa a semana agendada (`data/DailyReminder.kt`). Ajustes → **Testar notificação**
+  dispara uma em 5 segundos e um aviso aparece quando o aparelho bloqueia as notificações do
+  jogo, com atalho para os ajustes do sistema.
 - **Conexão instável (Online)** — cada jogada entra numa fila e é reenviada até o
   servidor confirmar, numerada para não duplicar (`client_seq`); a sessão se renova
   sozinha se o token vencer no meio da partida; e os dois lados batem o ponto de

@@ -16,11 +16,19 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.audio.AppForeground
+import br.com.navalbattle.data.DailyReminder
+import br.com.navalbattle.data.TEST_DELAY_SECONDS
 import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.data.shareStoreListing
 import br.com.navalbattle.design.Naval
@@ -71,6 +79,7 @@ fun SettingsScreen(state: AppState) {
                 ) { state.setReminder(!profile.reminderOn) }
                 HudLabel(t(K.SETTINGS_REMINDER_SUB), Naval.muted)
             }
+            NotificationTools()
 
             Gap(26)
             HudLabel(t(K.SETTINGS_ONLINE))
@@ -154,6 +163,37 @@ fun SettingsScreen(state: AppState) {
 
         Gap(14)
         SecondaryButton(t(K.BACK)) { state.screen = Screen.MENU }
+    }
+}
+
+/**
+ * Teste de notificação e aviso de bloqueio: sem isso não dá para saber, no aparelho,
+ * se o lembrete diário não chegou por regra (check-in já feito) ou por permissão negada.
+ */
+@Composable
+private fun NotificationTools() {
+    var allowed by remember { mutableStateOf(true) }
+    var sent by remember { mutableStateOf(false) }
+    // relê ao voltar dos ajustes do sistema
+    LaunchedEffect(AppForeground.active, sent) {
+        if (AppForeground.active) DailyReminder.checkAllowed { allowed = it }
+    }
+    Gap(10)
+    SecondaryButton(
+        t(K.SETTINGS_NOTIF_TEST),
+        subtitle = t(if (sent) K.SETTINGS_NOTIF_TEST_SENT else K.SETTINGS_NOTIF_TEST_SUB, TEST_DELAY_SECONDS),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        DailyReminder.sendTest(t(K.REMINDER_TEST_TITLE), t(K.REMINDER_TEST_BODY))
+        sent = true
+    }
+    if (!allowed) {
+        Gap(8)
+        HudLabel(t(K.SETTINGS_NOTIF_BLOCKED), Naval.danger)
+        Gap(6)
+        SecondaryButton(t(K.SETTINGS_NOTIF_OPEN), modifier = Modifier.fillMaxWidth()) {
+            DailyReminder.openSystemSettings()
+        }
     }
 }
 

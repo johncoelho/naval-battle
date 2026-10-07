@@ -1,1 +1,1 @@
-Botao voltar do Android agora volta para a tela anterior em vez de fechar o jogo; na partida ele nao derruba a batalha. Corrigido texto sobreposto no painel da sua frota no modo tatico. Aviso do sonar sem contradicao quando o setor esta vazio.
+Notificacoes: novo botao Testar notificacao nos Ajustes (chega em 5 segundos), aviso quando o aparelho bloqueia as notificacoes do jogo com atalho para liberar, e o lembrete diario volta sozinho depois de reiniciar o celular ou atualizar o app.

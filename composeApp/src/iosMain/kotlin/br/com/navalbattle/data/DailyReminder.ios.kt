@@ -7,7 +7,14 @@ import platform.Foundation.NSCalendarUnitMinute
 import platform.Foundation.NSCalendarUnitMonth
 import platform.Foundation.NSCalendarUnitYear
 import platform.Foundation.NSDate
+import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSinceDate
+import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationOpenSettingsURLString
+import platform.UserNotifications.UNAuthorizationStatusDenied
+import platform.UserNotifications.UNTimeIntervalNotificationTrigger
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
@@ -62,5 +69,36 @@ actual object DailyReminder {
 
     actual fun cancel() {
         center.removePendingNotificationRequestsWithIdentifiers(ids)
+    }
+
+    // o iPhone não mostra notificação com o app aberto na frente: o texto do botão
+    // pede para minimizar o jogo durante os 5 segundos
+    actual fun sendTest(title: String, body: String) {
+        center.requestAuthorizationWithOptions(
+            UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
+        ) { granted, _ ->
+            if (!granted) return@requestAuthorizationWithOptions
+            val content = UNMutableNotificationContent()
+            content.setTitle(title)
+            content.setBody(body)
+            val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(TEST_DELAY_SECONDS.toDouble(), repeats = false)
+            center.addNotificationRequest(
+                UNNotificationRequest.requestWithIdentifier("daily_logbook_test", content, trigger),
+                withCompletionHandler = null
+            )
+        }
+    }
+
+    actual fun checkAllowed(onResult: (Boolean) -> Unit) {
+        center.getNotificationSettingsWithCompletionHandler { settings ->
+            // "ainda não perguntado" não é bloqueio: o pedido sai no check-in ou no teste
+            val allowed = settings?.authorizationStatus != UNAuthorizationStatusDenied
+            dispatch_async(dispatch_get_main_queue()) { onResult(allowed) }
+        }
+    }
+
+    actual fun openSystemSettings() {
+        val url = NSURL.URLWithString(UIApplicationOpenSettingsURLString) ?: return
+        UIApplication.sharedApplication.openURL(url, options = emptyMap<Any?, Any>(), completionHandler = null)
     }
 }

@@ -14,6 +14,17 @@ expect object DailyReminder {
     fun schedule(title: String, body: String, skipToday: Boolean)
 
     fun cancel()
+
+    /** Dispara uma notificação de teste daqui a [TEST_DELAY_SECONDS]s (Ajustes → Testar notificação). */
+    fun sendTest(title: String, body: String)
+
+    /** Consulta se o sistema deixa o app notificar (permissão dada e notificações ligadas). */
+    fun checkAllowed(onResult: (Boolean) -> Unit)
+
+    /** Abre a tela de notificações do app nos ajustes do sistema. */
+    fun openSystemSettings()
 }
+
+const val TEST_DELAY_SECONDS = 5
 
 const val REMINDER_HOUR = 19
