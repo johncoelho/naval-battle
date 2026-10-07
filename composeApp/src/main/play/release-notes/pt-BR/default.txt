@@ -1,1 +1,1 @@
-Abertura nova com a frota em 3D, radar, tiros na agua e acerto em chamas. Corrigido no iPhone: ranqueada travada pedindo a temporada. Frota da tela inicial maior. Inclui o icone novo do jogo.
+Botao voltar do Android agora volta para a tela anterior em vez de fechar o jogo; na partida ele nao derruba a batalha. Corrigido texto sobreposto no painel da sua frota no modo tatico. Aviso do sonar sem contradicao quando o setor esta vazio.

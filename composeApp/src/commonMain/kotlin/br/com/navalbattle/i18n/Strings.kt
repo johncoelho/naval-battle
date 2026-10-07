@@ -246,7 +246,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     CALL_RECON_SUB("Linha %s revelada", "Row %s revealed", "Fila %s revelada"),
     CALL_RECON_CONTACTS("%s embarcações identificadas", "%s vessels identified", "%s embarcaciones identificadas"),
     CALL_RECON_NONE("Nenhum contato na linha", "No contacts on the row", "Ningún contacto en la fila"),
-    CALL_SONAR("Contato no sonar", "Sonar contact", "Contacto en el sonar"),
+    CALL_SONAR("Varredura de sonar", "Sonar sweep", "Barrido de sonar"),
     CALL_SONAR_SUB("Setor %s varrido", "Sector %s swept", "Sector %s barrido"),
     CALL_SONAR_CONTACTS("%s embarcações no setor", "%s vessels in the sector", "%s embarcaciones en el sector"),
     CALL_SONAR_NONE("Setor sem contato", "No contact in the sector", "Sector sin contacto"),

@@ -9,6 +9,30 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.58.0] — 2026-10-07 · Voltar do Android, loja e site atualizados
+
+App 0.26.1 (versionCode 61).
+
+### Corrigido
+- **Botão "voltar" do Android fechava o jogo de qualquer tela.** Agora volta para onde o botão
+  Voltar da tela levaria (menu, Ajustes, origem do feedback) e fecha a escolha de modo; dentro da
+  partida não faz nada, para um gesto sem querer não derrubar a batalha. No menu segue saindo do
+  app. `ui/SystemBack.kt` (no iPhone não há equivalente).
+- **Texto encavalado no painel "Sua frota"** do combate tático: o rótulo e "5 / 5 Navios à tona ·
+  Precisão" ficavam na mesma linha, em meia largura. Agora empilhados.
+- **Aviso do sonar contraditório**: dizia "Contato no sonar — Setor sem contato". O título virou
+  "Varredura de sonar".
+
+### Loja e site
+- Ficha da Play: descrição curta e completa reescritas conforme o jogo atual (sem a Imersão do
+  Submarino, com temporada, amigos, diário de bordo e 2 jogadores na horizontal), 7 capturas novas
+  com legenda (`assets/store/screenshot-0*.png`, texto em `assets/store/listing-pt-BR.txt`).
+- Trailer de 1 minuto com cenas reais e a trilha "Naval Battle" (`assets/store/promo-video-1080p.mp4`).
+- Site: telas novas, trailer, cartões do Diário de bordo e Amigos e o modo 2 jogadores na horizontal.
+- Materiais da loja reunidos em `assets/store/` (antes parte em `docs/store/`).
+
+---
+
 ## [0.57.0] — 2026-10-07 · Abertura nova e temporada no iPhone
 
 App 0.26.0 (versionCode 60).

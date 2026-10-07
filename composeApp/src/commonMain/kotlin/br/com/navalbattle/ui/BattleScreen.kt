@@ -407,19 +407,16 @@ private fun OwnFleetPanel(
     val afloat = board.remainingShips().size
     Column(modifier) {
         Gap(6)
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
-            Text(
-                "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}" +
-                    " · ${t(K.ACCURACY)} ${match.accuracyOf(viewSide)}%",
-                style = NavalType.mono,
-                color = if (afloat <= 2) Naval.danger else Naval.greenBright
-            )
-        }
+        // Empilhado: no tático o painel tem meia largura e, lado a lado, o rótulo
+        // encavalava com a contagem de navios.
+        HudLabel(t(K.BATTLE_YOUR_FLEET), Naval.inkSoft)
+        Gap(2)
+        Text(
+            "$afloat / ${ShipClass.fleet.size} ${t(K.SHIPS_AFLOAT)}" +
+                " · ${t(K.ACCURACY)} ${match.accuracyOf(viewSide)}%",
+            style = NavalType.mono,
+            color = if (afloat <= 2) Naval.danger else Naval.greenBright
+        )
         if (board.smokeActive) {
             HudLabel(t(K.BATTLE_SMOKE_ACTIVE), Naval.greenBright)
         }

@@ -87,6 +87,7 @@ import br.com.navalbattle.i18n.Lang
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.game.Side
 import br.com.navalbattle.ui.LanScreen
+import br.com.navalbattle.ui.SystemBackHandler
 import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
 import br.com.navalbattle.ui.FeedbackFormScreen
@@ -1794,6 +1795,25 @@ fun App() {
                 // o botão de fechar por baixo dele
                 .pointerInput(Unit) { detectTapGestures(onTap = { focusManager.clearFocus() }) }
         ) {
+            // "Voltar" do Android: antes fechava o app de qualquer tela. Agora volta para
+            // onde o botão Voltar da tela levaria; dentro da partida não faz nada, para um
+            // gesto sem querer não derrubar a batalha. No menu e na abertura segue saindo.
+            val backTarget: Screen? = when (state.screen) {
+                Screen.SHIPYARD, Screen.STORE, Screen.PROFILE, Screen.SETTINGS, Screen.LAN,
+                Screen.ONLINE, Screen.FRIENDS, Screen.LEADERBOARD -> Screen.MENU
+                Screen.RELEASE_NOTES -> Screen.SETTINGS
+                Screen.FEEDBACK -> state.feedbackReturn
+                else -> null
+            }
+            val inMatch = state.screen in setOf(
+                Screen.NAMES, Screen.PLACEMENT, Screen.HANDOFF, Screen.BATTLE, Screen.RESULT
+            )
+            SystemBackHandler(enabled = state.modePick != null || backTarget != null || inMatch) {
+                when {
+                    state.modePick != null -> state.modePick = null
+                    backTarget != null -> state.screen = backTarget
+                }
+            }
             when (state.screen) {
                 Screen.SPLASH -> SplashScreen(state)
                 Screen.WELCOME -> WelcomeScreen(state)

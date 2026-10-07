@@ -220,11 +220,21 @@ Dois eixos independentes, ambos comprados com dobrões:
 
 Ícone "Acerto no casco" (cruzador e destróier do jogo em perspectiva 3D sobre a carta de tiro).
 Android: ícone adaptativo com a arte em `drawable-xxxhdpi/ic_launcher_art.png`; iPhone:
-`AppIcon-1024.png`; ficha da Play: `docs/store/icon-512.png`. As alternativas de ícone, banner
+`AppIcon-1024.png`; ficha da Play: `assets/store/icon-512.png`. As alternativas de ícone, banner
 da loja e tela de abertura ficam no quadro do Claude Design do projeto. Banner da Play:
-`docs/store/feature-graphic-1024x500.png`. Abertura (`ui/SplashScreen.kt`): frota do jogo em
+`assets/store/feature-graphic-1024x500.png`. Abertura (`ui/SplashScreen.kt`): frota do jogo em
 perspectiva sobre a carta, radar, tiros na água e um acerto em chamas, com a barra e as frases
 de convés.
+
+Tudo o que vai para a ficha da Play fica em `assets/store/`: textos (`listing-pt-BR.txt`), as
+7 capturas com legenda (1080×1920; a de 2 jogadores é 1920×1080) e o trailer de 1 minuto
+(`promo-video-1080p.mp4`, cenas gravadas no emulador com a trilha "Naval Battle" e os efeitos do
+jogo). O site usa as mesmas telas, sem moldura, em `site/media/tela-*.webp`.
+
+### Navegação
+
+O botão/gesto "voltar" do Android volta para a tela anterior (`ui/SystemBack.kt`); dentro da
+partida ele é ignorado, para não derrubar a batalha, e no menu fecha o app.
 
 ### Menu inicial
 

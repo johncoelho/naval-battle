@@ -97,7 +97,11 @@
   .hero-shot img{display:block;width:100%;height:auto}
   .hero-shot figcaption{font:10px var(--mono);letter-spacing:.12em;text-transform:uppercase;
     color:var(--muted);padding:9px 5px 3px;text-align:center}
-  .screens{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:760px}
+  .screens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  .capture.wide{grid-column:1/-1}
+  .trailer{margin:0 0 24px;border:1px solid var(--line);background:var(--surface);padding:8px}
+  .trailer video{display:block;width:100%;height:auto;background:#000}
+  .trailer figcaption{padding:10px 5px 4px;font-size:13px;color:var(--inkSoft)}
   .capture{margin:0;border:1px solid var(--line);background:var(--surface);padding:8px}
   .capture img{display:block;width:100%;height:auto}
   .capture figcaption{padding:14px 5px 8px}
@@ -221,8 +225,8 @@
     </div>
 
     <figure class="hero-shot">
-      <img src="media/screenshot-07-combate.png" width="1080" height="1920"
-           alt="Captura do combate: radar naval, navio atingido e frota do jogador" fetchpriority="high">
+      <img src="media/tela-combate.webp" width="720" height="1600"
+           alt="Captura do combate tático: carta inimiga com acertos, a própria frota e as quatro habilidades" fetchpriority="high">
       <figcaption>Captura de tela do jogo em teste</figcaption>
     </figure>
   </div>
@@ -264,10 +268,10 @@
         <p>Jogue Clássico ou Tático contra uma IA que procura contatos e persegue acertos. As partidas avançam sua carreira.</p>
       </div>
       <div class="card">
-        <div class="k">Mesmo aparelho</div><h3>Passa e joga</h3>
-        <p>Cada comandante posiciona a frota em sigilo e a batalha corre numa tela só.
-           Cada um enxerga apenas os próprios tiros; no fim a carta se revela inteira,
-           com as duas frotas em cores diferentes.</p>
+        <div class="k">Mesmo aparelho</div><h3>Um mar para cada um</h3>
+        <p>Cada comandante põe o nome e posiciona a frota em sigilo. A batalha vira na
+           horizontal: um quadro para cada um, só o da vez aceso, o nome de quem joga no
+           centro e um botão para inverter os lados. No fim, a vitória aparece no meio da tela.</p>
       </div>
       <div class="card">
         <div class="k">Rede local</div><h3>Dois celulares, mesmo Wi-Fi</h3>
@@ -303,6 +307,10 @@
         <p>O Passe Gratuito libera a competição. O Passe de Temporada usa dobrões e oferece camuflagem da estação, dobrões e milhas; no fim, há prêmios conforme a colocação.</p></div>
       <div class="card"><div class="k">Economia de teste</div><h3>Dobrões e milhas náuticas</h3>
         <p>Partidas online gastam milhas, com recarga diária. A loja de dobrões no beta simula compras: não cobra dinheiro real. Compras reais ainda não estão disponíveis.</p></div>
+      <div class="card"><div class="k">Diário de bordo</div><h3>Prêmio todo dia</h3>
+        <p>Check-in diário numa trilha de 7 dias seguidos, com bônus na semana completa, e um desafio do dia diferente a cada dia. Um lembrete opcional avisa quando o prêmio está esperando.</p></div>
+      <div class="card"><div class="k">Amigos</div><h3>Chame para a batalha</h3>
+        <p>Busque comandantes pelo nome, veja a folha de serviço de cada um, com o retrato que escolheu, e convide para jogar com um toque.</p></div>
       <div class="card"><div class="k">Seu feedback</div><h3>Ajude a melhorar</h3>
         <p>Envie bugs ou sugestões pelo jogo. Feedback aprovado pode render dobrões ou cargas de habilidade, além da condecoração de Colaborador.</p></div>
     </div>
@@ -349,13 +357,29 @@
   <div class="wrap">
     <div class="sechead">
       <h2>Veja o jogo em ação</h2>
-      <p>Capturas reais de uma versão de teste. A interface pode mudar nas próximas atualizações.</p>
+      <p>Cenas e capturas reais da versão atual, gravadas no emulador. A interface pode mudar nas próximas atualizações.</p>
     </div>
+    <figure class="trailer">
+      <video controls preload="none" playsinline poster="media/trailer-poster.jpg" width="1920" height="1080">
+        <source src="media/naval-battle-trailer.mp4" type="video/mp4">
+      </video>
+      <figcaption>Trailer de 1 minuto, com o som do próprio jogo.</figcaption>
+    </figure>
     <div class="screens">
-      <figure class="capture"><img src="media/screenshot-06-posicionamento.png" width="1080" height="1920" loading="lazy" alt="Posicionamento das cinco embarcações no tabuleiro">
-        <figcaption><b>Posicionamento</b><span>Organize a frota antes de abrir fogo.</span></figcaption></figure>
-      <figure class="capture"><img src="media/screenshot-05-online.png" width="1080" height="1920" loading="lazy" alt="Tela de partidas pela internet com partida rápida e sala de amigo">
-        <figcaption><b>Online</b><span>Encontre um rival ou convide um amigo.</span></figcaption></figure>
+      <figure class="capture"><img src="media/tela-abertura.webp" width="720" height="1600" loading="lazy" alt="Abertura com a frota em perspectiva sobre a carta, radar e um acerto em chamas">
+        <figcaption><b>Abertura</b><span>A frota zarpa enquanto o jogo carrega.</span></figcaption></figure>
+      <figure class="capture"><img src="media/tela-deque.webp" width="720" height="1600" loading="lazy" alt="Deque com as cinco embarcações navegando e os modos de jogo">
+        <figcaption><b>Deque</b><span>Sua frota navegando e todos os modos à mão.</span></figcaption></figure>
+      <figure class="capture"><img src="media/tela-modos.webp" width="720" height="1600" loading="lazy" alt="Escolha entre os modos Clássico e Tático">
+        <figcaption><b>Clássico ou Tático</b><span>Escolha o modo antes de cada partida.</span></figcaption></figure>
+      <figure class="capture"><img src="media/tela-posicionamento.webp" width="720" height="1600" loading="lazy" alt="Posicionamento das cinco embarcações no tabuleiro">
+        <figcaption><b>Posicionamento</b><span>Toque para girar, arraste para mover.</span></figcaption></figure>
+      <figure class="capture"><img src="media/tela-combate.webp" width="720" height="1600" loading="lazy" alt="Combate tático com as habilidades sonar, radar, tiro duplo e fumaça">
+        <figcaption><b>Combate</b><span>Carta inimiga em cima, sua frota e habilidades embaixo.</span></figcaption></figure>
+      <figure class="capture"><img src="media/tela-loja.webp" width="720" height="1600" loading="lazy" alt="Loja do Arsenal com camuflagens da frota">
+        <figcaption><b>Loja do Arsenal</b><span>Cascos, camuflagens e cartuchos de habilidade.</span></figcaption></figure>
+      <figure class="capture wide"><img src="media/tela-dois-jogadores.webp" width="1600" height="720" loading="lazy" alt="Partida de dois jogadores no mesmo aparelho, na horizontal, um quadro para cada comandante">
+        <figcaption><b>Dois jogadores no mesmo aparelho</b><span>Na horizontal, um mar para cada comandante.</span></figcaption></figure>
     </div>
   </div>
 </section>
