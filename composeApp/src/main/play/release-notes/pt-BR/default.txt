@@ -1,1 +1,1 @@
-Dois jogadores no mesmo aparelho agora e na horizontal: um quadro para cada um com o nome no topo, vez sincronizada, botao para inverter os lados e aviso de vitoria no fim. Tela inicial com a frota em formacao e ondas do mar. Classico ou Tatico escolhido depois de tocar em como jogar. Tela de posicionar mais organizada.
+Frota viva na tela inicial: canhoes girando, cacas decolando e pousando no porta-avioes e esteira de espuma atras dos navios. Corrigido o desenho na frente das embarcacoes. Inclui o modo 2 jogadores na horizontal e a tela de posicionar mais organizada.

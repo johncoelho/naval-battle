@@ -606,7 +606,8 @@ private fun SeaFormation(state: AppState, modifier: Modifier = Modifier) {
                 lengthPx = len,
                 thicknessPx = cell * 0.82f,
                 vertical = false,
-                skin = state.skin
+                skin = state.skin,
+                animSeconds = now / 1000f
             )
             waves.forEach { w ->
                 val fade = w.fade(now)

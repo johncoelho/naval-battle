@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.55.1] — 2026-10-07 · Frota viva na tela inicial
+
+App 0.24.1 (versionCode 58).
+
+### Alterado
+- **Frota da tela inicial animada:** torres de canhão girando devagar, cada uma no seu tempo;
+  no porta-aviões, a cada 18s um caça decola pela proa (cresce e a sombra se afasta) e outro
+  pousa por trás, freando nos cabos; **esteira de bolhas** saindo da popa e se espalhando, e
+  **onda de proa** abrindo para trás, rente ao casco. Só no deque — no tabuleiro os navios
+  ficam parados (`drawShip(animSeconds = …)`).
+
+### Corrigido
+- Saem os "chifres" em V na frente das embarcações: era a espuma de proa desenhada abrindo
+  para a frente (`bowWash`), em navios parados no tabuleiro.
+
+---
+
 ## [0.55.0] — 2026-10-07 · Dois jogadores na horizontal
 
 App 0.24.0 (versionCode 57). Inclui a 0.23.2, que não chegou a sair (queda do GitHub Actions).

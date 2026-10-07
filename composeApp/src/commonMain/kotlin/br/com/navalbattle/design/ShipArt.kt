@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import br.com.navalbattle.game.ShipClass
@@ -42,6 +43,13 @@ private fun Color.shaded(t: Float) = Color(red * (1f - t), green * (1f - t), blu
  * lugar para verga de mastro, escaler e reparo antiaéreo sem nada vazar para a célula
  * vizinha — é isso que mantém duas embarcações encostadas sem sobreposição.
  */
+/**
+ * Relógio da animação (segundos) do navio sendo desenhado agora — nulo desenha parado.
+ * Só a frota da tela inicial anima (torres girando, caças decolando e pousando); no
+ * tabuleiro de batalha os navios ficam parados para não distrair do jogo.
+ */
+private var animTime: Float? = null
+
 fun DrawScope.drawShip(
     type: ShipClass,
     center: Offset,
@@ -49,8 +57,10 @@ fun DrawScope.drawShip(
     thicknessPx: Float,
     vertical: Boolean,
     skin: Skin,
-    alpha: Float = 1f
+    alpha: Float = 1f,
+    animSeconds: Float? = null
 ) {
+    animTime = animSeconds
     val paint = skin.paint
     val line = skin.fleet
     val vbW = type.size * 50f
@@ -62,6 +72,8 @@ fun DrawScope.drawShip(
         // a boca da linha de construção afina ou alarga o casco em torno da quilha
         if (line.beam != 1f) scale(1f, line.beam, pivot = Offset(0f, 25f))
     }) {
+        // navegando (só na tela inicial): esteira na popa e onda de proa abrindo para trás
+        animTime?.let { drawWake(type, it, alpha) }
         drawProw(type, line, paint, alpha)
         when (type) {
             ShipClass.CARRIER -> drawCarrier(paint, alpha)
@@ -74,7 +86,9 @@ fun DrawScope.drawShip(
             drawFunnels(type, line, paint, alpha)
             drawTower(type, line, paint, alpha)
         }
+        if (type == ShipClass.CARRIER) animTime?.let { drawFlightOps(it, paint, alpha) }
     }
+    animTime = null
 }
 
 /**
@@ -387,6 +401,22 @@ private fun DrawScope.turret(
         center = Offset(cx, 25f),
         alpha = a
     )
+    // animada: a torre varre devagar de um lado a outro, cada uma no seu tempo
+    val sweep = animTime?.let { t ->
+        val phase = cx * 0.37f
+        val slow = kotlin.math.sin(t * 0.45f + phase)
+        // fica um tempo apontada e depois gira (curva achatada no meio)
+        slow * kotlin.math.abs(slow) * 32f
+    } ?: 0f
+    rotate(sweep, Offset(cx, 25f)) {
+        turretBody(cx, r, barrels, barrelLen, dir, l, a)
+    }
+}
+
+private fun DrawScope.turretBody(
+    cx: Float, r: Float, barrels: Int, barrelLen: Float, dir: Float,
+    l: Paint, a: Float
+) {
     // casamata: face de cima clara, base escura
     val hw = r * 0.95f
     val hh = r * 0.78f
@@ -459,24 +489,6 @@ private fun DrawScope.boat(cx: Float, cy: Float, len: Float, l: Paint, a: Float)
     }
 }
 
-/** Espuma na proa — só um par de lascas claras, para dar sentido de marcha. */
-private fun DrawScope.bowWash(bx: Float, half: Float, a: Float) {
-    val c = Color(0xFFCFE4F5).copy(alpha = 0.4f * a)
-    val up = Path().apply {
-        moveTo(bx, 25f)
-        lineTo(bx + half * 0.7f, 25f - half * 1.15f)
-        lineTo(bx - half * 0.2f, 25f - half * 0.3f)
-        close()
-    }
-    val dn = Path().apply {
-        moveTo(bx, 25f)
-        lineTo(bx + half * 0.7f, 25f + half * 1.15f)
-        lineTo(bx - half * 0.2f, 25f + half * 0.3f)
-        close()
-    }
-    drawPath(up, c)
-    drawPath(dn, c)
-}
 
 /** Padrão de camuflagem, sempre recortado no contorno do casco. */
 private fun DrawScope.drawCamo(l: Paint, a: Float) {
@@ -610,7 +622,111 @@ private fun DrawScope.drawCarrier(l: Paint, a: Float) {
     carrierJet(bx - 34f, 25f + 12f, l, a)
 
     plating(sx, bx, half, l, a)
-    bowWash(bx, half, a)
+}
+
+/**
+ * Operação de voo (só animado): a cada 18s um caça acelera pela pista central e decola
+ * pela proa, subindo (cresce e a sombra se afasta) até sumir; depois outro chega por
+ * trás, desce e pousa, freando nos cabos de parada, e fica pronto para a próxima.
+ */
+private fun DrawScope.drawFlightOps(t: Float, l: Paint, a: Float) {
+    val bx = bowX(ShipClass.CARRIER)
+    val sx = sternX(ShipClass.CARRIER)
+    val start = sx + 30f
+    val cycle = 18f
+    val p = (t % cycle) / cycle
+    fun ease(u: Float) = u * u
+    fun easeOut(u: Float) = 1f - (1f - u) * (1f - u)
+    when {
+        // decolagem: corre pela pista e sobe a partir da proa
+        p < 0.30f -> {
+            val u = p / 0.30f
+            val x = start + (bx + 90f - start) * ease(u)
+            val alt = ((x - (bx - 20f)) / 110f).coerceIn(0f, 1f)
+            flyingJet(x, alt, a * (1f - ((u - 0.85f) / 0.15f).coerceIn(0f, 1f)), l)
+        }
+        // pouso: vem de trás descendo, toca o convés e freia nos cabos
+        p in 0.55f..0.85f -> {
+            val u = (p - 0.55f) / 0.30f
+            val x = sx - 110f + (start + 110f - sx + 0f) * easeOut(u)
+            val alt = ((sx + 14f - x) / 120f).coerceIn(0f, 1f)
+            val fadeIn = (u / 0.15f).coerceIn(0f, 1f)
+            flyingJet(x, alt, a * fadeIn, l)
+        }
+        // no convés, esperando a vez de decolar
+        else -> flyingJet(start, 0f, a, l)
+    }
+}
+
+/** Caça em voo ou no convés: [alt] 0 = rodando no convés, 1 = já no ar (maior, sombra longe). */
+private fun DrawScope.flyingJet(x: Float, alt: Float, a: Float, l: Paint) {
+    if (a <= 0.01f) return
+    val sc = 1f + alt * 0.8f
+    // sombra no mar/convés: se afasta conforme sobe
+    withTransform({ translate(alt * 9f, alt * 7f) }) {
+        withTransform({ scale(1f + alt * 0.2f, 1f + alt * 0.2f, Offset(x, 25f)) }) {
+            jetShape(x, 25f).let { drawPath(it, Color.Black.copy(alpha = 0.28f * a * (1f - alt * 0.5f))) }
+        }
+    }
+    withTransform({ scale(sc, sc, Offset(x, 25f)) }) {
+        drawPath(jetShape(x, 25f), l.trim.lit(0.1f), alpha = a * 0.95f)
+        drawCircle(l.dark, radius = 0.8f, center = Offset(x + 1.6f, 25f), alpha = a)
+    }
+}
+
+private fun jetShape(cx: Float, cy: Float) = Path().apply {
+    moveTo(cx + 5.5f, cy)
+    lineTo(cx + 1.4f, cy - 1.2f)
+    lineTo(cx - 1.6f, cy - 4.4f)
+    lineTo(cx - 2.6f, cy - 4.4f)
+    lineTo(cx - 1.4f, cy - 1.1f)
+    lineTo(cx - 5.4f, cy)
+    lineTo(cx - 1.4f, cy + 1.1f)
+    lineTo(cx - 2.6f, cy + 4.4f)
+    lineTo(cx - 1.6f, cy + 4.4f)
+    lineTo(cx + 1.4f, cy + 1.2f)
+    close()
+}
+
+/**
+ * Navio em marcha: a onda de proa nasce na ponta e abre PARA TRÁS, rente ao costado
+ * (a versão antiga abria para a frente e parecia um par de chifres), e a esteira sai da
+ * popa abrindo e sumindo, com as bolhas correndo para trás.
+ */
+private fun DrawScope.drawWake(type: ShipClass, t: Float, a: Float) {
+    val bx = bowX(type)
+    val sx = sternX(type)
+    val half = hullHalf(type)
+    val foam = Color(0xFFDCEBF5)
+    // onda de proa: duas lascas que abrem para trás, tremulando de leve
+    val flick = 0.75f + 0.25f * kotlin.math.sin(t * 7f)
+    listOf(-1f, 1f).forEach { side ->
+        val wave = Path().apply {
+            moveTo(bx + 1f, 25f)
+            quadraticTo(bx - 10f, 25f + side * half * 1.05f, bx - 34f, 25f + side * half * 1.45f)
+            lineTo(bx - 30f, 25f + side * half * 1.15f)
+            quadraticTo(bx - 10f, 25f + side * half * 0.75f, bx + 1f, 25f)
+            close()
+        }
+        drawPath(wave, foam.copy(alpha = 0.42f * a * flick))
+    }
+    // esteira: só bolhas — nascem densas na popa e se espalham para trás e para os
+    // lados, sumindo ao se afastar (sem faixa clara fixa por baixo)
+    val len = 85f
+    val rnd = kotlin.random.Random(type.ordinal * 977 + 13)
+    repeat(95) {
+        val f0 = rnd.nextFloat() * 2f - 1f
+        // puxa parte das bolhas para as bordas da cunha (onde a esteira quebra mais)
+        val f = if (rnd.nextFloat() < 0.45f) kotlin.math.sign(f0) * (0.75f + rnd.nextFloat() * 0.25f) else f0
+        val speed = 0.35f + rnd.nextFloat() * 0.3f
+        val phase = (t * speed + rnd.nextFloat()) % 1f
+        val x = sx + 1f - phase * len
+        val y = 25f + f * half * (0.5f + phase * 1.8f)
+        val r = 0.45f + rnd.nextFloat() * 1.1f
+        // mais forte logo atrás da popa, onde a hélice revolve a água
+        val alpha = (1f - phase) * (1f - phase) * (0.18f + rnd.nextFloat() * 0.30f) * a
+        drawCircle(foam.copy(alpha = alpha), radius = r, center = Offset(x, y))
+    }
 }
 
 /** Caça estivado: fuselagem, asa em flecha e leme, no tamanho do convés. */
@@ -665,7 +781,6 @@ private fun DrawScope.drawBattleship(l: Paint, a: Float) {
         aaTub(sx + 58f, 25f + s * half * 0.86f, half * 0.26f, s, l, a)
         boat(sx + 46f, 25f + s * half * 0.72f, half * 0.9f, l, a)
     }
-    bowWash(bx, half, a)
 }
 
 // -------------------------------------------------------------------- cruzador
@@ -708,7 +823,6 @@ private fun DrawScope.drawCruiser(l: Paint, a: Float) {
         aaTub(cx + 16f, 25f + s * half * 0.86f, half * 0.26f, s, l, a)
         boat(cx - 34f, 25f + s * half * 0.7f, half * 0.85f, l, a)
     }
-    bowWash(bx, half, a)
 }
 
 // ------------------------------------------------------------------ submarino
@@ -804,5 +918,4 @@ private fun DrawScope.drawDestroyer(l: Paint, a: Float) {
     listOf(-1f, 1f).forEach { s ->
         aaTub(cx + 12f, 25f + s * half * 0.88f, half * 0.28f, s, l, a)
     }
-    bowWash(bx, half, a)
 }
