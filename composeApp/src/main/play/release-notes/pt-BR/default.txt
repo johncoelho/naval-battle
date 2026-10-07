@@ -1,1 +1,1 @@
-Tela inicial reorganizada: sua frota inteira em formacao, jogar e atalhos juntos na parte de baixo. Classico ou Tatico agora e escolhido depois de tocar em como jogar, com explicacao de cada modo. Na rede local, quem entra joga no modo de quem abriu a partida.
+Tela inicial reorganizada: sua frota inteira em formacao num mar calmo, jogar e atalhos juntos na parte de baixo. Classico ou Tatico agora e escolhido depois de tocar em como jogar, com explicacao de cada modo. Na rede local, quem entra joga no modo de quem abriu a partida.

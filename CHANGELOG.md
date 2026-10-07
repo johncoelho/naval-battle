@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.54.1] — 2026-10-07 · Mar mais calmo no deque
+
+App 0.23.1 (versionCode 55).
+
+### Alterado
+- As linhas de onda contínuas da 0.23.0 (cansativas, pulsando como onda de rádio) viraram
+  **cristas curtas e apagadas que atravessam a tela devagar e se desfazem**, com os navios
+  num balanço lento e pequeno, cada um no seu tempo.
+
+---
+
 ## [0.54.0] — 2026-10-07 · Modo vira etapa do fluxo e deque reorganizado
 
 App 0.23.0 (versionCode 54).

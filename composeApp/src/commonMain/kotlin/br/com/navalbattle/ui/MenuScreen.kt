@@ -404,11 +404,11 @@ private fun FleetPreview(state: AppState, modifier: Modifier = Modifier, hero: B
         targetValue = 1.5f,
         animationSpec = infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse)
     )
-    // fase das ondas: uma volta completa a cada 6s, deslocando as cristas para a esquerda
-    val wavePhase by swell.animateFloat(
+    // relógio lento do mar (40s por volta): move as cristas e o balanço dos navios
+    val seaTime by swell.animateFloat(
         initialValue = 0f,
-        targetValue = (2 * kotlin.math.PI).toFloat(),
-        animationSpec = infiniteRepeatable(tween(6000, easing = LinearEasing), RepeatMode.Restart)
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(40000, easing = LinearEasing), RepeatMode.Restart)
     )
     Column(
         modifier
@@ -432,28 +432,30 @@ private fun FleetPreview(state: AppState, modifier: Modifier = Modifier, hero: B
                 while (gx < size.width) { drawLine(Naval.gridLine.copy(alpha = 0.09f), Offset(gx, 0f), Offset(gx, size.height), 1f); gx += step }
                 var gy = (size.height / 2f) % step
                 while (gy < size.height) { drawLine(Naval.gridLine.copy(alpha = 0.09f), Offset(0f, gy), Offset(size.width, gy), 1f); gy += step }
-                // ondas passando em cada faixa: a crista que corre pela linha d'água é a mesma
-                // que sobe e desce o navio, então o balanço acompanha o mar
-                val waveLen = size.width / 2.2f
-                val amp = cell * 0.10f
-                fun waveY(x: Float, baseY: Float, phase: Float) =
-                    baseY + kotlin.math.sin(x / waveLen * 2f * kotlin.math.PI.toFloat() + phase) * amp
+                // cristas soltas de onda: cada uma nasce à direita, atravessa devagar e se
+                // desfaz no caminho — mar passando, não linhas pulsando. Posições fixas
+                // (sem aleatório a cada quadro) e bem apagadas, para não cansar a vista
+                val twoPi = (2 * kotlin.math.PI).toFloat()
+                val crestW = cell * 1.1f
+                for (k in 0 until 9) {
+                    val lane = ((k * 0.37f + 0.11f) % 1f)
+                    // velocidade inteira: a volta do relógio não dá salto na posição da crista
+                    val speed = 1f + (k % 2)
+                    val travel = ((seaTime * speed + k * 0.29f) % 1f)
+                    val x = size.width + crestW - travel * (size.width + crestW * 2f)
+                    val y = size.height * (0.06f + lane * 0.88f)
+                    val alpha = kotlin.math.sin(travel * kotlin.math.PI.toFloat()) * 0.16f
+                    val crest = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(x - crestW / 2f, y)
+                        quadraticTo(x - crestW / 4f, y - cell * 0.12f, x, y)
+                        quadraticTo(x + crestW / 4f, y + cell * 0.08f, x + crestW / 2f, y - cell * 0.02f)
+                    }
+                    drawPath(crest, Naval.inkSoft.copy(alpha = alpha), style = Stroke(width = 1.2f * density, cap = StrokeCap.Round))
+                }
                 ships.forEachIndexed { i, ship ->
                     val baseY = rowH * (i + 0.5f)
-                    val phase = wavePhase + i * 1.3f
-                    // duas linhas de onda: uma na linha d'água, outra mais fraca abaixo
-                    listOf(cell * 0.52f to 0.22f, cell * 0.78f to 0.12f).forEach { (dy, alpha) ->
-                        val path = androidx.compose.ui.graphics.Path()
-                        var x = 0f
-                        path.moveTo(0f, waveY(0f, baseY + dy, phase))
-                        while (x <= size.width) {
-                            path.lineTo(x, waveY(x, baseY + dy, phase))
-                            x += 6f
-                        }
-                        drawPath(path, Naval.commanderOne.copy(alpha = alpha), style = Stroke(width = 1.4f * density, cap = StrokeCap.Round))
-                    }
-                    // o navio sobe e desce com a crista que passa sob o meio dele
-                    val bobY = kotlin.math.sin(size.width / 2f / waveLen * 2f * kotlin.math.PI.toFloat() + phase) * amp
+                    // balanço lento e pequeno, cada navio no seu tempo
+                    val bobY = kotlin.math.sin(seaTime * twoPi * 6f + i * 1.7f) * cell * 0.05f
                     drawShip(
                         type = ship,
                         center = Offset(size.width / 2f, baseY + bobY),
