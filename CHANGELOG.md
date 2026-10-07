@@ -9,6 +9,19 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.54.2] — 2026-10-07 · Ondas do mar passando pela frota
+
+App 0.23.2 (versionCode 56).
+
+### Alterado
+- As cristas soltas da 0.23.1 (pareciam minhocas) viraram **ondas de verdade**: de tempos em
+  tempos (7–12s) uma onda nasce acima do quadro e desce devagar (15–21s) pela tela inteira,
+  sempre no mesmo sentido — faixa de água mais clara com **espuma em degradê** na crista,
+  variando ao longo dela e no tempo. Ao encostar no casco, levanta um **borrifo** a partir da
+  borda real do navio; a espuma escorre pelas pontas e o navio sobe enquanto ela passa.
+
+---
+
 ## [0.54.1] — 2026-10-07 · Mar mais calmo no deque
 
 App 0.23.1 (versionCode 55).

@@ -221,8 +221,9 @@ O deque de comando (`ui/MenuScreen.kt`), de cima para baixo:
 - **Cartão do dia** — temporada (posição no placar ou o convite para aderir) e Diário de
   bordo (check-in pendente, desafio em andamento com barra, ou "tudo feito").
 - **Frota** — em tela alta, a frota inteira em formação (os 5 navios da linha e
-  camuflagem equipadas) sobre a carta náutica, com cristas de onda curtas e apagadas
-  atravessando devagar e os navios num balanço lento, ocupando o espaço livre; em tela baixa, só o
+  camuflagem equipadas) sobre a carta náutica, com ondas descendo devagar de cima
+  para baixo (espuma em degradê na crista, borrifo ao bater no casco, navio subindo quando
+  ela passa — `SeaFormation`), ocupando o espaço livre; em tela baixa, só o
   porta-aviões. Tocar (ou "Estaleiro ›") abre o Estaleiro.
 - **Jogar online** como ação principal e, abaixo, vs. IA, 2 jogadores e Rede local lado a
   lado — jogar e atalhos ficam juntos no pé da tela (zona do polegar).
