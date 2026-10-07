@@ -521,7 +521,7 @@ private fun SeaFormation(state: AppState, modifier: Modifier = Modifier) {
 
     Canvas(modifier.clipToBounds()) {
         val ships = ShipClass.fleet
-        val cell = minOf(size.width / 5.6f, size.height / (ships.size * 1.45f))
+        val cell = minOf(size.width / 5.3f, size.height / (ships.size * 1.05f))
         val rowH = size.height / ships.size
         val band = size.height * 0.16f
         // carta náutica bem apagada ao fundo

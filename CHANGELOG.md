@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.57.0] — 2026-10-07 · Abertura nova e temporada no iPhone
+
+App 0.26.0 (versionCode 60).
+
+### Alterado
+- **Tela de abertura nova** ("Frota navegando", escolhida no Claude Design): a frota do jogo
+  (encouraçado, porta-aviões e cruzador) em perspectiva 3D sobre a carta de tiro, com torres
+  girando e esteira; radar varrendo e acendendo contatos; tiros caindo na água com splash; um
+  acerto em chamas no encouraçado; marca entrando por cima e a barra com as frases de convés.
+- Frota da tela inicial maior (no iPhone ficava pequena no meio do quadro).
+
+### Corrigido
+- **iPhone: ranqueada travada em "Ranqueada exige a temporada" e "Ver temporada" sem ação.** O
+  passe só era carregado na abertura e na volta do segundo plano; quem entrava na conta com o app
+  aberto ficava sem passe — e o iPhone nunca avisava a volta do segundo plano. Agora a temporada
+  carrega ao entrar na conta, o iPhone avisa primeiro/segundo plano (`MainViewController`) e
+  "Ver temporada" busca o passe na hora se ainda não chegou. O texto do aviso não fica mais com o
+  nome da temporada em branco.
+
+---
+
 ## [0.56.0] — 2026-10-07 · Ícone novo
 
 App 0.25.0 (versionCode 59).

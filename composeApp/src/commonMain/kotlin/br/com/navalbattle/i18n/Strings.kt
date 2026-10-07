@@ -873,6 +873,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     SEASON_JOINED_FREE("Você entrou na temporada — a ranqueada está liberada", "You've joined the season — ranked is unlocked", "Entraste en la temporada — la clasificatoria está desbloqueada"),
     SEASON_JOINED_PREMIUM("Passe de Temporada ativo — recompensas entregues", "Season Pass active — rewards delivered", "Pase de Temporada activo — recompensas entregadas"),
     SEASON_RANKED_LOCKED_TITLE("Ranqueada exige a temporada", "Ranked requires the season", "La clasificatoria exige la temporada"),
+    SEASON_FALLBACK("temporada", "season", "temporada"),
     SEASON_RANKED_LOCKED_BODY("Para jogar ranqueada, entre na %s com o Passe Gratuito ou o Passe de Temporada. As partidas casuais continuam livres.", "To play ranked, join the %s with the Free Pass or the Season Pass. Casual matches stay open.", "Para jugar clasificatoria, entra en la %s con el Pase Gratuito o el Pase de Temporada. Las partidas casuales siguen libres."),
     SEASON_SEE_PASS("Ver temporada", "See season", "Ver temporada"),
     SEASON_CHIP_PREMIUM("Com passe", "Pass", "Con pase"),

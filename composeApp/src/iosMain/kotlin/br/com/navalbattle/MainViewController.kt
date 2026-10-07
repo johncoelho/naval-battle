@@ -1,6 +1,11 @@
 package br.com.navalbattle
 
 import androidx.compose.ui.window.ComposeUIViewController
+import br.com.navalbattle.audio.AppForeground
+import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSOperationQueue
+import platform.UIKit.UIApplicationDidBecomeActiveNotification
+import platform.UIKit.UIApplicationWillResignActiveNotification
 
 /**
  * Ponto de entrada chamado pelo `iosApp` (Swift) — a mesma tela Compose do Android.
@@ -15,3 +20,23 @@ import androidx.compose.ui.window.ComposeUIViewController
  * desativam a mesma flag pelo mesmo motivo.
  */
 fun MainViewController() = ComposeUIViewController(configure = { enforceStrictPlistSanityCheck = false }) { App() }
+    .also { watchForeground() }
+
+/**
+ * Primeiro/segundo plano no iPhone, o equivalente ao `onResume`/`onPause` do Android:
+ * sem isso [AppForeground.active] ficava sempre verdadeiro e nada que depende da volta
+ * ao app rodava de novo (temporada, badges, feedback, Diário de bordo, versão nova).
+ */
+private var foregroundWatched = false
+
+private fun watchForeground() {
+    if (foregroundWatched) return
+    foregroundWatched = true
+    val center = NSNotificationCenter.defaultCenter
+    center.addObserverForName(UIApplicationDidBecomeActiveNotification, null, NSOperationQueue.mainQueue) { _ ->
+        AppForeground.active = true
+    }
+    center.addObserverForName(UIApplicationWillResignActiveNotification, null, NSOperationQueue.mainQueue) { _ ->
+        AppForeground.active = false
+    }
+}

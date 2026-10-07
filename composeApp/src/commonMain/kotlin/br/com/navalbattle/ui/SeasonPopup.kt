@@ -313,7 +313,7 @@ fun RankedLockedPrompt(state: AppState) {
             Text(t(K.SEASON_RANKED_LOCKED_TITLE), style = NavalType.title, color = Naval.ink, textAlign = TextAlign.Center)
             Gap(8)
             Text(
-                t(K.SEASON_RANKED_LOCKED_BODY, pass?.let { seasonTitle(it.seasonKey) } ?: ""),
+                t(K.SEASON_RANKED_LOCKED_BODY, pass?.let { seasonTitle(it.seasonKey) } ?: state.currentSeason?.let { seasonTitle(it.seasonKey) } ?: t(K.SEASON_FALLBACK)),
                 style = NavalType.body,
                 color = Naval.inkSoft,
                 textAlign = TextAlign.Center

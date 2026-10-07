@@ -783,6 +783,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         rankedLockedPrompt = false
         seasonNotice = null
         seasonPassOpen = true
+        // passe ainda não carregado (rede lenta, login recente): busca agora — o banner
+        // abre assim que ele chegar, em vez de o botão não fazer nada
+        if (seasonPass == null) uiScope?.launch { loadSeason() }
     }
 
     /** Resgata (uma vez) o resultado da temporada que acabou e credita os dobrões do prêmio. */
@@ -1742,12 +1745,14 @@ fun App() {
 
     // temporada ranqueada corrente — vem do servidor pra não depender do relógio
     // do aparelho; se for diferente da última aceita, o popup de nova temporada aparece
-    LaunchedEffect(Unit) { state.loadSeason() }
+    // também ao entrar na conta: quem fazia login com o app já aberto ficava sem o passe
+    // (e sem ranqueada) até reabrir — no iPhone, para sempre (ver MainViewController)
+    LaunchedEffect(state.profile.signedIn) { state.loadSeason() }
 
     // badges e feedback avaliado: mesmo padrão sem push de verdade — checa na
     // abertura e toda vez que o app volta do segundo plano. O popup de recompensa
     // aparece por conta própria via FeedbackRewardPopup, olhando state.feedbackReward
-    LaunchedEffect(AppForeground.active) {
+    LaunchedEffect(AppForeground.active, state.profile.signedIn) {
         if (AppForeground.active) {
             state.loadBadges()
             state.checkFeedbackRewards()
