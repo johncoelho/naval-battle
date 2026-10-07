@@ -9,6 +9,32 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.60.0] — 2026-10-07 · Push de verdade no Android
+
+App 0.27.0 (versionCode 63).
+
+### Adicionado
+- **Notificações push no Android** (Firebase Cloud Messaging, projeto Firebase "Naval Battle",
+  `naval-battle-c6d36`, sem Analytics), mesmo com o jogo fechado:
+  - pedido de amizade recebido;
+  - pedido de amizade aceito;
+  - convite de amigo para partida;
+  - adversário entrou na sua partida rápida.
+  Com o jogo aberto não aparece notificação (os balões do jogo já avisam). Canal "Convites e
+  amigos"; a permissão é pedida ao abrir a tela de Amigos.
+- **Servidor** (`supabase/push.sql`): tokens por conta (`push_tokens`, gravados por
+  `register_push_token` ao entrar/voltar ao app e apagados ao sair da conta), fila
+  `push_outbox` e gatilhos em `friendships` e `online_matches` que chamam a Edge Function
+  `push` (`supabase/functions/push`) via `pg_net`. A função só envia o que está na fila, uma
+  vez, pela API HTTP v1 do FCM; o segredo `FCM_SERVICE_ACCOUNT` fica no Supabase.
+- `composeApp/google-services.json` (configuração pública do app, com o pacote da loja e o
+  `.preview`); sem ele o build continua funcionando e o push fica desligado.
+
+### Observação
+- iPhone segue só com o lembrete local: push lá exige conta paga da Apple (APNs).
+
+---
+
 ## [0.59.0] — 2026-10-07 · Notificações testáveis
 
 App 0.26.2 (versionCode 62).

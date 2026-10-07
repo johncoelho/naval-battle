@@ -3,6 +3,8 @@ package br.com.navalbattle.data
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.util.Log
+import br.com.navalbattle.BuildConfig
 import com.google.firebase.FirebaseApp
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -41,5 +43,8 @@ actual object PushMessaging {
 class PushService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {}
 
-    override fun onNewToken(token: String) {}
+    override fun onNewToken(token: String) {
+        // só no build de depuração: permite testar o envio pelo banco sem entrar na conta
+        if (BuildConfig.DEBUG) Log.i("NavalPush", "token=$token")
+    }
 }

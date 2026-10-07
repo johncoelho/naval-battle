@@ -413,3 +413,17 @@ vitrine dele está mostrando a informação certa.
 O commit de documentação anda junto com o de código — não depois, não "quando der".
 O objetivo é que o histórico do versionamento sirva para resgatar o que foi decidido,
 sem depender da memória de ninguém.
+
+## Push (Firebase)
+
+- Projeto Firebase **Naval Battle** (`naval-battle-c6d36`), sem Analytics. Apps Android
+  registrados: `aigamesfactory.navalbattleclassic` (loja) e `.preview` (emulador).
+- `composeApp/google-services.json` é a configuração pública dos dois apps (vai dentro do
+  APK). O plugin `com.google.gms.google-services` só é aplicado quando o arquivo existe.
+- Envio: `supabase/push.sql` (tabelas, RPCs e gatilhos) + Edge Function `push`
+  (`supabase/functions/push`, sem JWT). O segredo **`FCM_SERVICE_ACCOUNT`** (JSON da conta de
+  serviço do Firebase) fica só em Supabase → Edge Functions → Secrets — nunca no repositório.
+- Para testar sem conta no emulador: o build de depuração registra o token no logcat
+  (`adb logcat -s NavalPush`); insira-o em `push_tokens` para uma conta de teste e chame
+  `select public.queue_push(<uuid>, 'test', 'Título', 'Texto')`. O resultado do envio fica
+  em `push_outbox.result` (200 = entregue ao Firebase). Apague o token de teste depois.

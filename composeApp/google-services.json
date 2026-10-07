@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "743179429800",
+    "project_id": "naval-battle-c6d36",
+    "storage_bucket": "naval-battle-c6d36.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:743179429800:android:05cbd86b72e87c21ec1f9d",
+        "android_client_info": {
+          "package_name": "aigamesfactory.navalbattleclassic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHk74LYbJPtbN0u0ZsbFVc5NiYLD41aHg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:743179429800:android:51c0a15946064711ec1f9d",
+        "android_client_info": {
+          "package_name": "aigamesfactory.navalbattleclassic.preview"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHk74LYbJPtbN0u0ZsbFVc5NiYLD41aHg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
