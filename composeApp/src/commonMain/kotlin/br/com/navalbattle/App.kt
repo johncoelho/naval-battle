@@ -56,6 +56,7 @@ import br.com.navalbattle.data.SeasonInfo
 import br.com.navalbattle.data.SeasonTrophy
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
+import br.com.navalbattle.data.PushMessaging
 import br.com.navalbattle.data.RankedOutcome
 import br.com.navalbattle.data.Session
 import br.com.navalbattle.data.appVersionLabel
@@ -557,6 +558,27 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** Recusa sem entrar — o anfitrião para de esperar em vez de ficar preso na sala. */
+    /** Último token de push salvo na conta — evita regravar a cada volta ao app. */
+    private var pushRegistered: String? = null
+
+    /** Liga o push deste aparelho à conta (Android; no iPhone o token é nulo e nada acontece). */
+    suspend fun registerPush() {
+        if (!profile.signedIn) return
+        val token = PushMessaging.token() ?: return
+        if (token == pushRegistered) return
+        val r = authed { session -> cloud.registerPushToken(session, token, PushMessaging.platform) }
+        if (r is CloudResult.Ok) pushRegistered = token
+    }
+
+    /** Sai da conta e para de receber os avisos dela neste aparelho. */
+    fun signOut() {
+        val session = profile.currentSession()
+        val token = pushRegistered
+        pushRegistered = null
+        if (session != null && token != null) uiScope?.launch { cloud.unregisterPushToken(session, token) }
+        profile.signOut()
+    }
+
     fun declineInvite() {
         val invite = pendingInvite ?: return
         pendingInvite = null
@@ -1771,6 +1793,7 @@ fun App() {
         if (AppForeground.active) {
             state.loadMiles()
             state.loadDaily()
+            state.registerPush()
         }
     }
 

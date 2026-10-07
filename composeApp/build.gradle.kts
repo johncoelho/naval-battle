@@ -49,8 +49,18 @@ kotlin {
             // avisa quando uma versão mais nova já está publicada na faixa de teste do
             // comandante — mesma API que a própria Play Store usa, sem precisar de push
             implementation(libs.play.app.update.ktx)
+            // push de verdade (convites, amizade) pelo Firebase Cloud Messaging; a
+            // configuração vem do google-services.json (ver PushMessaging.android.kt)
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.messaging)
         }
     }
+}
+
+// O plugin do Google Services só entra quando o google-services.json está no módulo:
+// sem ele o app compila igual e o push fica desligado (PushMessaging devolve nulo).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 compose.resources {

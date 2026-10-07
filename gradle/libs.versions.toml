@@ -10,12 +10,16 @@ androidMinSdk = "26"
 androidTargetSdk = "36"
 playPublisher = "3.13.0"
 playAppUpdate = "2.1.0"
+firebaseBom = "33.7.0"
+googleServices = "4.4.2"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivityCompose" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidxCredentials" }
 androidx-credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "androidxCredentials" }
 google-id = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleId" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 play-app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "playAppUpdate" }
 
 [plugins]
@@ -24,3 +28,4 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 playPublisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "googleServices" }

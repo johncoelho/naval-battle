@@ -468,7 +468,7 @@ private fun AccountSection(state: AppState) {
             }
             Gap(8)
             SecondaryButton(t(K.AUTH_SIGN_OUT)) {
-                profile.signOut()
+                state.signOut()
                 message = t(K.AUTH_SIGNED_OUT)
             }
         } else {

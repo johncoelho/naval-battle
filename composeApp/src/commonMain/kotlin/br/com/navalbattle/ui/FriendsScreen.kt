@@ -47,6 +47,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import br.com.navalbattle.data.DailyReminder
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.FriendProfile
@@ -81,7 +82,11 @@ fun FriendsScreen(state: AppState) {
     var confirmRemove by remember { mutableStateOf<FriendEntry?>(null) }
     var sentTo by remember { mutableStateOf(setOf<String>()) }
 
-    LaunchedEffect(Unit) { state.refreshFriendships() }
+    LaunchedEffect(Unit) {
+        // convites e pedidos de amizade chegam por push: é aqui que a permissão faz sentido
+        DailyReminder.requestPermission()
+        state.refreshFriendships()
+    }
     LaunchedEffect(query) {
         if (query.trim().length < 2) {
             state.searchCommander("")

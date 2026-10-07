@@ -201,6 +201,17 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(if (arr.length() == 0) null else matchOf(arr.getJSONObject(0)))
     }
 
+    actual suspend fun registerPushToken(session: Session, token: String, platform: String): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_token", token).put("p_platform", platform)
+        post("/rest/v1/rpc/register_push_token", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun unregisterPushToken(session: Session, token: String): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/unregister_push_token", JSONObject().put("p_token", token), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun declineOnlineInvite(session: Session, matchId: String): CloudResult<Unit> = call {
         val body = JSONObject().put("p_match_id", matchId)
         post("/rest/v1/rpc/decline_online_invite", body, token = session.accessToken)

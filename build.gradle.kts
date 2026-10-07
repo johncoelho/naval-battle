@@ -4,4 +4,5 @@ plugins {
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.playPublisher) apply false
+    alias(libs.plugins.googleServices) apply false
 }

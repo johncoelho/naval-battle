@@ -199,6 +199,16 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(row?.let { matchOf(it) })
     }
 
+    actual suspend fun registerPushToken(session: Session, token: String, platform: String): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/register_push_token", mapOf("p_token" to token, "p_platform" to platform), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun unregisterPushToken(session: Session, token: String): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/unregister_push_token", mapOf("p_token" to token), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun declineOnlineInvite(session: Session, matchId: String): CloudResult<Unit> = call {
         post("/rest/v1/rpc/decline_online_invite", mapOf("p_match_id" to matchId), token = session.accessToken)
         CloudResult.Ok(Unit)
