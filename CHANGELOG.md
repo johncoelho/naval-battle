@@ -9,6 +9,20 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.64.0] — 2026-10-07 · Amigos mais direto
+
+App 0.28.2 (versionCode 67).
+
+### Alterado
+- **Cartão do amigo**: embaixo do nome agora vai a **patente** (vem do XP em `friend_presence`);
+  o status fica só à direita, numa informação: botão Jogar (online), "Em partida", "Sem
+  convites" ou há quanto tempo saiu ("há 3 h"). Antes "Offline" aparecia duas vezes.
+- **Busca de comandante** com botão **Buscar** (e o Enter do teclado) e linha de status:
+  "Digite pelo menos 2 letras", "Buscando…", "N comandantes encontrados" ou "Nenhum
+  comandante encontrado". O resultado continua aparecendo enquanto digita.
+
+---
+
 ## [0.63.0] — 2026-10-07 · Em partida, convites opcionais e partida rápida um por vez
 
 App 0.28.1 (versionCode 66).

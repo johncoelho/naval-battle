@@ -5,7 +5,7 @@
 --   (jogo aberto), "in_match" (jogando: não recebe convite) ou "away" (fechou ou
 --   minimizou, avisado na hora). accept_invites é o interruptor "Receber convites
 --   de amigos" dos Ajustes (padrão ligado).
--- * friend_presence(): para cada amigo, segundos desde o último ponto (nulo =
+-- * friend_presence(): para cada amigo (com o XP, para a patente no cartão), segundos desde o último ponto (nulo =
 --   nunca; "away" conta no mínimo 121s, ou seja, fora), o estado e se aceita
 --   convites. A tela de Amigos põe online primeiro e só deixa convidar quem está
 --   online, fora de partida e aceitando convites.
@@ -42,14 +42,15 @@ grant execute on function public.touch_presence(text, boolean) to authenticated;
 
 drop function if exists public.friend_presence();
 create function public.friend_presence()
-returns table (user_id uuid, seen_secs integer, state text, accepts_invites boolean)
+returns table (user_id uuid, seen_secs integer, state text, accepts_invites boolean, xp integer)
 language sql security definer set search_path = public stable as $$
   select p.id,
          case when p.presence = 'away' and p.last_seen_at is not null
               then greatest(extract(epoch from (now() - p.last_seen_at))::integer, 121)
               else extract(epoch from (now() - p.last_seen_at))::integer end,
          p.presence,
-         p.accept_invites
+         p.accept_invites,
+         p.xp
   from public.friendships f
   join public.profiles p
     on p.id = case when f.requester_id = auth.uid() then f.addressee_id else f.requester_id end

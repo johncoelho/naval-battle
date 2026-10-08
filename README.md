@@ -113,8 +113,9 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     ganha um bloco de ranking (pontos da partida e como foram compostos, pontos e
     posição na temporada antes → depois, partidas e vitórias, botão "Ver ranking").
   - **Amigos online** — presença por minuto (`supabase/presence.sql`): bolinha verde e
-    "Online agora" para quem está com o jogo aberto, "Em partida agora" para quem está
-    jogando, online no topo, "Visto há X" para os demais; só dá para convidar quem está online,
+    a patente embaixo do nome e o status só à direita (Jogar para quem está com o jogo aberto,
+    "Em partida", "há 3 h" para quem saiu), online no topo; a busca tem botão Buscar e diz
+    quantos comandantes achou; só dá para convidar quem está online,
     fora de partida e com **Receber convites de amigos** ligado nos Ajustes (padrão ligado). No teste fechado o convite pode ser **Casual ou
     Ranqueada** (chave `friend_ranked_enabled` em `app_config`; desligar no lançamento).
   - **Amigos** — tela própria (`ui/FriendsScreen.kt`): cartões com o avatar que cada

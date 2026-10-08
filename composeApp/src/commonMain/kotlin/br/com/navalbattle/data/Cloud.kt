@@ -536,4 +536,4 @@ expect class CloudApi() {
 }
 
 /** Segundos desde a última batida de ponto (-1 = nunca) e se estava em partida. */
-data class FriendPresence(val seenSecs: Int, val inMatch: Boolean, val acceptsInvites: Boolean = true)
+data class FriendPresence(val seenSecs: Int, val inMatch: Boolean, val acceptsInvites: Boolean = true, val xp: Int = -1)

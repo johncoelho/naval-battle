@@ -1,1 +1,1 @@
-Amigos mostra quem esta em partida (nao recebe convite) e sai na hora quem fecha o jogo. Novo nos Ajustes: Receber convites de amigos (ligado por padrao). Partida rapida oferecida a um comandante por vez: aceitou, some para todos; recusou, vai para o proximo.
+Amigos mais claro: a patente aparece embaixo do nome e o status fica so a direita (Jogar, Em partida ou ha quanto tempo saiu). Busca de comandante com botao Buscar e aviso do resultado.

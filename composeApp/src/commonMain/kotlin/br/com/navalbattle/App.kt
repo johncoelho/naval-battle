@@ -494,14 +494,24 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** Procura comandantes pelo início do nome, para mandar pedido de amizade. */
+    /** Busca em andamento e o último termo já respondido — a tela mostra o status da busca. */
+    var friendSearching by mutableStateOf(false)
+        private set
+    var friendSearchedFor by mutableStateOf("")
+        private set
+
     suspend fun searchCommander(query: String) {
         if (query.isBlank()) {
             friendResults = emptyList()
+            friendSearchedFor = ""
             return
         }
         val session = profile.currentSession() ?: return
+        friendSearching = true
         val r = cloud.searchCommander(session, query)
         friendResults = (r as? CloudResult.Ok)?.value.orEmpty()
+        friendSearchedFor = query
+        friendSearching = false
     }
 
     suspend fun sendFriendRequest(hit: CommanderHit) {

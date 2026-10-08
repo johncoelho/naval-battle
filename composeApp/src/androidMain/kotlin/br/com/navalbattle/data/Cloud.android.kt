@@ -371,7 +371,8 @@ actual class CloudApi actual constructor() {
             o.optString("user_id") to FriendPresence(
                 seenSecs = if (o.isNull("seen_secs")) -1 else o.optInt("seen_secs", -1),
                 inMatch = o.optString("state") == "in_match",
-                acceptsInvites = o.optBoolean("accepts_invites", true)
+                acceptsInvites = o.optBoolean("accepts_invites", true),
+                xp = o.optInt("xp", -1)
             )
         })
     }

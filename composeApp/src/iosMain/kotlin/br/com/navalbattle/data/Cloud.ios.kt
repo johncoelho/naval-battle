@@ -363,7 +363,8 @@ actual class CloudApi actual constructor() {
             it.strOr("user_id", "") to FriendPresence(
                 it.intOr("seen_secs", -1),
                 it.strOr("state", "") == "in_match",
-                (it["accepts_invites"] as? Boolean) ?: true
+                (it["accepts_invites"] as? Boolean) ?: true,
+                it.intOr("xp", -1)
             )
         })
     }

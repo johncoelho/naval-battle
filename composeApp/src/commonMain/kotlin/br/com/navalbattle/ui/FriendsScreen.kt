@@ -37,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -47,7 +48,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import br.com.navalbattle.ONLINE_SECS
+import br.com.navalbattle.game.Rank
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.FriendProfile
@@ -123,15 +124,31 @@ fun FriendsScreen(state: AppState) {
             HudLabel(t(K.FRIENDS_COUNT, friends.size), Naval.amberStrong)
         }
         Gap(14)
-        SearchField(query, onChange = { query = it }, onClear = { query = "" })
+        val focus = LocalFocusManager.current
+        val runSearch = {
+            focus.clearFocus()
+            if (query.trim().length >= 2) scope.launch { state.searchCommander(query.trim()) }
+        }
+        SearchField(query, onChange = { query = it }, onClear = { query = "" }, onSearch = { runSearch() })
+        // status da busca: sem isso não dá para saber se procurou e não achou ou se nem buscou
+        if (query.isNotBlank()) {
+            val trimmed = query.trim()
+            val found = state.friendResults.count { it.id != myId }
+            Gap(6)
+            when {
+                trimmed.length < 2 -> HudLabel(t(K.FRIENDS_SEARCH_MIN), Naval.muted)
+                state.friendSearching || state.friendSearchedFor != trimmed -> HudLabel(t(K.FRIENDS_SEARCHING), Naval.amberStrong)
+                found == 0 -> HudLabel(t(K.FRIENDS_SEARCH_EMPTY), Naval.danger)
+                found == 1 -> HudLabel(t(K.FRIENDS_SEARCH_FOUND_ONE), Naval.greenBright)
+                else -> HudLabel(t(K.FRIENDS_SEARCH_FOUND, found), Naval.greenBright)
+            }
+        }
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             // resultados da busca, logo abaixo do campo
             if (query.trim().length >= 2) {
                 Gap(10)
-                if (state.friendResults.isEmpty()) {
-                    HudLabel(t(K.FRIENDS_SEARCH_EMPTY), Naval.muted)
-                } else {
+                if (state.friendResults.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         state.friendResults.filter { it.id != myId }.forEach { hit ->
                             val known = state.friendships.any {
@@ -182,13 +199,10 @@ fun FriendsScreen(state: AppState) {
                     friends.forEach { e ->
                         val online = state.friendOnline(e.id)
                         val invitable = state.friendInvitable(e.id)
+                        val xp = state.friendPresence[e.id]?.xp ?: -1
                         PersonCard(
                             e.name,
-                            subtitle = when {
-                                state.friendInMatch(e.id) -> t(K.FRIENDS_IN_MATCH)
-                                online && !invitable -> t(K.FRIENDS_NO_INVITES)
-                                else -> presenceLabel(state.friendPresence[e.id]?.seenSecs)
-                            },
+                            subtitle = if (xp >= 0) t(Rank.of(xp).key) else null,
                             avatarId = state.friendAvatars[e.id],
                             online = online,
                             dim = !online,
@@ -197,19 +211,13 @@ fun FriendsScreen(state: AppState) {
                                 scope.launch { state.loadFriendProfile(e.id) }
                             }
                         ) {
-                            if (invitable) {
-                                PillButton(t(K.FRIENDS_PLAY), Naval.amber, Naval.amberInk) {
+                            when {
+                                invitable -> PillButton(t(K.FRIENDS_PLAY), Naval.amber, Naval.amberInk) {
                                     state.pickMode(ModePick.Friend(e.id))
                                 }
-                            } else {
-                                HudLabel(
-                                    t(when {
-                                        state.friendInMatch(e.id) -> K.FRIENDS_BUSY
-                                        online -> K.FRIENDS_NO_INVITES_SHORT
-                                        else -> K.FRIENDS_OFFLINE
-                                    }),
-                                    Naval.muted
-                                )
+                                state.friendInMatch(e.id) -> HudLabel(t(K.FRIENDS_BUSY), Naval.amberStrong)
+                                online -> HudLabel(t(K.FRIENDS_NO_INVITES_SHORT), Naval.muted)
+                                else -> HudLabel(lastSeenShort(state.friendPresence[e.id]?.seenSecs), Naval.muted)
                             }
                         }
                     }
@@ -269,12 +277,11 @@ fun FriendsScreen(state: AppState) {
 
 // ------------------------------------------------------------------ peças
 
-/** "Online agora", "Visto há 5 min", "Visto há 3 h"... ou "Offline" quando nunca foi visto. */
+/** Quanto tempo fora, curto para caber à direita do cartão: "há 5 min", "há 3 h", "Offline". */
 @Composable
-private fun presenceLabel(seenSecs: Int?): String = when {
+private fun lastSeenShort(seenSecs: Int?): String = when {
     seenSecs == null || seenSecs < 0 -> t(K.FRIENDS_OFFLINE)
-    seenSecs <= ONLINE_SECS -> t(K.FRIENDS_ONLINE_NOW)
-    seenSecs < 3600 -> t(K.FRIENDS_SEEN_MIN, seenSecs / 60)
+    seenSecs < 3600 -> t(K.FRIENDS_SEEN_MIN, maxOf(1, seenSecs / 60))
     seenSecs < 86_400 -> t(K.FRIENDS_SEEN_HOURS, seenSecs / 3600)
     else -> t(K.FRIENDS_SEEN_DAYS, seenSecs / 86_400)
 }
@@ -450,10 +457,11 @@ private fun EmptyFleet() {
 }
 
 @Composable
-private fun SearchField(value: String, onChange: (String) -> Unit, onClear: () -> Unit) {
+private fun SearchField(value: String, onChange: (String) -> Unit, onClear: () -> Unit, onSearch: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
     Row(
         Modifier
-            .fillMaxWidth()
+            .weight(1f)
             .background(Naval.surface2)
             .border(1.dp, if (value.isBlank()) Naval.line else Naval.amber)
             .padding(horizontal = 12.dp, vertical = 12.dp),
@@ -474,7 +482,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, onClear: () -
             textStyle = NavalType.mono.copy(color = Naval.ink),
             cursorBrush = SolidColor(Naval.amberStrong),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = {}),
+            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
             modifier = Modifier.weight(1f)
         ) { inner ->
             Box(Modifier.fillMaxWidth()) {
@@ -486,6 +494,20 @@ private fun SearchField(value: String, onChange: (String) -> Unit, onClear: () -
             Spacer(Modifier.width(8.dp))
             HudLabel("✕", Naval.inkSoft, Modifier.clickable(onClick = onClear).padding(4.dp))
         }
+    }
+    Spacer(Modifier.width(8.dp))
+    // botão explícito: o resultado já aparece enquanto digita, mas sem botão parecia não buscar
+    val ready = value.trim().length >= 2
+    Box(
+        Modifier
+            .background(if (ready) Naval.amber else Naval.surface2)
+            .border(1.dp, if (ready) Naval.amber else Naval.line)
+            .clickable(enabled = ready, onClick = onSearch)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(t(K.FRIENDS_SEARCH_BUTTON).uppercase(), style = NavalType.button, color = if (ready) Naval.amberInk else Naval.muted, maxLines = 1)
+    }
     }
 }
 
