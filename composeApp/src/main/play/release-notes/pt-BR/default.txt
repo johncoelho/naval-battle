@@ -1,1 +1,1 @@
-Amigos online: a lista mostra quem esta no jogo agora (bolinha verde, online primeiro) e o convite vai so para quem esta online. No teste fechado, convite de amigo pode ser Casual ou Ranqueada. Feedback sem conta ganhou o botao Entrar ou criar conta.
+Amigos mostra quem esta em partida (nao recebe convite) e sai na hora quem fecha o jogo. Novo nos Ajustes: Receber convites de amigos (ligado por padrao). Partida rapida oferecida a um comandante por vez: aceitou, some para todos; recusou, vai para o proximo.

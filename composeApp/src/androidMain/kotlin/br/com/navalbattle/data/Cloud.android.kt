@@ -353,16 +353,26 @@ actual class CloudApi actual constructor() {
         })
     }
 
-    actual suspend fun touchPresence(session: Session): CloudResult<Unit> = call {
-        post("/rest/v1/rpc/touch_presence", JSONObject(), token = session.accessToken)
+    actual suspend fun declineQuickOffer(session: Session, matchId: String): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/decline_quick_offer", JSONObject().put("p_match_id", matchId), token = session.accessToken)
         CloudResult.Ok(Unit)
     }
 
-    actual suspend fun friendPresence(session: Session): CloudResult<Map<String, Int>> = call {
+    actual suspend fun touchPresence(session: Session, state: String, acceptInvites: Boolean): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_state", state).put("p_accept_invites", acceptInvites)
+        post("/rest/v1/rpc/touch_presence", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun friendPresence(session: Session): CloudResult<Map<String, FriendPresence>> = call {
         val arr = JSONArray(post("/rest/v1/rpc/friend_presence", JSONObject(), token = session.accessToken))
         CloudResult.Ok((0 until arr.length()).associate { i ->
             val o = arr.getJSONObject(i)
-            o.optString("user_id") to (if (o.isNull("seen_secs")) -1 else o.optInt("seen_secs", -1))
+            o.optString("user_id") to FriendPresence(
+                seenSecs = if (o.isNull("seen_secs")) -1 else o.optInt("seen_secs", -1),
+                inMatch = o.optString("state") == "in_match",
+                acceptsInvites = o.optBoolean("accepts_invites", true)
+            )
         })
     }
 

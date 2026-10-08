@@ -342,15 +342,30 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(rows.associate { it.strOr("user_id", "") to it.strOr("avatar", "") })
     }
 
-    actual suspend fun touchPresence(session: Session): CloudResult<Unit> = call {
-        post("/rest/v1/rpc/touch_presence", emptyMap<String, Any?>(), token = session.accessToken)
+    actual suspend fun declineQuickOffer(session: Session, matchId: String): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/decline_quick_offer", mapOf("p_match_id" to matchId), token = session.accessToken)
         CloudResult.Ok(Unit)
     }
 
-    actual suspend fun friendPresence(session: Session): CloudResult<Map<String, Int>> = call {
+    actual suspend fun touchPresence(session: Session, state: String, acceptInvites: Boolean): CloudResult<Unit> = call {
+        post(
+            "/rest/v1/rpc/touch_presence",
+            mapOf("p_state" to state, "p_accept_invites" to acceptInvites),
+            token = session.accessToken
+        )
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun friendPresence(session: Session): CloudResult<Map<String, FriendPresence>> = call {
         val json = post("/rest/v1/rpc/friend_presence", emptyMap<String, Any?>(), token = session.accessToken)
         val rows = (json as? List<*>).orEmpty().mapNotNull { it as? Map<*, *> }
-        CloudResult.Ok(rows.associate { it.strOr("user_id", "") to it.intOr("seen_secs", -1) })
+        CloudResult.Ok(rows.associate {
+            it.strOr("user_id", "") to FriendPresence(
+                it.intOr("seen_secs", -1),
+                it.strOr("state", "") == "in_match",
+                (it["accepts_invites"] as? Boolean) ?: true
+            )
+        })
     }
 
     actual suspend fun friendRankedAllowed(session: Session): CloudResult<Boolean> = call {

@@ -301,6 +301,18 @@ class Profile(private val prefs: Prefs) {
     var quickOfferKind: QuickOfferKind by mutableStateOf(QuickOfferKind.of(prefs.getString(K_QUICK_OFFER_KIND, "")))
         private set
 
+    /**
+     * Recebe convites de amigos para partida online (balão em qualquer tela e push).
+     * Ligado por padrão; desligado, os amigos veem "não aceita convites".
+     */
+    var acceptInvites: Boolean by mutableStateOf(prefs.getInt(K_ACCEPT_INVITES, 1) == 1)
+        private set
+
+    fun changeAcceptInvites(on: Boolean) {
+        acceptInvites = on
+        prefs.putInt(K_ACCEPT_INVITES, if (on) 1 else 0)
+    }
+
     fun setQuickOffer(on: Boolean) {
         quickOfferEnabled = on
         prefs.putInt(K_QUICK_OFFER, if (on) 1 else 0)
@@ -673,6 +685,7 @@ class Profile(private val prefs: Prefs) {
         private const val K_FEEDBACK_OPT_OUT = "feedback_opt_out"
         private const val K_FEEDBACK_NEXT_AT = "feedback_next_at"
         private const val K_QUICK_OFFER = "quick_offer"
+        private const val K_ACCEPT_INVITES = "accept_invites"
         private const val K_QUICK_OFFER_KIND = "quick_offer_kind"
         private const val K_ONLINE_REWARDS = "online_rewards"
     }

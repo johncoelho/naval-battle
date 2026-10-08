@@ -9,6 +9,26 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.63.0] — 2026-10-07 · Em partida, convites opcionais e partida rápida um por vez
+
+App 0.28.1 (versionCode 66).
+
+### Adicionado
+- **"Em partida"** na lista de Amigos: quem está jogando aparece como "Em partida agora" e não
+  pode ser convidado até acabar. Fechar ou minimizar o jogo avisa na hora que saiu (antes o
+  amigo ficava "online" até 2 minutos). Presença com três estados em `supabase/presence.sql`.
+- **Ajustes → Receber convites de amigos** (ligado por padrão). Desligado: nenhum balão de
+  convite em tela nenhuma, nenhum push de convite, e os amigos veem "não está aceitando
+  convites".
+
+### Alterado
+- **Partida rápida um comandante por vez** (`supabase/quick_offer.sql`): o balão de "Disponível
+  para partida rápida" vai para um só disponível, com a sala reservada por 60s. Aceitou, a sala
+  some para todos; recusou ou deixou passar (o balão fecha sozinho em 50s), vai para o próximo
+  e nunca volta para quem recusou.
+
+---
+
 ## [0.62.0] — 2026-10-07 · Amigos online e ranqueada entre amigos
 
 App 0.28.0 (versionCode 65).

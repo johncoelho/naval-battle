@@ -56,6 +56,7 @@ import br.com.navalbattle.data.SeasonInfo
 import br.com.navalbattle.data.SeasonTrophy
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Protocol
+import br.com.navalbattle.data.FriendPresence
 import br.com.navalbattle.data.PushMessaging
 import br.com.navalbattle.data.RankedOutcome
 import br.com.navalbattle.data.Session
@@ -534,21 +535,30 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         refreshFriendPresence()
     }
 
-    /** Segundos desde que cada amigo foi visto no jogo (-1 = nunca); online = até [ONLINE_SECS]. */
-    var friendSeenSecs by mutableStateOf<Map<String, Int>>(emptyMap())
+    /** Presença de cada amigo; com o jogo aberto há até [ONLINE_SECS] conta como no jogo. */
+    var friendPresence by mutableStateOf<Map<String, FriendPresence>>(emptyMap())
         private set
 
-    fun friendOnline(id: String): Boolean = friendSeenSecs[id]?.let { it in 0..ONLINE_SECS } == true
+    private fun friendInGame(id: String): Boolean = friendPresence[id]?.seenSecs?.let { it in 0..ONLINE_SECS } == true
+
+    /** Logado e com o jogo aberto, fora de partida — online na lista. */
+    fun friendOnline(id: String): Boolean = friendInGame(id) && friendPresence[id]?.inMatch != true
+
+    /** Online e aceitando convites (não desligou nos Ajustes) — só para esse dá para convidar. */
+    fun friendInvitable(id: String): Boolean = friendOnline(id) && friendPresence[id]?.acceptsInvites != false
+
+    /** Logado e jogando agora: não recebe convite até a partida acabar. */
+    fun friendInMatch(id: String): Boolean = friendInGame(id) && friendPresence[id]?.inMatch == true
 
     suspend fun refreshFriendPresence() {
         val session = profile.currentSession() ?: return
-        (cloud.friendPresence(session) as? CloudResult.Ok)?.value?.let { friendSeenSecs = it }
+        (cloud.friendPresence(session) as? CloudResult.Ok)?.value?.let { friendPresence = it }
     }
 
-    /** Bate o ponto de presença: os amigos veem este comandante como online. */
-    suspend fun touchPresence() {
+    /** Bate o ponto de presença: online, em partida ou fora do jogo (ver supabase/presence.sql). */
+    suspend fun touchPresence(state: String) {
         val session = profile.currentSession() ?: return
-        cloud.touchPresence(session)
+        cloud.touchPresence(session, state, profile.acceptInvites)
     }
 
     /** Servidor libera ranqueada entre amigos (teste fechado) — chave friend_ranked_enabled. */
@@ -570,7 +580,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * banner debaixo do dedo de quem está lendo o de agora.
      */
     suspend fun pollPendingInvite() {
-        if (!profile.signedIn || match != null || pendingInvite != null) return
+        // desligado nos Ajustes: nenhum balão de convite em tela nenhuma
+        if (!profile.signedIn || !profile.acceptInvites || match != null || pendingInvite != null) return
         val session = profile.currentSession() ?: return
         val found = (cloud.findPendingInvite(session) as? CloudResult.Ok)?.value ?: return
         pendingInvite = found
@@ -696,6 +707,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val session = profile.currentSession() ?: return
         val shown = quickOffer
         if (shown != null) {
+            // a sala fica reservada para este comandante por 60s no servidor: sem resposta
+            // em 50s o balão fecha sozinho e a vez passa para outro disponível
+            if (nowMillis() - quickOfferShownAt > 50_000) {
+                dismissQuickOffer()
+                return
+            }
             val fresh = (cloud.getOnlineMatch(session, shown.id) as? CloudResult.Ok)?.value
             if (fresh == null || fresh.status != "waiting" || fresh.guestId != null) quickOffer = null
             return
@@ -704,8 +721,13 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (!casual && !ranked) return
         val found = (cloud.findQuickOffer(session, casual, ranked, ignoredOffers.toSet()) as? CloudResult.Ok)?.value ?: return
         // o estado pode ter mudado durante a chamada (entrou numa partida, abriu popup)
-        if (match == null && !otherPopupShowing && quickOffer == null) quickOffer = found
+        if (match == null && !otherPopupShowing && quickOffer == null) {
+            quickOffer = found
+            quickOfferShownAt = nowMillis()
+        }
     }
+
+    private var quickOfferShownAt = 0L
 
     /**
      * Aceita a sala do balão: assume o modo dela (Clássico ou Tático, venha de onde
@@ -731,11 +753,13 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         )
     }
 
-    /** "Agora não": esconde esta sala até o app ser fechado. */
+    /** "Agora não" (ou prazo vencido): a sala vai para o próximo disponível e não volta aqui. */
     fun dismissQuickOffer() {
         val room = quickOffer ?: return
         ignoredOffers += room.id
         quickOffer = null
+        val session = profile.currentSession() ?: return
+        uiScope?.launch { cloud.declineQuickOffer(session, room.id) }
     }
 
     fun clearQuickOfferNotice() {
@@ -1841,10 +1865,18 @@ fun App() {
         if (state.screen == Screen.MENU) DailyReminder.requestPermission()
     }
 
-    // presença para a lista de amigos: bate o ponto a cada minuto com o app aberto
-    LaunchedEffect(AppForeground.active, state.profile.signedIn) {
-        while (AppForeground.active && state.profile.signedIn) {
-            state.touchPresence()
+    // presença para a lista de amigos: com o jogo aberto bate o ponto a cada minuto
+    // ("em partida" durante a partida — aí não recebe convite); ao fechar ou minimizar
+    // avisa na hora que saiu, em vez de esperar o ponto vencer
+    val inMatch = state.match != null
+    LaunchedEffect(AppForeground.active, state.profile.signedIn, inMatch, state.profile.acceptInvites) {
+        if (!state.profile.signedIn) return@LaunchedEffect
+        if (!AppForeground.active) {
+            state.touchPresence("away")
+            return@LaunchedEffect
+        }
+        while (true) {
+            state.touchPresence(if (inMatch) "in_match" else "online")
             delay(60_000)
         }
     }

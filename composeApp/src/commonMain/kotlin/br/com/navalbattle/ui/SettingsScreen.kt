@@ -89,6 +89,13 @@ fun SettingsScreen(state: AppState) {
                 HudLabel(t(K.SETTINGS_QUICK_OFFER_SIGN_IN), Naval.muted)
             } else {
                 SettingsToggleRow(
+                    label = t(K.SETTINGS_ACCEPT_INVITES),
+                    on = profile.acceptInvites
+                ) { profile.changeAcceptInvites(!profile.acceptInvites) }
+                Gap(6)
+                HudLabel(t(K.SETTINGS_ACCEPT_INVITES_SUB), Naval.muted)
+                Gap(10)
+                SettingsToggleRow(
                     label = t(K.SETTINGS_QUICK_OFFER),
                     on = profile.quickOfferEnabled
                 ) { profile.setQuickOffer(!profile.quickOfferEnabled) }

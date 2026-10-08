@@ -108,7 +108,7 @@ fun FriendsScreen(state: AppState) {
     // online primeiro (quem pode receber convite agora), depois por quem foi visto há menos tempo
     val friends = state.friendships.filter { it.status == "accepted" }.map { other(it) }
         .sortedWith(compareBy<FriendEntry>({ !state.friendOnline(it.id) }, {
-            state.friendSeenSecs[it.id]?.takeIf { s -> s >= 0 } ?: Int.MAX_VALUE
+            if (state.friendInMatch(it.id)) 0 else state.friendPresence[it.id]?.seenSecs?.takeIf { s -> s >= 0 } ?: Int.MAX_VALUE
         }, { it.name.lowercase() }))
     val onlineCount = friends.count { state.friendOnline(it.id) }
 
@@ -181,9 +181,14 @@ fun FriendsScreen(state: AppState) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     friends.forEach { e ->
                         val online = state.friendOnline(e.id)
+                        val invitable = state.friendInvitable(e.id)
                         PersonCard(
                             e.name,
-                            subtitle = presenceLabel(state.friendSeenSecs[e.id]),
+                            subtitle = when {
+                                state.friendInMatch(e.id) -> t(K.FRIENDS_IN_MATCH)
+                                online && !invitable -> t(K.FRIENDS_NO_INVITES)
+                                else -> presenceLabel(state.friendPresence[e.id]?.seenSecs)
+                            },
                             avatarId = state.friendAvatars[e.id],
                             online = online,
                             dim = !online,
@@ -192,12 +197,19 @@ fun FriendsScreen(state: AppState) {
                                 scope.launch { state.loadFriendProfile(e.id) }
                             }
                         ) {
-                            if (online) {
+                            if (invitable) {
                                 PillButton(t(K.FRIENDS_PLAY), Naval.amber, Naval.amberInk) {
                                     state.pickMode(ModePick.Friend(e.id))
                                 }
                             } else {
-                                HudLabel(t(K.FRIENDS_OFFLINE), Naval.muted)
+                                HudLabel(
+                                    t(when {
+                                        state.friendInMatch(e.id) -> K.FRIENDS_BUSY
+                                        online -> K.FRIENDS_NO_INVITES_SHORT
+                                        else -> K.FRIENDS_OFFLINE
+                                    }),
+                                    Naval.muted
+                                )
                             }
                         }
                     }
@@ -229,7 +241,7 @@ fun FriendsScreen(state: AppState) {
             avatarId = state.viewedFriendProfile?.avatar?.ifBlank { null } ?: state.friendAvatars[e.id],
             loading = state.friendProfileLoading,
             profile = state.viewedFriendProfile,
-            onInvite = if (state.friendOnline(e.id)) {
+            onInvite = if (state.friendInvitable(e.id)) {
                 {
                     viewed = null
                     state.closeFriendProfile()

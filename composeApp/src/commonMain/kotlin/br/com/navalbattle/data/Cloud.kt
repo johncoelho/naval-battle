@@ -340,6 +340,9 @@ expect class CloudApi() {
         ignored: Set<String>
     ): CloudResult<OnlineMatch?>
 
+    /** "Agora não" no balão de partida rápida: a sala passa para outro comandante disponível. */
+    suspend fun declineQuickOffer(session: Session, matchId: String): CloudResult<Unit>
+
     /** Procura a sala de um código de convite, se ainda estiver esperando alguém. */
     suspend fun findMatchByCode(session: Session, code: String): CloudResult<OnlineMatch?>
 
@@ -411,11 +414,14 @@ expect class CloudApi() {
     /** Avatar de cada pessoa da lista de amigos (aceitos e pedidos), por id. */
     suspend fun friendAvatars(session: Session): CloudResult<Map<String, String>>
 
-    /** Bate o ponto de presença (supabase/presence.sql) — amigos veem quem está online. */
-    suspend fun touchPresence(session: Session): CloudResult<Unit>
+    /**
+     * Bate o ponto de presença (supabase/presence.sql): [state] é "online" (jogo aberto),
+     * "in_match" (em partida — não recebe convite) ou "away" (fechou/minimizou o jogo).
+     */
+    suspend fun touchPresence(session: Session, state: String, acceptInvites: Boolean): CloudResult<Unit>
 
-    /** Segundos desde que cada amigo foi visto no jogo, por id (-1 = nunca registrado). */
-    suspend fun friendPresence(session: Session): CloudResult<Map<String, Int>>
+    /** Presença de cada amigo, por id. */
+    suspend fun friendPresence(session: Session): CloudResult<Map<String, FriendPresence>>
 
     /** Ranqueada entre amigos liberada (chave do servidor, ligada no teste fechado). */
     suspend fun friendRankedAllowed(session: Session): CloudResult<Boolean>
@@ -528,3 +534,6 @@ expect class CloudApi() {
     /** Resgata o resultado da última temporada encerrada ainda não vista — nulo se não houver. */
     suspend fun claimSeasonEnd(session: Session): CloudResult<SeasonEnd?>
 }
+
+/** Segundos desde a última batida de ponto (-1 = nunca) e se estava em partida. */
+data class FriendPresence(val seenSecs: Int, val inMatch: Boolean, val acceptsInvites: Boolean = true)

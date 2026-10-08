@@ -95,7 +95,9 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     Ranqueada / Ambas (ranqueada só depois de aceitar a temporada). Ligado, o mesmo
     polling de 4s do convite procura salas de partida rápida esperando adversário, de
     qualquer modo (`find_quick_offer` no banco, que ignora sala parada há mais de 10
-    minutos), e mostra um balão (`ui/QuickOfferBanner.kt`) com Aceitar / Agora não.
+    minutos), e mostra um balão (`ui/QuickOfferBanner.kt`) com Aceitar / Agora não. A sala
+    vai para um disponível por vez (`supabase/quick_offer.sql`): reservada por 60s, recusada ou
+    sem resposta em 50s passa para o próximo, e nunca volta para quem recusou.
     Nunca aparece durante partida, enquanto o próprio comandante procura/hospeda, com
     outro popup na tela ou com o app em segundo plano. Aceitar entra pelo mesmo
     caminho do convidado da partida rápida (`OnlineLink.joinQuickOffer`); se alguém
@@ -111,8 +113,9 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     ganha um bloco de ranking (pontos da partida e como foram compostos, pontos e
     posição na temporada antes → depois, partidas e vitórias, botão "Ver ranking").
   - **Amigos online** — presença por minuto (`supabase/presence.sql`): bolinha verde e
-    "Online agora" para quem está no jogo, online no topo, "Visto há X" para os demais; só
-    dá para convidar quem está online. No teste fechado o convite pode ser **Casual ou
+    "Online agora" para quem está com o jogo aberto, "Em partida agora" para quem está
+    jogando, online no topo, "Visto há X" para os demais; só dá para convidar quem está online,
+    fora de partida e com **Receber convites de amigos** ligado nos Ajustes (padrão ligado). No teste fechado o convite pode ser **Casual ou
     Ranqueada** (chave `friend_ranked_enabled` em `app_config`; desligar no lançamento).
   - **Amigos** — tela própria (`ui/FriendsScreen.kt`): cartões com o avatar que cada
     comandante escolheu no perfil (`friend_avatars`; inicial do nome como reserva), nome e
