@@ -204,6 +204,8 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
 - **Patentes**, de Recruta a Almirante, em dez degraus de XP.
 - **Perfil** com nome de guerra, insígnia (seis brasões vetoriais) e folha de serviço
   completa: partidas, vitórias, aproveitamento, precisão, navios afundados e sequências.
+  **Excluir conta** fica no próprio Perfil, com confirmação: apaga tudo no servidor
+  (`supabase/account.sql`) e a carreira do aparelho volta ao começo.
 - **Dobrões** (a moeda do jogo) compram na loja. Beta testers têm uma aba Dobrões com compra
   simulada (até R$ 50/dia, sem cobrança real); a Google Play Billing entra depois.
 - **Passe de temporada**: para jogar ranqueada é preciso aderir à temporada da estação —

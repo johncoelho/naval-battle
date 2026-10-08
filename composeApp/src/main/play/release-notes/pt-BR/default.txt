@@ -1,1 +1,1 @@
-Ajustes internos. Nova pagina para virar beta tester no site do jogo, com o passo a passo e a situacao da sua liberacao.
+Agora da para excluir a sua conta pelo proprio jogo: Perfil, Excluir conta. Apaga a conta e tudo dela no servidor, com confirmacao antes.

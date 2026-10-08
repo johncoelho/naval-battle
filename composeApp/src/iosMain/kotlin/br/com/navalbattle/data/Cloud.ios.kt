@@ -199,6 +199,11 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(row?.let { matchOf(it) })
     }
 
+    actual suspend fun deleteAccount(session: Session): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/delete_my_account", emptyMap<String, Any?>(), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun registerPushToken(session: Session?, token: String, platform: String): CloudResult<Unit> = call {
         post("/rest/v1/rpc/register_push_token", mapOf("p_token" to token, "p_platform" to platform), token = session?.accessToken)
         CloudResult.Ok(Unit)

@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.66.0] — 2026-10-08 · Excluir conta pelo app
+
+App 0.29.0 (versionCode 69).
+
+### Adicionado
+- **Perfil → Excluir conta**, com confirmação ("Excluir para sempre" / "Manter conta"). Apaga
+  o usuário no servidor (`delete_my_account` em `supabase/account.sql`) e, em cascata,
+  perfil, amizades, partidas, passes, ranking, feedbacks e tokens de push; a carreira do
+  aparelho volta ao começo e o jogo segue como convidado. Exigência da App Store (regra
+  5.1.1) para a publicação no iPhone.
+- `assets/social/`: artes de divulgação do beta (post 1080×1350 e Stories 1080×1920).
+
+### Decisões para o iPhone (App Store)
+- Login com Google mantido por enquanto; "Entrar com a Apple" fica para depois.
+- Loja de dobrões simulada mantida igual no iPhone durante o beta.
+
+---
+
 ## [0.65.0] — 2026-10-07 · Página de beta tester
 
 App 0.28.3 (versionCode 68) — sem mudança no jogo; a versão sobe porque todo push publica.

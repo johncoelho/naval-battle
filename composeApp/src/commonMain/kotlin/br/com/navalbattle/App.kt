@@ -639,6 +639,21 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
     }
 
+    /**
+     * Exclui a conta de vez (App Store 5.1.1): apaga tudo no servidor e zera a carreira
+     * guardada no aparelho. Devolve falso se o servidor não confirmou — aí nada muda.
+     */
+    suspend fun deleteAccount(): Boolean {
+        val r = authed { session -> cloud.deleteAccount(session) }
+        if (r !is CloudResult.Ok) return false
+        pushRegistered = null
+        pushRegisteredFor = null
+        friendships = emptyList()
+        profile.signOut()
+        profile.reset()
+        return true
+    }
+
     /** Sai da conta e para de receber os avisos dela neste aparelho. */
     fun signOut() {
         val session = profile.currentSession()

@@ -422,6 +422,7 @@ private fun AccountSection(state: AppState) {
     var failed by remember { mutableStateOf(false) }
     var showForgot by remember { mutableStateOf(false) }
     var showChangePassword by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     Column(
@@ -470,6 +471,49 @@ private fun AccountSection(state: AppState) {
             SecondaryButton(t(K.AUTH_SIGN_OUT)) {
                 state.signOut()
                 message = t(K.AUTH_SIGNED_OUT)
+            }
+            Gap(14)
+            // exclusão de conta pelo próprio app — exigência da App Store (5.1.1)
+            if (!confirmDelete) {
+                HudLabel(
+                    t(K.AUTH_DELETE_ACCOUNT).uppercase(),
+                    Naval.danger,
+                    Modifier.clickable { confirmDelete = true; message = null }.padding(vertical = 6.dp)
+                )
+            } else {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, Naval.danger)
+                        .padding(12.dp)
+                ) {
+                    Text(t(K.AUTH_DELETE_TITLE), style = NavalType.mono, color = Naval.ink)
+                    Gap(6)
+                    HudLabel(t(K.AUTH_DELETE_BODY), Naval.muted)
+                    Gap(12)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        SecondaryButton(t(K.AUTH_DELETE_KEEP), modifier = Modifier.weight(1f)) { confirmDelete = false }
+                        Box(
+                            Modifier
+                                .weight(1f)
+                                .background(Naval.danger)
+                                .clickable(enabled = !busy) {
+                                    busy = true
+                                    scope.launch {
+                                        val ok = state.deleteAccount()
+                                        busy = false
+                                        confirmDelete = false
+                                        failed = !ok
+                                        message = t(if (ok) K.AUTH_DELETED else K.AUTH_DELETE_FAILED)
+                                    }
+                                }
+                                .padding(vertical = 14.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(t(K.AUTH_DELETE_CONFIRM).uppercase(), style = NavalType.button, color = Naval.bg)
+                        }
+                    }
+                }
             }
         } else {
             Gap(14)

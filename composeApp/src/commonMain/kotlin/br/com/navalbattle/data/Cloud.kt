@@ -358,6 +358,9 @@ expect class CloudApi() {
      */
     suspend fun registerPushToken(session: Session?, token: String, platform: String): CloudResult<Unit>
 
+    /** Apaga a conta e tudo dela no servidor (supabase/account.sql). Não tem volta. */
+    suspend fun deleteAccount(session: Session): CloudResult<Unit>
+
     /** Tira o token deste aparelho da conta (ao sair dela). */
     suspend fun unregisterPushToken(session: Session, token: String): CloudResult<Unit>
 
