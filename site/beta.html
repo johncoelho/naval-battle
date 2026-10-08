@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seja beta tester — Naval Battle</title>
+<meta name="description" content="Entre no teste fechado do Naval Battle no Android em três passos: cadastre o e-mail da sua Google Conta, aguarde a liberação e instale pela Play Store.">
+<meta name="theme-color" content="#080B07">
+<meta property="og:title" content="Seja beta tester do Naval Battle">
+<meta property="og:description" content="Três passos para jogar o Naval Battle antes de todo mundo: cadastre o e-mail, aguarde a liberação e instale pela Play Store.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://johncoelho.github.io/naval-battle/beta.html">
+<meta property="og:image" content="https://johncoelho.github.io/naval-battle/media/feature-graphic-1024x500.png">
+<link rel="icon" href="media/icon-512.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --bg:#080B07; --surface:#101509; --surface2:#161C10; --surface3:#1F2717;
+    --line:#2B3520; --lineSoft:#1B2214;
+    --ink:#EFF2E4; --inkSoft:#B4C0A4; --muted:#6B7760;
+    --green:#5F8F4A; --greenBright:#8ED17A;
+    --amber:#E6AC3F; --amberStrong:#FFC95C; --amberInk:#1E1402;
+    --danger:#E05A35;
+    --sans:'Chakra Petch',system-ui,-apple-system,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       background-image:radial-gradient(1000px 600px at 50% -10%,#0d1a0f 0%,var(--bg) 60%)}
+  a{color:inherit}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px}
+  header{border-bottom:1px solid var(--lineSoft);background:rgba(8,11,7,.86)}
+  .bar{display:flex;align-items:center;justify-content:space-between;height:58px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.04em;text-decoration:none}
+  .brand img{width:30px;height:30px;border-radius:7px}
+  .back{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-decoration:none}
+  .back:hover{color:var(--amberStrong)}
+
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--greenBright);text-transform:uppercase;margin:0}
+  h1{font-size:clamp(38px,8vw,64px);line-height:.95;margin:12px 0 14px;font-weight:700;text-wrap:balance}
+  h1 span{color:var(--amberStrong)}
+  h2{font-size:22px;margin:0 0 6px;font-weight:700}
+  p{line-height:1.62;color:var(--inkSoft);margin:0 0 12px}
+  .lede{font-size:clamp(16px,2.4vw,18px);max-width:52ch}
+  .hero{padding:44px 0 26px}
+
+  .steps{display:grid;gap:14px;margin:8px 0 34px;padding:0;list-style:none;counter-reset:passo}
+  .step{position:relative;border:1px solid var(--line);background:var(--surface);padding:20px 20px 20px 74px}
+  .step::before{counter-increment:passo;content:counter(passo);position:absolute;left:20px;top:20px;
+    width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--amber);
+    color:var(--amberStrong);font-family:var(--mono);font-weight:700;font-size:15px}
+  .step.done::before{content:"✓";background:var(--greenBright);border-color:var(--greenBright);color:var(--bg)}
+  .step.current{border-color:var(--amber);background:linear-gradient(180deg,rgba(230,172,63,.07),transparent 70%),var(--surface)}
+  .tip{font-size:13.5px;color:var(--muted);margin:10px 0 0}
+  .tip b{color:var(--inkSoft)}
+
+  form{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+  input[type=email]{flex:1 1 240px;min-width:0;background:var(--surface2);border:1px solid var(--line);color:var(--ink);
+    font-family:var(--mono);font-size:15px;padding:13px 14px;outline:none}
+  input[type=email]:focus{border-color:var(--amber)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;font-size:14px;padding:13px 18px;border:1px solid var(--amber);
+    background:var(--amber);color:var(--amberInk);cursor:pointer;text-decoration:none}
+  .btn:hover{background:var(--amberStrong)}
+  .btn:disabled{opacity:.55;cursor:default}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  .btn.ghost:hover{border-color:var(--amber);color:var(--amberStrong)}
+  .btn.off{background:var(--surface2);border-color:var(--line);color:var(--muted);pointer-events:none}
+  .btn:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--amberStrong);outline-offset:2px}
+
+  .result{margin:12px 0 0;min-height:22px;font-family:var(--mono);font-size:13px;color:var(--inkSoft)}
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    padding:5px 10px;border:1px solid;margin-right:8px;vertical-align:middle}
+  .pill.wait{color:var(--amberStrong);border-color:var(--amber)}
+  .pill.ok{color:var(--bg);background:var(--greenBright);border-color:var(--greenBright)}
+  .pill.none{color:var(--muted);border-color:var(--line)}
+  .pill.err{color:var(--danger);border-color:var(--danger)}
+
+  .faq{border-top:1px solid var(--lineSoft);padding:26px 0 10px}
+  details{border:1px solid var(--lineSoft);background:var(--surface);padding:14px 16px;margin:0 0 8px}
+  summary{cursor:pointer;font-weight:600;color:var(--ink)}
+  details p{margin:10px 0 0}
+  footer{border-top:1px solid var(--lineSoft);padding:22px 0 40px;font-size:13px;color:var(--muted)}
+  footer a{color:var(--inkSoft)}
+  @media (max-width:520px){ .step{padding:18px 16px 18px 64px} .step::before{left:16px;top:18px;width:32px;height:32px} }
+  @media (prefers-reduced-motion: no-preference){ .step{transition:border-color .2s,background .2s} }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="./"><img src="media/icon-512.png" alt="">Naval Battle</a>
+    <a class="back" href="./">← Voltar ao site</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="eyebrow">Teste fechado · Android</p>
+    <h1>Seja <span>beta tester</span></h1>
+    <p class="lede">Jogue o Naval Battle antes de todo mundo e ajude a deixar o jogo melhor.
+      São três passos, e o mais demorado é esperar a liberação — normalmente no mesmo dia.</p>
+  </section>
+
+  <ol class="steps">
+    <li class="step current" id="passo-1">
+      <h2>Cadastre o e-mail da sua Google Conta</h2>
+      <p>Use o mesmo e-mail que está na Play Store do seu celular Android. É por ele que a
+        Play reconhece que você pode instalar o teste.</p>
+      <form id="cadastro">
+        <input type="email" id="cad-email" required maxlength="254" autocomplete="email"
+               placeholder="seu@gmail.com" aria-label="E-mail da Google Conta">
+        <button type="submit" class="btn">Quero testar</button>
+      </form>
+      <p class="result" id="cad-result" role="status" aria-live="polite"></p>
+      <p class="tip">Não sabe qual é? Abra a <b>Play Store</b>, toque na sua foto no canto de
+        cima: o e-mail aparece logo abaixo do nome.</p>
+    </li>
+
+    <li class="step" id="passo-2">
+      <h2>Aguarde a liberação</h2>
+      <p>Seu e-mail entra na lista de testadores da Play Store. Volte aqui e confira a
+        situação quando quiser — a página lembra do e-mail que você usou.</p>
+      <form id="consulta">
+        <input type="email" id="con-email" required maxlength="254" autocomplete="email"
+               placeholder="seu@gmail.com" aria-label="E-mail cadastrado">
+        <button type="submit" class="btn ghost">Ver minha situação</button>
+      </form>
+      <p class="result" id="con-result" role="status" aria-live="polite"></p>
+    </li>
+
+    <li class="step" id="passo-3">
+      <h2>Instale pela Play Store</h2>
+      <p>Com a liberação feita, abra o link abaixo <b style="color:var(--ink)">no celular</b>,
+        toque em <b style="color:var(--ink)">Participar do teste</b> e depois em
+        <b style="color:var(--ink)">Instalar</b>. O jogo aparece como
+        “Naval Battle Classic (acesso antecipado)”.</p>
+      <a class="btn off" id="instalar" aria-disabled="true"
+         href="https://play.google.com/apps/testing/aigamesfactory.navalbattleclassic"
+         target="_blank" rel="noopener">Entrar no teste e instalar</a>
+      <p class="tip" id="instalar-dica">O botão acende quando a sua liberação estiver pronta.</p>
+    </li>
+  </ol>
+
+  <section class="faq">
+    <h2>Dúvidas comuns</h2>
+    <details>
+      <summary>A Play diz que o app não está disponível</summary>
+      <p>Ou a liberação ainda não saiu, ou a Play Store do celular está com outra Google
+        Conta. Confira a situação no passo 2 e, na Play Store, troque para a conta do e-mail
+        cadastrado (toque na sua foto e escolha a conta).</p>
+    </details>
+    <details>
+      <summary>Já tenho o APK do site instalado</summary>
+      <p>O APK do site e a versão da Play são assinados de forma diferente, então o Android
+        pede para desinstalar um antes de instalar o outro. Entre na sua conta do jogo antes:
+        a carreira fica salva na nuvem e volta quando você entrar de novo.</p>
+    </details>
+    <details>
+      <summary>Tenho iPhone</summary>
+      <p>O teste fechado da Play é só para Android. No iPhone dá para instalar o arquivo de
+        teste com o Sideloadly — o passo a passo está na <a href="./#ios">página do jogo</a>.</p>
+    </details>
+    <details>
+      <summary>Como mando um bug ou uma ideia?</summary>
+      <p>No próprio jogo: Ajustes → Enviar feedback. Bug confirmado rende dobrões e melhoria
+        aceita rende carga de habilidade.</p>
+    </details>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    Naval Battle · <a href="./">Página do jogo</a> · <a href="./privacy.html">Privacidade</a>
+  </div>
+</footer>
+
+<script>
+  // Cadastro e consulta da fila de beta testers (supabase/beta_waitlist.sql) com a chave
+  // anônima pública do app. A liberação na Play é feita à mão; esta página só mostra a
+  // situação: 'none' (fora da lista), 'pending' (na fila) ou 'invited' (liberado).
+  (() => {
+    const SUPABASE_URL = 'https://cwtslesnthbenxswdcbv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+      'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dHNsZXNudGhiZW54c3dkY2J2Iiwicm9sZSI6ImFub24i' +
+      'LCJpYXQiOjE3ODkyNjc4MDksImV4cCI6MjEwNDg0MzgwOX0.nNN323ZRPocbcRVc4DPHNoWtgP2nVBjjojWIMNSZI_g';
+    const KEY = 'naval-beta-email';
+    const $ = (id) => document.getElementById(id);
+
+    async function rpc(name, body) {
+      const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) throw new Error('http ' + r.status);
+      return r.json();
+    }
+    function remember(email) { try { localStorage.setItem(KEY, email); } catch (e) {} }
+    function recall() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+
+    function setStep(n) {
+      [1, 2, 3].forEach(i => {
+        const el = $('passo-' + i);
+        el.classList.toggle('done', i < n);
+        el.classList.toggle('current', i === n);
+      });
+    }
+    function setInstall(on) {
+      const b = $('instalar');
+      b.classList.toggle('off', !on);
+      b.setAttribute('aria-disabled', on ? 'false' : 'true');
+      $('instalar-dica').textContent = on
+        ? 'Liberado! Abra no celular com a mesma Google Conta do cadastro.'
+        : 'O botão acende quando a sua liberação estiver pronta.';
+    }
+    function showStatus(status, email) {
+      const out = $('con-result');
+      if (status === 'invited') {
+        out.innerHTML = '<span class="pill ok">Liberado</span>Pode instalar — siga para o passo 3.';
+        setStep(3); setInstall(true);
+      } else if (status === 'pending') {
+        out.innerHTML = '<span class="pill wait">Na fila</span>Cadastro recebido. A liberação costuma sair no mesmo dia.';
+        setStep(2); setInstall(false);
+      } else {
+        out.innerHTML = '<span class="pill none">Não encontrado</span>Esse e-mail ainda não está na lista — faça o passo 1.';
+        setStep(1); setInstall(false);
+      }
+      $('con-email').value = email;
+    }
+    async function check(email) {
+      $('con-result').textContent = 'Consultando…';
+      try {
+        const rows = await rpc('beta_status', { p_email: email });
+        const status = Array.isArray(rows) && rows[0] ? rows[0].status : 'none';
+        showStatus(status, email);
+        if (status !== 'none') remember(email);
+      } catch (e) {
+        $('con-result').innerHTML = '<span class="pill err">Sem conexão</span>Não consegui consultar agora. Tente de novo em instantes.';
+      }
+    }
+
+    $('cadastro').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const email = $('cad-email').value.trim();
+      if (!email) return;
+      const button = ev.target.querySelector('button');
+      const out = $('cad-result');
+      button.disabled = true;
+      out.textContent = 'Enviando…';
+      try {
+        const result = await rpc('join_beta_waitlist', { p_email: email, p_platform: 'android' });
+        if (result === 'ok' || result === 'exists') {
+          out.innerHTML = result === 'ok'
+            ? '<span class="pill ok">Cadastrado</span>Agora é só aguardar a liberação.'
+            : '<span class="pill wait">Já cadastrado</span>Esse e-mail já estava na lista.';
+          remember(email);
+          check(email);
+        } else if (result === 'invalid') {
+          out.innerHTML = '<span class="pill err">E-mail inválido</span>Confira se ele está completo.';
+        } else {
+          out.innerHTML = '<span class="pill err">Erro</span>Não consegui cadastrar agora. Tente de novo daqui a pouco.';
+        }
+      } catch (e) {
+        out.innerHTML = '<span class="pill err">Sem conexão</span>Tente de novo daqui a pouco.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    $('consulta').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const email = $('con-email').value.trim();
+      if (email) check(email);
+    });
+
+    // voltou depois: já mostra a situação do e-mail usado antes
+    const saved = recall();
+    if (saved) { $('cad-email').value = saved; check(saved); }
+  })();
+</script>
+</body>
+</html>

@@ -37,3 +37,19 @@ end $$;
 
 revoke all on function public.join_beta_waitlist(text, text) from public;
 grant execute on function public.join_beta_waitlist(text, text) to anon, authenticated;
+
+-- situação do cadastro para a página beta.html: 'none' (não está na lista),
+-- 'pending' (na fila, aguardando liberação na Play) ou 'invited' (liberado, pode
+-- instalar). Só devolve o status do e-mail digitado — nada de outros cadastros.
+create or replace function public.beta_status(p_email text)
+returns table (status text)
+language sql security definer set search_path = public stable as $$
+  select coalesce(
+    (select case when b.status in ('invited', 'active') then 'invited' else 'pending' end
+       from public.beta_testers b
+      where lower(b.email) = lower(trim(p_email))
+      limit 1),
+    'none');
+$$;
+revoke all on function public.beta_status(text) from public;
+grant execute on function public.beta_status(text) to anon, authenticated;

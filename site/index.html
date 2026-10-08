@@ -179,7 +179,7 @@
       </svg>
       NAVAL BATTLE
     </div>
-    <nav class="navlinks">
+    <nav class="navlinks"><a href="./beta.html">Beta tester</a>
       <a href="#jogo">O jogo</a>
       <a href="#formas">Como jogar</a>
       <a href="#temporadas">Temporadas</a>
@@ -395,28 +395,16 @@
       <div class="install">
         <h3>Android</h3>
         <div id="testador" class="betastep">
-          <p class="step-k">1 · Entre na lista de testadores</p>
-          <p class="step-p">A Play Store só libera o teste fechado para quem está na lista. Use o
-             e-mail da Google Conta do celular — é nele que o convite chega.</p>
-          <form id="beta-form" class="betaform">
-            <input type="email" id="beta-email" required maxlength="254" autocomplete="email"
-                   placeholder="seu@email.com" aria-label="E-mail da Google Conta">
-            <button type="submit" class="btn btn-primary">Quero testar</button>
-          </form>
-          <p class="meta" id="beta-status" role="status" aria-live="polite"></p>
-        </div>
-        <div class="betastep">
-          <p class="step-k">2 · Com o convite no e-mail, entre pela Play Store</p>
+          <p class="step-k">Pela Play Store · teste fechado</p>
+          <p class="step-p">Cadastre o e-mail da Google Conta do celular, aguarde a liberação e
+             instale pela Play Store. A página de beta tester mostra cada passo e avisa quando
+             o seu acesso estiver liberado.</p>
           <div class="cta" style="margin:10px 0 0">
-            <a class="btn btn-ghost"
-               href="https://play.google.com/apps/testing/aigamesfactory.navalbattleclassic"
-               target="_blank" rel="noopener">
-              ↓ Entrar pela Play Store
-            </a>
+            <a class="btn btn-primary" href="./beta.html">Quero ser beta tester</a>
           </div>
         </div>
         <p style="margin:0 0 14px;font-size:13.5px;color:var(--muted)">
-          Enquanto o convite não chega, use o APK direto, que instala sem precisar de convite.
+          Enquanto a liberação não sai, dá para usar o APK direto, que instala sem convite.
         </p>
         <div class="cta" style="margin:0 0 14px">
           <a class="btn btn-ghost"
@@ -527,54 +515,6 @@
     } catch (e) {
       todos.forEach(el => { if (el) el.textContent = 'Versão de teste · consulte a release para conferir o build'; });
     }
-  })();
-</script>
-<script>
-  // fila de beta testers: chama join_beta_waitlist no Supabase (supabase/beta_waitlist.sql)
-  // com a chave anonima publica do app. A tabela nao tem policy; a funcao valida e
-  // nao duplica. Os e-mails vao a mao para a lista do Play Console (docs/BUILD.md).
-  (() => {
-    const SUPABASE_URL = 'https://cwtslesnthbenxswdcbv.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
-      'eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3dHNsZXNudGhiZW54c3dkY2J2Iiwicm9sZSI6ImFub24i' +
-      'LCJpYXQiOjE3ODkyNjc4MDksImV4cCI6MjEwNDg0MzgwOX0.nNN323ZRPocbcRVc4DPHNoWtgP2nVBjjojWIMNSZI_g';
-    const form = document.getElementById('beta-form');
-    const status = document.getElementById('beta-status');
-    if (!form) return;
-    form.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const email = document.getElementById('beta-email').value.trim();
-      if (!email) return;
-      const button = form.querySelector('button');
-      button.disabled = true;
-      status.textContent = 'Enviando…';
-      try {
-        const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/join_beta_waitlist', {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ p_email: email, p_platform: 'android' })
-        });
-        const result = r.ok ? await r.json() : null;
-        if (result === 'ok') {
-          status.textContent = 'Cadastrado! Assim que for adicionado, o convite da Play Store chega nesse e-mail.';
-          form.reset();
-        } else if (result === 'exists') {
-          status.textContent = 'Esse e-mail já está na fila. Quando o convite chegar, siga para o passo 2.';
-        } else if (result === 'invalid') {
-          status.textContent = 'Confira o e-mail — ele parece incompleto.';
-        } else {
-          status.textContent = 'Não consegui cadastrar agora. Tente de novo daqui a pouco.';
-        }
-      } catch (e) {
-        status.textContent = 'Sem conexão com o servidor. Tente de novo daqui a pouco.';
-      } finally {
-        button.disabled = false;
-      }
-    });
   })();
 </script>
 </body>

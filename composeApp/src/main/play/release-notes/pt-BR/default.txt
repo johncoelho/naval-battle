@@ -1,1 +1,1 @@
-Amigos mais claro: a patente aparece embaixo do nome e o status fica so a direita (Jogar, Em partida ou ha quanto tempo saiu). Busca de comandante com botao Buscar e aviso do resultado.
+Ajustes internos. Nova pagina para virar beta tester no site do jogo, com o passo a passo e a situacao da sua liberacao.

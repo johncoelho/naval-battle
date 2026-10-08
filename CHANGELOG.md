@@ -9,6 +9,22 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.65.0] — 2026-10-07 · Página de beta tester
+
+App 0.28.3 (versionCode 68) — sem mudança no jogo; a versão sobe porque todo push publica.
+
+### Adicionado
+- **`site/beta.html`**: página só para virar beta tester, em três passos numerados —
+  cadastrar o e-mail da Google Conta, aguardar a liberação e instalar pela Play Store. "Ver
+  minha situação" consulta `beta_status` (novo em `supabase/beta_waitlist.sql`) e mostra
+  Não encontrado / Na fila / Liberado; liberado, o botão de instalar acende. A página lembra
+  o e-mail usado no aparelho. Dúvidas comuns (conta errada na Play, APK do site, iPhone,
+  feedback).
+- Site: atalho "Beta tester" no menu e o quadro Android leva à página nova (o formulário
+  antigo dizia que a Play mandava convite por e-mail, o que não acontece).
+
+---
+
 ## [0.64.0] — 2026-10-07 · Amigos mais direto
 
 App 0.28.2 (versionCode 67).
