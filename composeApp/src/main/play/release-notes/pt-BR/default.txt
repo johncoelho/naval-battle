@@ -1,1 +1,1 @@
-Agora da para excluir a sua conta pelo proprio jogo: Perfil, Excluir conta. Apaga a conta e tudo dela no servidor, com confirmacao antes.
+Correcoes da bateria de testes: campo do feedback aceita toque em qualquer ponto; convite recusado avisa quem convidou; nome do adversario certo no topo da partida online; barragem dupla nao se perde num acerto; lista e selo de amigos atualizam sozinhos; tocar na notificacao volta ao jogo aberto; radar gira com o rastro do lado certo.

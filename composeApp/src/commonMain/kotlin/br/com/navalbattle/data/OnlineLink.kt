@@ -100,6 +100,10 @@ class OnlineLink(
     var ranked: Boolean = false
         private set
 
+    /** O amigo convidado recusou a sala (ela virou `abandoned` antes de alguém entrar). */
+    var inviteDeclined: Boolean = false
+        private set
+
     /** Id e nome de quem está do outro lado da sala — nulos até a conexão fechar. */
     var opponentId: String? = null
         private set
@@ -182,6 +186,7 @@ class OnlineLink(
     ) {
         this.session = session
         this.ranked = ranked
+        inviteDeclined = false
         pollJob?.cancel()
         onState(LinkState.HOSTING, Side.PLAYER)
         pollJob = scope.launch {
@@ -343,6 +348,12 @@ class OnlineLink(
                 captureOpponent(match, session)
                 onState(LinkState.CONNECTED, Side.PLAYER)
                 startMessagePolling(session, matchId, onLine)
+                return
+            }
+            // o convidado recusou (decline_online_invite fecha a sala): para de esperar
+            if (match.status == "abandoned") {
+                inviteDeclined = match.invitedId != null
+                onState(LinkState.FAILED, Side.PLAYER)
                 return
             }
         }

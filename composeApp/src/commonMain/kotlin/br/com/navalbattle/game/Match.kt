@@ -406,12 +406,16 @@ class Match(
             return outcome
         }
 
-        if (extraShots > 0) {
-            extraShots--
-            return outcome
+        // regra clássica da batalha naval: quem acerta joga de novo; só passa a vez no erro.
+        // A barragem dupla só é gasta num erro — acerto já dá outro tiro, então
+        // consumi-la ali desperdiçava a habilidade sem efeito nenhum.
+        if (!scored) {
+            if (extraShots > 0) {
+                extraShots--
+                return outcome
+            }
+            endTurn()
         }
-        // regra clássica da batalha naval: quem acerta joga de novo; só passa a vez no erro
-        if (!scored) endTurn()
         return outcome
     }
 

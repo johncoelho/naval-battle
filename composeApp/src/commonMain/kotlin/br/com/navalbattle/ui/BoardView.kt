@@ -160,11 +160,13 @@ fun BoardView(
         if (sweep) {
             rotate(sweepAngle, center) {
                 drawCircle(
+                    // a varredura gira no sentido horário: a borda acesa fica na frente
+                    // (fim do degradê) e o rastro vai apagando para trás, por onde já passou
                     brush = Brush.sweepGradient(
-                        0.00f to Naval.greenBright.copy(alpha = 0.22f),
-                        0.10f to Naval.greenBright.copy(alpha = 0.05f),
-                        0.28f to Color.Transparent,
-                        1.00f to Color.Transparent,
+                        0.00f to Color.Transparent,
+                        0.72f to Color.Transparent,
+                        0.90f to Naval.greenBright.copy(alpha = 0.05f),
+                        1.00f to Naval.greenBright.copy(alpha = 0.22f),
                         center = center
                     ),
                     radius = size.width * 0.72f,

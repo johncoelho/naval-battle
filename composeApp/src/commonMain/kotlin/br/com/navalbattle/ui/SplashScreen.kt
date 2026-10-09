@@ -200,11 +200,12 @@ private fun DrawScope.drawSea(now: Long, skin: br.com.navalbattle.design.Skin) {
     val sweepDeg = (t * 90f) % 360f
     rotate(sweepDeg, c) {
         drawCircle(
+            // borda acesa na frente do giro (horário), rastro apagando para trás
             brush = Brush.sweepGradient(
-                0.00f to Naval.greenBright.copy(alpha = 0.42f),
-                0.09f to Naval.greenBright.copy(alpha = 0.10f),
-                0.25f to Color.Transparent,
-                1.00f to Color.Transparent,
+                0.00f to Color.Transparent,
+                0.75f to Color.Transparent,
+                0.91f to Naval.greenBright.copy(alpha = 0.10f),
+                1.00f to Naval.greenBright.copy(alpha = 0.42f),
                 center = c
             ),
             radius = r,

@@ -9,6 +9,35 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.67.0] — 2026-10-09 · Bateria de testes completa e correções
+
+App 0.29.1 (versionCode 70).
+
+### Adicionado
+- `docs/QA_TEST_PLAN.md`: roteiro fixo de testes de ponta a ponta (SPEC de QA), com o app
+  instalado pela Play Store nos emuladores QA01 e QA02 (contas Google de teste), casos de
+  dois aparelhos primeiro, limpeza do servidor e formato de relatório. Skill
+  `.claude/skills/qa-full-test` aponta para ele.
+
+### Corrigido
+- **Feedback**: a caixa de texto só abria o teclado tocando na primeira linha — agora o
+  campo ocupa a caixa inteira (era o "não deixa escrever" relatado pelos testadores).
+- **Convite recusado**: quem convidou ficava em "Aguardando aceitar…" para sempre; agora a
+  espera para e a tela Online mostra "Convite recusado".
+- **Cabeçalho da partida online**: quem entrava na sala via o próprio nome em "VS.".
+- **Barragem dupla** era gasta mesmo quando o primeiro tiro acertava (acerto já dá outro
+  tiro); agora só é consumida num erro.
+- **Amigos**: pedido recebido com o jogo aberto ou minimizado não acendia o selo do deque,
+  e o "Pedido enviado" não virava amigo com a tela aberta. Push com o jogo aberto agora
+  relê as amizades (`PushInbox`), a volta do segundo plano também, e a tela de Amigos relê
+  a lista a cada 20s.
+- **Notificação**: tocar nela com o jogo minimizado reabria o app pela abertura
+  (`launchMode="singleTask"`).
+- **Radar**: o rastro da varredura estava à frente da linha; agora a borda acesa lidera e o
+  rastro apaga por onde já passou (tabuleiro e abertura).
+
+---
+
 ## [0.66.0] — 2026-10-08 · Excluir conta pelo app
 
 App 0.29.0 (versionCode 69).

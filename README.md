@@ -14,7 +14,7 @@ comando naval noturno. Todo o jogo é desenhado em Canvas: não há uma única i
 | **APK de teste** | [release `latest`](https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk) |
 
 Documentação complementar: [processo de build](docs/BUILD.md) · [stack e convenções](docs/STACK.md) ·
-[design system](docs/DESIGN_SYSTEM.md) · [histórico](CHANGELOG.md)
+[design system](docs/DESIGN_SYSTEM.md) · [roteiro de testes](docs/QA_TEST_PLAN.md) · [histórico](CHANGELOG.md)
 
 ---
 

@@ -104,7 +104,9 @@ fun FeedbackFormScreen(state: AppState) {
                     onValueChange = { if (it.length <= 800) message = it },
                     textStyle = NavalType.body.copy(color = Naval.ink),
                     cursorBrush = SolidColor(Naval.amberStrong),
-                    modifier = Modifier.fillMaxWidth()
+                    // o campo ocupa a caixa toda: com a altura de uma linha só, tocar no
+                    // meio da caixa não abria o teclado e parecia que não dava pra escrever
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 112.dp)
                 )
             }
             if (message.isNotBlank() && !validLength) {

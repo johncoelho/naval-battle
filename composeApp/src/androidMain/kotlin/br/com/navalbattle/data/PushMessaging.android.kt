@@ -37,11 +37,14 @@ actual object PushMessaging {
 
 /**
  * Com o app fechado/em segundo plano o próprio Android mostra a notificação (payload
- * "notification"); com ele aberto, os balões do jogo já cuidam do aviso, então aqui
- * não se mostra nada. Token novo é registrado na próxima vez que o app abre.
+ * "notification"); com ele aberto, não se mostra nada — só avisa o jogo pelo
+ * [PushInbox] para reler o que mudou (amizades, por exemplo). Token novo é
+ * registrado na próxima vez que o app abre.
  */
 class PushService : FirebaseMessagingService() {
-    override fun onMessageReceived(message: RemoteMessage) {}
+    override fun onMessageReceived(message: RemoteMessage) {
+        PushInbox.post(message.data["kind"].orEmpty())
+    }
 
     override fun onNewToken(token: String) {
         // só no build de depuração: permite testar o envio pelo banco sem entrar na conta

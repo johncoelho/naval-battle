@@ -85,10 +85,11 @@ fun FriendsScreen(state: AppState) {
 
     LaunchedEffect(Unit) {
         state.refreshFriendships()
-        // presença muda com a tela aberta: relê a cada 20s
+        // presença e pedidos mudam com a tela aberta (aceite do outro lado, pedido novo):
+        // relê tudo a cada 20s — antes só a presença, e o "pedido enviado" ficava preso
         while (true) {
             delay(20_000)
-            state.refreshFriendPresence()
+            state.refreshFriendships()
         }
     }
     LaunchedEffect(query) {

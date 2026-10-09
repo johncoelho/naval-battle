@@ -1,5 +1,22 @@
 package br.com.navalbattle.data
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+
+/**
+ * Pushes que chegam com o jogo aberto (o sistema não mostra a notificação nesse caso).
+ * Carrega só o `kind` do aviso, para a tela certa reler o que mudou no servidor —
+ * sem isso o pedido de amizade aceito só aparecia depois de sair e voltar.
+ */
+object PushInbox {
+    private val flow = MutableSharedFlow<String>(extraBufferCapacity = 8)
+    val events: SharedFlow<String> = flow
+
+    fun post(kind: String) {
+        flow.tryEmit(kind)
+    }
+}
+
 /**
  * Push de verdade: convites de amigo, pedidos de amizade e adversário encontrado
  * chegam com o app fechado. Android via Firebase Cloud Messaging; o envio sai do

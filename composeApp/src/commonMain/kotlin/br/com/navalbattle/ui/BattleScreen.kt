@@ -211,7 +211,8 @@ fun BattleScreen(state: AppState, match: Match) {
                         local -> t(K.BATTLE_TURN_OF, match.sideName(viewSide)).uppercase()
                         // rede (LAN ou online): o nome do adversário chega pelo HELLO do
                         // protocolo — antes a tela mostrava só "alvo inimigo" sempre
-                        lan -> t(K.BATTLE_VS, match.sideName(Side.ENEMY)).uppercase()
+                        // o lado de quem entrou na sala é o ENEMY: o adversário é sempre o outro lado
+                        lan -> t(K.BATTLE_VS, match.sideName(viewSide.other())).uppercase()
                         else -> t(K.BATTLE_ENEMY_TARGET)
                     },
                     "${t(K.TURN)} ${match.turnCount.toString().padStart(2, '0')}",

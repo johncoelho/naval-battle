@@ -163,9 +163,10 @@ fun OnlineScreen(state: AppState) {
                 LinkState.FAILED -> {
                     Gap(20)
                     OnlinePanel(Naval.danger) {
-                        HudLabel(t(K.ONLINE_FAILED), Naval.danger)
+                        val declined = state.onlineInviteDeclined
+                        HudLabel(t(if (declined) K.ONLINE_DECLINED else K.ONLINE_FAILED), Naval.danger)
                         Gap(6)
-                        HudLabel(t(K.ONLINE_FAILED_SUB), Naval.muted)
+                        HudLabel(t(if (declined) K.ONLINE_DECLINED_SUB else K.ONLINE_FAILED_SUB), Naval.muted)
                     }
                 }
 

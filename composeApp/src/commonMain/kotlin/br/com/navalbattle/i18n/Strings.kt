@@ -671,6 +671,8 @@ enum class K(val pt: String, val en: String, val es: String) {
     ONLINE_CONNECTING("Entrando na sala…", "Joining the room…", "Entrando a la sala…"),
     ONLINE_CONNECTED("Conectado", "Connected", "Conectado"),
     ONLINE_FAILED("Não deu certo", "Didn't work", "No funcionó"),
+    ONLINE_DECLINED("Convite recusado", "Invite declined", "Invitación rechazada"),
+    ONLINE_DECLINED_SUB("Seu amigo não pode jogar agora — tente mais tarde ou convide outro", "Your friend can't play right now — try later or invite someone else", "Tu amigo no puede jugar ahora — intenta más tarde o invita a otro"),
     ONLINE_FAILED_SUB("Confira o código ou tente a partida rápida", "Check the code or try quick match", "Revisa el código o intenta la partida rápida"),
     ONLINE_HOW("Como funciona", "How it works", "Cómo funciona"),
     ONLINE_STEP_1("Toque em partida rápida ou crie uma sala de amigo", "Tap quick match or create a friend room", "Toca partida rápida o crea una sala de amigo"),

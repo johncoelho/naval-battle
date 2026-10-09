@@ -33,6 +33,7 @@ import br.com.navalbattle.data.AppRelease
 import br.com.navalbattle.data.appVersionName
 import br.com.navalbattle.data.isNewerVersion
 import br.com.navalbattle.data.DailyReminder
+import br.com.navalbattle.data.PushInbox
 import br.com.navalbattle.data.DailyStatus
 import br.com.navalbattle.data.SeasonEnd
 import br.com.navalbattle.data.SeasonPassStatus
@@ -368,6 +369,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     var onlineLinkState by mutableStateOf(LinkState.IDLE)
         private set
+
+    /** A última sala de convite falhou porque o amigo recusou (lido junto com FAILED). */
+    val onlineInviteDeclined: Boolean get() = onlineLink.inviteDeclined
 
     /** Código da sala de amigo, para mostrar na tela enquanto espera alguém entrar. */
     var onlineCode by mutableStateOf<String?>(null)
@@ -1881,6 +1885,16 @@ fun App() {
             state.checkSeasonEnd()
             // Diário de bordo: toda entrada no app pode mostrar o balão de novo
             state.onAppEntered()
+            // pedido de amizade que chegou com o app minimizado: acende o selo de Amigos
+            state.refreshFriendships()
+        }
+    }
+
+    // push que chega com o jogo aberto (o sistema não mostra): relê as amizades para o
+    // selo do deque e a tela de Amigos refletirem pedido recebido/aceito na hora
+    LaunchedEffect(Unit) {
+        PushInbox.events.collect { kind ->
+            if (kind.startsWith("friend")) state.refreshFriendships()
         }
     }
 
