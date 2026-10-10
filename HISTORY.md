@@ -132,6 +132,9 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   John: "se tiverem mais pontos para serem resolvidos na fila, sugiro fazer todos sempre no mesmo
   release, senão vai demorar mto". Cada versão passa pela revisão do Google; um commit por item
   mantém a causa fácil de achar.
+- **10/10 · QA anexa print de evidência** em todo fechamento, passou ou falhou (pedido do John):
+  mais fácil corrigir e mais claro quando deu certo. Prints no branch `qa-evidencias` (público, fora
+  do CI), enviados por `tools/qa-evidencia.sh`.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 

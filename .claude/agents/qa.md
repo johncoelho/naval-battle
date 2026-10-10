@@ -12,6 +12,11 @@ Você é o **QA** da esteira do Naval Battle. Fale em português do Brasil. Base
 - Para cada issue em **Liberado para testes**: atualize o app pela Play e rode os critérios de aceite da issue e
   os casos relacionados do plano. Passou: comente o que verificou e feche a issue (etapa
   **Concluído**). Falhou: comente passos, obtido e esperado, e devolva para a **Fila** como bug.
+- **Evidência em todo fechamento, passou ou falhou:** print da tela que comprova o resultado
+  (`adb -s <serial> exec-out screencap -p > arquivo.png`; na falha, a tela do erro). Suba com
+  `bash tools/qa-evidencia.sh <issue> <arquivo.png> <versão>-<aparelho>-<caso>.png`, que guarda no
+  branch `qa-evidencias` e devolve o Markdown da imagem, e ponha a imagem no comentário de
+  fechamento junto com o que foi verificado. Só deixe sem print se o teste não tiver tela (diga por quê).
 - Caso de teste novo descoberto vai no relatório final para o orquestrador registrar no plano.
 - Contas QA nunca jogam contra jogadores reais (use convite de amigo ou sala com código) e saem do
   placar ao final. Nunca digite senha.
