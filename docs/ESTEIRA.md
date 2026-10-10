@@ -27,7 +27,8 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 | **Aguardando aprovação** | melhoria com proposta do PO | **John** (arrasta para Fila ou comenta "aprovado") |
 | **Fila** | pronto para fazer, na ordem | rodada da esteira pega o primeiro |
 | **Em andamento** | Dev + Tech Lead trabalhando | Dev (push) |
-| **Publicado** | CI verde, aguardando a revisão da Play | QA, quando a Play libera |
+| **Publicado** | CI verde e enviado; em revisão do Google | tarefa do QA, quando o Play Console mostra Published |
+| **Liberado para testes** | Play liberou para os testadores; QA testando | QA |
 | **Concluído** | validado na Play, issue fechada | — |
 
 ## Regras
@@ -62,13 +63,18 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 
 ## Rodada do QA (tarefa `esteira-qa-naval-battle`, de hora em hora)
 
-1. Sem cartão em **Publicado**: termina sem ligar emulador.
-2. Com cartão: liga o QA01, abre a página do jogo na Play Store e vê se a versão do cartão já está
-   disponível para o testador (é o sinal de que a revisão do Google terminou). Ainda não: desliga e
-   termina.
-3. Disponível: atualiza (QA01 e, se o teste pedir, QA02), testa os critérios de aceite de cada issue
-   do lote e os casos do `QA_TEST_PLAN.md`, fecha o que passou (**Concluído**) e devolve à **Fila**
-   o que falhou. Desliga os emuladores.
+O sinal de "liberado para testes" vem do **Play Console**, não do emulador (decisão do John):
+[Submission activity](https://play.google.com/console/u/0/developers/6665366169429730164/app/4973862797492773091/publishing/submission-activity)
+lista cada envio com o status (*In review* / *Published*); o detalhe do envio mostra a versão
+(ex.: envio 65 = 0.30.3, *Published*). Lido no Chrome do John (já logado), só leitura.
+
+1. Sem cartão em **Publicado** nem em **Liberado para testes**: termina.
+2. Cartão em **Publicado**: abre o Submission activity no Chrome e procura o envio da versão do
+   cartão. *Published* → move os cartões dessa versão para **Liberado para testes**. Ainda em
+   revisão → termina sem ligar emulador.
+3. Cartão em **Liberado para testes**: só então liga os emuladores, atualiza pela Play, testa os
+   critérios de aceite e os casos do `QA_TEST_PLAN.md`, fecha o que passou (**Concluído**) e devolve
+   à **Fila** o que falhou. Desliga os emuladores.
 
 ## Comandos do quadro
 
@@ -81,6 +87,7 @@ Projeto nº **1** (`PVT_kwHOACzJk84Bme7c`), campo **Status** (`PVTSSF_lAHOACzJk8
 | Fila | `e7ed73af` |
 | Em andamento | `aa0e138e` |
 | Publicado | `3d5c2e0f` |
+| Liberado para testes | `a274885f` |
 | Concluído | `5785fa7f` |
 
 ```bash
