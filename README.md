@@ -124,7 +124,13 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     a patente embaixo do nome e o status só à direita (Jogar para quem está com o jogo aberto,
     "Em partida", "há 3 h" para quem saiu), online no topo; a busca tem botão Buscar e diz
     quantos comandantes achou; só dá para convidar quem está online,
-    fora de partida e com **Receber convites de amigos** ligado nos Ajustes (padrão ligado). No teste fechado o convite pode ser **Casual ou
+    fora de partida e com **Receber convites de amigos** ligado nos Ajustes (padrão ligado). **Push "amigo online"** (0.31.0): quando um amigo
+    abre o jogo depois de estar fora, quem está com o jogo fechado recebe "<nome> está
+    online · Chame para uma batalha." e o toque abre a tela de Amigos. Opção **Avisar quando
+    um amigo ficar online** nos Ajustes (padrão ligado; inativa com os convites desligados).
+    Anti-spam no servidor (`touch_presence`): 1 aviso por amigo a cada 3 h e até 5 por dia
+    (`friend_online_pair_hours` e `friend_online_daily_cap` em `app_config`); nada para
+    quem está com o jogo aberto ou em partida. iPhone só depois do APNs. No teste fechado o convite pode ser **Casual ou
     Ranqueada** (chave `friend_ranked_enabled` em `app_config`; desligar no lançamento).
   - **Amigos** — tela própria (`ui/FriendsScreen.kt`): cartões com o avatar que cada
     comandante escolheu no perfil (`friend_avatars`; inicial do nome como reserva), nome e
@@ -307,7 +313,8 @@ pula as já compradas, as inclusas e as exclusivas do passe.
 
 Tela própria (`ui/SettingsScreen.kt`, ícone de engrenagem no menu): trilha sonora e
 efeitos sonoros com toggles separados, a seção **Online** ("Disponível para partida
-rápida" e o tipo aceito: Casual, Ranqueada ou Ambas) e o seletor de idioma — que saiu do
+rápida", o tipo aceito: Casual, Ranqueada ou Ambas, "Receber convites de amigos" e
+"Avisar quando um amigo ficar online") e o seletor de idioma — que saiu do
 Perfil para não ficar duplicado. Cor do oceano, espessura da grade, cor do alvo e notificações push
 ainda não têm preferência própria (ficam no backlog).
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -130,6 +131,12 @@ const val ONLINE_SECS = 120
 enum class Screen {
     SPLASH, WELCOME, MENU, SHIPYARD, STORE, PROFILE, SETTINGS, RELEASE_NOTES, LAN, ONLINE, NAMES,
     PLACEMENT, HANDOFF, BATTLE, RESULT, FRIENDS, LEADERBOARD, FEEDBACK
+}
+
+/** Tela que o toque num push abre, pelo `kind` que a Edge Function manda (#19); nulo = só abre o jogo. */
+internal fun screenForPushKind(kind: String): Screen? = when (kind) {
+    "friend_online" -> Screen.FRIENDS
+    else -> null
 }
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
@@ -578,7 +585,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Bate o ponto de presença: online, em partida ou fora do jogo (ver supabase/presence.sql). */
     suspend fun touchPresence(state: String) {
         val session = profile.currentSession() ?: return
-        cloud.touchPresence(session, state, profile.acceptInvites)
+        cloud.touchPresence(session, state, profile.acceptInvites, profile.friendOnlinePush)
     }
 
     /** Servidor libera ranqueada entre amigos (teste fechado) — chave friend_ranked_enabled. */
@@ -1941,6 +1948,20 @@ fun App() {
         }
     }
 
+    // push tocado (#19): leva à tela do aviso ("amigo online" -> Amigos). Espera a
+    // abertura terminar e nunca tira o jogador de uma partida em andamento
+    val openedPush by PushInbox.opened.collectAsState()
+    LaunchedEffect(openedPush, state.screen) {
+        val kind = openedPush ?: return@LaunchedEffect
+        if (state.screen == Screen.SPLASH) return@LaunchedEffect
+        PushInbox.consumeOpened()
+        val target = screenForPushKind(kind) ?: return@LaunchedEffect
+        if (state.match == null && state.profile.signedIn) {
+            state.screen = target
+            state.refreshFriendships()
+        }
+    }
+
     // notificações (push e lembrete): pede a permissão uma vez, ao chegar no menu — o
     // sistema só mostra o pedido enquanto a pessoa não respondeu
     LaunchedEffect(state.screen == Screen.MENU) {
@@ -1951,7 +1972,7 @@ fun App() {
     // ("em partida" durante a partida — aí não recebe convite); ao fechar ou minimizar
     // avisa na hora que saiu, em vez de esperar o ponto vencer
     val inMatch = state.match != null
-    LaunchedEffect(AppForeground.active, state.profile.signedIn, inMatch, state.profile.acceptInvites) {
+    LaunchedEffect(AppForeground.active, state.profile.signedIn, inMatch, state.profile.acceptInvites, state.profile.friendOnlinePush) {
         if (!state.profile.signedIn) return@LaunchedEffect
         if (!AppForeground.active) {
             state.touchPresence("away")

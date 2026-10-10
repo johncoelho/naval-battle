@@ -95,6 +95,15 @@ fun SettingsScreen(state: AppState) {
                 Gap(6)
                 HudLabel(t(K.SETTINGS_ACCEPT_INVITES_SUB), Naval.muted)
                 Gap(10)
+                // sem convites o servidor também não avisa: a opção fica inativa
+                SettingsToggleRow(
+                    label = t(K.SETTINGS_FRIEND_ONLINE),
+                    on = profile.friendOnlinePush && profile.acceptInvites,
+                    enabled = profile.acceptInvites
+                ) { profile.changeFriendOnlinePush(!profile.friendOnlinePush) }
+                Gap(6)
+                HudLabel(t(K.SETTINGS_FRIEND_ONLINE_SUB), Naval.muted)
+                Gap(10)
                 SettingsToggleRow(
                     label = t(K.SETTINGS_QUICK_OFFER),
                     on = profile.quickOfferEnabled
@@ -205,18 +214,18 @@ private fun NotificationTools() {
 }
 
 @Composable
-private fun SettingsToggleRow(label: String, on: Boolean, onToggle: () -> Unit) {
+private fun SettingsToggleRow(label: String, on: Boolean, enabled: Boolean = true, onToggle: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
             .background(Naval.surface2)
             .border(1.dp, Naval.lineSoft)
-            .clickable { onToggle() }
+            .clickable(enabled = enabled) { onToggle() }
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = NavalType.mono, color = Naval.ink)
+        Text(label, style = NavalType.mono, color = if (enabled) Naval.ink else Naval.muted)
         Box(
             Modifier
                 .background(if (on) Naval.surface3 else Naval.surface)

@@ -20,25 +20,101 @@ alter table public.profiles add column if not exists presence text not null defa
   check (presence in ('online', 'in_match', 'away'));
 alter table public.profiles add column if not exists accept_invites boolean not null default true;
 
+-- Aviso "amigo online" (0.31.0, #19): quando um jogador passa de fora (away, sem ponto
+-- ou ponto com mais de 2 min) para online, cada amigo com friend_online_push e
+-- accept_invites ligados, fora do jogo e com token de push recebe um push. Anti-spam
+-- no servidor: 1 aviso por par a cada friend_online_pair_hours (3) e no máximo
+-- friend_online_daily_cap (5) por destinatário em 24 h. friend_online_push_log só é
+-- mexida pela função (RLS ligado, sem políticas, como push_tokens).
+alter table public.profiles add column if not exists friend_online_push boolean not null default true;
+
+create table if not exists public.friend_online_push_log (
+  recipient_id uuid        not null references auth.users(id) on delete cascade,
+  friend_id    uuid        not null references auth.users(id) on delete cascade,
+  sent_at      timestamptz not null default now()
+);
+create index if not exists friend_online_push_log_recipient_idx
+  on public.friend_online_push_log (recipient_id, sent_at);
+alter table public.friend_online_push_log enable row level security;
+
+insert into public.app_config (key, value)
+values ('friend_online_pair_hours', '3'), ('friend_online_daily_cap', '5')
+on conflict (key) do nothing;
+
+-- p_friend_online_push nulo (app antigo, que não manda o campo) não muda o valor gravado:
+-- o app antigo não pode religar a opção de quem a desligou. A assinatura (text, boolean)
+-- sai para o PostgREST não ficar com duas funções ambíguas; a chamada antiga com dois
+-- argumentos nomeados cai nesta pelo default.
 drop function if exists public.touch_presence();
 drop function if exists public.touch_presence(text);
-create or replace function public.touch_presence(p_state text default 'online', p_accept_invites boolean default true)
+drop function if exists public.touch_presence(text, boolean);
+create or replace function public.touch_presence(
+  p_state text default 'online',
+  p_accept_invites boolean default true,
+  p_friend_online_push boolean default null
+)
 returns table (ok boolean)
 language plpgsql security definer set search_path = public as $$
+declare
+  me uuid := auth.uid();
+  v_state text := case when p_state in ('online', 'in_match', 'away') then p_state else 'online' end;
+  v_old_presence text;
+  v_old_seen timestamptz;
+  v_name text;
+  v_pair_hours integer;
+  v_cap integer;
+  r record;
 begin
-  if auth.uid() is null then
+  if me is null then
     return query select false;
     return;
   end if;
+  select presence, last_seen_at, username into v_old_presence, v_old_seen, v_name
+    from public.profiles where id = me;
   update public.profiles
      set last_seen_at = now(),
-         presence = case when p_state in ('online', 'in_match', 'away') then p_state else 'online' end,
-         accept_invites = coalesce(p_accept_invites, true)
-   where id = auth.uid();
+         presence = v_state,
+         accept_invites = coalesce(p_accept_invites, true),
+         friend_online_push = coalesce(p_friend_online_push, friend_online_push)
+   where id = me;
+
+  -- só a transição fora -> online dispara; o ponto de cada minuto nunca
+  if v_state = 'online'
+     and (v_old_presence = 'away' or v_old_seen is null or v_old_seen < now() - interval '2 minutes') then
+    begin
+      v_pair_hours := public.config_int('friend_online_pair_hours', 3);
+      v_cap := public.config_int('friend_online_daily_cap', 5);
+      for r in
+        select p.id
+          from public.friendships f
+          join public.profiles p
+            on p.id = case when f.requester_id = me then f.addressee_id else f.requester_id end
+         where (f.requester_id = me or f.addressee_id = me)
+           and f.status = 'accepted'
+           and p.friend_online_push
+           and p.accept_invites
+           and (p.presence = 'away' or p.last_seen_at is null or p.last_seen_at < now() - interval '2 minutes')
+           and exists (select 1 from public.push_tokens t where t.user_id = p.id)
+           and not exists (
+             select 1 from public.friend_online_push_log l
+              where l.recipient_id = p.id and l.friend_id = me
+                and l.sent_at > now() - make_interval(hours => v_pair_hours))
+           and (select count(*) from public.friend_online_push_log l
+                 where l.recipient_id = p.id and l.sent_at > now() - interval '24 hours') < v_cap
+      loop
+        perform public.queue_push(r.id, 'friend_online',
+          coalesce(v_name, 'Um amigo') || ' está online', 'Chame para uma batalha.');
+        insert into public.friend_online_push_log (recipient_id, friend_id) values (r.id, me);
+      end loop;
+    exception when others then
+      -- erro de push nunca pode derrubar a presença
+      null;
+    end;
+  end if;
   return query select true;
 end $$;
-revoke all on function public.touch_presence(text, boolean) from public;
-grant execute on function public.touch_presence(text, boolean) to authenticated;
+revoke all on function public.touch_presence(text, boolean, boolean) from public;
+grant execute on function public.touch_presence(text, boolean, boolean) to authenticated;
 
 drop function if exists public.friend_presence();
 create function public.friend_presence()

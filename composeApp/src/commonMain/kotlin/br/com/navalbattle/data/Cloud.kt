@@ -421,7 +421,7 @@ expect class CloudApi() {
      * Bate o ponto de presença (supabase/presence.sql): [state] é "online" (jogo aberto),
      * "in_match" (em partida — não recebe convite) ou "away" (fechou/minimizou o jogo).
      */
-    suspend fun touchPresence(session: Session, state: String, acceptInvites: Boolean): CloudResult<Unit>
+    suspend fun touchPresence(session: Session, state: String, acceptInvites: Boolean, friendOnlinePush: Boolean): CloudResult<Unit>
 
     /** Presença de cada amigo, por id. */
     suspend fun friendPresence(session: Session): CloudResult<Map<String, FriendPresence>>

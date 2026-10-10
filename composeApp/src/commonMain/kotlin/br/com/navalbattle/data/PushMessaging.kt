@@ -1,7 +1,9 @@
 package br.com.navalbattle.data
 
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Pushes que chegam com o jogo aberto (o sistema não mostra a notificação nesse caso).
@@ -14,6 +16,21 @@ object PushInbox {
 
     fun post(kind: String) {
         flow.tryEmit(kind)
+    }
+
+    /**
+     * Push tocado pelo jogador (o sistema abriu o app com o `kind` nos extras, #19).
+     * Fica guardado até o jogo sair da abertura e levar à tela certa ([consumeOpened]).
+     */
+    private val openedFlow = MutableStateFlow<String?>(null)
+    val opened: StateFlow<String?> = openedFlow
+
+    fun open(kind: String) {
+        if (kind.isNotBlank()) openedFlow.value = kind
+    }
+
+    fun consumeOpened() {
+        openedFlow.value = null
     }
 }
 

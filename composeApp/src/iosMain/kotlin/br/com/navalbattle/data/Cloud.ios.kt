@@ -352,10 +352,10 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
-    actual suspend fun touchPresence(session: Session, state: String, acceptInvites: Boolean): CloudResult<Unit> = call {
+    actual suspend fun touchPresence(session: Session, state: String, acceptInvites: Boolean, friendOnlinePush: Boolean): CloudResult<Unit> = call {
         post(
             "/rest/v1/rpc/touch_presence",
-            mapOf("p_state" to state, "p_accept_invites" to acceptInvites),
+            mapOf("p_state" to state, "p_accept_invites" to acceptInvites, "p_friend_online_push" to friendOnlinePush),
             token = session.accessToken
         )
         CloudResult.Ok(Unit)

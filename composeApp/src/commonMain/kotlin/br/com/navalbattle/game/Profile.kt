@@ -313,6 +313,18 @@ class Profile(private val prefs: Prefs) {
         prefs.putInt(K_ACCEPT_INVITES, if (on) 1 else 0)
     }
 
+    /**
+     * Push "amigo online, chamar para batalha" (#19). Ligado por padrão; vai ao servidor
+     * pelo touch_presence. Com os convites desligados o servidor também não avisa.
+     */
+    var friendOnlinePush: Boolean by mutableStateOf(prefs.getInt(K_FRIEND_ONLINE_PUSH, 1) == 1)
+        private set
+
+    fun changeFriendOnlinePush(on: Boolean) {
+        friendOnlinePush = on
+        prefs.putInt(K_FRIEND_ONLINE_PUSH, if (on) 1 else 0)
+    }
+
     fun setQuickOffer(on: Boolean) {
         quickOfferEnabled = on
         prefs.putInt(K_QUICK_OFFER, if (on) 1 else 0)
@@ -686,6 +698,7 @@ class Profile(private val prefs: Prefs) {
         private const val K_FEEDBACK_NEXT_AT = "feedback_next_at"
         private const val K_QUICK_OFFER = "quick_offer"
         private const val K_ACCEPT_INVITES = "accept_invites"
+        private const val K_FRIEND_ONLINE_PUSH = "friend_online_push"
         private const val K_QUICK_OFFER_KIND = "quick_offer_kind"
         private const val K_ONLINE_REWARDS = "online_rewards"
     }

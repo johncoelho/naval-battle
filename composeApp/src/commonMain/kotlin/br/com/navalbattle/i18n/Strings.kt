@@ -462,6 +462,8 @@ enum class K(val pt: String, val en: String, val es: String) {
     SETTINGS_LANGUAGE("Idioma do jogo", "Game language", "Idioma del juego"),
     SETTINGS_ONLINE("Online", "Online", "En línea"),
     SETTINGS_ACCEPT_INVITES("Receber convites de amigos", "Receive friend invites", "Recibir invitaciones de amigos"),
+    SETTINGS_FRIEND_ONLINE("Avisar quando um amigo ficar online", "Notify me when a friend comes online", "Avisarme cuando un amigo se conecte"),
+    SETTINGS_FRIEND_ONLINE_SUB("Notificação para chamar o amigo para uma batalha (no máximo 1 a cada 3 h por amigo)", "Notification to call your friend to battle (at most 1 every 3 h per friend)", "Notificación para llamar a tu amigo a una batalla (como máximo 1 cada 3 h por amigo)"),
     SETTINGS_ACCEPT_INVITES_SUB("Convite para partida online em qualquer tela do jogo e por notificação", "Online match invites on any game screen and by notification", "Invitaciones a partida online en cualquier pantalla y por notificación"),
     SETTINGS_QUICK_OFFER("Disponível para partida rápida", "Available for quick match", "Disponible para partida rápida"),
     SETTINGS_QUICK_OFFER_SUB("Avisa em qualquer tela quando alguém procura adversário", "Alerts you on any screen when someone is looking for an opponent", "Avisa en cualquier pantalla cuando alguien busca adversario"),
