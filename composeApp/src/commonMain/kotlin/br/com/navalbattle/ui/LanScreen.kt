@@ -101,6 +101,10 @@ fun LanScreen(state: AppState) {
                             Naval.muted
                         )
                     }
+                    Gap(8)
+                    // Cancela o anúncio: fecha o socket e o registro NSD/NetService e
+                    // volta ao estado inicial (campo de nome e "Criar partida" liberados).
+                    SecondaryButton(t(K.CANCEL)) { state.closeLink() }
                 }
 
                 LinkState.SEARCHING -> {
