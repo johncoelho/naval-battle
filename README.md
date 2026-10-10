@@ -124,7 +124,8 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     Ranqueada** (chave `friend_ranked_enabled` em `app_config`; desligar no lançamento).
   - **Amigos** — tela própria (`ui/FriendsScreen.kt`): cartões com o avatar que cada
     comandante escolheu no perfil (`friend_avatars`; inicial do nome como reserva), nome e
-    uma ação principal; busca enquanto digita; seções Pedidos recebidos (em destaque),
+    uma ação principal; busca enquanto digita (quem já me mandou pedido aparece com
+    **Aceitar** direto no resultado); seções Pedidos recebidos (em destaque),
     Seus amigos (com **Jogar** direto) e Pedidos enviados (com Cancelar). Tocar no
     cartão abre a folha de serviço (insígnia, XP, pontos, partidas, vitórias, % e
     sequência) com Convidar e Remover (com confirmação); convidar abre uma sala do

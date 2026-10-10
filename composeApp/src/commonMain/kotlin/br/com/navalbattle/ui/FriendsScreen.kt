@@ -55,6 +55,7 @@ import br.com.navalbattle.data.FriendProfile
 import br.com.navalbattle.data.FriendRelation
 import br.com.navalbattle.data.Friendship
 import br.com.navalbattle.data.friendRelation
+import br.com.navalbattle.data.pendingRequestFrom
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawAvatar
@@ -85,6 +86,8 @@ fun FriendsScreen(state: AppState) {
     var confirmRemove by remember { mutableStateOf<FriendEntry?>(null) }
     // "Adicionar" tocado e o servidor ainda não respondeu — só o intervalo otimista
     var sentTo by remember { mutableStateOf(setOf<String>()) }
+    // pedidos sendo aceitos direto na busca: impede o duplo toque enquanto o servidor responde
+    var accepting by remember { mutableStateOf(setOf<String>()) }
 
     LaunchedEffect(Unit) {
         state.refreshFriendships()
@@ -162,7 +165,23 @@ fun FriendsScreen(state: AppState) {
                                 when (relation) {
                                     FriendRelation.FRIEND -> HudLabel(t(K.FRIENDS_ALREADY), Naval.greenBright)
                                     FriendRelation.REQUEST_SENT -> HudLabel(t(K.FRIENDS_REQUEST_SENT), Naval.muted)
-                                    FriendRelation.REQUEST_RECEIVED -> HudLabel(t(K.FRIENDS_REQUEST_RECEIVED), Naval.amber)
+                                    FriendRelation.REQUEST_RECEIVED -> {
+                                        val request = pendingRequestFrom(myId, hit.id, state.friendships)
+                                        if (request == null) {
+                                            HudLabel(t(K.FRIENDS_REQUEST_RECEIVED), Naval.amber)
+                                        } else {
+                                            PillButton(t(K.FRIENDS_ACCEPT), Naval.greenBright, Naval.bg) {
+                                                if (request.id !in accepting) {
+                                                    accepting = accepting + request.id
+                                                    scope.launch {
+                                                        state.respondFriendRequest(request, true)
+                                                        // a lista foi relida: o cartão vira "Amigo" sozinho
+                                                        accepting = accepting - request.id
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                     FriendRelation.NONE -> PillButton(t(K.FRIENDS_ADD), Naval.amber, Naval.amberInk) {
                                         sentTo = sentTo + hit.id
                                         scope.launch {

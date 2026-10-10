@@ -28,3 +28,13 @@ fun friendRelation(
         else -> FriendRelation.REQUEST_SENT
     }
 }
+
+/**
+ * O pedido de amizade pendente que [otherId] me mandou, para aceitar direto do resultado
+ * da busca (#20). Só devolve linha `pending` em que o outro pediu e eu sou o destinatário;
+ * `declined`, `accepted` ou pedido enviado por mim devolvem null (cuidado da #7).
+ */
+fun pendingRequestFrom(myId: String, otherId: String, friendships: List<Friendship>): Friendship? =
+    friendships.firstOrNull {
+        it.status == "pending" && it.requesterId == otherId && it.addresseeId == myId
+    }

@@ -2,6 +2,7 @@ package br.com.navalbattle.data
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class FriendRelationTest {
 
@@ -37,5 +38,18 @@ class FriendRelationTest {
     fun semAmizadeSoMostraEnviadoEnquantoOServidorNaoResponde() {
         assertEquals(FriendRelation.NONE, friendRelation("a", "c", listOf(f("a", "b", "accepted"))))
         assertEquals(FriendRelation.REQUEST_SENT, friendRelation("a", "c", emptyList(), setOf("c")))
+    }
+
+    @Test
+    fun aceitarNaBuscaSoComPedidoPendenteRecebido() {
+        // #20: B pediu a A, pendente -> A pode aceitar direto na busca
+        val pending = f("b", "a", "pending")
+        assertEquals(pending, pendingRequestFrom("a", "b", listOf(pending)))
+        // pedido enviado por mim nao vira Aceitar
+        assertNull(pendingRequestFrom("b", "a", listOf(pending)))
+        // recusado, aceito ou sem linha: nada a aceitar
+        assertNull(pendingRequestFrom("a", "b", listOf(f("b", "a", "declined"))))
+        assertNull(pendingRequestFrom("a", "b", listOf(f("b", "a", "accepted"))))
+        assertNull(pendingRequestFrom("a", "b", emptyList()))
     }
 }
