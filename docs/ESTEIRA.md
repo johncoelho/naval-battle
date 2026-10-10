@@ -57,8 +57,18 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 2. PO escreve proposta para melhorias novas e ordena a Fila.
 3. Se nada estiver **Em andamento**: pega **toda a Fila** como um lote → Tech Lead desenha (se preciso) → Dev
    implementa → Tech Lead revisa → Dev publica → Release acompanha o CI.
-4. QA valida o que está em **Publicado** se a Play já liberou.
+4. QA **não** roda na rodada: tem tarefa própria.
 5. Relatório curto para o John (o que entrou, o que saiu, o que espera dele).
+
+## Rodada do QA (tarefa `esteira-qa-naval-battle`, de hora em hora)
+
+1. Sem cartão em **Publicado**: termina sem ligar emulador.
+2. Com cartão: liga o QA01, abre a página do jogo na Play Store e vê se a versão do cartão já está
+   disponível para o testador (é o sinal de que a revisão do Google terminou). Ainda não: desliga e
+   termina.
+3. Disponível: atualiza (QA01 e, se o teste pedir, QA02), testa os critérios de aceite de cada issue
+   do lote e os casos do `QA_TEST_PLAN.md`, fecha o que passou (**Concluído**) e devolve à **Fila**
+   o que falhou. Desliga os emuladores.
 
 ## Comandos do quadro
 

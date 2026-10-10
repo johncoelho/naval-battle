@@ -1,6 +1,6 @@
 ---
 name: esteira
-description: Uma rodada da esteira agêntica do Naval Battle — Suporte faz a triagem de issues e feedback, PO propõe melhorias e ordena a Fila, e se nada estiver em andamento toda a Fila é implementada num lote e publicada numa versão só (Tech Lead, Dev, Release), e o QA valida o que a Play liberou. Use na tarefa agendada da esteira ou quando o John pedir "roda a esteira" ou "olha a fila".
+description: Uma rodada da esteira agêntica do Naval Battle — Suporte faz a triagem de issues e feedback, PO propõe melhorias e ordena a Fila, e se nada estiver em andamento toda a Fila é implementada num lote e publicada numa versão só (Tech Lead, Dev, Release), e o QA (tarefa própria) valida o que a Play liberou. Use na tarefa agendada da esteira ou quando o John pedir "roda a esteira" ou "olha a fila".
 ---
 
 # Rodada da esteira
@@ -28,7 +28,8 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
    - APROVADO: Dev publica; **Release** acompanha o CI e move **todos os cartões do lote** para **Publicado**.
    - Item **Em andamento** há mais de 3 h sem commit: retome do worktree se existir, senão devolva
      à Fila com comentário.
-5. **QA** (`qa`): só se houver cartão em **Publicado** e a versão já estiver na Play dos emuladores.
+5. **QA**: não é chamado aqui. Tem tarefa agendada própria (`esteira-qa-naval-battle`, de hora em
+   hora) e é o único que liga os emuladores.
 6. **Relatório** (resposta final, curta): triagem feita, item publicado (versão), o que está
    aguardando o John (melhorias para aprovar, decisões). Rodada sem nada novo: uma linha.
 
