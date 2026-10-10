@@ -52,7 +52,9 @@ import br.com.navalbattle.game.Rank
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.FriendProfile
+import br.com.navalbattle.data.FriendRelation
 import br.com.navalbattle.data.Friendship
+import br.com.navalbattle.data.friendRelation
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawAvatar
@@ -81,6 +83,7 @@ fun FriendsScreen(state: AppState) {
     var query by remember { mutableStateOf("") }
     var viewed by remember { mutableStateOf<FriendEntry?>(null) }
     var confirmRemove by remember { mutableStateOf<FriendEntry?>(null) }
+    // "Adicionar" tocado e o servidor ainda não respondeu — só o intervalo otimista
     var sentTo by remember { mutableStateOf(setOf<String>()) }
 
     LaunchedEffect(Unit) {
@@ -152,17 +155,21 @@ fun FriendsScreen(state: AppState) {
                 if (state.friendResults.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         state.friendResults.filter { it.id != myId }.forEach { hit ->
-                            val known = state.friendships.any {
-                                (it.requesterId == myId && it.addresseeId == hit.id) ||
-                                    (it.addresseeId == myId && it.requesterId == hit.id)
-                            }
+                            // estado vem das amizades do servidor (relidas a cada 20s): aceito o
+                            // pedido, o resultado vira "Amigo" sem precisar buscar de novo
+                            val relation = friendRelation(myId, hit.id, state.friendships, sentTo)
                             PersonCard(hit.username, subtitle = null, avatarId = hit.avatar) {
-                                if (known || hit.id in sentTo) {
-                                    HudLabel(t(K.FRIENDS_REQUEST_SENT), Naval.muted)
-                                } else {
-                                    PillButton(t(K.FRIENDS_ADD), Naval.amber, Naval.amberInk) {
+                                when (relation) {
+                                    FriendRelation.FRIEND -> HudLabel(t(K.FRIENDS_ALREADY), Naval.greenBright)
+                                    FriendRelation.REQUEST_SENT -> HudLabel(t(K.FRIENDS_REQUEST_SENT), Naval.muted)
+                                    FriendRelation.REQUEST_RECEIVED -> HudLabel(t(K.FRIENDS_REQUEST_RECEIVED), Naval.amber)
+                                    FriendRelation.NONE -> PillButton(t(K.FRIENDS_ADD), Naval.amber, Naval.amberInk) {
                                         sentTo = sentTo + hit.id
-                                        scope.launch { state.sendFriendRequest(hit) }
+                                        scope.launch {
+                                            state.sendFriendRequest(hit)
+                                            // o servidor já respondeu (e a lista foi relida): ele manda
+                                            sentTo = sentTo - hit.id
+                                        }
                                     }
                                 }
                             }

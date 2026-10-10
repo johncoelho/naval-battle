@@ -694,6 +694,8 @@ enum class K(val pt: String, val en: String, val es: String) {
     FRIENDS_SEARCH_HINT("Buscar comandante pelo nome", "Search commander by name", "Buscar comandante por nombre"),
     FRIENDS_ADD("Adicionar", "Add", "Agregar"),
     FRIENDS_REQUEST_SENT("Pedido enviado", "Request sent", "Pedido enviado"),
+    FRIENDS_ALREADY("Amigo", "Friend", "Amigo"),
+    FRIENDS_REQUEST_RECEIVED("Pedido recebido", "Request received", "Pedido recibido"),
     FRIENDS_REQUESTS("Pedidos recebidos", "Requests received", "Pedidos recibidos"),
     FRIENDS_ACCEPT("Aceitar", "Accept", "Aceptar"),
     FRIENDS_DECLINE("Recusar", "Decline", "Rechazar"),

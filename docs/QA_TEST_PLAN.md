@@ -155,6 +155,7 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | FR-02b | P1 | B com o jogo aberto (ou minimizado) quando o pedido chega | Selo de Amigos no deque acende sem reabrir o app |
 | FR-03 | P0 | B aceita | Os dois aparecem em Seus amigos; A recebe push "pedido aceito" |
 | FR-03b | P1 | A com a tela de Amigos aberta enquanto B aceita | Em até ~20s o "Pedido enviado" vira amigo, sem sair da tela |
+| FR-03c | P1 | Depois do aceite (ou com B já amigo), A busca B de novo ou fica com a busca aberta | Resultado mostra "Amigo" em verde, nunca "Pedido enviado"; se B pediu para A, o resultado mostra Pedido recebido; depois de recusar, nada de botão Aceitar |
 | FR-04 | P1 | Presença | Com os dois com jogo aberto: bolinha verde e "Jogar"; B em partida: "Em partida"; B fechado há mais de 2 min: "há X min" |
 | FR-05 | P0 | A → Jogar em B → Casual | B vê popup "A te convidou · Casual · <modo>" (push se app fechado); aceitar inicia a partida |
 | FR-06 | P1 | Convite recusado | A vê a recusa; nada fica preso na tela |

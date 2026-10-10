@@ -9,6 +9,21 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.71.1] — 2026-10-10 · Busca de amigos mostra quem já é amigo
+
+App 0.30.3 (versionCode 74). Refs #7.
+
+### Corrigido
+- **Busca de amigos**: qualquer amizade (inclusive aceita) aparecia como "Pedido enviado" no resultado.
+  Agora o cartão mostra o estado real vindo do servidor — **Amigo** (verde), **Pedido enviado**,
+  **Pedido recebido** (quando a pessoa buscada já te pediu) ou **Adicionar** — e acompanha a releitura de 20s da
+  tela, então o aceite do outro lado aparece sem buscar de novo. O "Adicionar" otimista (`sentTo`) só
+  vale até o servidor responder.
+- Lógica em função pura (`data/FriendRelation.kt`) com testes em `commonTest`; textos novos
+  `FRIENDS_ALREADY` e `FRIENDS_REQUEST_RECEIVED` nas três línguas.
+
+---
+
 ## [0.71.0] — 2026-10-10 · Testes automatizados e trava de release
 
 App 0.30.2 (versionCode 73). Sem mudança para o jogador.

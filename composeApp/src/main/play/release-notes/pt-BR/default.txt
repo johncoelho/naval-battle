@@ -1,1 +1,1 @@
-Versao de manutencao: testes automaticos das regras do jogo e conferencias de qualidade antes de cada publicacao. Nada muda na forma de jogar.
+Correcao na busca de amigos: quem ja e seu amigo agora aparece como Amigo, e nao mais como Pedido enviado. Quando o outro aceita o pedido, o resultado da busca se atualiza sozinho. Se a pessoa ja te mandou um pedido, a busca mostra Pedido recebido.
