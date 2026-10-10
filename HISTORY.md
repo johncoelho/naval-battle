@@ -135,6 +135,9 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **10/10 · QA anexa print de evidência** em todo fechamento, passou ou falhou (pedido do John):
   mais fácil corrigir e mais claro quando deu certo. Prints no branch `qa-evidencias` (público, fora
   do CI), enviados por `tools/qa-evidencia.sh`.
+- **10/10 · Esteira roda sozinha**: tarefas agendadas em modo automático (configurado pelo John no app),
+  `defaultMode: auto` no projeto, e regras que ele adicionou para o push na `main` e o SQL do Supabase
+  (o Release registra cada versão em `app_releases`). Antes, as rodadas paravam esperando permissão.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo
