@@ -71,7 +71,6 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 - Autenticar o GitHub sem navegador para eu operar as issues (`gh auth login` ou MCP do GitHub).
 - Avisar quando a conta Apple ativar.
-- Trocar as senhas das contas QA (a da qa01 passou pelo chat; a da qa02 apareceu na tela).
 
 ## 6. Ambiente e armadilhas conhecidas
 
