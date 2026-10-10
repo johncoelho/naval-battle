@@ -31,6 +31,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Autonomia total no release:** do pedido à Play sem pedir licença (skill `dev-cycle`); ele só
   instala e testa. Verificar o CI de verdade antes de dizer que está no ar.
 - Processo que se repete vira **skill** em `.claude/skills/`.
+- Quando algo depende dele: **comando pronto** num bloco de shell (botão Run), um por bloco, só para
+  ele executar.
 - "Bateria de testes completa" = `docs/QA_TEST_PLAN.md` (skill `qa-full-test`).
 - Prévia para aprovação é **build local** (APK `.preview`), nunca branch (branch também publica).
 - Navegador: painel embutido só para tarefa autônoma; o que ele acompanha vai no Chrome dele.
