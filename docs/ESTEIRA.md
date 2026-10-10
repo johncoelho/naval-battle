@@ -72,7 +72,8 @@ lista cada envio com o status (*In review* / *Published*); o detalhe do envio mo
 2. Cartão em **Publicado**: abre o Submission activity no Chrome e procura o envio da versão do
    cartão. *Published* → move os cartões dessa versão para **Liberado para testes**. Ainda em
    revisão → termina sem ligar emulador.
-3. Cartão em **Liberado para testes**: só então liga os emuladores, atualiza pela Play, testa os
+3. Cartão em **Liberado para testes**: só então liga os emuladores (QA01 = `emulator-5554`,
+   QA02 = `emulator-5556`; pacote do app `aigamesfactory.navalbattleclassic`), atualiza pela Play, testa os
    critérios de aceite e os casos do `QA_TEST_PLAN.md`, fecha o que passou (**Concluído**) e devolve
    à **Fila** o que falhou. Desliga os emuladores.
 
