@@ -129,8 +129,11 @@ fun BattleScreen(state: AppState, match: Match) {
                 // com o app em segundo plano o relógio do turno fica parado — sem
                 // isso o comandante podia voltar e já ter atirado sozinho às cegas
                 // sem conexão o relógio também para: a jogada não iria a lugar nenhum
-                if (AppForeground.active && !state.onlineSelfOffline) secondsLeft--
+                secondsLeft = turnTick(secondsLeft, AppForeground.active, state.onlineSelfOffline)
             }
+            // defesa extra (#8): se a conexão caiu bem no último segundo, espera voltar
+            // em vez de disparar uma jogada que não iria a lugar nenhum
+            while (state.onlineSelfOffline) delay(500)
             // em rede, quem escolhe a coordenada é o dono do turno, e ela viaja
             if (lan) match.pickTarget()?.let { state.fireShared(it) } else match.fireRandom()
         }
@@ -724,3 +727,10 @@ private fun Tone.toSfx(): Sfx = when (this) {
     Tone.SUNK -> Sfx.SUNK
     else -> Sfx.MISS
 }
+
+/**
+ * Um segundo do relógio do turno: só desconta com o app em primeiro plano e com
+ * conexão, e nunca fica negativo (#8).
+ */
+internal fun turnTick(secondsLeft: Int, foreground: Boolean, offline: Boolean): Int =
+    if (foreground && !offline) (secondsLeft - 1).coerceAtLeast(0) else secondsLeft

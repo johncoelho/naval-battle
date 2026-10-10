@@ -38,6 +38,7 @@ class OnlineLink(
 ) {
     private var pollJob: Job? = null
     private var heartbeatJob: Job? = null
+    private var beatJob: Job? = null
     private var sendJob: Job? = null
     private var session: Session? = null
 
@@ -67,7 +68,7 @@ class OnlineLink(
         private const val QUICK_MATCH_SEARCH_ATTEMPTS = 5
         private const val QUICK_MATCH_SEARCH_INTERVAL_MS = 500L
         private const val HEARTBEAT_INTERVAL_MS = 3000L
-        private const val OFFLINE_AFTER_MS = 6000L
+        const val OFFLINE_AFTER_MS = 6000L
         private const val RESEND_MAX_DELAY_MS = 4000L
     }
 
@@ -132,6 +133,8 @@ class OnlineLink(
         pollJob = null
         heartbeatJob?.cancel()
         heartbeatJob = null
+        beatJob?.cancel()
+        beatJob = null
         sendJob?.cancel()
         sendJob = null
         outbox.clear()
@@ -246,6 +249,7 @@ class OnlineLink(
     private fun stopRoomJobs() {
         pollJob?.cancel()
         heartbeatJob?.cancel()
+        beatJob?.cancel()
         sendJob?.cancel()
         outbox.clear()
     }
@@ -422,25 +426,34 @@ class OnlineLink(
         flushOutbox()
     }
 
+    /**
+     * Dois laços separados (0.31.0, #8): a batida de presença pode ficar presa na
+     * chamada de rede por até ~30 s com a internet cortada (15 s de conexão + 15 s de
+     * leitura). Antes o cálculo de [selfOffline] esperava essa chamada voltar, então o
+     * relógio do turno seguia correndo e a jogada saía sozinha. Agora a batida vive no
+     * [beatJob] e o [heartbeatJob] só recalcula o estado a cada segundo a partir do
+     * [lastOkMillis], sem nunca esperar a rede.
+     */
     private fun startHeartbeat(matchId: String) {
         heartbeatJob?.cancel()
-        heartbeatJob = scope.launch {
-            var sinceBeat = HEARTBEAT_INTERVAL_MS
+        beatJob?.cancel()
+        beatJob = scope.launch {
             while (isActive) {
-                if (sinceBeat >= HEARTBEAT_INTERVAL_MS) {
-                    sinceBeat = 0L
-                    val beat = withSession { cloud.onlineHeartbeat(it, matchId) }
-                    if (beat is CloudResult.Ok) {
-                        opponentSeenAtMillis = beat.value?.let { secs -> nowMillis() - secs * 1000L }
-                    }
+                val beat = withSession { cloud.onlineHeartbeat(it, matchId) }
+                if (beat is CloudResult.Ok) {
+                    opponentSeenAtMillis = beat.value?.let { secs -> nowMillis() - secs * 1000L }
                 }
+                delay(HEARTBEAT_INTERVAL_MS)
+            }
+        }
+        heartbeatJob = scope.launch {
+            while (isActive) {
                 val now = nowMillis()
-                selfOffline = now - lastOkMillis > OFFLINE_AFTER_MS
+                selfOffline = isOffline(now, lastOkMillis)
                 // sem conexão aqui não dá para culpar o outro lado
                 opponentAwaySeconds = if (selfOffline) null
                 else opponentSeenAtMillis?.let { ((now - it) / 1000L).toInt() }
                 delay(1000)
-                sinceBeat += 1000L
             }
         }
     }
@@ -493,3 +506,10 @@ class OnlineLink(
         return (1..5).map { alphabet.random() }.joinToString("")
     }
 }
+
+/**
+ * Este aparelho está sem conexão quando a última resposta boa do servidor ([lastOk])
+ * tem mais de [limitMs]. Função pura para o teste de unidade (#8).
+ */
+fun isOffline(now: Long, lastOk: Long, limitMs: Long = OnlineLink.OFFLINE_AFTER_MS): Boolean =
+    now - lastOk > limitMs
