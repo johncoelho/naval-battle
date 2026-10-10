@@ -1,0 +1,32 @@
+<!-- @dsCard height=300 -->
+<style>
+  .cv { position: relative; width: 960px; height: 300px; background: var(--bg, #080b07); overflow: hidden; }
+  .cv svg { position: absolute; left: 0; top: 0; }
+  .g { fill: var(--green, #5f8f4a); } .gb { fill: var(--greenBright, #8ed17a); } .am { fill: var(--amber, #e6ac3f); }
+  .ab { fill: var(--abyss2, #0c1a14); } .s3 { fill: var(--surface3, #1f2717); } .dg { fill: var(--danger, #e05a35); }
+  .grid { stroke: var(--green, #5f8f4a); stroke-width: 1; opacity: .55; fill: none; }
+  .name { position: absolute; left: 40px; bottom: 54px; width: 430px; margin: 0;
+    font: 900 64px/0.95 Roboto, system-ui, "Segoe UI", sans-serif; letter-spacing: 0.5px; color: var(--ink, #eff2e4); text-transform: uppercase; }
+  .tag { position: absolute; left: 40px; bottom: 28px; width: 430px; margin: 0;
+    font: 13px "Roboto Mono", ui-monospace, monospace; letter-spacing: 1px; color: var(--muted, #939f88); text-transform: uppercase; }
+</style>
+<div class="cv">
+  <svg width="960" height="300" viewBox="0 0 960 300">
+    <!-- blocos: abyss2 (água) 480×300 de base, green 200×140, surface3 160×80, amber 120×60 (ação), danger 40×40 (dano, pequeno)
+         arranjo: carta náutica à direita, blocos encaixados como painéis do HUD, sangrando pela borda superior e direita
+         padrão: malha de carta a cada 40px (10 casas, o tabuleiro) — o sistema é um instrumento de precisão sobre a grade
+         escalas: passos de 20/40 (space-20 × 2), radius-none em tudo (cantos retos) -->
+    <rect class="ab" x="480" y="0" width="480" height="300"/>
+    <g class="grid">
+      <path d="M520 0V300M560 0V300M600 0V300M640 0V300M680 0V300M720 0V300M760 0V300M800 0V300M840 0V300M880 0V300M920 0V300"/>
+      <path d="M480 20H960M480 60H960M480 100H960M480 140H960M480 180H960M480 220H960M480 260H960"/>
+    </g>
+    <rect class="g" x="760" y="0" width="200" height="140"/>
+    <rect class="s3" x="560" y="140" width="160" height="80"/>
+    <rect class="am" x="720" y="220" width="120" height="60"/>
+    <rect class="dg" x="880" y="180" width="40" height="40"/>
+    <rect class="gb" x="600" y="60" width="40" height="40"/>
+  </svg>
+  <p class="name">Naval Battle Command HUD</p>
+  <p class="tag">Centro de comando naval noturno</p>
+</div>

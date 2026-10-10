@@ -5,6 +5,9 @@ description: Full checklist and known pitfalls for cutting a new Android release
 
 # Naval Battle Classic — Android release pipeline
 
+> Parte do ciclo completo da skill `dev-cycle` (pedido → publicação). Este arquivo guarda os
+> detalhes técnicos do pipeline Android → Play Console e as armadilhas já vividas.
+
 This app publishes to Google Play Console as **"Naval Battle Classic"** under developer
 **"AI Games Factory"** (`applicationId = aigamesfactory.navalbattleclassic`, internal Kotlin
 `namespace = br.com.navalbattle`). Every step below was learned the hard way — skipping one

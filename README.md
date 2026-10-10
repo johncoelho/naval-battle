@@ -13,8 +13,9 @@ comando naval noturno. Todo o jogo é desenhado em Canvas: não há uma única i
 | **Site** | [johncoelho.github.io/naval-battle](https://johncoelho.github.io/naval-battle/) |
 | **APK de teste** | [release `latest`](https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk) |
 
-Documentação complementar: [processo de build](docs/BUILD.md) · [stack e convenções](docs/STACK.md) ·
-[design system](docs/DESIGN_SYSTEM.md) · [roteiro de testes](docs/QA_TEST_PLAN.md) · [histórico](CHANGELOG.md)
+Documentação complementar: [especificação técnica](#especificação-técnica) · [processo de build](docs/BUILD.md) ·
+[design system](docs/DESIGN_SYSTEM.md) · [roteiro de testes](docs/QA_TEST_PLAN.md) · [histórico e decisões](HISTORY.md) ·
+[memória do projeto](MEMORY.md) · [changelog](CHANGELOG.md) · [guia para IA](CLAUDE.md)
 
 ---
 
@@ -366,65 +367,143 @@ Fica **só no servidor**: a senha, no Auth do Supabase — o app nunca a guarda.
 
 ---
 
-## Arquitetura
+## Especificação técnica
+
+Esta seção é o **padrão do projeto**. Todo código novo segue o que está aqui; toda melhoria que
+mude algo daqui atualiza esta seção no mesmo commit. Detalhes de build e assinatura em
+[docs/BUILD.md](docs/BUILD.md); identidade visual em [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
+e no design system do Claude Design ([Naval Battle Command HUD](https://claude.ai/artifact/LCZELzjB8RFDv2pdGo7HNg)).
+
+### Governança da stack
+
+- **Camada nova na stack só entra com aprovação do John.** Biblioteca, serviço externo, plugin de
+  build, linguagem, banco, provedor (push, analytics, pagamento…) ou mudança de versão maior: propor
+  com motivo, custo (APK, acoplamento, conta paga) e alternativa sem a dependência. Aprovado, entra
+  na tabela abaixo e no [HISTORY.md](HISTORY.md) com a data e o porquê. Sem aprovação, não entra.
+- Atualização de versão menor/patch de algo que já está na stack não precisa de aprovação, mas passa
+  pelo catálogo `gradle/libs.versions.toml` e pelo CHANGELOG.
+- **Não suba o AGP para 9.x**: o plugin `com.android.application` deixa de ser compatível com
+  `org.jetbrains.kotlin.multiplatform` (já quebrou o projeto uma vez).
+
+### Stack
+
+| Camada | Escolha | Versão / onde |
+|---|---|---|
+| Linguagem | Kotlin Multiplatform | 2.1.0 (`gradle/libs.versions.toml`) |
+| UI | Compose Multiplatform (runtime, foundation, material3, resources) | 1.7.3 |
+| Build | Gradle + Android Gradle Plugin | 8.11.1 / AGP 8.7.3 |
+| Android | compileSdk / targetSdk 36, minSdk 26, JVM target 17 | catálogo + `composeApp/build.gradle.kts` |
+| iOS | framework KMP + projeto Xcode (`iosApp/`), `.ipa` sem assinatura no CI | Xcode do runner `macos` |
+| Login Google (Android) | Credential Manager (`androidx.credentials` 1.3.0 + `googleid` 1.1.1) | aprovado em 0.11 |
+| Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
+| Push (Android) | Firebase Cloud Messaging (`firebase-bom` 33.7.0, plugin `google-services` 4.4.2 só se houver `google-services.json`) | aprovado em 0.60 |
+| Publicação | Gradle Play Publisher 3.13.0 (faixa Alpha do teste fechado) | aprovado em 0.16 |
+| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Function `push` (Deno) | `supabase/` |
+| Site | HTML estático no GitHub Pages | `site/`, `pages.yml` |
+| CI | GitHub Actions: `android.yml` (APK + `.aab` + Play), `ios.yml` (framework + `.ipa`), `pages.yml` | JDK 21 Temurin |
+
+**A regra das dependências é não ter.** Fora o que está na tabela, nada: sem biblioteca de imagem,
+de fonte, de rede, de serialização ou de injeção. Rede é `HttpURLConnection` + `org.json`
+(Android) e `NSURLSession` (iOS); arte é Canvas; fonte é do sistema; persistência é
+`SharedPreferences`/`NSUserDefaults` atrás de `Prefs`.
+
+### Estrutura
 
 ```
 composeApp/src/
   commonMain/kotlin/br/com/navalbattle/
-    App.kt        estado global, roteador de telas, fusão com a nuvem
-    game/         motor: modelo, tabuleiro, IA, partida, carreira
-    design/       tokens, tipografia, pinturas, linhas de casco, arte vetorial
-    i18n/         dicionário dos três idiomas
-    ui/           telas e componentes
-    data/         armazenamento local e cliente da nuvem (expect)
-    composeResources/files/  efeitos e trilha, lidos pelos dois lados via Res.readBytes
-  androidMain/    Activity, manifesto, recursos, e os actual de áudio/dados
-  iosMain/        actual de preferências, nuvem, modo Online e áudio — rede e Google
-                  ainda pendentes (dependem do projeto Xcode, que ainda não existe)
-supabase/schema.sql   tabela profiles, RLS, gatilhos e placar
-supabase/online.sql   salas, jogadas e amizades do modo Online
-site/index.html       landing page publicada no GitHub Pages
-keystore/             chave de depuração fixa (ver docs/BUILD.md)
-docs/                 build, stack e design system
+    App.kt          AppState: estado global, roteador de telas, conta, online, presença, push
+    game/           motor: Board, Match, AI, Profile/carreira, habilidades, modos
+    design/         Theme.kt (tokens Naval/NavalType), Paint, FleetLine, *Art.kt (arte vetorial)
+    i18n/           Strings.kt: cada chave com pt-BR, en e es na mesma linha
+    ui/             telas (*Screen.kt), popups e Components.kt (componentes compartilhados)
+    data/           Cloud.kt (contrato), OnlineLink, LanLink, Prefs, push, lembrete, versões
+    composeResources/files/   áudio lido pelos dois lados via Res.readBytes
+  androidMain/      MainActivity, manifesto, res/raw, e os actual Android
+  iosMain/          os actual iOS
+iosApp/             projeto Xcode (Info.plist com a versão)
+supabase/*.sql      fonte da verdade do banco, um arquivo por domínio
+supabase/functions/push/   Edge Function que envia FCM
+site/               landing page e página de beta tester
+docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
+.claude/skills/     processos repetíveis (ciclo de desenvolvimento, release, QA, …)
 ```
 
-Toda a lógica e toda a interface vivem em `commonMain`. O que é específico de plataforma
-está isolado em três pares `expect/actual`: `SoundPlayer`, `MusicPlayer` e `Prefs`/`CloudApi`.
-É o que torna o alvo iOS uma questão de escrever os `actual`, sem tocar no jogo.
+### Contratos de plataforma (`expect/actual`)
 
-### Telas
+| Contrato | Para quê | Android | iOS |
+|---|---|---|---|
+| `SoundPlayer`, `MusicPlayer` | efeitos e trilha | `SoundPool`, `MediaPlayer` | `AVAudioPlayer` |
+| `Prefs` | chave-valor local | `SharedPreferences` | `NSUserDefaults` |
+| `CloudApi` | REST do Supabase | `HttpURLConnection` + `org.json` | `NSURLSession` |
+| `GoogleAuth` | login com Google | Credential Manager | fluxo OAuth com PKCE |
+| `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
+| `PushMessaging` | token de push | Firebase Messaging | sem push (APNs pendente) |
+| `DailyReminder` | lembrete diário local | `AlarmManager` | `UNUserNotificationCenter` |
+| `openStoreListing`, `shareStoreListing` | loja e compartilhar | Play Store | página `#ios` do site |
+| `SystemBackHandler` | voltar do sistema | `BackHandler` | nada |
+| `nowMillis` | relógio | `System.currentTimeMillis` | `NSDate` |
 
-`SPLASH → MENU → {SHIPYARD, STORE, PROFILE, AUTH}` e o fluxo de partida
-`NAMES → PLACEMENT → HANDOFF → BATTLE → RESULT`.
+Lógica e interface vivem **só** em `commonMain`. Código de plataforma que vaza para lá é dívida
+imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?: padrão`.
 
----
+### Estado e efeitos
 
-## Base de dados
+- `AppState` (em `App.kt`) é o roteador e guarda tela, partida, conta e o estado online.
+- `Profile` grava a cada mudança; `Match` vive e morre com a partida.
+- Estado observável com `mutableStateOf` dentro das classes de domínio; sem ViewModel, sem
+  camada de eventos.
+- Efeitos (som, rede, temporizadores, polling) em `LaunchedEffect` com chaves que dizem quando
+  rodar de novo; nunca dentro da composição. Voltar do segundo plano é `AppForeground.active`.
 
-O script [`supabase/schema.sql`](supabase/schema.sql) cria tudo. Em resumo:
+### Padrões de código
 
-- Tabela `profiles`, uma linha por comandante, presa a `auth.users`.
-- **RLS ligado**: cada um só lê e escreve a própria carreira. A chave anônima sozinha
-  não devolve nada — foi verificado por chamada real à API.
-- Gatilho `on_auth_user_created` cria a carreira no instante em que a conta nasce,
-  **inclusive em login social** — é o que faz o Google cair na mesma carreira do e-mail.
-  Nome de usuário repetido ganha sufixo em vez de barrar o cadastro.
-- View `leaderboard` pronta para a ranqueada.
+- Código e identificadores em inglês; **comentários e textos de tela em português**.
+- Comentário explica o **porquê**, nunca repete o código.
+- Nenhum texto de tela no código: chave em `i18n/Strings.kt` com as três línguas, usada com `t(K.X)`.
+- Nenhuma cor, tamanho ou fonte solta numa tela: tokens `Naval`/`NavalType` e componentes de
+  `ui/Components.kt` (ver o design system). Componente novo nasce compartilhado.
+- Desenho é `private fun DrawScope.drawAlgo(...)` em coordenadas do próprio viewBox.
+- Nada de `TODO` órfão: vira item do Roadmap ou vira código.
 
-Configuração do cliente em `data/Cloud.kt` (`SupabaseConfig`). A chave anônima é pública
-por natureza; a `service_role` **nunca** entra no repositório nem no app.
+### Back-end (Supabase)
 
----
+- Cada domínio tem seu arquivo em `supabase/` (`schema`, `online`, `presence`, `push`, `economy`,
+  `season`, `daily`, `feedback`, `releases`, `account`…). **O arquivo do repositório é a fonte da
+  verdade**: mudança no banco é feita no arquivo e aplicada como migração com o mesmo conteúdo.
+- Regras de jogo que valem ponto, moeda ou milha rodam no servidor, em RPC `security definer`
+  com `set search_path = public`; o app só pede. RLS ligado em toda tabela.
+- Mudança de regra sensível é testada no próprio banco antes de anunciar: um bloco `do $$ … $$`
+  que monta o cenário, chama a RPC como cada usuário (`request.jwt.claims`) e termina com
+  `raise exception` para desfazer tudo.
+- Números ajustáveis ficam em `app_config` e são lidos com `config_int(chave, padrão)`.
+- Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
+  FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).
+- Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.
 
-## Build
+### Versão, release e entrega
 
-```bash
-./gradlew :composeApp:assembleDebug
-```
+- Todo commit enviado à `main` publica: o CI gera APK, `.aab` (faixa Alpha da Play), framework e
+  `.ipa` (release `latest`). Por isso **todo push sobe `versionCode`/`versionName`** e o
+  `CFBundleShortVersionString` do iOS, e atualiza as notas da Play
+  (`composeApp/src/main/play/release-notes/pt-BR/default.txt`, ≤ 500 caracteres, sem acento).
+- Cada versão ganha uma linha em `app_releases` (notas em pt/en/es) para a janela "Versão nova";
+  `ios_live` só depois do build do iOS passar.
+- O passo a passo é a skill `dev-cycle` (pedido → publicação) e, para o Android, `play-store-release`.
 
-Cada push na `main` dispara o GitHub Actions, que compila e publica o APK na release
-`latest`. O processo completo — assinatura, entrega e a regra de atualizar a documentação
-a cada versão — está em **[docs/BUILD.md](docs/BUILD.md)**.
+### Qualidade
+
+- Antes de todo push: compilar Android e iOS (`:composeApp:assembleDebug` +
+  `:composeApp:compileKotlinIosSimulatorArm64`; contorno do Windows em docs/BUILD.md).
+- Bateria completa de ponta a ponta: [docs/QA_TEST_PLAN.md](docs/QA_TEST_PLAN.md) (skill
+  `qa-full-test`), com o app instalado pela Play nos emuladores QA01/QA02.
+
+### Segurança
+
+- Senha só no Auth do Supabase; o app nunca a guarda.
+- Segredos (keystore de release, conta de serviço da Play, FCM) só em secrets do GitHub/Supabase.
+- Tokens de sessão em `SharedPreferences` comum: endurecer com `EncryptedSharedPreferences` é
+  pendência conhecida.
 
 ---
 

@@ -9,6 +9,35 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.70.0] — 2026-10-10 · Base de conhecimento, design system e skills
+
+Sem versão nova do app (commit só de documentação, `[skip ci]`).
+
+### Adicionado
+- **`CLAUDE.md`**: porta de entrada que o Claude Code lê em toda sessão — o que ler, regras
+  inegociáveis, tabela de skills e como manter a base de conhecimento.
+- **`HISTORY.md`**: linha do tempo das decisões do projeto desde 12/09, com o porquê de cada uma e os
+  artefatos de SPEC/design aprovados.
+- **`MEMORY.md`**: memória do projeto versionada (antes só existia na máquina do John), por relevância:
+  regras de ouro, jeito de trabalhar, estado atual, pendências, backlog, armadilhas.
+- **Design system no Claude Design** — [Naval Battle Command HUD](https://claude.ai/artifact/LCZELzjB8RFDv2pdGo7HNg):
+  20 cores, 7 estilos de texto, espaçamento e cantos tirados de `design/Theme.kt`, README de uso,
+  10 componentes com prévia (rendições estáticas dos Composables) e as capturas reais. Fonte
+  versionada em `docs/design-system/` (`build.py` + `project/`).
+- **Skills novas**: `dev-cycle` (pedido → publicação), `design-system`, `supabase-change`,
+  `feedback-triage`, `beta-testers`.
+
+### Mudado
+- **README → Especificação técnica** substitui Arquitetura/Base de dados/Build: stack completa e atual
+  (Firebase, In-App Update, Play Publisher, compileSdk 36), 11 contratos `expect/actual`, padrões de
+  código, back-end, release, qualidade e a **governança da stack** (camada nova só com aprovação do John).
+  `docs/STACK.md` vira ponteiro para ela.
+- `docs/DESIGN_SYSTEM.md` alinhado ao código (`muted` #939F88, `UnderlineTab`, atalho do deque, padrão
+  de popup, cantos retos) e ao artefato.
+- Commit só de documentação passa a levar `[skip ci]` e não sobe versão (antes todo push publicava).
+
+---
+
 ## [0.69.0] — 2026-10-10 · Saída do adversário no posicionamento
 
 App 0.30.1 (versionCode 72). Achados da segunda rodada da bateria de testes

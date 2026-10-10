@@ -7,6 +7,11 @@ Este documento é a referência para manter isso consistente em qualquer tela no
 Código-fonte da verdade: `design/Theme.kt`, `design/Paint.kt`, `design/FleetLine.kt`,
 `design/ShipArt.kt`, `design/InsigniaArt.kt` e `ui/Components.kt`.
 
+**Design system no Claude Design:** [Naval Battle Command HUD](https://claude.ai/artifact/LCZELzjB8RFDv2pdGo7HNg)
+— tokens, regras de uso, prévia de cada componente compartilhado e capturas reais. É a referência
+visual para qualquer tela nova (skill `design-system`). Código, este arquivo e o artefato mudam
+**juntos**: token ou componente novo entra nos três no mesmo ciclo.
+
 ## Princípios
 
 1. **Noturno sempre.** O jogo não segue o tema do sistema. Um único mundo visual, escuro,
@@ -29,7 +34,7 @@ Código-fonte da verdade: `design/Theme.kt`, `design/Paint.kt`, `design/FleetLin
 | `line` / `lineSoft` | `#2B3520` / `#1B2214` | bordas e divisórias |
 | `abyss` / `abyss2` | `#08120E` / `#0C1A14` | água do tabuleiro (gradiente radial) |
 | `gridLine` | `#298ED17A` | malha da carta |
-| `ink` / `inkSoft` / `muted` | `#EFF2E4` / `#B4C0A4` / `#6B7760` | texto principal, secundário, rótulo |
+| `ink` / `inkSoft` / `muted` | `#EFF2E4` / `#B4C0A4` / `#939F88` | texto principal, secundário, rótulo |
 | `green` / `greenBright` | `#5F8F4A` / `#8ED17A` | radar, sonar, confirmação |
 | `amber` / `amberStrong` / `amberInk` | `#E6AC3F` / `#FFC95C` / `#1E1402` | ação, destaque, texto sobre âmbar |
 | `danger` | `#E05A35` | dano, perda, encerrar |
@@ -58,9 +63,11 @@ Rótulos passam por `HudLabel`, que aplica caixa alta — não escreva `.upperca
 
 | Componente | Quando usar |
 |---|---|
-| `PrimaryButton` | a ação principal da tela; fundo âmbar, no máximo um por tela |
+| `PrimaryButton` | a ação principal da tela; fundo âmbar, no máximo um por tela; título em cima à esquerda, legenda embaixo à direita (nunca lado a lado) |
 | `SecondaryButton` | alternativas e navegação; contorno, fundo de superfície |
 | `ModeChip` | escolha entre poucas opções lado a lado |
+| `UnderlineTab` | abas de navegação (Loja, Placar): texto + sublinhado âmbar de 2 dp |
+| `Shortcut` (deque) | atalho com ícone de traço, selo numérico `danger` circular e etiqueta âmbar |
 | `AbilityButton` | habilidade tática, com código, nome e recarga |
 | `CalloutBanner` | mensagem de combate, sempre **abaixo** do tabuleiro |
 | `HudLabel` | qualquer rótulo curto de painel |
@@ -69,6 +76,14 @@ Rótulos passam por `HudLabel`, que aplica caixa alta — não escreva `.upperca
 
 Ações destrutivas (encerrar partida, zerar carreira) usam `danger` e **pedem confirmação**
 numa sobreposição que cobre a tela.
+
+**Popups e confirmações** seguem um padrão só (convite, adversário encontrado, diário,
+encerrar, excluir conta): sobreposição escura, cartão `surface2` com borda âmbar, rótulo
+`HudLabel` de contexto, título `title` centralizado, ações em linha com a saída segura à
+esquerda. A próxima variação nova vira componente compartilhado em `ui/Components.kt`.
+
+**Cantos retos em tudo.** Círculo só em selo numérico, avatar e indicador de status. Sem
+sombra: profundidade vem de superfície mais clara + borda.
 
 ## Arte das embarcações
 

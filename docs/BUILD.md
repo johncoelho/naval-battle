@@ -406,8 +406,10 @@ vitrine dele está mostrando a informação certa.
 | `CHANGELOG.md` | **sempre** — uma entrada por versão, com o que mudou e por quê |
 | `README.md` | quando mudar comportamento do jogo, telas, economia ou arquitetura |
 | `docs/BUILD.md` | quando mudar build, assinatura, CI ou entrega |
-| `docs/STACK.md` | quando mudar versão de ferramenta, dependência ou convenção |
-| `docs/DESIGN_SYSTEM.md` | quando mudar token, tipografia, arte ou padrão de interface |
+| `README.md` → Especificação técnica | quando mudar versão de ferramenta, dependência ou convenção (camada nova só com aprovação) |
+| `HISTORY.md` | toda decisão de produto, técnica ou de processo, com o porquê |
+| `docs/DESIGN_SYSTEM.md` + design system no Claude Design | quando mudar token, tipografia, arte, componente ou padrão de interface (skill `design-system`) |
+| `MEMORY.md` | quando surgir regra, preferência ou fato do projeto que valha lembrar em toda sessão |
 | `site/index.html` | quando entrar recurso que valha aparecer na apresentação do jogo |
 
 O commit de documentação anda junto com o de código — não depois, não "quando der".

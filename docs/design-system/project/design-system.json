@@ -1,0 +1,101 @@
+{
+  "v": 3,
+  "layout": "files",
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-10T11:46:38Z"
+  },
+  "title": "Naval Battle Command HUD",
+  "namespace": "NavalHUD",
+  "libraries": [],
+  "sections": {},
+  "groups": [
+    "Logos",
+    "Telas"
+  ],
+  "assetGroups": {
+    "Logos": {
+      "name": "Logos",
+      "tile": "m",
+      "order": [
+        "naval-battle-icone-512.png"
+      ],
+      "files": {
+        "naval-battle-icone-512.png": {
+          "name": "naval-battle-icone-512.png",
+          "blob": "e48c0b3c83631939c7129672a95879c8",
+          "size": 266207,
+          "type": "image/png"
+        }
+      }
+    },
+    "Telas": {
+      "name": "Telas",
+      "tile": "l",
+      "order": [
+        "tela-01-abertura.png",
+        "tela-02-deque.png",
+        "tela-03-modos.png",
+        "tela-04-posicionamento.png",
+        "tela-05-combate.png",
+        "tela-06-dois-jogadores.png",
+        "tela-07-loja.png"
+      ],
+      "files": {
+        "tela-01-abertura.png": {
+          "name": "tela-01-abertura.png",
+          "blob": "bb21dac3836655a4e411bb076d11f2c9",
+          "size": 954600,
+          "type": "image/png"
+        },
+        "tela-02-deque.png": {
+          "name": "tela-02-deque.png",
+          "blob": "32519c60c6f04b18c35ee7955627dfa3",
+          "size": 478049,
+          "type": "image/png"
+        },
+        "tela-03-modos.png": {
+          "name": "tela-03-modos.png",
+          "blob": "4e3c9e00272704dade6d81e49171210c",
+          "size": 300090,
+          "type": "image/png"
+        },
+        "tela-04-posicionamento.png": {
+          "name": "tela-04-posicionamento.png",
+          "blob": "c9e763bb4e425a1cec234d31532c5d25",
+          "size": 395242,
+          "type": "image/png"
+        },
+        "tela-05-combate.png": {
+          "name": "tela-05-combate.png",
+          "blob": "9272da799ba8a9b695a70c686893b7a4",
+          "size": 530849,
+          "type": "image/png"
+        },
+        "tela-06-dois-jogadores.png": {
+          "name": "tela-06-dois-jogadores.png",
+          "blob": "17dbcbfd2cc744bf80c51390b8328191",
+          "size": 403749,
+          "type": "image/png"
+        },
+        "tela-07-loja.png": {
+          "name": "tela-07-loja.png",
+          "blob": "d20065495978f8724a76c865b9b20f4f",
+          "size": 335175,
+          "type": "image/png"
+        }
+      }
+    }
+  },
+  "blobs": {},
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "lastChange": {
+    "by": "John Coelho",
+    "at": "2026-10-10T11:46:38Z",
+    "via": "Claude Code · johncoelho/naval-battle",
+    "note": "Sistema criado a partir de design/Theme.kt e ui/Components.kt"
+  }
+}
