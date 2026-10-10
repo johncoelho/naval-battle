@@ -37,6 +37,10 @@ kotlin {
             // dos dois lados — no iOS é o que falta pra áudio de verdade existir
             implementation(compose.components.resources)
         }
+        // testes de unidade da lógica de jogo (game/), rodam no JVM e no simulador iOS
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -89,8 +93,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 72
-        versionName = "0.30.1"
+        versionCode = 73
+        versionName = "0.30.2"
     }
 
     /**

@@ -1,1 +1,1 @@
-Se o adversario sai da partida online enquanto voce ainda posiciona a frota, o jogo agora vai direto para o relatorio em vez de ficar parado, e avisa que ele desistiu. A espera da revanche nao mostra mais o codigo da sala antiga.
+Versao de manutencao: testes automaticos das regras do jogo e conferencias de qualidade antes de cada publicacao. Nada muda na forma de jogar.

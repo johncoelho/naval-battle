@@ -9,6 +9,31 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.71.0] — 2026-10-10 · Testes automatizados e trava de release
+
+App 0.30.2 (versionCode 73). Sem mudança para o jogador.
+
+### Adicionado
+- **Testes de unidade** em `composeApp/src/commonTest` com `kotlin.test` (aprovado pelo John): 17 testes
+  de tabuleiro (posicionamento, tiros, varredura, fumaça, aleatório sem sobreposição), regras de turno
+  (acertou joga de novo, turno por rodada, tiro repetido), habilidades (barragem perdoa um erro e não
+  se gasta num acerto, recarga, cartucho, habilidade do navio afundado), abandono, lado do adversário
+  em rede e codec da frota. Ligação no CI (JVM no `android.yml`, simulador no `ios.yml`) pronta, mas
+  **pendente**: o token do GitHub desta máquina não tem o escopo `workflow`, então o John aplica a
+  mudança dos workflows.
+- **Trava de release** (`tools/release-check.sh`, a ser o primeiro passo do `android.yml`): push que mexe no
+  app sem `versionCode` maior, iOS alinhado, notas da Play novas (≤ 500, sem acento) ou CHANGELOG com
+  `App <versão>` falha antes de compilar.
+- `.gitattributes`: scripts `.sh` sempre com fim de linha LF.
+
+### Processo
+- Skill `dev-cycle`: modelo de SPEC com critérios de aceite, uma versão por assunto, testes no passo de
+  verificação e checklist de fechamento.
+- Backlog passa a viver no GitHub Issues; `MEMORY.md` reorganizado em assuntos em andamento, decisões
+  recentes e pendências.
+
+---
+
 ## [0.70.0] — 2026-10-10 · Base de conhecimento, design system e skills
 
 Sem versão nova do app (commit só de documentação, `[skip ci]`).

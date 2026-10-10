@@ -35,40 +35,47 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - Prévia para aprovação é **build local** (APK `.preview`), nunca branch (branch também publica).
 - Navegador: painel embutido só para tarefa autônoma; o que ele acompanha vai no Chrome dele.
 - Botões: título em cima à esquerda, legenda embaixo à direita, nunca lado a lado.
-- Issues do GitHub: trabalhar sozinho ao juntar 5 abertas, ou quando ele pedir.
+- Issues do GitHub são o backlog: ele prioriza; só bug que quebra o jogo pode ser pego sem pedir.
 - Antes de fechar uma SPEC de melhoria, avisar se há bugs de jogador pendentes para incluir.
 
-## 3. Estado atual (10/10/2026)
+## 3. Assuntos em andamento
 
-- App **0.30.1 (72)**. Android no teste fechado da Play (faixa Alpha), iOS por `.ipa` (Sideloadly).
-- Teste fechado: **12 testadores inscritos**; 14 dias seguidos até poder pedir produção (≈ 23/10).
-  Contas QA não contam.
-- **Apple Developer** pago em 08/10, aguardando ativação. Depois: chave da API do App Store Connect
-  (o John coloca como secret), app no App Store Connect, envio ao TestFlight **ao lado** do `.ipa`.
-  Login com Google mantido no iPhone por ora (Apple depois); loja de dobrões simulada mantida;
-  **`.ipa` do Sideloadly segue ativo** até a versão da Apple ter tudo.
-- Ranqueada: soma zero, força do adversário antes da partida, 3 por dia contra o mesmo adversário.
-- Design system no Claude Design criado em 10/10.
+- **Base de conhecimento e qualidade (10/10):** CLAUDE.md, HISTORY.md, MEMORY.md, especificação técnica
+  no README, design system no Claude Design, skills; testes de unidade (`commonTest`) e trava de
+  release no CI (`tools/release-check.sh`).
+- **Backlog no GitHub Issues:** migrando os itens para issues (#6 criada; demais aguardam o `gh`
+  autenticado ou um MCP do GitHub — sem navegador, por preferência do John).
+- **iPhone na App Store:** aguardando a ativação da conta Apple Developer (paga em 08/10). Depois:
+  chave da API do App Store Connect como secret, app no App Store Connect, TestFlight **ao lado** do
+  `.ipa` do Sideloadly (que segue ativo até a versão da Apple ter tudo).
+- **Teste fechado → produção:** 12 testadores inscritos; 14 dias seguidos (≈ 23/10), depois pedir
+  produção no Play Console. Contas QA não contam.
 
-## 4. Pendências com o John
+## 4. Decisões recentes (detalhe e porquê no HISTORY)
 
+- 10/10 · Backlog inteiro no GitHub Issues; aqui só assuntos em andamento e decisões.
+- 10/10 · Testes de unidade obrigatórios para regra de jogo; bug de lógica corrigido ganha teste.
+- 10/10 · CI barra release incompleto (versão, iOS, notas, CHANGELOG).
+- 10/10 · SPEC com critérios de aceite para feature média/grande; critérios viram casos de QA.
+- 10/10 · Uma versão por assunto.
+- 10/10 · Ambiente de teste do banco (branch Supabase) adiado.
+- 10/10 · Camada nova na stack só com aprovação do John.
+- 09–10/10 · Ranqueada soma zero, força do adversário antes da partida, 3/dia contra o mesmo
+  adversário; revanche online em sala nova.
+- 08/10 · iPhone: Google login mantido (Apple depois), loja simulada mantida, `.ipa` segue ativo.
+
+## 5. Pendências com o John
+
+- Aplicar a mudança dos workflows (testes + trava de release no CI): o token desta máquina não tem
+  escopo `workflow`. Patch pronto em `.design/workflows-0.30.2.patch` (e no `git stash`).
+
+- Autenticar o GitHub sem navegador para eu operar as issues (`gh auth login` ou MCP do GitHub).
 - Avisar quando a conta Apple ativar.
 - Trocar as senhas das contas QA (a da qa01 passou pelo chat; a da qa02 apareceu na tela).
-- Opcional: `gh auth login` no terminal para o CI ser acompanhado com menos voltas.
-
-## 5. Backlog combinado (adiado de propósito)
-
-- Preferências de tabuleiro: cor do oceano, espessura da grade, cor do alvo.
-- Vitória por desistência no posicionamento ainda rende XP/dobrões (limite de 3/dia por adversário);
-  avaliar zerar recompensa nesse caso.
-- Busca de amigos mostra "Pedido enviado" para quem já virou amigo até buscar de novo.
-- Relógio do turno continua correndo sem conexão (README diz que para).
-- "Trocar senha" aparece em conta só-Google.
-- Rede local sem botão Cancelar durante o anúncio.
-- Google Play Billing (dobrões reais), Sign in with Apple, push no iOS (APNs).
-- Endurecer tokens com `EncryptedSharedPreferences`.
 
 ## 6. Ambiente e armadilhas conhecidas
+
+- Backlog: [GitHub Issues](https://github.com/johncoelho/naval-battle/issues) — pendência nova vira issue, não linha aqui.
 
 - GitHub: sempre `johncoelho`. `git push` direto funciona (se travar, ver
   `git-credential-manager github list` por identidade duplicada).

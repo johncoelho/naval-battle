@@ -103,6 +103,19 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   Claude Design ([Naval Battle Command HUD](https://claude.ai/artifact/LCZELzjB8RFDv2pdGo7HNg)) e
   processos repetíveis como skills em `.claude/skills/`.
 - **10/10 · Camada nova na stack só com aprovação do John**, registrada no README e aqui.
+- **10/10 · Testes de unidade** (`composeApp/src/commonTest`, `kotlin.test` — aprovado pelo John):
+  regra de jogo nova ganha teste e bug de lógica corrigido ganha teste de regressão. Três falhas da
+  semana (barragem, pontuação, revanche) eram de lógica pura e teriam sido pegas antes.
+- **10/10 · Trava de release no CI** (`tools/release-check.sh`): push que mexe no app sem versão nova,
+  iOS alinhado, notas da Play ou CHANGELOG falha antes do build. Disciplina vira garantia.
+- **10/10 · SPEC com critérios de aceite** para feature média/grande; cada critério vira caso no
+  `QA_TEST_PLAN.md`. **Uma versão por assunto** (revisão mais rápida, causa óbvia se quebrar).
+- **10/10 · Backlog inteiro no GitHub Issues**; o MEMORY guarda só assuntos em andamento e decisões.
+  Issues são criadas e operadas sem navegador (`gh` ou MCP do GitHub), por preferência do John. A
+  regra antiga "5 issues abertas = trabalhar sozinho" deixou de valer: o John prioriza; só bug que
+  quebra o jogo pode ser pego sem pedir.
+- **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
+  tudo em produção (skill `supabase-change`).
 
 ---
 

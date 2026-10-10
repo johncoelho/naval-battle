@@ -403,7 +403,7 @@ vitrine dele está mostrando a informação certa.
 
 | Arquivo | Quando atualizar |
 |---|---|
-| `CHANGELOG.md` | **sempre** — uma entrada por versão, com o que mudou e por quê |
+| `CHANGELOG.md` | **sempre** — uma entrada por versão, com o que mudou e por quê (o CI confere: `tools/release-check.sh`) |
 | `README.md` | quando mudar comportamento do jogo, telas, economia ou arquitetura |
 | `docs/BUILD.md` | quando mudar build, assinatura, CI ou entrega |
 | `README.md` → Especificação técnica | quando mudar versão de ferramenta, dependência ou convenção (camada nova só com aprovação) |

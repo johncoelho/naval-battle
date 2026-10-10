@@ -27,6 +27,10 @@ Supabase. Dono: **John Coelho** (GitHub `johncoelho`). **Fale com ele em portugu
 
 Padrão que se repete e ainda não tem skill: proponha criar uma.
 
+**Backlog:** [GitHub Issues](https://github.com/johncoelho/naval-battle/issues) — pendência nova vira
+issue (via `gh`/MCP do GitHub, sem navegador). O John prioriza; só bug que quebra o jogo pode ser
+pego sem pedir. `MEMORY.md` guarda só assuntos em andamento e decisões.
+
 ## Inegociável
 
 - Todo push na `main` publica: subir versão (Android e iOS) e escrever as notas da Play no mesmo commit.

@@ -400,7 +400,8 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Publicação | Gradle Play Publisher 3.13.0 (faixa Alpha do teste fechado) | aprovado em 0.16 |
 | Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Function `push` (Deno) | `supabase/` |
 | Site | HTML estático no GitHub Pages | `site/`, `pages.yml` |
-| CI | GitHub Actions: `android.yml` (APK + `.aab` + Play), `ios.yml` (framework + `.ipa`), `pages.yml` | JDK 21 Temurin |
+| Testes | `kotlin.test` em `composeApp/src/commonTest` (JVM e simulador iOS) | aprovado em 10/10/2026 |
+| CI | GitHub Actions: `android.yml` (trava de release + testes + APK + `.aab` + Play), `ios.yml` (testes no simulador + framework + `.ipa`), `pages.yml` | JDK 21 Temurin |
 
 **A regra das dependências é não ter.** Fora o que está na tabela, nada: sem biblioteca de imagem,
 de fonte, de rede, de serialização ou de injeção. Rede é `HttpURLConnection` + `org.json`
@@ -493,8 +494,14 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 
 ### Qualidade
 
-- Antes de todo push: compilar Android e iOS (`:composeApp:assembleDebug` +
+- **Testes de unidade** em `composeApp/src/commonTest` (tabuleiro, regras de turno, habilidades,
+  codec da frota, lado do adversário em rede): `./gradlew :composeApp:testDebugUnitTest`. Regra de
+  jogo nova ganha teste; bug de lógica corrigido ganha teste de regressão.
+- Antes de todo push: testes + compilar Android e iOS (`:composeApp:assembleDebug` +
   `:composeApp:compileKotlinIosSimulatorArm64`; contorno do Windows em docs/BUILD.md).
+- **Trava de release no CI** (`tools/release-check.sh`): push que mexe no app precisa de `versionCode`
+  maior, iOS alinhado ao `versionName`, notas da Play novas (≤ 500, sem acento) e CHANGELOG com
+  `App <versão>`; senão o build falha antes de compilar. Conferir antes: `bash tools/release-check.sh origin/main`.
 - Bateria completa de ponta a ponta: [docs/QA_TEST_PLAN.md](docs/QA_TEST_PLAN.md) (skill
   `qa-full-test`), com o app instalado pela Play nos emuladores QA01/QA02.
 
