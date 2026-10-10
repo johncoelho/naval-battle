@@ -68,6 +68,8 @@ fun ResultScreen(state: AppState, match: Match) {
     // o mesmo perfil, então não conta. Fica num efeito para creditar uma única vez
     var award by remember(match) { mutableStateOf<Award?>(null) }
     var rewardCapped by remember(match) { mutableStateOf(false) }
+    // vitória sem combate (#6): conta no histórico, mas não paga carreira nem desafio
+    val noCombat = online && match.wonWithoutCombat(me)
     LaunchedEffect(match) {
         if (match.opponent == Opponent.AI) {
             award = state.profile.registerMatch(
@@ -79,7 +81,8 @@ fun ResultScreen(state: AppState, match: Match) {
             )
             // com conta conectada a carreira sobe sozinha depois de cada partida
         } else if (online) {
-            if (!match.forfeitedBySelf) {
+            // sem combate nem gasta uma das 3 partidas recompensadas contra o adversário
+            if (!match.forfeitedBySelf && !noCombat) {
                 if (state.claimOnlineReward()) {
                     award = state.profile.registerMatch(
                         victory = victory,
@@ -104,10 +107,11 @@ fun ResultScreen(state: AppState, match: Match) {
             }
             // milhas da vitória: depois do relato, porque na ranqueada o servidor só
             // paga a quem ele mesmo registrou como vencedor
-            if (victory && !match.forfeitedBySelf) state.awardWinMiles()
+            // (o servidor também barra a milha sem tiro, para o app antigo)
+            if (victory && !match.forfeitedBySelf && !noCombat) state.awardWinMiles()
         }
         // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
-        if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf) state.recordDailyMatch(match)
+        if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
     }
 
     Column(
@@ -211,6 +215,10 @@ fun ResultScreen(state: AppState, match: Match) {
                     MilesLabel(t(K.MILES_SPENT), color = Naval.muted)
                 }
 
+                if (noCombat) {
+                    Gap(16)
+                    HudLabel(t(K.RESULT_NO_COMBAT), Naval.muted)
+                }
                 if (rewardCapped) {
                     Gap(16)
                     HudLabel(t(K.RESULT_NO_REWARD_TODAY, Profile.ONLINE_REWARDS_PER_OPPONENT), Naval.muted)

@@ -332,6 +332,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_REMATCH_INVITE("%s quer uma revanche", "%s wants a rematch", "%s quiere la revancha"),
     RESULT_COMPARE("Comparativo", "Head to head", "Comparativa"),
     RESULT_NO_REWARD_TODAY("Já foram %s partidas recompensadas contra este adversário hoje — esta não rende XP, medalhas nem dobrões.", "You've already had %s rewarded matches against this opponent today — this one gives no XP, medals or doubloons.", "Ya hubo %s partidas recompensadas contra este adversario hoy — esta no da XP, medallas ni doblones."),
+    RESULT_NO_COMBAT("Vitória sem combate: o adversário saiu antes do primeiro tiro. Sem XP e dobrões.", "Win without combat: the opponent left before the first shot. No XP or doubloons.", "Victoria sin combate: el rival salió antes del primer disparo. Sin XP ni doblones."),
     RESULT_CASUAL_NOTE("Partida casual — não conta para o ranking", "Casual match — doesn't count for the ranking", "Partida casual — no cuenta para la clasificación"),
     RESULT_RANKING("Ranking da temporada", "Season ranking", "Clasificación de la temporada"),
     RESULT_RANKING_SEASON("Temporada de %s", "%s season", "Temporada de %s"),

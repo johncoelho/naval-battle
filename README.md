@@ -113,7 +113,11 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     condecorações, carreira e a própria frota. Partida online (casual ou ranqueada)
     rende XP, medalhas e dobrões como contra a IA, com limite anti-farm: no máximo
     3 partidas recompensadas por dia contra o mesmo adversário (contagem local em
-    `Profile.claimOnlineReward`). Casual mostra "não conta para o ranking"; ranqueada
+    `Profile.claimOnlineReward`). **Vitória sem combate** (o adversário saiu antes de
+    quem ficou dar um tiro ou usar uma habilidade) conta no histórico, mas não rende XP,
+    dobrões, milha nem desafio do dia (`Match.wonWithoutCombat`; a milha também é barrada
+    no servidor, em `award_win_miles`); os pontos da ranqueada seguem a regra de abandono.
+    Casual mostra "não conta para o ranking"; ranqueada
     ganha um bloco de ranking (pontos da partida e como foram compostos, pontos e
     posição na temporada antes → depois, partidas e vitórias, botão "Ver ranking").
   - **Amigos online** — presença por minuto (`supabase/presence.sql`): bolinha verde e

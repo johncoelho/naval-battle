@@ -2,6 +2,7 @@ package br.com.navalbattle.game
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -128,5 +129,39 @@ class MatchTest {
         host.setName(Side.PLAYER, "QA01")
         host.setName(Side.ENEMY, "QA02")
         assertEquals("QA02", host.sideName(host.mySide.other()))
+    }
+
+    @Test
+    fun vitoriaSemCombateQuandoOAdversarioSaiNoPosicionamento() {
+        // #6: saiu antes do primeiro tiro -> vence, mas sem combate
+        val m = Match(GameMode.CLASSIC, Opponent.LOCAL)
+        m.abandon(Side.PLAYER)
+        assertTrue(m.wonWithoutCombat(Side.PLAYER))
+        assertFalse(m.wonWithoutCombat(Side.ENEMY), "quem perdeu nunca e vitoria sem combate")
+    }
+
+    @Test
+    fun umTiroJaContaComoCombate() {
+        val m = battle()
+        m.act(water) // o jogador atira e erra
+        m.abandon(Side.PLAYER) // o adversario desiste depois
+        assertFalse(m.wonWithoutCombat(Side.PLAYER))
+    }
+
+    @Test
+    fun habilidadeTambemContaComoCombate() {
+        val m = battle(GameMode.TACTICAL)
+        m.selectAbility(Ability.SONAR_PING)
+        m.act(Coord(5, 5))
+        m.abandon(Side.PLAYER)
+        assertFalse(m.wonWithoutCombat(Side.PLAYER))
+    }
+
+    @Test
+    fun vitoriaNormalNaoEhSemCombate() {
+        val m = battle()
+        fixedFleet().flatMap { it.cells }.forEach { m.act(it) }
+        assertFalse(m.wonWithoutCombat(Side.PLAYER))
+        assertFalse(m.wonWithoutCombat(Side.ENEMY))
     }
 }

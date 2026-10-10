@@ -253,6 +253,19 @@ begin
   end if;
   cur := public.miles_refresh(auth.uid());
 
+  -- vitória sem combate não rende milha (0.31.0, #6): o vencedor precisa ter dado
+  -- pelo menos 1 tiro (ACT) ou usado 1 habilidade (ABIL) na sala. Mesma definição
+  -- do app (Match.wonWithoutCombat).
+  if not exists (
+    select 1 from public.online_messages om
+     where om.match_id = p_match_id
+       and om.sender_id = auth.uid()
+       and (om.body like 'ACT|%' or om.body like 'ABIL|%')
+  ) then
+    return query select cur;
+    return;
+  end if;
+
   if m.ranked then
     if m.winner_id is distinct from auth.uid() then
       return query select cur;

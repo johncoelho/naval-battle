@@ -134,6 +134,14 @@ class Match(
     /** Habilidades que [side] usou na partida — conta para o desafio do dia. */
     fun abilitiesUsedBy(side: Side): Int = abilitiesUsed[side] ?: 0
 
+    /**
+     * [side] venceu sem combate: o adversário saiu antes de [side] dar um tiro ou usar
+     * uma habilidade (#6). A vitória conta, mas não paga XP, dobrões, milha nem desafio
+     * do dia — mesma definição do servidor em `award_win_miles`.
+     */
+    fun wonWithoutCombat(side: Side): Boolean =
+        winner == side && shotsOf(side) == 0 && abilitiesUsedBy(side) == 0
+
     private fun countAbility(side: Side) {
         abilitiesUsed[side] = abilitiesUsedBy(side) + 1
     }
