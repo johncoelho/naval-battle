@@ -99,6 +99,19 @@ O visual é a combinação de dois eixos independentes, no tipo `Skin`:
 - **`FleetLine`** (linha de casco) — parâmetros de silhueta: `beam` (multiplicador de
   largura), `prow` (padrão, clipper, bulbosa, facetada), `tower` e `funnels`.
 
+**Superestrutura (#21):** `tower` e `funnels` da linha **substituem** a ilha e as chaminés da
+classe, nunca empilham por cima. A torre fica centrada na ilha da classe e cabe na pegada dela
+(bloco externo da ponte), para não encostar em torre de canhão, reparo antiaéreo ou tubo de
+torpedo; linha com `funnels = 0` fica com as chaminés da classe. Porta-aviões (ilha a boreste) e
+submarino (vela) não recebem torre nem chaminé da linha. A decisão mora em
+`superstructurePlan(type, line)` (testada em `commonTest/design/ShipLayoutTest.kt`); o desenho só
+a segue.
+
+**Mastro:** no máximo um por navio, visto de cima como pé do mastro com sombra e **uma** verga
+curta e encorpada (traço 1,2 com fio de luz), sempre **dentro do contorno do casco** (≤ 0,62 da
+meia-boca). Nada fino solto sobre a água: em célula pequena e sobre camuflagem isso lê como falha.
+Torre facetada (furtiva) não tem mastro.
+
 **Ao criar item novo:** camuflagem nova é uma entrada em `Paint.all`; casco novo é uma
 entrada em `FleetLine.all`. Nenhum desenho precisa ser refeito — essa é a razão de os dois
 eixos serem paramétricos, e é o que torna barato produzir item de loja.

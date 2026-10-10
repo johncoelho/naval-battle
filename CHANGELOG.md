@@ -9,6 +9,31 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.73.1] — 2026-10-10 · Arte dos navios: torre da linha sem empilhar e mastro dentro do casco
+
+App 0.31.2 (versionCode 77). Refs #21.
+
+### Corrigido
+- **Superestrutura da linha de casco** (#21): a torre da linha (pagode da Imperial, bloco da
+  Atlântica, facetada da Fantasma) era desenhada **por cima** da ilha da classe, num ponto que não
+  coincidia com ela — sobravam bordas da ponte e o mastro da classe como traço solto. Agora ela
+  **substitui** a ilha do encouraçado, do cruzador e do destróier, centrada nela e na mesma pegada
+  (não encosta em torre de canhão, reparo antiaéreo nem tubo de torpedo).
+- **Chaminés**: as da linha (Imperial 2, Atlântica 1, mais larga) **substituem** as da classe em vez
+  de somar (o destróier Imperial chegava a ter 4 encavaladas). A Padrão e a Fantasma ficam com as da
+  classe — a Fantasma mantém a silhueta comprada; só a duplicação saiu.
+- **Porta-aviões**: não recebe mais torre nem chaminé da linha no meio do convés de voo (caíam sobre
+  a pista). Submarino sem mudança.
+- **Mastro** (todas as linhas, inclusive a Padrão): as três linhas finas que passavam do costado e
+  saíam sobre a água viraram um pé de mastro com sombra e **uma** verga curta e encorpada, sempre
+  dentro do casco (≤ 0,62 da meia-boca). No máximo um mastro por navio; a torre facetada não tem.
+- Código: `superstructurePlan(type, line)` decide ilha, mastro e chaminés e é testado nas 20
+  combinações (`commonTest/design/ShipLayoutTest.kt`); `drawShip` não chama mais
+  `drawTower`/`drawFunnels`. Na Padrão, ilha e chaminés ficam nas mesmas posições de antes (teste de
+  regressão); só o mastro mudou.
+
+---
+
 ## [0.73.0] — 2026-10-10 · Criar senha para conta só Google
 
 App 0.31.1 (versionCode 76). Refs #9.

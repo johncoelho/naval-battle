@@ -158,6 +158,14 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   acrescenta `email` aos provedores quando a conta OAuth cria senha, então a lista mentiria depois.
   Não pede reautenticação: a sessão Google é a prova de identidade e o "Secure password change" do
   Auth está desligado (conferido pelo John). Sem resposta do servidor vale "Trocar senha".
+- **10/10 · Superestrutura da linha substitui a da classe e mastro fica dentro do casco** (#21,
+  0.31.2): torre e chaminés da linha eram desenhadas por cima da ilha da classe e o mastro eram três
+  riscos finos sobre a água; nos prints do John (Loja → Cascos e Camuflagens) isso lia como falha de
+  desenho em todas as linhas. Agora torre e chaminés da linha ocupam o lugar das da classe (nunca as
+  duas) e há no máximo um mastro por navio, com verga curta dentro do convés. A Fantasma mantém as
+  chaminés da classe (orquestrador da esteira: não mudar a silhueta comprada além do que o bug
+  pede); porta-aviões não recebe torre de linha (cairia na pista). A decisão do desenho fica numa
+  função pura (`superstructurePlan`) para ser testável sem teste de pixel.
 
 ---
 

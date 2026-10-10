@@ -1,1 +1,1 @@
-Novidade: quem entrou so com o Google agora pode criar uma senha no Perfil (Conta > Criar senha) e passar a entrar tambem com e-mail e senha. Contas que ja tem senha seguem com Trocar senha, como antes.
+Correcao na arte dos navios: nas linhas de casco Imperial, Atlantica e Fantasma a torre da linha agora fica no lugar da ponte original, sem blocos empilhados nem tracos sobrando, e as chamines nao se sobrepoem mais. O mastro de todos os navios ficou mais firme e dentro do casco, sem riscos finos sobre a agua. A linha Padrao segue igual, so com o mastro novo.
