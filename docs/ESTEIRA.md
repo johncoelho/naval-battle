@@ -32,7 +32,10 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 
 ## Regras
 
-- **Bug vai direto para a Fila e é resolvido logo**, sem esperar aprovação (P0 antes de P1).
+- **Bug vai direto para a Fila e é resolvido logo**, sem esperar aprovação (P0 antes de P1). Bug é
+  o código não fazer o que a regra documentada (README, SPEC) diz.
+- **Mudar uma regra que já está valendo é melhoria, nunca bug**, mesmo que a regra pareça errada ou
+  explorável: precisa da aprovação do John.
 - **Melhoria só entra na Fila com aprovação do John.** O Game Designer e o PO propõem; ele decide.
 - **Um item em andamento por vez** (fila serial, push direto na `main` como hoje). Tech Lead aprova o
   diff antes de todo push. Paralelismo com PRs fica para quando a fila pedir.

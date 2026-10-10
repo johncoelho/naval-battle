@@ -36,7 +36,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - Navegador: painel embutido só para tarefa autônoma; o que ele acompanha vai no Chrome dele.
 - Botões: título em cima à esquerda, legenda embaixo à direita, nunca lado a lado.
 - Esteira agêntica (`docs/ESTEIRA.md`): **bug vai direto para a Fila e é resolvido logo**; melhoria
-  só entra na Fila com aprovação dele (arrasta o cartão ou comenta "aprovado").
+  só entra na Fila com aprovação dele (arrasta o cartão ou comenta "aprovado"). **Mudar regra que já
+  está valendo é melhoria, nunca bug** — sempre com a aprovação dele.
 - Antes de fechar uma SPEC de melhoria, avisar se há bugs de jogador pendentes para incluir.
 
 ## 3. Assuntos em andamento

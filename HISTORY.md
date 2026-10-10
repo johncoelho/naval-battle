@@ -121,6 +121,9 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   GitHub Projects. **Bug entra direto na Fila e é resolvido logo; melhoria só com aprovação do John**
   (substitui "só bug que quebra o jogo sem pedir"). Fila serial com push direto na `main` e revisão
   do Tech Lead antes de todo push; PRs e paralelismo só quando a fila pedir.
+- **10/10 · Mudar regra aplicada é melhoria, não bug** — precisa da aprovação do John mesmo quando a
+  regra parece errada ou explorável (caso da #6, vitória por desistência rendendo XP e dobrões). Bug
+  é só o código não fazer o que a regra documentada diz.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 
