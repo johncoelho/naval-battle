@@ -337,6 +337,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_RANKING_SEASON("Temporada de %s", "%s season", "Temporada de %s"),
     RESULT_RANKING_BASE("Base · força do adversário", "Base · opponent strength", "Base · fuerza del adversario"),
     RESULT_RANKING_BONUS("Bônus de desempenho", "Performance bonus", "Bono de desempeño"),
+    RESULT_RANKING_PAIR_LIMIT("Limite do dia contra este adversário: esta partida não vale pontos no ranking (XP e dobrões continuam)", "Daily limit against this opponent: this match gives no ranking points (XP and doubloons still count)", "Límite diario contra este rival: esta partida no da puntos de ranking (XP y doblones siguen contando)"),
     RESULT_RANKING_MERCY("Alívio pela precisão", "Accuracy cushion", "Alivio por precisión"),
     RESULT_RANKING_DELTA("Pontos desta partida", "Points this match", "Puntos de esta partida"),
     RESULT_RANKING_POINTS("Pontos na temporada", "Season points", "Puntos en la temporada"),

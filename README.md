@@ -76,6 +76,9 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   tela. Não passa por servidor: funciona sem internet.
   - **Revanche** — ao fim da partida, cada lado toca em "Revanche"; quando os dois
     tocam, a batalha recomeça na mesma ligação, sem precisar criar ou procurar de novo.
+    No **online** a revanche vai para uma sala nova (quem abriu a antiga cria a nova e
+    manda o id por `ROOM|id`): custa 1 milha como qualquer partida e, na ranqueada,
+    vale pontos de novo (0.30.0).
   - **Provocações** — um ícone de rádio na barra superior abre um mural de emojis e
     gritos de guerra prontos ("Fogo total!", "Belo tiro!", ...) para mandar ao outro
     aparelho durante a partida; aparecem como uma bolha na tela de quem recebe.
@@ -133,13 +136,17 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
      gravado) e a sala fica marcada em `result_conflict`.
   2. **Pontos estilo Elo** pela força do adversário: esperado = 1/(1+10^((adv−eu)/400)),
      base = round(32 × (resultado − esperado)) — com os pontos de temporada dos dois
-     no placar da temporada e com o `ranked_rating` no geral.
-  3. **Bônus de desempenho só para quem vence**, com teto de 30% do ganho
-     (precisão × 0,08 + navios restantes); vitória vale no mínimo +5. Derrota só tem
-     um alívio de até 3 pontos pela precisão, sem nunca virar ganho.
-  4. **Abandono é derrota cheia** — sair no meio ou estourar os 60s em segundo plano
+     no placar da temporada e com o `ranked_rating` no geral. A força do adversário é
+     sempre a de antes da partida, não importa quem relata primeiro (0.30.0).
+  3. **Soma zero** (0.30.0): o vencedor ganha exatamente o que o perdedor perde. O antigo
+     bônus de desempenho, o piso de +5 e o alívio da derrota saíram — inflavam o placar
+     (~+6 por partida) e o bônus batia no teto em qualquer vitória.
+  4. **Limite por adversário** (0.30.0): só as 3 primeiras ranqueadas do dia (Brasília)
+     contra o mesmo adversário valem pontos (`ranked_daily_pair_limit` em `app_config`);
+     da 4ª em diante a partida não conta no placar e o relatório avisa.
+  5. **Abandono é derrota cheia** — sair no meio ou estourar os 60s em segundo plano
      relata derrota com acerto 0.
-  5. **Desempate** no placar e na posição própria: pontos, vitórias, aproveitamento,
+  6. **Desempate** no placar e na posição própria: pontos, vitórias, aproveitamento,
      antiguidade.
 
   Temporadas por estação

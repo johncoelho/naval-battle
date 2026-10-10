@@ -591,22 +591,34 @@ grant execute on function public.season_trophies(text) to authenticated;
 --      base     = round(32 * (resultado - esperado))   (resultado: 1 vitória, 0 derrota)
 --    A conta roda duas vezes: com os pontos de temporada dos dois (placar da
 --    temporada) e com o ranked_rating dos dois (placar geral).
--- 3. Bônus de desempenho só para quem venceu, com teto de 30% do ganho:
---      bônus = least(round(|base| * 0.3), round(precisão * 0.08) + navios_restantes)
---    Vitória vale no mínimo +5. Derrota não desconta por desempenho, só tem um
---    alívio pequeno: até 3 pontos a menos de perda (round(precisão * 0.03)),
---    sem nunca virar ganho.
--- 4. Abandono é derrota cheia: quem desiste (ou estoura os 60s em segundo
---    plano) agora também relata, com p_won = false e precisão 0 — sem alívio.
--- 5. Desempate dos placares: pontos, vitórias, aproveitamento, antiguidade.
+--    A força do adversário é sempre a de ANTES da partida (0.30.0): se ele relatou
+--    primeiro, o que ele já levou desta sala (host/guest_delta_*) é descontado.
+-- 3. Soma zero (0.30.0): o vencedor ganha exatamente o que o perdedor perde. O
+--    bônus de desempenho, o piso de +5 e o alívio da derrota saíram — inflavam o
+--    placar e o bônus batia no teto em qualquer vitória.
+-- 4. Anti-farm (0.30.0): a partir da (ranked_daily_pair_limit + 1)ª ranqueada do
+--    dia contra o mesmo adversário (padrão 3, em app_config), a partida não vale
+--    pontos nem conta partida/vitória no placar.
+-- 5. Abandono é derrota cheia: quem desiste (ou estoura os 60s em segundo
+--    plano) também relata, com p_won = false.
+-- 6. Desempate dos placares: pontos, vitórias, aproveitamento, antiguidade.
 --
 -- Devolve uma linha com o que a tela de resultado mostra no bloco de ranking:
--- pontos desta partida (e como foram compostos: base Elo + bônus/alívio),
+-- pontos desta partida (base Elo; bonus_points fica 0 desde a soma zero),
 -- pontos e posição na temporada depois da partida, partidas e vitórias da
 -- temporada e `accepted` — falso quando este lado já tinha relatado antes
 -- (nada mudou nesta chamada, só devolve o estado atual).
 alter table public.online_matches add column if not exists winner_id uuid references auth.users(id) on delete set null;
 alter table public.online_matches add column if not exists result_conflict boolean not null default false;
+-- pontos que cada lado já levou desta sala (temporada e geral): quem relata depois
+-- desconta o que o outro já levou para calcular contra a força dele ANTES da partida
+alter table public.online_matches add column if not exists host_delta_s integer;
+alter table public.online_matches add column if not exists guest_delta_s integer;
+alter table public.online_matches add column if not exists host_delta_o integer;
+alter table public.online_matches add column if not exists guest_delta_o integer;
+-- anti-farm da ranqueada: quantas ranqueadas por dia contra o mesmo adversário valem pontos
+insert into public.app_config (key, value) values ('ranked_daily_pair_limit', '3')
+on conflict (key) do nothing;
 
 -- o formato de retorno mudou (void -> tabela): create or replace não troca isso
 drop function if exists public.record_ranked_result(uuid, boolean, integer, integer);
@@ -640,6 +652,7 @@ declare
   base_o integer;
   bonus_o integer;
   delta_o integer;
+  pair_today integer;
 begin
   -- "for update" enfileira os dois relatos da mesma sala: os dois lados terminam
   -- quase juntos, e sem a trava os dois podiam achar winner_id vazio ao mesmo tempo
@@ -711,42 +724,60 @@ begin
   opp_season := coalesce(opp_season, 1000);
   my_overall := coalesce(my_overall, 1000);
   opp_overall := coalesce(opp_overall, 1000);
+  -- se o adversário relatou primeiro, a força dele já inclui esta partida: tira de
+  -- volta, senão o resultado dependia de quem chegava antes (ex.: +21/-15 em vez de
+  -- +21/-16 com os dois em 1000)
+  opp_season := opp_season - coalesce(case when is_host then m.guest_delta_s else m.host_delta_s end, 0);
+  opp_overall := opp_overall - coalesce(case when is_host then m.guest_delta_o else m.host_delta_o end, 0);
 
   base_s := round(32 * ((case when won then 1 else 0 end)
     - 1.0 / (1 + power(10.0, (opp_season - my_season) / 400.0))));
   base_o := round(32 * ((case when won then 1 else 0 end)
     - 1.0 / (1 + power(10.0, (opp_overall - my_overall) / 400.0))));
 
-  -- 3. bônus de desempenho (vencedor, teto de 30%) ou alívio pequeno (perdedor)
-  if won then
-    bonus_s := least(round(abs(base_s) * 0.3), round(acc * 0.08) + ships);
-    bonus_o := least(round(abs(base_o) * 0.3), round(acc * 0.08) + ships);
-    delta_s := greatest(5, base_s + bonus_s);
-    delta_o := greatest(5, base_o + bonus_o);
-  else
-    bonus_s := least(3, round(acc * 0.03));
-    bonus_o := bonus_s;
-    delta_s := least(0, base_s + bonus_s);
-    delta_o := least(0, base_o + bonus_o);
+  -- 3. soma zero (0.30.0): o vencedor ganha exatamente o que o perdedor perde —
+  -- sem bônus de desempenho, piso de +5 nem alívio na derrota, que inflavam o placar
+  -- (~+6 por partida) e não diferenciavam ninguém (o bônus batia no teto sempre)
+  delta_s := base_s;
+  delta_o := base_o;
+
+  -- 4. anti-farm: a partir da (limite+1)ª ranqueada do dia (Brasília) contra o mesmo
+  -- adversário, a partida não vale pontos nem conta no placar — duas contas
+  -- combinadas não sobem pontos sem limite
+  select count(*) into pair_today from public.online_matches om
+   where om.ranked and om.id <> p_match_id
+     and ((om.host_id = me and om.guest_id = opp) or (om.host_id = opp and om.guest_id = me))
+     and (om.created_at at time zone 'America/Sao_Paulo')::date = public.brt_today()
+     and (om.host_delta_s is not null or om.guest_delta_s is not null);
+  if pair_today >= public.config_int('ranked_daily_pair_limit', 3) then
+    delta_s := 0;
+    delta_o := 0;
+    base_s := 0;
   end if;
-  -- o que aparece como bônus é o que de fato entrou além da base (inclui o piso
-  -- de +5 na vitória e o corte do alívio que viraria ganho na derrota)
-  bonus_s := delta_s - base_s;
+  bonus_s := 0;
 
-  update public.profiles p
-    set ranked_rating = greatest(0, p.ranked_rating + delta_o),
-        ranked_matches = p.ranked_matches + 1,
-        ranked_wins = p.ranked_wins + case when won then 1 else 0 end
-    where p.id = me;
+  if is_host then
+    update public.online_matches om set host_delta_s = delta_s, host_delta_o = delta_o where om.id = p_match_id;
+  else
+    update public.online_matches om set guest_delta_s = delta_s, guest_delta_o = delta_o where om.id = p_match_id;
+  end if;
 
-  insert into public.ranked_season_stats as s (user_id, season_key, username, points, matches, wins)
-  values (me, szn, my_username, greatest(0, 1000 + delta_s), 1, case when won then 1 else 0 end)
-  on conflict (user_id, season_key) do update
-    set points = greatest(0, s.points + delta_s),
-        matches = s.matches + 1,
-        wins = s.wins + case when won then 1 else 0 end,
-        username = excluded.username,
-        updated_at = now();
+  if pair_today < public.config_int('ranked_daily_pair_limit', 3) then
+    update public.profiles p
+      set ranked_rating = greatest(0, p.ranked_rating + delta_o),
+          ranked_matches = p.ranked_matches + 1,
+          ranked_wins = p.ranked_wins + case when won then 1 else 0 end
+      where p.id = me;
+
+    insert into public.ranked_season_stats as s (user_id, season_key, username, points, matches, wins)
+    values (me, szn, my_username, greatest(0, 1000 + delta_s), 1, case when won then 1 else 0 end)
+    on conflict (user_id, season_key) do update
+      set points = greatest(0, s.points + delta_s),
+          matches = s.matches + 1,
+          wins = s.wins + case when won then 1 else 0 end,
+          username = excluded.username,
+          updated_at = now();
+  end if;
 
   select s.points, s.matches, s.wins into season_points, season_matches, season_wins
     from public.ranked_season_stats s where s.user_id = me and s.season_key = szn;

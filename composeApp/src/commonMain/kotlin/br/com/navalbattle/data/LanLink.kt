@@ -48,6 +48,11 @@ object Protocol {
     // online: quem esperou o adversário sem conexão até o fim do prazo leva a vitória
     // e deixa esta linha na sala — ao reconectar, o outro lado lê e fecha a partida
     const val DROP = "DROP"
+    // online: revanche joga numa sala nova (cobra a milha e vale ranqueada de novo);
+    // quem abriu a sala antiga cria a nova e manda o id por aqui
+    const val ROOM = "ROOM"
+
+    fun room(matchId: String) = "$ROOM|$matchId"
 
     fun hello(name: String, mode: String) = "$HELLO|$name|$mode"
 

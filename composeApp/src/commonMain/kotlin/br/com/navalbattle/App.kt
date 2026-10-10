@@ -1480,6 +1480,20 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 maybeStartRematch()
             }
 
+            // revanche online: o anfitrião abriu a sala nova — entra nela pelo id
+            Protocol.ROOM -> {
+                val roomId = parts.getOrNull(1) ?: return
+                if (m.opponent != Opponent.ONLINE || !rematchRequestedByMe) return
+                val session = profile.currentSession() ?: return
+                rematchRequestedByMe = false
+                rematchRequestedByOpponent = false
+                onlineLink.acceptInvite(
+                    session, roomId,
+                    onState = { s, side -> onMain { onOnlineState(s, side) } },
+                    onLine = { line -> onMain { onLine(line) } }
+                )
+            }
+
             Protocol.QUIT -> {
                 m.abandon(m.mySide)
                 if (m.opponent == Opponent.LAN) closeLink() else closeOnline()
@@ -1626,6 +1640,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             else -> false
         }
         if (!connected) return
+        // revanche online é uma partida nova: custa 1 milha como qualquer outra
+        if (m.opponent == Opponent.ONLINE && !hasMileOrPrompt()) return
         rematchRequestedByMe = true
         sendToOpponent(Protocol.REMATCH)
         maybeStartRematch()
@@ -1634,11 +1650,26 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     private fun maybeStartRematch() {
         if (!rematchRequestedByMe || !rematchRequestedByOpponent) return
         val old = match ?: return
-        rematchRequestedByMe = false
-        rematchRequestedByOpponent = false
         when (old.opponent) {
-            Opponent.LAN -> startLanMatch(old.mySide)
-            Opponent.ONLINE -> startOnlineMatch(old.mySide)
+            Opponent.LAN -> {
+                rematchRequestedByMe = false
+                rematchRequestedByOpponent = false
+                startLanMatch(old.mySide)
+            }
+            // online: a revanche vai para uma sala nova. Quem abriu a sala antiga cria a
+            // nova e manda o id ([Protocol.ROOM]); o outro lado segue "aguardando" até
+            // a linha chegar e entra por ela — os dois começam pelo caminho normal de
+            // partida online (milha cobrada, ranqueada valendo de novo)
+            Opponent.ONLINE -> {
+                if (old.mySide != Side.PLAYER) return
+                rematchRequestedByMe = false
+                rematchRequestedByOpponent = false
+                onlineLink.openRematchRoom(
+                    mode.name,
+                    onState = { s, side -> onMain { onOnlineState(s, side) } },
+                    onLine = { line -> onMain { onLine(line) } }
+                )
+            }
             else -> Unit
         }
     }

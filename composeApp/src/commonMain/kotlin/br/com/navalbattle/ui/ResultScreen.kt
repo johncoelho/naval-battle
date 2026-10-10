@@ -367,12 +367,19 @@ private fun RankingBlock(state: AppState, match: Match) {
             if (!fresh) {
                 HudLabel(t(K.RESULT_RANKING_REPEAT), Naval.muted)
                 Gap(8)
+            } else if (outcome.pointsDelta == 0 && outcome.basePoints == 0) {
+                // anti-farm do servidor: passou do limite de ranqueadas do dia contra
+                // este adversário — a partida conta para a carreira, não para o placar
+                HudLabel(t(K.RESULT_RANKING_PAIR_LIMIT), Naval.muted)
+                Gap(8)
             } else {
-                // vitória vale no mínimo +5 e derrota nunca soma: o sinal do total já
-                // diz de que lado o servidor gravou esta partida
+                // soma zero desde a 0.30.0: o total é a base Elo. O bônus só aparece em
+                // relato antigo que ainda veio com ele
                 val won = outcome.pointsDelta > 0
                 SignedRow(t(K.RESULT_RANKING_BASE), outcome.basePoints, first = true)
-                SignedRow(t(if (won) K.RESULT_RANKING_BONUS else K.RESULT_RANKING_MERCY), outcome.bonusPoints)
+                if (outcome.bonusPoints != 0) {
+                    SignedRow(t(if (won) K.RESULT_RANKING_BONUS else K.RESULT_RANKING_MERCY), outcome.bonusPoints)
+                }
             }
 
             Gap(10)

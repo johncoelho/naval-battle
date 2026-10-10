@@ -207,10 +207,53 @@ class OnlineLink(
         }
     }
 
+    /**
+     * Revanche online: quem abriu a sala atual cria uma sala nova (de código, sem
+     * convite mirado — assim não dispara push nem balão de convite), avisa o id pela
+     * sala antiga com [Protocol.ROOM], fecha a antiga e espera o adversário entrar.
+     * Sala nova = milha cobrada de novo e ranqueada pontuada de novo (o servidor só
+     * aceita um relato por sala).
+     */
+    fun openRematchRoom(mode: String, onState: (LinkState, Side) -> Unit, onLine: (String) -> Unit) {
+        val s = session ?: return
+        val oldId = matchId ?: return
+        val wasRanked = ranked
+        stopRoomJobs()
+        onState(LinkState.HOSTING, Side.PLAYER)
+        pollJob = scope.launch {
+            val code = randomCode()
+            val created = (withSession {
+                cloud.createOnlineMatch(it, mode, quick = false, inviteCode = code, hostName = it.username, ranked = wasRanked)
+            } as? CloudResult.Ok)?.value
+            if (created == null) {
+                onState(LinkState.FAILED, Side.PLAYER)
+                return@launch
+            }
+            // direto, fora da fila: a fila é da sala antiga e vai ser descartada
+            var tries = 0
+            while (tries < 5 && withSession { cloud.sendOnlineMessage(it, oldId, Protocol.room(created.id), nextSeq++) } !is CloudResult.Ok) {
+                tries++
+                delay(800)
+            }
+            withSession { cloud.closeOnlineMatch(it, oldId, "finished") }
+            matchId = created.id
+            inviteCode = created.inviteCode ?: code
+            waitForGuest(s, created.id, onState, onLine)
+        }
+    }
+
+    /** Para polling, batimento e fila da sala atual antes de trocar de sala. */
+    private fun stopRoomJobs() {
+        pollJob?.cancel()
+        heartbeatJob?.cancel()
+        sendJob?.cancel()
+        outbox.clear()
+    }
+
     /** Aceita um convite mirado direto pelo id da sala — sem precisar digitar código. */
     fun acceptInvite(session: Session, matchId: String, onState: (LinkState, Side) -> Unit, onLine: (String) -> Unit) {
         this.session = session
-        pollJob?.cancel()
+        stopRoomJobs()
         onState(LinkState.CONNECTING, Side.ENEMY)
         pollJob = scope.launch {
             val joined = (cloud.joinOnlineMatch(session, matchId, session.username) as? CloudResult.Ok)?.value

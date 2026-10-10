@@ -9,6 +9,32 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.68.0] — 2026-10-09 · Ranqueada soma zero e revanche em sala nova
+
+App 0.30.0 (versionCode 71). Banco: migração `ranked_zero_sum_order_fix_pair_limit`.
+
+### Mudado
+- **Ranqueada soma zero** (`record_ranked_result`, `supabase/online.sql`): o vencedor
+  ganha exatamente o que o perdedor perde. Saíram o bônus de desempenho (batia no teto
+  de 5 pontos em qualquer vitória), o piso de +5 e o alívio da derrota — juntos
+  injetavam ~+6 pontos por partida no placar.
+- **Revanche online em sala nova**: quem abriu a sala cria uma sala de código nova e
+  manda o id pela antiga (`Protocol.ROOM`); o outro lado entra por ela. Antes a revanche
+  reaproveitava a sala, não cobrava milha, não pagava a milha da vitória e, na
+  ranqueada, não valia pontos (o servidor aceita um relato por sala).
+
+### Corrigido
+- **Pontuação dependia de quem relatava primeiro**: o segundo calculava o Elo contra os
+  pontos do adversário já atualizados (+21/−15 em vez de +21/−16). Cada lado agora grava
+  o que levou da sala (`host/guest_delta_s/o`) e o segundo desconta.
+
+### Adicionado
+- **Limite por adversário**: só as 3 primeiras ranqueadas do dia (Brasília) contra o
+  mesmo adversário valem pontos (`ranked_daily_pair_limit` em `app_config`); da 4ª em
+  diante a partida não conta no placar e o relatório avisa.
+
+---
+
 ## [0.67.0] — 2026-10-09 · Bateria de testes completa e correções
 
 App 0.29.1 (versionCode 70).
