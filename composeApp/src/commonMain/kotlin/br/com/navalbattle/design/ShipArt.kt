@@ -40,8 +40,9 @@ private fun Color.shaded(t: Float) = Color(red * (1f - t), green * (1f - t), blu
  *
  * A boca fica em torno de 1/10 do comprimento, como num navio de verdade: o casco
  * ocupa só a faixa central da célula, e a folga que sobra nas laterais é o que deixa
- * lugar para verga de mastro, escaler e reparo antiaéreo sem nada vazar para a célula
- * vizinha — é isso que mantém duas embarcações encostadas sem sobreposição.
+ * lugar para escaler e reparo antiaéreo sem nada vazar para a célula vizinha — é isso
+ * que mantém duas embarcações encostadas sem sobreposição. Mastro e verga ficam sempre
+ * dentro do contorno do casco (#21: riscos sobre a água liam como falha de desenho).
  */
 /**
  * Relógio da animação (segundos) do navio sendo desenhado agora — nulo desenha parado.
@@ -75,16 +76,14 @@ fun DrawScope.drawShip(
         // navegando (só na tela inicial): esteira na popa e onda de proa abrindo para trás
         animTime?.let { drawWake(type, it, alpha) }
         drawProw(type, line, paint, alpha)
+        // a superestrutura da linha (torre e chaminés) é desenhada dentro de cada classe,
+        // no lugar da ilha padrão: substitui, nunca empilha por cima (#21)
         when (type) {
             ShipClass.CARRIER -> drawCarrier(paint, alpha)
-            ShipClass.BATTLESHIP -> drawBattleship(paint, alpha)
-            ShipClass.CRUISER -> drawCruiser(paint, alpha)
+            ShipClass.BATTLESHIP -> drawBattleship(line, paint, alpha)
+            ShipClass.CRUISER -> drawCruiser(line, paint, alpha)
             ShipClass.SUBMARINE -> drawSubmarine(paint, alpha)
-            ShipClass.DESTROYER -> drawDestroyer(paint, alpha)
-        }
-        if (type != ShipClass.SUBMARINE) {
-            drawFunnels(type, line, paint, alpha)
-            drawTower(type, line, paint, alpha)
+            ShipClass.DESTROYER -> drawDestroyer(line, paint, alpha)
         }
         if (type == ShipClass.CARRIER) animTime?.let { drawFlightOps(it, paint, alpha) }
     }
@@ -155,7 +154,7 @@ private fun bowX(type: ShipClass): Float = type.size * 50f - 5f
 private fun sternX(type: ShipClass): Float = 5f
 
 /** Meia-boca do casco. Perto de 1/20 do comprimento dos dois lados da quilha. */
-private fun hullHalf(type: ShipClass): Float = when (type) {
+internal fun hullHalf(type: ShipClass): Float = when (type) {
     ShipClass.CARRIER -> 11.5f
     ShipClass.BATTLESHIP -> 10.8f
     ShipClass.CRUISER -> 8.8f
@@ -234,57 +233,217 @@ private fun DrawScope.drawProw(type: ShipClass, line: FleetLine, l: Paint, a: Fl
     }
 }
 
-/** Chaminés da linha de construção, logo atrás do meio do navio. */
-private fun DrawScope.drawFunnels(type: ShipClass, line: FleetLine, l: Paint, a: Float) {
-    if (line.funnels == 0) return
-    val bow = bowX(type)
+/** Chaminé no eixo do navio: posição no comprimento e os dois raios da elipse. */
+internal data class FunnelSpot(val x: Float, val rx: Float, val ry: Float)
+
+/**
+ * O que vai no meio do navio, decidido antes de desenhar (separado do desenho para
+ * poder ser testado): qual ilha ([bridge] PADRAO é a da classe; as outras são a torre
+ * da linha), onde ela fica e a pegada dela, o mastro (no máximo um, com a verga dentro
+ * do casco) e as chaminés.
+ *
+ * Regra (#21): a superestrutura da linha **substitui** a da classe, centrada na ilha
+ * da classe e sem passar da pegada dela; as chaminés da linha, quando ela tem, também
+ * substituem as da classe. Nada é desenhado por cima de outra peça equivalente.
+ */
+internal data class SuperstructurePlan(
+    val bridge: Tower,
+    val bridgeCx: Float,
+    /** Comprimento da pegada da ilha (o bloco externo da ilha da classe). */
+    val bridgeLength: Float,
+    /** Meia-largura da pegada da ilha, a partir da quilha. */
+    val bridgeHalfBeam: Float,
+    /** Posição do mastro no comprimento; nulo quando não há mastro. */
+    val mastX: Float?,
+    /** Quanto a verga avança para cada bordo, a partir da quilha. */
+    val yardHalf: Float,
+    val funnels: List<FunnelSpot>
+) {
+    val mastCount: Int get() = if (mastX == null) 0 else 1
+}
+
+/** Verga: esta fração da meia-boca, para ficar sempre dentro do convés. */
+private const val YARD_FRACTION = 0.62f
+
+internal fun superstructurePlan(type: ShipClass, line: FleetLine): SuperstructurePlan {
+    val bx = bowX(type)
     val half = hullHalf(type)
-    for (i in 0 until line.funnels) {
-        funnel(bow * (0.34f + i * 0.11f), half * 0.58f, half * 0.46f, l, a)
+    val yard = half * YARD_FRACTION
+    return when (type) {
+        // porta-aviões: a ilha a boreste é sempre a da classe; torre ou chaminé da linha
+        // no meio do convés de voo cairia em cima da pista (#21)
+        ShipClass.CARRIER -> {
+            val islandX = bx - 74f
+            SuperstructurePlan(
+                Tower.PADRAO, islandX + 13f, 26f, 3.75f, null, 0f,
+                listOf(FunnelSpot(islandX + 20f, 2.6f, 2.1f))
+            )
+        }
+
+        // submarino: só a vela; a linha de casco não muda a superestrutura dele
+        ShipClass.SUBMARINE -> SuperstructurePlan(
+            Tower.PADRAO, bx * 0.44f, 18f, half * 0.6f, null, 0f, emptyList()
+        )
+
+        ShipClass.BATTLESHIP -> {
+            val cx = bx * 0.5f
+            planFor(
+                line, cx, 32f, half * 0.68f, yard,
+                classMast = cx + 12f,
+                classFunnels = listOf(
+                    FunnelSpot(cx + 20f, half * 0.5f, half * 0.4f),
+                    FunnelSpot(cx - 26f, half * 0.4f, half * 0.32f)
+                ),
+                pairFunnels = listOf(
+                    FunnelSpot(cx + 20f, half * 0.5f, half * 0.4f),
+                    FunnelSpot(cx - 26f, half * 0.5f, half * 0.4f)
+                ),
+                singleFunnel = FunnelSpot(cx - 26f, half * 0.6f, half * 0.46f)
+            )
+        }
+
+        ShipClass.CRUISER -> {
+            val cx = bx * 0.44f
+            planFor(
+                line, cx, 22f, half * 0.62f, yard,
+                classMast = cx + 9f,
+                classFunnels = listOf(
+                    FunnelSpot(cx - 14f, half * 0.46f, half * 0.37f),
+                    FunnelSpot(cx - 26f, half * 0.4f, half * 0.32f)
+                ),
+                pairFunnels = listOf(
+                    FunnelSpot(cx - 14f, half * 0.46f, half * 0.37f),
+                    FunnelSpot(cx - 25f, half * 0.46f, half * 0.37f)
+                ),
+                singleFunnel = FunnelSpot(cx - 17f, half * 0.6f, half * 0.46f)
+            )
+        }
+
+        ShipClass.DESTROYER -> {
+            val cx = bx * 0.5f
+            planFor(
+                line, cx, 16f, half * 0.64f, yard,
+                classMast = cx + 6f,
+                classFunnels = listOf(
+                    FunnelSpot(cx - 11f, half * 0.44f, half * 0.35f),
+                    FunnelSpot(cx - 21f, half * 0.38f, half * 0.3f)
+                ),
+                pairFunnels = listOf(
+                    FunnelSpot(cx - 11f, half * 0.44f, half * 0.35f),
+                    FunnelSpot(cx - 20f, half * 0.44f, half * 0.35f)
+                ),
+                singleFunnel = FunnelSpot(cx - 13f, half * 0.6f, half * 0.46f)
+            )
+        }
     }
 }
 
-/** Superestrutura característica da linha, desenhada sobre o convés. */
-private fun DrawScope.drawTower(type: ShipClass, line: FleetLine, l: Paint, a: Float) {
-    if (line.tower == Tower.PADRAO) return
-    val bow = bowX(type)
-    val half = hullHalf(type)
-    val cx = bow * 0.52f
-    when (line.tower) {
+/**
+ * Ilha de encouraçado, cruzador e destróier. Padrão: a ilha e o mastro da classe.
+ * Linha com torre própria: a torre no mesmo lugar e na mesma pegada; pagode e bloco
+ * levam um mastro a ré, a torre facetada (furtiva) não tem mastro. Linha com chaminés
+ * próprias ([pairFunnels] para duas, [singleFunnel] para uma, mais larga) troca as da
+ * classe; linha sem chaminé fica com as da classe.
+ */
+private fun planFor(
+    line: FleetLine,
+    cx: Float,
+    length: Float,
+    halfBeam: Float,
+    yard: Float,
+    classMast: Float,
+    classFunnels: List<FunnelSpot>,
+    pairFunnels: List<FunnelSpot>,
+    singleFunnel: FunnelSpot
+): SuperstructurePlan {
+    val mast = when (line.tower) {
+        Tower.PADRAO -> classMast
+        Tower.PAGODE -> cx - length * 0.42f
+        Tower.BLOCO -> cx - length * 0.38f
+        Tower.FACETADA -> null
+    }
+    val funnels = when (line.funnels) {
+        0 -> classFunnels
+        1 -> listOf(singleFunnel)
+        else -> pairFunnels.take(line.funnels)
+    }
+    return SuperstructurePlan(line.tower, cx, length, halfBeam, mast, yard, funnels)
+}
+
+/** Ilha padrão de cada classe: blocos da ponte e radar (mastro e chaminés vêm do plano). */
+private fun DrawScope.classIsland(type: ShipClass, cx: Float, half: Float, l: Paint, a: Float) {
+    when (type) {
+        ShipClass.BATTLESHIP -> {
+            deckBlock(cx - 16f, 25f - half * 0.68f, 32f, half * 1.36f, l.dark, a, 2.2f)
+            deckBlock(cx - 10f, 25f - half * 0.42f, 18f, half * 0.84f, l.deck, a, 2.8f)
+            radar(cx - 1f, half * 0.2f, l, a)
+        }
+
+        ShipClass.CRUISER -> {
+            deckBlock(cx - 11f, 25f - half * 0.62f, 22f, half * 1.24f, l.dark, a, 2f)
+            deckBlock(cx - 6f, 25f - half * 0.38f, 12f, half * 0.76f, l.deck, a, 2.5f)
+            radar(cx, half * 0.19f, l, a)
+        }
+
+        ShipClass.DESTROYER -> {
+            deckBlock(cx - 8f, 25f - half * 0.64f, 16f, half * 1.28f, l.dark, a, 1.8f)
+            deckBlock(cx - 4f, 25f - half * 0.4f, 8f, half * 0.8f, l.deck, a, 2.2f)
+        }
+
+        ShipClass.CARRIER, ShipClass.SUBMARINE -> Unit
+    }
+}
+
+/** Torre característica da linha, ocupando só a pegada da ilha da classe. */
+private fun DrawScope.lineTower(p: SuperstructurePlan, l: Paint, a: Float) {
+    val cx = p.bridgeCx
+    val len = p.bridgeLength
+    val hb = p.bridgeHalfBeam
+    val aft = cx - len / 2f
+    when (p.bridge) {
         Tower.PAGODE -> {
-            // torre em pagode: caixas empilhadas afinando para a proa
+            // caixas empilhadas afinando para a proa
             for (i in 0 until 3) {
-                val w = half * (1.5f - i * 0.36f)
-                val h = half * (1.15f - i * 0.30f)
-                deckBlock(cx - w / 2f + i * half * 0.2f, 25f - h / 2f, w, h, l.dark, a, 1.6f + i * 0.8f)
+                val w = len * (1f - i * 0.24f)
+                val h = hb * 2f * (1f - i * 0.26f)
+                deckBlock(aft + i * len * 0.16f, 25f - h / 2f, w, h, l.dark, a, 1.6f + i * 0.8f)
             }
-            mastAndYards(cx - half * 0.9f, half * 1.9f, l, a)
         }
 
         Tower.BLOCO -> {
-            val w = half * 2.1f
-            deckBlock(cx - w / 2f, 25f - half * 0.92f, w, half * 1.84f, l.dark, a, 2f)
-            deckBlock(cx - w / 2f + half * 0.26f, 25f - half * 0.54f, w - half * 0.52f, half * 1.08f, l.deck, a * 0.9f, 2.6f)
-            mastAndYards(cx - half * 1.2f, half * 2.1f, l, a)
+            deckBlock(aft, 25f - hb, len, hb * 2f, l.dark, a, 2f)
+            deckBlock(aft + len * 0.12f, 25f - hb * 0.59f, len * 0.76f, hb * 1.18f, l.deck, a * 0.9f, 2.6f)
         }
 
         Tower.FACETADA -> {
-            val p = Path().apply {
-                moveTo(cx - half * 1.1f, 25f - half * 0.78f)
-                lineTo(cx + half * 0.8f, 25f - half * 0.42f)
-                lineTo(cx + half * 0.8f, 25f + half * 0.42f)
-                lineTo(cx - half * 1.1f, 25f + half * 0.78f)
+            val path = Path().apply {
+                moveTo(aft, 25f - hb)
+                lineTo(cx + len / 2f, 25f - hb * 0.54f)
+                lineTo(cx + len / 2f, 25f + hb * 0.54f)
+                lineTo(aft, 25f + hb)
                 close()
             }
             translate(-LIGHT_DX * 1.8f, -LIGHT_DY * 1.8f) {
-                drawPath(p, Color.Black.copy(alpha = 0.3f * a))
+                drawPath(path, Color.Black.copy(alpha = 0.3f * a))
             }
-            drawPath(p, l.dark, alpha = a)
-            drawPath(p, l.trim.copy(alpha = 0.5f), alpha = a, style = Stroke(0.7f))
+            drawPath(path, l.dark, alpha = a)
+            drawPath(path, l.trim.copy(alpha = 0.5f), alpha = a, style = Stroke(0.7f))
         }
 
         Tower.PADRAO -> Unit
     }
+}
+
+/**
+ * Meio do navio: a ilha (a da classe ou a torre da linha, nunca as duas), o mastro e
+ * as chaminés, nessa ordem, antes dos reparos antiaéreos e escaleres, que ficam por cima.
+ */
+private fun DrawScope.bridge(type: ShipClass, line: FleetLine, l: Paint, a: Float) {
+    val plan = superstructurePlan(type, line)
+    val half = hullHalf(type)
+    if (plan.bridge == Tower.PADRAO) classIsland(type, plan.bridgeCx, half, l, a) else lineTower(plan, l, a)
+    plan.mastX?.let { mastAndYard(it, plan.yardHalf, half, l, a) }
+    plan.funnels.forEach { funnel(it.x, it.rx, it.ry, l, a) }
 }
 
 /**
@@ -444,16 +603,25 @@ private fun DrawScope.aaTub(cx: Float, cy: Float, r: Float, out: Float, l: Paint
 }
 
 /**
- * Mastro visto de cima: o pau some na vertical, o que se vê são as vergas. Elas
- * avançam sobre a água dos dois bordos, no espaço que o casco fino deixa livre.
+ * Mastro visto de cima: o pé do mastro (pino com sombra) e uma verga transversal curta
+ * e encorpada, com um fio de luz como o dos canos. A verga avança [yardHalf] para cada
+ * bordo, sempre menos que a meia-boca: fica dentro do convés e nunca sai sobre a água
+ * (as três linhas finas de antes passavam do costado e liam como falha de desenho, #21).
  */
-private fun DrawScope.mastAndYards(cx: Float, span: Float, l: Paint, a: Float) {
-    val c = l.trim.copy(alpha = 0.9f * a)
-    drawLine(c, Offset(cx, 25f - span), Offset(cx, 25f + span), 0.7f, cap = StrokeCap.Round)
-    listOf(-0.55f, 0.55f).forEach { f ->
-        drawLine(c, Offset(cx + span * f * 0.5f, 25f - span * 0.5f), Offset(cx + span * f * 0.5f, 25f + span * 0.5f), 0.6f, cap = StrokeCap.Round)
-    }
-    drawCircle(l.dark.lit(0.3f), radius = span * 0.16f, center = Offset(cx, 25f), alpha = a)
+private fun DrawScope.mastAndYard(cx: Float, yardHalf: Float, half: Float, l: Paint, a: Float) {
+    val top = Offset(cx, 25f - yardHalf)
+    val bottom = Offset(cx, 25f + yardHalf)
+    val w = 1.2f
+    val shadow = Offset(-LIGHT_DX * 0.6f, -LIGHT_DY * 0.6f)
+    drawLine(Color.Black.copy(alpha = 0.32f * a), top + shadow, bottom + shadow, w, cap = StrokeCap.Round)
+    drawLine(l.dark.shaded(0.1f), top, bottom, w, alpha = a, cap = StrokeCap.Round)
+    val lit = Offset(LIGHT_DX * 0.3f, 0f)
+    drawLine(l.trim, top + lit, bottom + lit, w * 0.38f, alpha = a * 0.9f, cap = StrokeCap.Round)
+    // pé do mastro
+    val r = half * 0.17f
+    drawCircle(Color.Black.copy(alpha = 0.3f * a), radius = r, center = Offset(cx - LIGHT_DX * 0.8f, 25f - LIGHT_DY * 0.8f))
+    drawCircle(l.dark.lit(0.3f), radius = r, center = Offset(cx, 25f), alpha = a)
+    drawCircle(l.trim, radius = r * 0.45f, center = Offset(cx + LIGHT_DX * r * 0.3f, 25f + LIGHT_DY * r * 0.3f), alpha = a * 0.8f)
 }
 
 /** Chaminé: boca escura no meio de um anel claro. */
@@ -612,7 +780,7 @@ private fun DrawScope.drawCarrier(l: Paint, a: Float) {
     val islandX = bx - 74f
     deckBlock(islandX, 25f + 8.5f, 26f, 7.5f, l.dark, a, 2.2f)
     deckBlock(islandX + 3f, 25f + 10f, 9f, 4.5f, l.deck, a, 2.8f)
-    funnel(islandX + 20f, 2.6f, 2.1f, l, a)
+    superstructurePlan(ShipClass.CARRIER, FleetLine.STANDARD).funnels.forEach { funnel(it.x, it.rx, it.ry, l, a) }
     radar(islandX + 9f, 1.8f, l, a * 0.9f)
 
     // aeronaves estivadas no convés de voo
@@ -751,7 +919,7 @@ private fun DrawScope.carrierJet(cx: Float, cy: Float, l: Paint, a: Float) {
 
 // ------------------------------------------------------------------ couraçado
 
-private fun DrawScope.drawBattleship(l: Paint, a: Float) {
+private fun DrawScope.drawBattleship(line: FleetLine, l: Paint, a: Float) {
     val bx = bowX(ShipClass.BATTLESHIP)
     val sx = sternX(ShipClass.BATTLESHIP)
     val half = hullHalf(ShipClass.BATTLESHIP)
@@ -765,14 +933,9 @@ private fun DrawScope.drawBattleship(l: Paint, a: Float) {
     turret(cx = bx - 76f, r = half * 0.55f, barrels = 3, barrelLen = half * 1.7f, dir = 1f, l = l, a = a)
     turret(cx = sx + 34f, r = half * 0.6f, barrels = 3, barrelLen = half * 2f, dir = -1f, l = l, a = a)
 
-    // ilha central em blocos, com ponte fechada e radar
+    // ilha central em blocos, com ponte fechada e radar (ou a torre da linha no lugar)
     val cx = bx * 0.5f
-    deckBlock(cx - 16f, 25f - half * 0.68f, 32f, half * 1.36f, l.dark, a, 2.2f)
-    deckBlock(cx - 10f, 25f - half * 0.42f, 18f, half * 0.84f, l.deck, a, 2.8f)
-    radar(cx - 1f, half * 0.2f, l, a)
-    mastAndYards(cx + 12f, half * 1.55f, l, a)
-    funnel(cx + 20f, half * 0.5f, half * 0.4f, l, a)
-    funnel(cx - 26f, half * 0.4f, half * 0.32f, l, a)
+    bridge(ShipClass.BATTLESHIP, line, l, a)
 
     // secundárias e antiaéreos nas galerias dos dois bordos
     listOf(-1f, 1f).forEach { s ->
@@ -785,7 +948,7 @@ private fun DrawScope.drawBattleship(l: Paint, a: Float) {
 
 // -------------------------------------------------------------------- cruzador
 
-private fun DrawScope.drawCruiser(l: Paint, a: Float) {
+private fun DrawScope.drawCruiser(line: FleetLine, l: Paint, a: Float) {
     val bx = bowX(ShipClass.CRUISER)
     val sx = sternX(ShipClass.CRUISER)
     val half = hullHalf(ShipClass.CRUISER)
@@ -808,12 +971,7 @@ private fun DrawScope.drawCruiser(l: Paint, a: Float) {
     }
 
     val cx = bx * 0.44f
-    deckBlock(cx - 11f, 25f - half * 0.62f, 22f, half * 1.24f, l.dark, a, 2f)
-    deckBlock(cx - 6f, 25f - half * 0.38f, 12f, half * 0.76f, l.deck, a, 2.5f)
-    radar(cx, half * 0.19f, l, a)
-    mastAndYards(cx + 9f, half * 1.5f, l, a)
-    funnel(cx - 14f, half * 0.46f, half * 0.37f, l, a)
-    funnel(cx - 26f, half * 0.4f, half * 0.32f, l, a)
+    bridge(ShipClass.CRUISER, line, l, a)
 
     // convoo marcado na popa
     drawCircle(l.dark, radius = half * 0.82f, center = Offset(sx + 13f, 25f), alpha = a * 0.5f)
@@ -888,7 +1046,7 @@ private fun DrawScope.drawSubmarine(l: Paint, a: Float) {
 
 // ------------------------------------------------------------------- destróier
 
-private fun DrawScope.drawDestroyer(l: Paint, a: Float) {
+private fun DrawScope.drawDestroyer(line: FleetLine, l: Paint, a: Float) {
     val bx = bowX(ShipClass.DESTROYER)
     val sx = sternX(ShipClass.DESTROYER)
     val half = hullHalf(ShipClass.DESTROYER)
@@ -901,11 +1059,7 @@ private fun DrawScope.drawDestroyer(l: Paint, a: Float) {
     turret(cx = sx + 20f, r = half * 0.56f, barrels = 2, barrelLen = half * 1.6f, dir = -1f, l = l, a = a)
 
     val cx = bx * 0.5f
-    deckBlock(cx - 8f, 25f - half * 0.64f, 16f, half * 1.28f, l.dark, a, 1.8f)
-    deckBlock(cx - 4f, 25f - half * 0.4f, 8f, half * 0.8f, l.deck, a, 2.2f)
-    mastAndYards(cx + 6f, half * 1.45f, l, a)
-    funnel(cx - 11f, half * 0.44f, half * 0.35f, l, a)
-    funnel(cx - 21f, half * 0.38f, half * 0.3f, l, a)
+    bridge(ShipClass.DESTROYER, line, l, a)
 
     // tubos lança-torpedos girados para um bordo
     deckBlock(cx - 32f, 25f - half * 0.34f, 9f, half * 0.68f, l.dark, a, 1.4f)
