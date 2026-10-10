@@ -35,11 +35,14 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - Prévia para aprovação é **build local** (APK `.preview`), nunca branch (branch também publica).
 - Navegador: painel embutido só para tarefa autônoma; o que ele acompanha vai no Chrome dele.
 - Botões: título em cima à esquerda, legenda embaixo à direita, nunca lado a lado.
-- Issues do GitHub são o backlog: ele prioriza; só bug que quebra o jogo pode ser pego sem pedir.
+- Esteira agêntica (`docs/ESTEIRA.md`): **bug vai direto para a Fila e é resolvido logo**; melhoria
+  só entra na Fila com aprovação dele (arrasta o cartão ou comenta "aprovado").
 - Antes de fechar uma SPEC de melhoria, avisar se há bugs de jogador pendentes para incluir.
 
 ## 3. Assuntos em andamento
 
+- **Esteira agêntica (10/10):** agentes em `.claude/agents/`, skill `esteira`, `docs/ESTEIRA.md`.
+  Falta: quadro no GitHub Projects (precisa do escopo `project` no `gh`) e a tarefa agendada.
 - **Base de conhecimento e qualidade (10/10):** CLAUDE.md, HISTORY.md, MEMORY.md, especificação técnica
   no README, design system no Claude Design, skills; testes de unidade (`commonTest`) e trava de
   release no CI (`tools/release-check.sh`).

@@ -24,12 +24,15 @@ Supabase. Dono: **John Coelho** (GitHub `johncoelho`). **Fale com ele em portugu
 | "Bateria de testes completa" / teste de ponta a ponta | `qa-full-test` |
 | "Temos bugs?" / feedback de jogador | `feedback-triage` |
 | Testadores novos, liberar na Play, contagem para produção | `beta-testers` |
+| "Roda a esteira" / tarefa agendada da fila | `esteira` |
 
 Padrão que se repete e ainda não tem skill: proponha criar uma.
 
-**Backlog:** [GitHub Issues](https://github.com/johncoelho/naval-battle/issues) — pendência nova vira
-issue (via `gh`/MCP do GitHub, sem navegador). O John prioriza; só bug que quebra o jogo pode ser
-pego sem pedir. `MEMORY.md` guarda só assuntos em andamento e decisões.
+**Esteira agêntica:** [docs/ESTEIRA.md](docs/ESTEIRA.md) — agentes em `.claude/agents/` (suporte, po,
+tech-lead, dev, release, qa, game-designer), quadro no GitHub Projects, backlog no
+[GitHub Issues](https://github.com/johncoelho/naval-battle/issues) via `gh` (sem navegador).
+**Bug vai direto para a Fila e é resolvido logo; melhoria só com aprovação do John.**
+`MEMORY.md` guarda só assuntos em andamento e decisões.
 
 ## Inegociável
 

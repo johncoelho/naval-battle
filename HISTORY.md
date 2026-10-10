@@ -116,6 +116,11 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   quebra o jogo pode ser pego sem pedir.
 - **10/10 · Backlog migrado para o GitHub Issues** (#6–#18, criadas pelo `gh` logado pelo John) e
   trava de release + testes de unidade ligados no CI (aplicado com o OK dele).
+- **10/10 · Esteira agêntica**: papéis de time (Suporte, PO, Tech Lead, Dev, Release, QA, Game
+  Designer) como agentes em `.claude/agents/`, rodada recorrente (skill `esteira`) e quadro kanban no
+  GitHub Projects. **Bug entra direto na Fila e é resolvido logo; melhoria só com aprovação do John**
+  (substitui "só bug que quebra o jogo sem pedir"). Fila serial com push direto na `main` e revisão
+  do Tech Lead antes de todo push; PRs e paralelismo só quando a fila pedir.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 
