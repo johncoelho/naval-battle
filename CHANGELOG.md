@@ -9,6 +9,43 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.72.0] — 2026-10-10 · Amigo online, aceitar na busca e lote de correções
+
+App 0.31.0 (versionCode 75). Refs #10, #8, #20, #6, #19.
+
+### Adicionado
+- **Push "amigo online"** (#19): quando um amigo passa de fora para online, quem está com o jogo
+  fechado recebe "<nome> está online · Chame para uma batalha."; o toque abre a tela de Amigos.
+  Opção **Avisar quando um amigo ficar online** nos Ajustes (padrão ligado, inativa sem convites).
+  Servidor (`supabase/presence.sql`, migração `friend_online_push`): coluna
+  `profiles.friend_online_push`, tabela `friend_online_push_log`, chaves `friend_online_pair_hours`
+  (3) e `friend_online_daily_cap` (5) e `touch_presence(text, boolean, boolean)` (o terceiro
+  argumento nulo, do app antigo, não muda a opção). Android lê o `kind` do push tocado
+  (`MainActivity`, `PushInbox.opened`). iPhone só depois do APNs (#14).
+- **Aceitar pedido direto na busca de amigos** (#20): `pendingRequestFrom()` só oferece Aceitar
+  para pedido `pending` recebido; guarda contra duplo toque.
+
+### Alterado
+- **Vitória sem combate não rende carreira** (#6): partida online em que o vencedor não deu tiro
+  nem usou habilidade conta no histórico, mas não paga XP, dobrões, milha nem desafio do dia, e
+  não gasta uma das 3 partidas recompensadas contra o adversário. Aviso `RESULT_NO_COMBAT` no
+  resultado. O servidor também barra a milha (`award_win_miles` em `supabase/economy.sql`,
+  migração `award_win_miles_requires_combat`). Ranqueada segue a regra de abandono.
+
+### Corrigido
+- **Rede local**: botão **Cancelar** no painel "Anunciando na rede" (#10).
+- **Online**: o relógio do turno seguia correndo sem conexão e a jogada saía sozinha (#8). A batida
+  de presença podia ficar presa até ~30 s na rede e segurava o cálculo de "sem conexão"; agora ela
+  roda num job próprio e o estado é recalculado a cada segundo. Funções puras `isOffline()` e
+  `turnTick()` com testes.
+
+### Testes
+- `OfflineRuleTest`, `TurnTickTest`, `PushKindTest`, casos novos em `FriendRelationTest` e
+  `MatchTest`. QA_TEST_PLAN: ON-08 (ajustado), ON-15, ON-16, LAN-01 (ajustado), FR-03d, FR-10 a
+  FR-13, SET-06.
+
+---
+
 ## [0.71.1] — 2026-10-10 · Busca de amigos mostra quem já é amigo
 
 App 0.30.3 (versionCode 74). Refs #7.

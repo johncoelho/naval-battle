@@ -93,8 +93,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 74
-        versionName = "0.30.3"
+        versionCode = 75
+        versionName = "0.31.0"
     }
 
     /**

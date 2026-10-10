@@ -137,6 +137,18 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   do CI), enviados por `tools/qa-evidencia.sh`.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
+- **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo
+  menos 1 tiro ou usou 1 habilidade, mesma definição no app (`Match.wonWithoutCombat`) e no
+  servidor (`award_win_miles` conta `ACT|`/`ABIL|` em `online_messages`). Fecha a brecha de XP,
+  dobrões e milha de graça com um amigo saindo no posicionamento. A ranqueada fica de fora para
+  não quebrar a soma zero (HISTORY 09–10/10); anular para os dois lados seria outra issue.
+- **10/10 · Push "amigo online"** (#19, 0.31.0), padrão ligado como o "Receber convites", com
+  anti-spam no servidor (1 por par a cada 3 h, até 5 por dia, em `app_config`) porque push demais
+  faz o jogador desligar todas as notificações e perder os convites. Dispara só na transição fora
+  → online dentro do `touch_presence`; erro de push nunca derruba a presença. O terceiro argumento
+  nulo (app antigo) não muda a opção, para o app antigo não religar o que o jogador desligou.
+- **10/10 · Presença da partida online: cálculo separado da chamada de rede** (#8, 0.31.0): a batida
+  presa na rede (até ~30 s) segurava o "sem conexão" e o relógio do turno disparava sozinho.
 
 ---
 

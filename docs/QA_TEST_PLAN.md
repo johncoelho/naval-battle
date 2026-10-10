@@ -119,13 +119,15 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | ON-05 | P1 | Cancelar na espera | Sala some; o outro não é pareado com ela |
 | ON-06 | P1 | Durante a partida, A vai para segundo plano (Home) | B vê pausa com contagem de 60s; A volta antes → partida segue |
 | ON-07 | P1 | A fica fora mais de 60s | B vence por desistência; A vê derrota ao voltar |
-| ON-08 | P1 | Cortar rede de A (`adb emu network speed`/modo avião) por 15s | A: "Sem conexão — reconectando"; B: "Adversário sem conexão" com contagem; ao voltar, jogadas guardadas chegam |
+| ON-08 | P1 | Cortar rede de A (`adb emu network speed`/modo avião) por 15s, no meio do turno de A | A: "Sem conexão — reconectando" e o relógio do turno para em até ~6s (a jogada não sai sozinha); B: "Adversário sem conexão" com contagem; ao voltar, jogadas guardadas chegam e o relógio retoma (#8) |
 | ON-09 | P1 | Provocações (ícone de rádio) | Bolha aparece no outro aparelho |
 | ON-10 | P1 | Ranqueada (uma vez por bateria) | Exige passe da temporada; relatório com bloco de ranking; pontos aparecem no Placar |
 | ON-11 | P1 | Conferir a pontuação da ON-10 no banco (`ranked_season_stats`) contra a fórmula de `record_ranked_result` | Vencedor e perdedor batem com o Elo calculado a partir dos pontos de ANTES da partida, sem depender de quem relatou primeiro |
 | ON-12 | P2 | Cabeçalho da batalha nos dois aparelhos | Cada um vê "VS. <nome do outro>" — inclusive quem entrou na sala |
 | ON-13 | P1 | Revanche online | Recomeça; milha e pontos (na ranqueada) contam de novo |
 | ON-14 | P1 | B encerra a partida ainda no posicionamento | A vai para o relatório ("O adversário desistiu"), não fica preso no posicionamento |
+| ON-15 | P1 | Casual e ranqueada: B sai no posicionamento (ou antes do primeiro tiro de A) | A vê "Vitória sem combate"; XP, dobrões e milhas de A não mudam; desafio do dia não avança; na ranqueada os pontos seguem a regra de abandono; nada muda para B (#6) |
+| ON-16 | P1 | A dá pelo menos 1 tiro (ou usa 1 habilidade) e B desiste depois | XP, dobrões, milha e desafio do dia pagos como antes (#6) |
 
 ## 8b. Rede local (A × B)
 
@@ -135,7 +137,7 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 
 | ID | P | Passos | Esperado |
 |---|---|---|---|
-| LAN-01 | P1 | A: Rede local → criar partida com nome | Fica anunciando; Cancelar volta |
+| LAN-01 | P1 | A: Rede local → criar partida com nome → Cancelar → criar de novo com outro nome | Fica anunciando com botão Cancelar; Cancelar volta ao início (campo e Criar partida liberados); o outro aparelho deixa de ver o anúncio antigo (#10) |
 | LAN-02 | P1 | B: Rede local → busca acha o nome de A → entrar | Cada um posiciona no seu aparelho; partida no modo de A |
 | LAN-03 | P1 | Fim → os dois tocam Revanche | Recomeça na mesma ligação |
 
@@ -156,12 +158,17 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | FR-03 | P0 | B aceita | Os dois aparecem em Seus amigos; A recebe push "pedido aceito" |
 | FR-03b | P1 | A com a tela de Amigos aberta enquanto B aceita | Em até ~20s o "Pedido enviado" vira amigo, sem sair da tela |
 | FR-03c | P1 | Depois do aceite (ou com B já amigo), A busca B de novo ou fica com a busca aberta | Resultado mostra "Amigo" em verde, nunca "Pedido enviado"; se B pediu para A, o resultado mostra Pedido recebido; depois de recusar, nada de botão Aceitar |
+| FR-03d | P1 | B pede amizade a A; A busca B | O resultado mostra **Aceitar**; um toque vira "Amigo" (duplo toque não manda dois aceites); recusado ou já aceito não mostra Aceitar (#20) |
 | FR-04 | P1 | Presença | Com os dois com jogo aberto: bolinha verde e "Jogar"; B em partida: "Em partida"; B fechado há mais de 2 min: "há X min" |
 | FR-05 | P0 | A → Jogar em B → Casual | B vê popup "A te convidou · Casual · <modo>" (push se app fechado); aceitar inicia a partida |
 | FR-06 | P1 | Convite recusado | A vê a recusa; nada fica preso na tela |
 | FR-07 | P1 | B desliga "Receber convites de amigos" em Ajustes | A não consegue convidar B (sem Jogar); religar volta ao normal |
 | FR-08 | P1 | Convite Ranqueada (beta, `friend_ranked_enabled`) | Chip Ranqueada disponível; sem passe pede adesão |
 | FR-09 | P2 | Tocar no cartão do amigo | Folha de serviço com Convidar e Remover (com confirmação) |
+| FR-10 | P1 | A e B amigos, B com o jogo fechado e a opção "Avisar quando um amigo ficar online" ligada; A abre o jogo logado | B recebe "A está online · Chame para uma batalha." em até 1 min (#19) |
+| FR-11 | P1 | B toca no aviso da FR-10 | O jogo abre na tela de Amigos com A online e o Jogar disponível (#19) |
+| FR-12 | P1 | A fecha e reabre o jogo três vezes em 1 h | B recebe só 1 aviso (anti-spam de 3 h por amigo) (#19) |
+| FR-13 | P1 | B desliga a opção (ou "Receber convites"), ou está no meio de uma partida; A fica online | B não recebe nada (#19) |
 
 ## 11. Partida rápida de qualquer tela (A × B)
 
@@ -194,6 +201,7 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | SET-02 | P1 | Idioma EN e ES | Todas as telas visitadas trocam na hora, sem texto cortado; voltar para PT |
 | SET-03 | P1 | Testar notificação | Notificação chega em ~5s com o app em segundo plano |
 | SET-04 | P1 | Bloquear notificações no sistema | Ajustes mostra aviso com atalho para o sistema |
+| SET-06 | P1 | Ajustes → Online (conta nova ou existente) | "Avisar quando um amigo ficar online" aparece ligado; com "Receber convites" desligado fica inativo (#19) |
 | SET-05 | P2 | Sobre → Novidades / Compartilhar | Lista de versões; compartilhar abre a folha do sistema com o link da loja |
 | PUSH-01 | P1 | Com o app fechado em B, A faz FR-02/FR-05 | Notificação do sistema aparece em B; tocar abre o jogo |
 | PUSH-02 | P2 | Tocar na notificação com o jogo minimizado (não fechado) | Volta para o jogo onde estava, sem passar pela abertura de novo |
