@@ -110,8 +110,8 @@ Notas com acento nas três línguas. `notify = true` só quando o John quiser pu
 
 ## 8. Acompanhar o CI e liberar o iPhone
 
-- CI: `android.yml` (APK + `.aab` + Play), `ios.yml` (framework + `.ipa`), `pages.yml`. Sem `gh`
-  logado, acompanhar pela API pública:
+- CI: `android.yml` (APK + `.aab` + Play), `ios.yml` (framework + `.ipa`), `pages.yml`. Com o `gh`:
+  `gh run list -c <sha>` e `gh run watch <id> --exit-status` (em segundo plano). Sem `gh`, pela API pública:
   `curl -s https://api.github.com/repos/johncoelho/naval-battle/actions/runs?per_page=6`
   (laço em segundo plano até os runs do commit terminarem).
 - Falhou: ler o log, corrigir, nova versão. Nunca dizer "no ar" sem o CI verde.

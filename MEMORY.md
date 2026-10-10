@@ -43,8 +43,6 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Base de conhecimento e qualidade (10/10):** CLAUDE.md, HISTORY.md, MEMORY.md, especificação técnica
   no README, design system no Claude Design, skills; testes de unidade (`commonTest`) e trava de
   release no CI (`tools/release-check.sh`).
-- **Backlog no GitHub Issues:** migrando os itens para issues (#6 criada; demais aguardam o `gh`
-  autenticado ou um MCP do GitHub — sem navegador, por preferência do John).
 - **iPhone na App Store:** aguardando a ativação da conta Apple Developer (paga em 08/10). Depois:
   chave da API do App Store Connect como secret, app no App Store Connect, TestFlight **ao lado** do
   `.ipa` do Sideloadly (que segue ativo até a versão da Apple ter tudo).
@@ -66,15 +64,13 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 5. Pendências com o John
 
-- Aplicar a mudança dos workflows (testes + trava de release no CI): o token desta máquina não tem
-  escopo `workflow`. Patch pronto em `.design/workflows-0.30.2.patch` (e no `git stash`).
-
-- Autenticar o GitHub sem navegador para eu operar as issues (`gh auth login` ou MCP do GitHub).
 - Avisar quando a conta Apple ativar.
 
 ## 6. Ambiente e armadilhas conhecidas
 
 - Backlog: [GitHub Issues](https://github.com/johncoelho/naval-battle/issues) — pendência nova vira issue, não linha aqui.
+- `gh` logado como `johncoelho` (login feito pelo John): issues e acompanhamento do CI
+  (`gh run watch`). Mudança em `.github/workflows` só com o OK do John, caso a caso.
 
 - GitHub: sempre `johncoelho`. `git push` direto funciona (se travar, ver
   `git-credential-manager github list` por identidade duplicada).

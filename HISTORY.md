@@ -114,6 +114,8 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   Issues são criadas e operadas sem navegador (`gh` ou MCP do GitHub), por preferência do John. A
   regra antiga "5 issues abertas = trabalhar sozinho" deixou de valer: o John prioriza; só bug que
   quebra o jogo pode ser pego sem pedir.
+- **10/10 · Backlog migrado para o GitHub Issues** (#6–#18, criadas pelo `gh` logado pelo John) e
+  trava de release + testes de unidade ligados no CI (aplicado com o OK dele).
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 
