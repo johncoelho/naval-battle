@@ -30,6 +30,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Testes de unidade no simulador iOS
+        run: ./gradlew :composeApp:iosSimulatorArm64Test --console=plain
+
       - name: Compila o app para iPhone (arm64) sem assinatura
         run: |
           xcodebuild \
