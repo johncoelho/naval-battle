@@ -18,8 +18,8 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 
 ## Quadro
 
-[GitHub Projects — Naval Battle · Esteira](https://github.com/users/johncoelho/projects) (campo
-**Etapa**, visão em quadro). Cada issue aberta é um cartão.
+[GitHub Projects — Naval Battle · Esteira](https://github.com/users/johncoelho/projects/1) (campo
+**Status**, visão em quadro). Cada issue aberta é um cartão.
 
 | Etapa | Significa | Quem move para a próxima |
 |---|---|---|
@@ -52,10 +52,22 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 
 ## Comandos do quadro
 
-Preenchidos quando o quadro foi criado (número do projeto e ids dos campos):
+Projeto nº **1** (`PVT_kwHOACzJk84Bme7c`), campo **Status** (`PVTSSF_lAHOACzJk84Bme7czhlHyVE`).
+
+| Etapa | id da opção |
+|---|---|
+| Novo | `53b1f7e7` |
+| Aguardando aprovação | `6d7c57b5` |
+| Fila | `e7ed73af` |
+| Em andamento | `aa0e138e` |
+| Publicado | `3d5c2e0f` |
+| Concluído | `5785fa7f` |
 
 ```bash
-gh project item-list <NUM> --owner johncoelho --format json        # cartões e etapas
-gh project item-add <NUM> --owner johncoelho --url <url-da-issue>  # pôr issue no quadro
-gh project item-edit --project-id <PID> --id <ITEM> --field-id <FID> --single-select-option-id <OPT>
+# cartões, etapas e número da issue
+gh project item-list 1 --owner johncoelho --format json --jq '.items[]|{id, n: .content.number, title, status}'
+# pôr uma issue no quadro (devolve o id do cartão)
+gh project item-add 1 --owner johncoelho --url https://github.com/johncoelho/naval-battle/issues/<N> --format json --jq .id
+# mover um cartão
+gh project item-edit --project-id PVT_kwHOACzJk84Bme7c --id <ID-DO-CARTAO> --field-id PVTSSF_lAHOACzJk84Bme7czhlHyVE --single-select-option-id <ID-DA-ETAPA>
 ```
