@@ -19,3 +19,15 @@ begin
 end $$;
 revoke all on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- "Criar senha" (#9): conta que entrou só com Google não tem senha, então o Perfil
+-- oferece criar uma em vez de trocar. A lista de provedores do Auth não serve para
+-- decidir (o GoTrue não acrescenta "email" quando a conta OAuth define senha), por
+-- isso a resposta vem daqui: só a linha do próprio usuário e só um booleano.
+create or replace function public.account_has_password()
+returns table (has_password boolean)
+language sql security definer set search_path = public stable as $$
+  select coalesce(u.encrypted_password, '') <> '' from auth.users u where u.id = auth.uid()
+$$;
+revoke all on function public.account_has_password() from public, anon;
+grant execute on function public.account_has_password() to authenticated;

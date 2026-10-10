@@ -122,6 +122,12 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
+    actual suspend fun accountHasPassword(session: Session): CloudResult<Boolean> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/account_has_password", JSONObject(), token = session.accessToken))
+        val row = if (arr.length() == 0) null else arr.getJSONObject(0)
+        CloudResult.Ok(row?.optBoolean("has_password", true) ?: true)
+    }
+
     actual suspend fun sendPasswordReset(email: String): CloudResult<Unit> = call {
         val body = JSONObject().put("email", email)
         post("/auth/v1/recover", body, token = null)

@@ -677,6 +677,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val token = pushRegistered
         pushRegisteredFor = null
         if (session != null && token != null) uiScope?.launch { cloud.unregisterPushToken(session, token) }
+        hasPassword = null
         profile.signOut()
     }
 
@@ -1824,6 +1825,32 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             }
         }
     }
+
+    /**
+     * Se a conta logada tem senha (#9). Nulo = não sabemos (sem rede, erro, ou ainda
+     * não carregou) e conta como "tem senha", que é o comportamento de antes.
+     * Carregado ao abrir o Perfil com [loadHasPassword]; zera ao sair da conta.
+     */
+    var hasPassword by mutableStateOf<Boolean?>(null)
+
+    suspend fun loadHasPassword() {
+        if (!profile.signedIn) { hasPassword = null; return }
+        hasPassword = (authed { session -> cloud.accountHasPassword(session) } as? CloudResult.Ok)?.value
+    }
+
+    /**
+     * Cria a primeira senha de uma conta que entrou só com o Google. Não pede senha
+     * atual (não existe): a sessão Google aberta é a prova de identidade, e o
+     * "Secure password change" do Auth está desligado, então não exige login recente.
+     */
+    suspend fun createPassword(newPassword: String): Pair<Boolean, String> =
+        when (val r = authed { session -> cloud.updatePassword(session, newPassword) }) {
+            is CloudResult.Ok -> {
+                hasPassword = true
+                true to t(K.AUTH_PASSWORD_CREATED)
+            }
+            is CloudResult.Fail -> false to r.message
+        }
 
     /** "Esqueci minha senha": manda o link de recuperação para o e-mail informado. */
     suspend fun forgotPassword(email: String): Pair<Boolean, String> =

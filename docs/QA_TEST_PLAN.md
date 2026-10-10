@@ -79,6 +79,8 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | AUTH-03 | P1 | Fechar e reabrir o app | Continua logado (sessão renovada sozinha) |
 | AUTH-04 | P1 | Trocar nome de guerra e insígnia no Perfil | Salva, aparece no menu e para o outro aparelho (busca de amigos) |
 | AUTH-05 | P1 | Sair da conta e entrar de novo | Volta como convidado ao sair; ao entrar recupera a carreira do servidor |
+| AUTH-07 | P1 | Conta só Google (sem senha) → Perfil → Criar senha; nova senha 6+ e confirmação → Salvar | Botão mostra "Criar senha" (não "Trocar senha") e o cartão não pede senha atual; confirma "Senha criada"; o botão vira "Trocar senha"; sair e entrar por e-mail + essa senha cai na mesma carreira (senha digitada só pelo John) |
+| AUTH-08 | P1 | Conta criada por e-mail e senha → Perfil | Mostra "Trocar senha" pedindo a senha atual, como antes |
 
 ## 5. Menu e navegação
 

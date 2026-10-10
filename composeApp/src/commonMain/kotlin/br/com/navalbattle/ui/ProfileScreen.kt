@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.GoogleAuthConfig
+import br.com.navalbattle.data.PasswordAction
+import br.com.navalbattle.data.passwordAction
 import br.com.navalbattle.data.SupabaseConfig
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.i18n.K
@@ -424,6 +426,9 @@ private fun AccountSection(state: AppState) {
     var showChangePassword by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    // conta só Google não tem senha: oferece "Criar senha" em vez de "Trocar senha" (#9)
+    LaunchedEffect(profile.signedIn) { state.loadHasPassword() }
+    val creatingPassword = passwordAction(state.hasPassword) == PasswordAction.CREATE
 
     Column(
         Modifier
@@ -446,17 +451,23 @@ private fun AccountSection(state: AppState) {
             Gap(6)
             HudLabel(t(K.AUTH_AUTO_SYNC), Naval.greenBright)
             Gap(14)
-            SecondaryButton(t(K.AUTH_CHANGE_PASSWORD)) {
+            SecondaryButton(
+                if (creatingPassword) t(K.AUTH_CREATE_PASSWORD) else t(K.AUTH_CHANGE_PASSWORD),
+                subtitle = if (creatingPassword) t(K.AUTH_CREATE_PASSWORD_SUB) else null
+            ) {
                 showChangePassword = !showChangePassword
                 message = null
             }
             if (showChangePassword) {
                 Gap(10)
                 ChangePasswordCard(
+                    create = creatingPassword,
                     onSubmit = { current, new ->
                         busy = true; failed = false; message = null
                         scope.launch {
-                            val result = state.changePassword(current, new)
+                            val result =
+                                if (creatingPassword) state.createPassword(new)
+                                else state.changePassword(current, new)
                             busy = false
                             failed = !result.first
                             message = result.second
@@ -632,9 +643,12 @@ private fun ForgotPasswordCard(email: String, busy: Boolean, onSend: () -> Unit)
 /**
  * Trocar senha exige a senha atual — reautenticamos com ela antes de aceitar a
  * troca, para ninguém trocar a senha de uma sessão esquecida aberta no aparelho.
+ * Com [create] (conta só Google, #9) não há senha atual: pede só a nova e a
+ * confirmação, e [onSubmit] recebe a atual vazia.
  */
 @Composable
 private fun ChangePasswordCard(
+    create: Boolean,
     onSubmit: (current: String, new: String) -> Unit,
     onCancel: () -> Unit,
     busy: Boolean
@@ -651,10 +665,12 @@ private fun ChangePasswordCard(
             .border(1.dp, Naval.line)
             .padding(14.dp)
     ) {
-        HudLabel(t(K.AUTH_CHANGE_PASSWORD), Naval.amberStrong)
+        HudLabel(if (create) t(K.AUTH_CREATE_PASSWORD) else t(K.AUTH_CHANGE_PASSWORD), Naval.amberStrong)
         Gap(12)
-        Field(t(K.AUTH_CURRENT_PASSWORD), current, KeyboardType.Password, true) { current = it.take(64) }
-        Gap(10)
+        if (!create) {
+            Field(t(K.AUTH_CURRENT_PASSWORD), current, KeyboardType.Password, true) { current = it.take(64) }
+            Gap(10)
+        }
         Field(t(K.AUTH_NEW_PASSWORD), new, KeyboardType.Password, true) { new = it.take(64) }
         Gap(10)
         Field(t(K.AUTH_CONFIRM_PASSWORD), confirm, KeyboardType.Password, true) { confirm = it.take(64) }
@@ -670,13 +686,13 @@ private fun ChangePasswordCard(
             PrimaryButton(
                 t(K.SAVE),
                 modifier = Modifier.weight(1f),
-                enabled = !busy && current.isNotBlank() && new.length >= 6 && confirm.isNotBlank()
+                enabled = !busy && (create || current.isNotBlank()) && new.length >= 6 && confirm.isNotBlank()
             ) {
                 if (new != confirm) {
                     localError = t(K.AUTH_PASSWORD_MISMATCH)
                 } else {
                     localError = null
-                    onSubmit(current, new)
+                    onSubmit(if (create) "" else current, new)
                 }
             }
         }

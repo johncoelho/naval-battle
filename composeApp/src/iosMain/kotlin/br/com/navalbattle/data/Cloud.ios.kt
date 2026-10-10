@@ -114,6 +114,12 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
+    actual suspend fun accountHasPassword(session: Session): CloudResult<Boolean> = call {
+        val json = post("/rest/v1/rpc/account_has_password", emptyMap<String, Any?>(), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok((row?.get("has_password") as? Boolean) ?: true)
+    }
+
     actual suspend fun sendPasswordReset(email: String): CloudResult<Unit> = call {
         post("/auth/v1/recover", mapOf("email" to email), token = null)
         CloudResult.Ok(Unit)

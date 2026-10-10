@@ -371,7 +371,10 @@ A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
   Nunca se perde o maior progresso.
 - A sessão se renova sozinha quando o token vence (401 → refresh → repete a chamada).
 - **Trocar senha** (logado, pede a senha atual) e **esqueci minha senha** (manda link
-  por e-mail) na tela de Conta.
+  por e-mail) na tela de Conta. Conta que entrou **só com o Google** não tem senha: no lugar de
+  "Trocar senha" aparece **Criar senha** (só a nova senha e a confirmação, mínimo 6), e depois
+  ela entra também por e-mail e senha. Quem decide é o servidor (`account_has_password()`); sem
+  resposta, vale "Trocar senha".
 - Sem rede ou sem conta, o jogo roda inteiro offline.
 
 Fica **só no aparelho**: tokens de sessão, preferência de trilha e o andamento da partida.

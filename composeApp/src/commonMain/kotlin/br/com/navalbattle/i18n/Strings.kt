@@ -619,6 +619,9 @@ enum class K(val pt: String, val en: String, val es: String) {
     AUTH_CONFIRM_PASSWORD("Confirmar nova senha", "Confirm new password", "Confirmar contraseña nueva"),
     AUTH_PASSWORD_MISMATCH("As senhas novas não são iguais.", "The new passwords don't match.", "Las contraseñas nuevas no coinciden."),
     AUTH_PASSWORD_CHANGED("Senha alterada.", "Password changed.", "Contraseña actualizada."),
+    AUTH_CREATE_PASSWORD("Criar senha", "Create password", "Crear contraseña"),
+    AUTH_CREATE_PASSWORD_SUB("Para entrar também com e-mail e senha", "To also sign in with email and password", "Para entrar también con correo y contraseña"),
+    AUTH_PASSWORD_CREATED("Senha criada. Agora você também entra com e-mail e senha.", "Password created. You can now also sign in with email and password.", "Contraseña creada. Ahora también entras con correo y contraseña."),
     AUTH_CANCEL("Cancelar", "Cancel", "Cancelar"),
 
     // ---------------------------------------------------------------- rede local

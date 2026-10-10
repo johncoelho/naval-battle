@@ -149,6 +149,12 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   nulo (app antigo) não muda a opção, para o app antigo não religar o que o jogador desligou.
 - **10/10 · Presença da partida online: cálculo separado da chamada de rede** (#8, 0.31.0): a batida
   presa na rede (até ~30 s) segurava o "sem conexão" e o relógio do turno disparava sozinho.
+- **10/10 · "Criar senha" para conta só Google** (#9, 0.31.1), aprovado pelo John no lugar de só
+  esconder a opção (esconder deixaria o jogador sem jeito de entrar por e-mail se perder o Google).
+  Quem decide é o servidor (`account_has_password()`), não `app_metadata.providers`: o GoTrue não
+  acrescenta `email` aos provedores quando a conta OAuth cria senha, então a lista mentiria depois.
+  Não pede reautenticação: a sessão Google é a prova de identidade e o "Secure password change" do
+  Auth está desligado (conferido pelo John). Sem resposta do servidor vale "Trocar senha".
 
 ---
 

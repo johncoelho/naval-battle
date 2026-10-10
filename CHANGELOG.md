@@ -9,6 +9,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.73.0] — 2026-10-10 · Criar senha para conta só Google
+
+App 0.31.1 (versionCode 76). Refs #9.
+
+### Adicionado
+- **Criar senha** (#9): conta que entrou só com o Google vê **Criar senha** no Perfil (legenda
+  "Para entrar também com e-mail e senha") em vez de "Trocar senha", que pedia uma senha atual que
+  ela nunca teve. O cartão pede só a nova senha e a confirmação (mínimo 6) e usa o mesmo
+  `PUT /auth/v1/user`; depois disso o botão volta a ser "Trocar senha". Sem rede ou erro, segue
+  "Trocar senha", como antes.
+- Servidor (`supabase/account.sql`, migração `account_has_password`): RPC
+  `account_has_password()` (security definer, só a linha do próprio usuário, só um booleano). A
+  lista de provedores do Auth não serve porque não ganha `email` quando a conta OAuth cria senha.
+- App: `CloudApi.accountHasPassword`, `AppState.hasPassword`/`createPassword`, função pura
+  `passwordAction()` com teste em `commonTest`; textos `AUTH_CREATE_PASSWORD`,
+  `AUTH_CREATE_PASSWORD_SUB` e `AUTH_PASSWORD_CREATED` nas três línguas.
+
+---
+
 ## [0.72.0] — 2026-10-10 · Amigo online, aceitar na busca e lote de correções
 
 App 0.31.0 (versionCode 75). Refs #10, #8, #20, #6, #19.

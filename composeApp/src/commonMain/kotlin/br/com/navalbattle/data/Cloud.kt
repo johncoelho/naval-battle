@@ -303,6 +303,13 @@ expect class CloudApi() {
      */
     suspend fun updatePassword(session: Session, newPassword: String): CloudResult<Unit>
 
+    /**
+     * Se a conta tem senha (RPC `account_has_password`). Conta que entrou só com o
+     * Google não tem, e o Perfil oferece "Criar senha" em vez de "Trocar senha".
+     * Sem linha na resposta conta como "tem senha" (o comportamento de antes).
+     */
+    suspend fun accountHasPassword(session: Session): CloudResult<Boolean>
+
     /** Manda o e-mail de "esqueci minha senha" — link de recuperação do Supabase Auth. */
     suspend fun sendPasswordReset(email: String): CloudResult<Unit>
 
