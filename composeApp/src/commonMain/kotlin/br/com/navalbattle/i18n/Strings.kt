@@ -349,6 +349,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_RANKING_REPEAT("Resultado já registrado antes — nada mudou", "Result was already recorded — nothing changed", "Resultado ya registrado — nada cambió"),
     RESULT_RANKING_ABANDON("Abandono conta como derrota", "Leaving counts as a defeat", "Abandonar cuenta como derrota"),
     RESULT_RANKING_VIEW("Ver ranking", "View ranking", "Ver clasificación"),
+    RESULT_OPPONENT_QUIT("O adversário desistiu da partida", "The opponent left the match", "El adversario abandonó la partida"),
     RESULT_REMATCH_LOST_LINK("A ligação com o adversário caiu", "The connection with the opponent dropped", "La conexión con el adversario se cayó"),
 
     // ---------------------------------------------------------------- estaleiro e loja

@@ -466,7 +466,7 @@ private fun RematchSection(state: AppState, match: Match) {
     }
     when {
         !connected ->
-            HudLabel(t(K.RESULT_REMATCH_LOST_LINK), Naval.danger)
+            HudLabel(t(if (state.opponentQuit) K.RESULT_OPPONENT_QUIT else K.RESULT_REMATCH_LOST_LINK), Naval.danger)
 
         state.rematchRequestedByMe ->
             PrimaryButton(t(K.RESULT_REMATCH_WAITING), enabled = false) {}

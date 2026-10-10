@@ -1,1 +1,1 @@
-Ranqueada mais justa: o vencedor ganha exatamente o que o perdedor perde, sem depender de quem termina primeiro, e so as 3 primeiras ranqueadas do dia contra o mesmo adversario valem pontos. Revanche online agora abre uma partida nova: custa 1 milha e, na ranqueada, vale pontos de novo.
+Se o adversario sai da partida online enquanto voce ainda posiciona a frota, o jogo agora vai direto para o relatorio em vez de ficar parado, e avisa que ele desistiu. A espera da revanche nao mostra mais o codigo da sala antiga.

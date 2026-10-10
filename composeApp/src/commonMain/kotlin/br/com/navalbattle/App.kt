@@ -299,6 +299,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var rematchRequestedByOpponent by mutableStateOf(false)
         private set
 
+    /** O adversário saiu da partida (QUIT) — o relatório diz isso em vez de "ligação caiu". */
+    var opponentQuit by mutableStateOf(false)
+        private set
+
     private val link = LanLink()
 
     private fun onMain(block: () -> Unit) {
@@ -358,6 +362,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Abre uma partida em rede — na primeira ligação e em toda revanche seguinte. */
     private fun startLanMatch(side: Side) {
         opponentProfile = null
+        opponentQuit = false
         val m = Match(mode, Opponent.LAN, mySide = side)
         m.setName(side, profile.displayName)
         match = m
@@ -478,6 +483,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val m = Match(mode, Opponent.ONLINE, mySide = side)
         m.setName(side, profile.displayName)
         match = m
+        opponentQuit = false
         rankedResultSent = false
         rankedOutcome = null
         rankedReport = RankedReport.IDLE
@@ -1496,7 +1502,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
             Protocol.QUIT -> {
                 m.abandon(m.mySide)
+                opponentQuit = true
                 if (m.opponent == Opponent.LAN) closeLink() else closeOnline()
+                // só a tela de batalha leva sozinha ao relatório: quem ainda estava
+                // posicionando a frota ficava preso numa partida que já tinha acabado
+                if (screen == Screen.PLACEMENT || screen == Screen.HANDOFF) screen = Screen.RESULT
             }
 
             Protocol.PAUSE -> startOpponentPauseWatch()
@@ -1664,6 +1674,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 if (old.mySide != Side.PLAYER) return
                 rematchRequestedByMe = false
                 rematchRequestedByOpponent = false
+                // a espera da sala nova não mostra código: o da sala antiga confundia
+                onlineCode = null
                 onlineLink.openRematchRoom(
                     mode.name,
                     onState = { s, side -> onMain { onOnlineState(s, side) } },

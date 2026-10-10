@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.69.0] — 2026-10-10 · Saída do adversário no posicionamento
+
+App 0.30.1 (versionCode 72). Achados da segunda rodada da bateria de testes
+(`docs/QA_TEST_PLAN.md`), com a 0.30.0 instalada pela Play nos emuladores QA01/QA02.
+
+### Corrigido
+- **Adversário sai no posicionamento**: o `QUIT` encerrava a partida, mas só a tela de
+  batalha leva ao relatório — quem ainda posicionava a frota ficava preso numa partida
+  já encerrada. Agora vai direto para o relatório.
+- O relatório diz "O adversário desistiu da partida" quando foi isso (antes, "A ligação
+  com o adversário caiu").
+- A espera da revanche online mostrava o código da sala antiga.
+
+### Conferido na 0.30.0 (Play)
+- Revanche online em sala nova: sala antiga `finished`, nova `active`, 1 milha cobrada
+  de cada lado; na ranqueada, a revanche pontuou (1016/984 → 1031/969).
+- Ranqueada soma zero: ±16 na primeira, ±15 na revanche.
+- Convite recusado, cabeçalho "VS." de quem entra e campo do feedback — corrigidos.
+
+---
+
 ## [0.68.0] — 2026-10-09 · Ranqueada soma zero e revanche em sala nova
 
 App 0.30.0 (versionCode 71). Banco: migração `ranked_zero_sum_order_fix_pair_limit`.

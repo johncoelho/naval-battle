@@ -125,6 +125,7 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | ON-11 | P1 | Conferir a pontuação da ON-10 no banco (`ranked_season_stats`) contra a fórmula de `record_ranked_result` | Vencedor e perdedor batem com o Elo calculado a partir dos pontos de ANTES da partida, sem depender de quem relatou primeiro |
 | ON-12 | P2 | Cabeçalho da batalha nos dois aparelhos | Cada um vê "VS. <nome do outro>" — inclusive quem entrou na sala |
 | ON-13 | P1 | Revanche online | Recomeça; milha e pontos (na ranqueada) contam de novo |
+| ON-14 | P1 | B encerra a partida ainda no posicionamento | A vai para o relatório ("O adversário desistiu"), não fica preso no posicionamento |
 
 ## 8b. Rede local (A × B)
 
