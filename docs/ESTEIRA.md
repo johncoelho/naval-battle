@@ -39,6 +39,10 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 - **Melhoria só entra na Fila com aprovação do John.** O Game Designer e o PO propõem; ele decide.
 - **Um item em andamento por vez** (fila serial, push direto na `main` como hoje). Tech Lead aprova o
   diff antes de todo push. Paralelismo com PRs fica para quando a fila pedir.
+- **Publicação sem esperar o John** (decisão dele, 10/10): item liberado para desenvolvimento (bug
+  pela regra acima, melhoria aprovada por ele) + **APROVADO** do Tech Lead + testes de unidade e
+  `release-check` verdes → o agente publica. O CI repete a trava e os testes antes de compilar e
+  publicar; falhou, nada vai para a Play.
 - **Uma versão por assunto.**
 - Feedback de jogador vira issue, mas aprovar, recusar ou recompensar continua sendo do John.
 - Nada em `.github/workflows`, stack nova ou dinheiro sem o OK dele.

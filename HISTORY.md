@@ -124,6 +124,10 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **10/10 · Mudar regra aplicada é melhoria, não bug** — precisa da aprovação do John mesmo quando a
   regra parece errada ou explorável (caso da #6, vitória por desistência rendendo XP e dobrões). Bug
   é só o código não fazer o que a regra documentada diz.
+- **10/10 · Agente publica sozinho o que já foi liberado** — palavras do John: "se o desenvolvimento
+  já foi aprovado por mim não vejo pq o agente não publicar sozinho, desde que todos testes
+  automatizados tenham dado certo". Condições: item liberado (bug pela regra, melhoria aprovada),
+  APROVADO do Tech Lead, testes e `release-check` verdes. Primeira entrega da esteira: #7 (0.30.3).
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 
