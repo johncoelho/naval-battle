@@ -10,7 +10,7 @@ da skill `dev-cycle` e o `docs/ESTEIRA.md`.
 
 1. Se a versão ainda não está em `app_releases` (projeto Supabase `cwtslesnthbenxswdcbv`), insira
    com `android_live = true`, `ios_live = false`, `notify = false` e notas com acento nas três línguas.
-2. CI do commit: `gh run list -R johncoelho/naval-battle -c <sha> --json databaseId,name,status,conclusion`,
+2. CI do commit: `gh run list -R johncoelho/naval-battle -c <sha-completo> --json databaseId,name,status,conclusion`,
    depois `gh run watch <id> -R johncoelho/naval-battle --exit-status` em cada run (Build APK e Build
    iOS framework).
 3. Os dois verdes: `update app_releases set ios_live = true where version_code = N`, comente na issue
