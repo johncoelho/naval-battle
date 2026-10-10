@@ -62,7 +62,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - 10/10 · Testes de unidade obrigatórios para regra de jogo; bug de lógica corrigido ganha teste.
 - 10/10 · CI barra release incompleto (versão, iOS, notas, CHANGELOG).
 - 10/10 · SPEC com critérios de aceite para feature média/grande; critérios viram casos de QA.
-- 10/10 · Uma versão por assunto.
+- 10/10 · Um lote por release: toda a Fila numa versão só (substituiu "uma versão por assunto").
 - 10/10 · Ambiente de teste do banco (branch Supabase) adiado.
 - 10/10 · Camada nova na stack só com aprovação do John.
 - 09–10/10 · Ranqueada soma zero, força do adversário antes da partida, 3/dia contra o mesmo

@@ -15,9 +15,10 @@ para decisões que são do John (stack nova, regra de produto ambígua, aprovaç
   anterior sobre o mesmo assunto). Se contradiz uma decisão registrada, diga e pergunte.
 - Feature média/grande: escreva uma **SPEC com critérios de aceite** antes de codar (modelo
   abaixo); o John aprova. Correção pequena: siga direto.
-- **Uma versão por assunto.** Não misture recursos independentes no mesmo release: pacote pequeno
-  passa mais rápido na revisão da Play e, se algo quebrar, a causa é óbvia. Correções do mesmo
-  assunto podem ir juntas.
+- **Um lote por release** (decisão do John, 10/10): tudo o que está na Fila quando a rodada começa
+  vai junto numa versão só — cada versão passa pela revisão do Google, e uma por correção deixava o
+  fluxo lento demais. Um commit por item dentro do lote (causa fácil de achar) e uma subida de versão
+  no fim. Item que travar (decisão do John, permissão) sai do lote e o resto segue.
 - Backlog é o **GitHub Issues** (`johncoelho/naval-battle`). Pedido grande dividido: uma issue por
   parte. Ao concluir, feche a issue citando a versão.
 

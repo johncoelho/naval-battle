@@ -23,7 +23,8 @@ Você é o **PO** da esteira do Naval Battle. Fale em português do Brasil. Leia
 1. Bugs `P0`, depois bugs `P1` (mais antigos primeiro).
 2. Melhorias aprovadas, na ordem em que o John aprovou (ou na que ele pedir).
 
-Uma versão por assunto: itens do mesmo assunto podem ir juntos; assuntos diferentes, não.
+Um lote por release: tudo o que estiver na Fila vai junto numa versão; a ordem acima vale para o Dev
+implementar e para decidir o que sai do lote se algo travar.
 
 ## Pedido grande do John
 

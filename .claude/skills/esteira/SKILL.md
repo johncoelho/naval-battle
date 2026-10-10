@@ -1,6 +1,6 @@
 ---
 name: esteira
-description: Uma rodada da esteira agêntica do Naval Battle — Suporte faz a triagem de issues e feedback, PO propõe melhorias e ordena a Fila, e se nada estiver em andamento o primeiro item da Fila é implementado (Tech Lead, Dev, Release), e o QA valida o que a Play liberou. Use na tarefa agendada da esteira ou quando o John pedir "roda a esteira" ou "olha a fila".
+description: Uma rodada da esteira agêntica do Naval Battle — Suporte faz a triagem de issues e feedback, PO propõe melhorias e ordena a Fila, e se nada estiver em andamento toda a Fila é implementada num lote e publicada numa versão só (Tech Lead, Dev, Release), e o QA valida o que a Play liberou. Use na tarefa agendada da esteira ou quando o John pedir "roda a esteira" ou "olha a fila".
 ---
 
 # Rodada da esteira
@@ -18,11 +18,14 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
 3. **PO** (`po`): proposta nas melhorias novas; move para a Fila as que o John aprovou por comentário;
    ordena a Fila (P0, P1, melhorias aprovadas).
 4. **Implementação**, só se nada estiver **Em andamento**:
-   - mova o primeiro da Fila para **Em andamento**;
+   - **lote = toda a Fila** no início da rodada; mova todos para **Em andamento**;
    - melhoria ou bug não trivial: **Tech Lead** desenha (comentário na issue);
-   - **Dev** implementa no worktree e faz o commit;
+   - **Dev** implementa o lote num worktree só: um commit por item (`Refs #N`), e no fim um commit
+     com a subida de versão, notas da Play e CHANGELOG citando todos os itens;
+   - item que travar (precisa do John, permissão negada): volta para a Fila com comentário e sai do
+     lote; o resto segue;
    - **Tech Lead** revisa o diff; CORRIGIR volta ao Dev (até 3 voltas; depois disso, pare e reporte);
-   - APROVADO: Dev publica; **Release** acompanha o CI e move para **Publicado**.
+   - APROVADO: Dev publica; **Release** acompanha o CI e move **todos os cartões do lote** para **Publicado**.
    - Item **Em andamento** há mais de 3 h sem commit: retome do worktree se existir, senão devolva
      à Fila com comentário.
 5. **QA** (`qa`): só se houver cartão em **Publicado** e a versão já estiver na Play dos emuladores.
@@ -31,7 +34,7 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
 
 ## Limites
 
-- Uma implementação por rodada. Nunca duas ao mesmo tempo.
+- Um lote por rodada (uma versão). Nunca dois ao mesmo tempo.
 - Nunca: aprovar feedback, mover melhoria para a Fila sem aprovação do John, mexer em
   `.github/workflows`, adicionar dependência, digitar senha.
 - Algo que precisa do John (decisão, permissão negada, CI quebrado 3 vezes): pare o item, comente na

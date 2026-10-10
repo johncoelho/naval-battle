@@ -11,7 +11,7 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 | Suporte | `suporte` | lê issues e feedback, classifica bug × melhoria, deixa reproduzível | — |
 | PO | `po` | SPEC com critérios de aceite, ordem da Fila, quebra pedidos grandes | — |
 | Tech Lead | `tech-lead` | desenho técnico antes, revisão antes de todo push | — |
-| Dev | `dev` | implementa um item da Fila num worktree, com testes e documentação | — |
+| Dev | `dev` | implementa o lote da Fila num worktree, com testes e documentação | — |
 | Release | `release` | `app_releases`, CI, `ios_live`, versão na issue | — |
 | QA | `qa` | valida na Play (QA01/QA02) e fecha a issue | — |
 | Game Designer | `game-designer` | analisa dados, propõe balanceamento e mecânicas | — |
@@ -37,13 +37,16 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 - **Mudar uma regra que já está valendo é melhoria, nunca bug**, mesmo que a regra pareça errada ou
   explorável: precisa da aprovação do John.
 - **Melhoria só entra na Fila com aprovação do John.** O Game Designer e o PO propõem; ele decide.
-- **Um item em andamento por vez** (fila serial, push direto na `main` como hoje). Tech Lead aprova o
-  diff antes de todo push. Paralelismo com PRs fica para quando a fila pedir.
+- **Um lote em andamento por vez** (push direto na `main` como hoje). Tech Lead aprova o diff antes
+  de todo push. Paralelismo com PRs fica para quando a fila pedir.
 - **Publicação sem esperar o John** (decisão dele, 10/10): item liberado para desenvolvimento (bug
   pela regra acima, melhoria aprovada por ele) + **APROVADO** do Tech Lead + testes de unidade e
   `release-check` verdes → o agente publica. O CI repete a trava e os testes antes de compilar e
   publicar; falhou, nada vai para a Play.
-- **Uma versão por assunto.**
+- **Um lote por release** (decisão do John, 10/10): tudo o que está na Fila quando a rodada começa
+  vai junto numa versão só (substitui "uma versão por assunto"): um commit por
+  item, uma subida de versão no fim, notas da Play e CHANGELOG citando todos. Item que travar sai do
+  lote e o resto segue.
 - Feedback de jogador vira issue, mas aprovar, recusar ou recompensar continua sendo do John.
 - Nada em `.github/workflows`, stack nova ou dinheiro sem o OK dele.
 - Item em **Em andamento** há mais de 3 horas sem commit: a rodada seguinte retoma ou devolve à Fila.
@@ -52,7 +55,7 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 
 1. Suporte faz a triagem (issues novas e feedback pendente).
 2. PO escreve proposta para melhorias novas e ordena a Fila.
-3. Se nada estiver **Em andamento**: pega o primeiro da Fila → Tech Lead desenha (se preciso) → Dev
+3. Se nada estiver **Em andamento**: pega **toda a Fila** como um lote → Tech Lead desenha (se preciso) → Dev
    implementa → Tech Lead revisa → Dev publica → Release acompanha o CI.
 4. QA valida o que está em **Publicado** se a Play já liberou.
 5. Relatório curto para o John (o que entrou, o que saiu, o que espera dele).

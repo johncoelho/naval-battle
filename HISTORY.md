@@ -128,6 +128,10 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   já foi aprovado por mim não vejo pq o agente não publicar sozinho, desde que todos testes
   automatizados tenham dado certo". Condições: item liberado (bug pela regra, melhoria aprovada),
   APROVADO do Tech Lead, testes e `release-check` verdes. Primeira entrega da esteira: #7 (0.30.3).
+- **10/10 · Um lote por release** (substitui "uma versão por assunto", da mesma manhã) — palavras do
+  John: "se tiverem mais pontos para serem resolvidos na fila, sugiro fazer todos sempre no mesmo
+  release, senão vai demorar mto". Cada versão passa pela revisão do Google; um commit por item
+  mantém a causa fácil de achar.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 
