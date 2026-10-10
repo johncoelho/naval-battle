@@ -45,8 +45,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 ## 3. Assuntos em andamento
 
 - **Esteira agêntica (10/10):** agentes em `.claude/agents/`, skill `esteira`, `docs/ESTEIRA.md`.
-  Quadro: https://github.com/users/johncoelho/projects/1. Falta: primeira rodada acompanhada e a
-  tarefa agendada (a cada 30 min).
+  Quadro: https://github.com/users/johncoelho/projects/1. Tarefa agendada `esteira-naval-battle`
+  a cada 30 min (só com o app aberto). Primeira entrega: #7 na 0.30.3.
 - **Base de conhecimento e qualidade (10/10):** CLAUDE.md, HISTORY.md, MEMORY.md, especificação técnica
   no README, design system no Claude Design, skills; testes de unidade (`commonTest`) e trava de
   release no CI (`tools/release-check.sh`).
