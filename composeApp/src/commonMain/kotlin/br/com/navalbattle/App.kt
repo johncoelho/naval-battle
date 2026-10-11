@@ -65,6 +65,8 @@ import br.com.navalbattle.data.Session
 import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.data.checkUpdateAvailable
 import br.com.navalbattle.data.platformName
+import br.com.navalbattle.data.deviceCheckKey
+import br.com.navalbattle.data.isTestLabDevice
 import br.com.navalbattle.data.nowMillis
 import br.com.navalbattle.data.openStoreListing
 import br.com.navalbattle.design.FleetLine
@@ -654,6 +656,21 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             pushRegistered = token
             pushRegisteredFor = account
         }
+    }
+
+    /**
+     * Relata ao servidor se este aparelho é dos testes automáticos do Google (#23),
+     * uma vez por conta e versão. Falha de rede não marca nada como enviado: tenta de
+     * novo na próxima abertura. No iPhone vai sempre falso (base de comparação).
+     */
+    suspend fun reportDeviceCheck() {
+        if (!profile.signedIn) return
+        val key = deviceCheckKey(profile.accountId, appVersionName)
+        if (profile.deviceCheckSent == key) return
+        val r = authed { session ->
+            cloud.reportDeviceCheck(session, isTestLabDevice(), appVersionName, platformName)
+        }
+        if (r is CloudResult.Ok) profile.deviceCheckSent = key
     }
 
     /**
@@ -2018,6 +2035,7 @@ fun App() {
             state.loadMiles()
             state.loadDaily()
             state.registerPush()
+            state.reportDeviceCheck()
         }
     }
 

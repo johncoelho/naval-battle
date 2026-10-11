@@ -215,6 +215,17 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
+    actual suspend fun reportDeviceCheck(
+        session: Session,
+        testLab: Boolean,
+        appVersion: String,
+        platform: String
+    ): CloudResult<Unit> = call {
+        val body = mapOf("p_test_lab" to testLab, "p_app_version" to appVersion, "p_platform" to platform)
+        post("/rest/v1/rpc/report_device_check", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun unregisterPushToken(session: Session, token: String): CloudResult<Unit> = call {
         post("/rest/v1/rpc/unregister_push_token", mapOf("p_token" to token), token = session.accessToken)
         CloudResult.Ok(Unit)

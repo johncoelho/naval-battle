@@ -212,6 +212,16 @@ class Profile(private val prefs: Prefs) {
         prefs.putInt(K_WELCOME_DONE, 1)
     }
 
+    /**
+     * Último relato de aparelho de teste aceito pelo servidor ("conta|versão", #23):
+     * fica no aparelho para relatar uma vez só por conta e versão.
+     */
+    var deviceCheckSent: String = prefs.getString(K_DEVICE_CHECK, "")
+        set(value) {
+            field = value
+            prefs.putString(K_DEVICE_CHECK, value)
+        }
+
     /** Preferência de trilha: fica no aparelho, não viaja para a nuvem. */
     var musicOn: Boolean = prefs.getInt(K_MUSIC, 1) == 1
         private set
@@ -701,6 +711,7 @@ class Profile(private val prefs: Prefs) {
         private const val K_FRIEND_ONLINE_PUSH = "friend_online_push"
         private const val K_QUICK_OFFER_KIND = "quick_offer_kind"
         private const val K_ONLINE_REWARDS = "online_rewards"
+        private const val K_DEVICE_CHECK = "device_check_sent"
     }
 }
 

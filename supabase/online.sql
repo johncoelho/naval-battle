@@ -48,7 +48,10 @@ alter table public.online_matches enable row level security;
 
 -- quem está dentro da sala vê a sala; quem procura partida rápida ou tem o
 -- código vê salas ainda abertas (sem isso não dá para encontrar/entrar); quem
--- foi convidado precisa ver a própria sala mirada mesmo antes de entrar nela
+-- foi convidado precisa ver a própria sala mirada mesmo antes de entrar nela.
+-- Partida rápida separa conta de teste de jogador real (#23): cada um só enxerga
+-- sala rápida de quem é do mesmo tipo (vale também para a busca do app antigo,
+-- que lê a tabela direto); convite por código ou de amigo não muda
 drop policy if exists "sala online: ler" on public.online_matches;
 create policy "sala online: ler"
   on public.online_matches for select
@@ -56,7 +59,8 @@ create policy "sala online: ler"
     auth.uid() = host_id
     or auth.uid() = guest_id
     or auth.uid() = invited_id
-    or status = 'waiting'
+    or (status = 'waiting'
+        and (not is_quick_match or public.is_test_user(host_id) = public.my_is_test()))
   );
 
 drop policy if exists "sala online: criar" on public.online_matches;
@@ -271,6 +275,8 @@ begin
     set guest_id = auth.uid(), guest_name = p_guest_name, status = 'active'
     where id = p_match_id and guest_id is null and status = 'waiting'
       and (invited_id is null or invited_id = auth.uid())
+      -- partida rápida: conta de teste só com conta de teste (#23)
+      and (not is_quick_match or public.is_test_user(host_id) = public.my_is_test())
     returning *;
 end $$;
 
@@ -411,6 +417,7 @@ language sql security definer set search_path = public stable as $$
   select p.id, p.username, p.insignia, p.avatar, p.ranked_rating, p.ranked_matches, p.ranked_wins
   from public.profiles p
   where p.ranked_matches > 0
+    and not coalesce(p.is_test, false)  -- conta de teste fora do placar (#23)
   -- desempate: pontos, depois vitórias, depois aproveitamento (vitórias/partidas)
   -- e, por último, quem chegou primeiro àquela pontuação fica na frente
   order by p.ranked_rating desc, p.ranked_wins desc,
@@ -429,6 +436,8 @@ language sql security definer set search_path = public stable as $$
   from public.ranked_season_stats s
   join public.current_season() c on s.season_key = c.season_key
   left join public.profiles p on p.id = s.user_id
+  -- conta de teste fora do placar (#23); conta apagada (sem perfil) segue aparecendo
+  where not coalesce(p.is_test, false)
   -- mesmo desempate do placar geral (ver leaderboard_overall)
   order by s.points desc, s.wins desc,
            (s.wins::numeric / greatest(s.matches, 1)) desc, s.updated_at asc
@@ -456,6 +465,7 @@ language sql security definer set search_path = public stable as $$
       p.id
     from public.profiles p
     where p.ranked_matches > 0 and not p_season
+      and not coalesce(p.is_test, false)
   ) ranked
   where ranked.id = auth.uid()
   union all
@@ -467,8 +477,10 @@ language sql security definer set search_path = public stable as $$
       ) as "position",
       s.points as rating,
       s.user_id
-    from public.ranked_season_stats s, public.current_season() c
-    where s.season_key = c.season_key and p_season
+    from public.ranked_season_stats s
+    join public.current_season() c on s.season_key = c.season_key
+    left join public.profiles p on p.id = s.user_id
+    where p_season and not coalesce(p.is_test, false)
   ) ranked
   where ranked.user_id = auth.uid();
 $$;
@@ -559,6 +571,7 @@ language sql security definer set search_path = public stable as $$
     from public.ranked_season_stats s
     join target t on s.season_key = t.season_key
     left join public.profiles p on p.id = s.user_id
+    where not coalesce(p.is_test, false)  -- conta de teste fora das medalhas (#23)
   )
   select
     user_id, username, insignia, avatar, points, "position",
@@ -667,6 +680,12 @@ begin
   end if;
   opp := case when is_host then m.guest_id else m.host_id end;
   my_username := case when is_host then m.host_name else m.guest_name end;
+
+  -- conta de teste (#23) de qualquer lado: a partida não vale ponto nem conta no
+  -- placar (o app trata o retorno vazio como o de quem não tem passe)
+  if public.is_test_user(me) or public.is_test_user(opp) then
+    return;
+  end if;
 
   select c.season_key, c.name into szn, szn_label from public.current_season() c;
   season_name := szn_label;

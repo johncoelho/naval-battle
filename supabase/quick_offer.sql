@@ -27,6 +27,8 @@ begin
     and m.guest_id is null
     and m.invited_id is null
     and m.host_id <> me
+    -- conta de teste só recebe sala de conta de teste, e vice-versa (#23)
+    and public.is_test_user(m.host_id) = public.is_test_user(me)
     and not (me = any(m.declined_by))
     and ((m.ranked and p_ranked) or (not m.ranked and p_casual))
     and m.created_at > now() - interval '10 minutes'

@@ -182,6 +182,10 @@ begin
   if auth.uid() is null then
     raise exception 'season_auth';
   end if;
+  -- conta de teste (#23) não resgata recompensa de temporada
+  if public.is_test_user(auth.uid()) then
+    return;
+  end if;
   select c.season_key into szn from public.current_season() c;
 
   select s.season_key into target
@@ -200,7 +204,9 @@ begin
                               (s.wins::numeric / greatest(s.matches, 1)) desc, s.updated_at asc) as pos,
            count(*) over () as total
       from public.ranked_season_stats s
+      left join public.profiles p on p.id = s.user_id
      where s.season_key = target and s.matches > 0
+       and not coalesce(p.is_test, false)  -- posição e total sem conta de teste
   ) x where x.user_id = auth.uid();
 
   select s.points, s.matches, s.wins into st

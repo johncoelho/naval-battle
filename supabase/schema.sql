@@ -67,6 +67,50 @@ create trigger profiles_touch
   before update on public.profiles
   for each row execute function public.touch_profile();
 
+-- conta de teste (#23): os testes automáticos da revisão do Google criam contas a
+-- cada envio à Play. Marcadas aqui, ficam fora do ranking, da recompensa de
+-- temporada e da partida rápida com jogador real (ver test_accounts.sql, online.sql,
+-- quick_offer.sql e season.sql). A marca só vem do servidor.
+alter table public.profiles add column if not exists is_test boolean not null default false;
+
+-- profiles só deixa ler a própria linha: as duas funções abrem só o booleano
+-- (anon também, porque a política de leitura das salas chama as duas)
+create or replace function public.is_test_user(p_user uuid)
+returns boolean
+language sql security definer set search_path = public stable as $$
+  select coalesce((select p.is_test from public.profiles p where p.id = p_user), false);
+$$;
+revoke all on function public.is_test_user(uuid) from public;
+grant execute on function public.is_test_user(uuid) to anon, authenticated;
+
+create or replace function public.my_is_test()
+returns boolean
+language sql security definer set search_path = public stable as $$
+  select public.is_test_user(auth.uid());
+$$;
+revoke all on function public.my_is_test() from public;
+grant execute on function public.my_is_test() to anon, authenticated;
+
+-- trava: o cliente (gravação direta como anon/authenticated) não marca nem desmarca
+-- a conta de teste; dentro das RPCs security definer o current_user é o dono e passa
+create or replace function public.guard_profile_is_test()
+returns trigger language plpgsql as $$
+begin
+  if current_user in ('anon', 'authenticated') then
+    if tg_op = 'INSERT' then
+      new.is_test := false;
+    else
+      new.is_test := coalesce(old.is_test, false);
+    end if;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists profiles_guard_is_test on public.profiles;
+create trigger profiles_guard_is_test
+  before insert or update on public.profiles
+  for each row execute function public.guard_profile_is_test();
+
 -- cria a linha da carreira assim que a conta nasce, inclusive no login social,
 -- para o Google cair na mesma carreira do e-mail
 create or replace function public.handle_new_user()

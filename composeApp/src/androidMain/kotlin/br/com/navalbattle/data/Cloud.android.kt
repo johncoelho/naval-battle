@@ -218,6 +218,20 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
+    actual suspend fun reportDeviceCheck(
+        session: Session,
+        testLab: Boolean,
+        appVersion: String,
+        platform: String
+    ): CloudResult<Unit> = call {
+        val body = JSONObject()
+            .put("p_test_lab", testLab)
+            .put("p_app_version", appVersion)
+            .put("p_platform", platform)
+        post("/rest/v1/rpc/report_device_check", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun unregisterPushToken(session: Session, token: String): CloudResult<Unit> = call {
         post("/rest/v1/rpc/unregister_push_token", JSONObject().put("p_token", token), token = session.accessToken)
         CloudResult.Ok(Unit)

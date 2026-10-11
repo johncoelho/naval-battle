@@ -365,6 +365,13 @@ expect class CloudApi() {
      */
     suspend fun registerPushToken(session: Session?, token: String, platform: String): CloudResult<Unit>
 
+    /**
+     * Relata se este aparelho é dos testes automáticos do Google (supabase/test_accounts.sql,
+     * #23): grava o diagnóstico da conta nesta versão e, se for, o servidor marca a conta
+     * como de teste (fora do ranking e da partida rápida com jogador real).
+     */
+    suspend fun reportDeviceCheck(session: Session, testLab: Boolean, appVersion: String, platform: String): CloudResult<Unit>
+
     /** Apaga a conta e tudo dela no servidor (supabase/account.sql). Não tem volta. */
     suspend fun deleteAccount(session: Session): CloudResult<Unit>
 
