@@ -480,6 +480,11 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 - Nenhuma cor, tamanho ou fonte solta numa tela: tokens `Naval`/`NavalType` e componentes de
   `ui/Components.kt` (ver o design system). Componente novo nasce compartilhado.
 - Desenho é `private fun DrawScope.drawAlgo(...)` em coordenadas do próprio viewBox.
+- **Desenho animado não aloca por quadro**: `Brush`/shader, `Random` e listas fixas nunca são criados
+  dentro do desenho que roda a cada quadro — degradê vai para `drawWithCache` (por tamanho) e é
+  transladado, alfa variável vai no `alpha` da pintura. A parte estática fica numa camada separada
+  da animada (`drawWithCache` ou `graphicsLayer()` próprio); rotação/translação contínua é
+  propriedade do `graphicsLayer`, não redesenho (ex.: `BoardView`, `SeaFormation` do menu).
 - Nada de `TODO` órfão: vira item do Roadmap ou vira código.
 
 ### Back-end (Supabase)

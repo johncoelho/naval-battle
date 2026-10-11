@@ -9,6 +9,30 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.73.2] — 2026-10-10 · Animação mais fluida no Android (menu e tabuleiro)
+
+App 0.31.3 (versionCode 78). Refs #22.
+
+### Corrigido
+- **Animação travada no Android** (#22, relato de jogador): o desenho fazia trabalho demais a cada
+  quadro. Nenhuma mudança visual, de regra, de banco ou de rede.
+  - **Menu (`SeaFormation`)**: cada onda criava um degradê novo por coluna de 6 px no corpo e outro
+    na espuma, a cada quadro (centenas de shaders por quadro no Android). Agora os dois degradês são
+    criados uma vez por tamanho (`drawWithCache`) e só transladados por coluna, com o fade no alfa da
+    pintura (mesma conta). O borrifo no casco é sorteado uma vez por navio, na mesma ordem do
+    `Random` antigo, em vez de a cada quadro.
+  - **Tabuleiro (`BoardView`)**: o `Canvas` único virou uma pilha de camadas na mesma ordem de pintura
+    — fundo (abismo e anéis, cacheado), varredura do radar (desenhada uma vez e girada por
+    `graphicsLayer`), carta (grade e navios), cortina de fumaça, marcas e efeitos. A varredura não
+    redesenha mais grade, navios e marcas a cada quadro, e a fumaça não redesenha mais os 5 navios.
+- Medição no emulador Pixel_6 (20 s no menu, `dumpsys gfxinfo`): percentil 99 de 38 → 29 ms e
+  *Slow issue draw commands* de 2 → 0; na partida, percentil 99 de 25 → 23 ms.
+- Código: `markVisibleDuringRecon` e `shakePattern` (BoardView) e `sprayParticles` (MenuScreen)
+  viraram funções puras testadas (`commonTest/ui/BoardRenderRulesTest.kt` e `SeaWaveSprayTest.kt`):
+  a leitura do reconhecimento continua só acendendo depois do avião e tiros nunca são ocultados.
+
+---
+
 ## [0.73.1] — 2026-10-10 · Arte dos navios: torre da linha sem empilhar e mastro dentro do casco
 
 App 0.31.2 (versionCode 77). Refs #21.

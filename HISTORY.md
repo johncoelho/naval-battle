@@ -166,6 +166,13 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   chaminés da classe (orquestrador da esteira: não mudar a silhueta comprada além do que o bug
   pede); porta-aviões não recebe torre de linha (cairia na pista). A decisão do desenho fica numa
   função pura (`superstructurePlan`) para ser testável sem teste de pixel.
+- **10/10 · Desenho animado não cria Brush por quadro e separa o estático do animado** (#22, 0.31.3):
+  jogador relatou animação travada no Android. O menu criava centenas de degradês por quadro e a
+  varredura do radar redesenhava o tabuleiro inteiro; no Android cada `Brush` novo é um shader novo
+  na thread principal (no iPhone, Skia/Metal e ProMotion disfarçavam). Escolhido cachear com
+  `drawWithCache` e separar camadas com `graphicsLayer` (girar a camada da varredura em vez de
+  redesenhar), sem dependência nova e sem mudar nada visível. Virou padrão no README → Especificação
+  técnica.
 
 ---
 
