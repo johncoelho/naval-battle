@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -449,7 +451,7 @@ private fun FleetPreview(state: AppState, modifier: Modifier = Modifier, hero: B
  * Uma onda do mar atravessando o quadro de cima para baixo: nasce acima da borda e
  * desce até sair embaixo. Inclinação, velocidade e o desenho da frente são sorteados.
  */
-private class SeaWave(
+internal class SeaWave(
     val startMs: Long,
     val durationMs: Long,
     val tilt: Float,
@@ -462,6 +464,14 @@ private class SeaWave(
     private val p1 = rnd.nextFloat() * 6.28f
     private val p2 = rnd.nextFloat() * 6.28f
     val foamSeed = rnd.nextInt()
+
+    // #22: o borrifo de cada navio era sorteado de novo a cada quadro com a mesma semente;
+    // agora é sorteado uma vez, na mesma ordem, e só o desenho anima.
+    private val sprayByShip = HashMap<Int, List<SprayParticle>>()
+
+    /** As 18 gotas do borrifo no casco do navio [shipIndex] — sempre as mesmas. */
+    fun spray(shipIndex: Int): List<SprayParticle> =
+        sprayByShip.getOrPut(shipIndex) { sprayParticles(foamSeed + shipIndex * 31) }
 
     fun progress(now: Long): Float = ((now - startMs).toFloat() / durationMs).coerceIn(0f, 1f)
 
@@ -484,6 +494,25 @@ private class SeaWave(
 
     /** Some nas pontas da travessia, sem aparecer nem sumir de repente. */
     fun fade(now: Long): Float = kotlin.math.sin(progress(now) * kotlin.math.PI.toFloat())
+}
+
+/**
+ * Uma gota do borrifo, em frações: [fx] ao longo do casco, [angle] em radianos, [reachFrac]
+ * do alcance (× meia célula), raio [r] (× densidade) e alfa inicial [a0].
+ */
+internal data class SprayParticle(val fx: Float, val angle: Float, val reachFrac: Float, val r: Float, val a0: Float)
+
+/** Sorteia as 18 gotas do borrifo com [seed], consumindo o Random na ordem do desenho original. */
+internal fun sprayParticles(seed: Int): List<SprayParticle> {
+    val spray = kotlin.random.Random(seed)
+    return List(18) {
+        val fx = spray.nextFloat()
+        val angle = (-90f + (spray.nextFloat() - 0.5f) * 140f) * (kotlin.math.PI.toFloat() / 180f)
+        val reachFrac = 0.3f + spray.nextFloat() * 0.7f
+        val r = 1f + spray.nextFloat() * 1.8f
+        val a0 = 0.45f + spray.nextFloat() * 0.4f
+        SprayParticle(fx, angle, reachFrac, r, a0)
+    }
 }
 
 /**
@@ -519,122 +548,123 @@ private fun SeaFormation(state: AppState, modifier: Modifier = Modifier) {
         }
     }
 
-    Canvas(modifier.clipToBounds()) {
-        val ships = ShipClass.fleet
-        val cell = minOf(size.width / 5.3f, size.height / (ships.size * 1.05f))
-        val rowH = size.height / ships.size
-        val band = size.height * 0.16f
-        // carta náutica bem apagada ao fundo
-        var gx = (size.width / 2f) % cell
-        while (gx < size.width) { drawLine(Naval.gridLine.copy(alpha = 0.07f), Offset(gx, 0f), Offset(gx, size.height), 1f); gx += cell }
-        var gy = (size.height / 2f) % cell
-        while (gy < size.height) { drawLine(Naval.gridLine.copy(alpha = 0.07f), Offset(0f, gy), Offset(size.width, gy), 1f); gy += cell }
-
-        waves.forEach { w ->
-            val fade = w.fade(now)
-            // corpo da onda: faixa de água mais clara acima da frente, desenhada em colunas
-            var x = 0f
-            val strip = 6f
-            while (x < size.width) {
-                val fy = w.frontY(x + strip / 2f, size.width, size.height, band, now)
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Naval.commanderOne.copy(alpha = 0.10f * fade)),
-                        startY = fy - band,
-                        endY = fy
-                    ),
-                    topLeft = Offset(x, fy - band),
-                    size = Size(strip + 0.5f, band)
-                )
-                x += strip
-            }
-            // espuma na crista em degradê: branca na frente da onda, sumindo para trás, com
-            // a força variando ao longo da crista e mudando com o tempo (nada de traço fixo)
+    // #22: os degradês da onda são criados uma vez por tamanho (drawWithCache) e só
+    // transladados por coluna; antes nascia um shader novo por coluna a cada quadro.
+    Spacer(
+        modifier.clipToBounds().drawWithCache {
+            val ships = ShipClass.fleet
+            val cell = minOf(size.width / 5.3f, size.height / (ships.size * 1.05f))
+            val rowH = size.height / ships.size
+            val band = size.height * 0.16f
             val foamH = band * 0.28f
-            val tSec = now / 1000f
-            val ph = (w.foamSeed % 1000) / 159f
-            var fx = 0f
-            while (fx < size.width) {
-                val fy = w.frontY(fx + strip / 2f, size.width, size.height, band, now)
-                val n = (0.5f + 0.5f * kotlin.math.sin(fx * 0.045f + tSec * 1.3f + ph)) *
-                    (0.55f + 0.45f * kotlin.math.sin(fx * 0.013f - tSec * 0.7f + ph * 2f))
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.White.copy(alpha = 0.32f * n * fade)),
-                        startY = fy - foamH,
-                        endY = fy
-                    ),
-                    topLeft = Offset(fx, fy - foamH),
-                    size = Size(strip + 0.5f, foamH)
-                )
-                fx += strip
-            }
-            // borda da espuma: linha branca definida bem na frente da onda, mais forte e
-            // mais fraca ao longo dela, mudando com o tempo
-            var cx0 = 0f
-            val seg = 4f
-            while (cx0 < size.width) {
-                val y0 = w.frontY(cx0, size.width, size.height, band, now)
-                val y1 = w.frontY(cx0 + seg, size.width, size.height, band, now)
-                val n = 0.55f + 0.45f * kotlin.math.sin(cx0 * 0.06f + tSec * 1.8f + ph) *
-                    kotlin.math.sin(cx0 * 0.021f - tSec * 0.9f + ph * 1.7f)
-                drawLine(
-                    Color.White.copy(alpha = 0.55f * n * fade),
-                    Offset(cx0, y0), Offset(cx0 + seg, y1),
-                    strokeWidth = (1.2f + n * 1.0f) * density,
-                    cap = StrokeCap.Round
-                )
-                cx0 += seg
-            }
-        }
-
-        ships.forEachIndexed { i, ship ->
-            val baseY = rowH * (i + 0.5f)
-            val cx = size.width / 2f
-            val len = cell * ship.size
-            val half = cell * 0.41f
-            // o navio sobe quando a frente de alguma onda passa sob o meio dele
-            var lift = 0f
-            waves.forEach { w ->
-                val d = (w.frontY(cx, size.width, size.height, band, now) - baseY) / (band * 0.7f)
-                lift += kotlin.math.exp(-d * d) * w.fade(now)
-            }
-            val shipY = baseY - lift.coerceAtMost(1f) * cell * 0.12f
-            drawShip(
-                type = ship,
-                center = Offset(cx, shipY),
-                lengthPx = len,
-                thicknessPx = cell * 0.82f,
-                vertical = false,
-                skin = state.skin,
-                animSeconds = now / 1000f
+            val strip = 6f
+            // o alfa da pintura multiplica o do degradê (que sai do transparente): mesma
+            // conta de antes, com o fade e a força da espuma fora do shader
+            val bodyBrush = Brush.verticalGradient(
+                colors = listOf(Color.Transparent, Naval.commanderOne.copy(alpha = 0.10f)),
+                startY = 0f,
+                endY = band
             )
-            waves.forEach { w ->
-                val fade = w.fade(now)
-                // impacto no costado de cima: cada ponto do casco borrifa no instante em
-                // que a crista encosta nele (a frente é irregular, então corre pelo casco)
-                val spray = kotlin.random.Random(w.foamSeed + i * 31)
-                // borda real do casco (o desenho é mais fino que a faixa reservada ao navio)
-                val hullTop = shipY - cell * 0.17f
-                repeat(18) {
-                    val px0 = cx - len / 2f + spray.nextFloat() * len
-                    val age = now - w.crossTime(px0, hullTop, size.width, size.height, band)
-                    val angle = (-90f + (spray.nextFloat() - 0.5f) * 140f) * (kotlin.math.PI.toFloat() / 180f)
-                    val reach = (0.3f + spray.nextFloat() * 0.7f) * cell * 0.5f
-                    val r = 1f + spray.nextFloat() * 1.8f
-                    val a0 = 0.45f + spray.nextFloat() * 0.4f
-                    if (age in 0..650) {
-                        val t = age / 650f
-                        drawCircle(
-                            Color.White.copy(alpha = (1f - t) * a0 * (0.5f + fade * 0.5f)),
-                            radius = r * density * (1f - t * 0.4f),
-                            center = Offset(px0 + kotlin.math.cos(angle) * reach * t, hullTop + kotlin.math.sin(angle) * reach * t)
+            val foamBrush = Brush.verticalGradient(
+                colors = listOf(Color.Transparent, Color.White.copy(alpha = 0.32f)),
+                startY = 0f,
+                endY = foamH
+            )
+            onDrawBehind {
+                // carta náutica bem apagada ao fundo
+                var gx = (size.width / 2f) % cell
+                while (gx < size.width) { drawLine(Naval.gridLine.copy(alpha = 0.07f), Offset(gx, 0f), Offset(gx, size.height), 1f); gx += cell }
+                var gy = (size.height / 2f) % cell
+                while (gy < size.height) { drawLine(Naval.gridLine.copy(alpha = 0.07f), Offset(0f, gy), Offset(size.width, gy), 1f); gy += cell }
+
+                waves.forEach { w ->
+                    val fade = w.fade(now)
+                    // corpo da onda: faixa de água mais clara acima da frente, desenhada em colunas
+                    var x = 0f
+                    while (x < size.width) {
+                        val fy = w.frontY(x + strip / 2f, size.width, size.height, band, now)
+                        translate(x, fy - band) {
+                            drawRect(bodyBrush, size = Size(strip + 0.5f, band), alpha = fade)
+                        }
+                        x += strip
+                    }
+                    // espuma na crista em degradê: branca na frente da onda, sumindo para trás, com
+                    // a força variando ao longo da crista e mudando com o tempo (nada de traço fixo)
+                    val tSec = now / 1000f
+                    val ph = (w.foamSeed % 1000) / 159f
+                    var fx = 0f
+                    while (fx < size.width) {
+                        val fy = w.frontY(fx + strip / 2f, size.width, size.height, band, now)
+                        val n = (0.5f + 0.5f * kotlin.math.sin(fx * 0.045f + tSec * 1.3f + ph)) *
+                            (0.55f + 0.45f * kotlin.math.sin(fx * 0.013f - tSec * 0.7f + ph * 2f))
+                        translate(fx, fy - foamH) {
+                            drawRect(foamBrush, size = Size(strip + 0.5f, foamH), alpha = n * fade)
+                        }
+                        fx += strip
+                    }
+                    // borda da espuma: linha branca definida bem na frente da onda, mais forte e
+                    // mais fraca ao longo dela, mudando com o tempo
+                    var cx0 = 0f
+                    val seg = 4f
+                    while (cx0 < size.width) {
+                        val y0 = w.frontY(cx0, size.width, size.height, band, now)
+                        val y1 = w.frontY(cx0 + seg, size.width, size.height, band, now)
+                        val n = 0.55f + 0.45f * kotlin.math.sin(cx0 * 0.06f + tSec * 1.8f + ph) *
+                            kotlin.math.sin(cx0 * 0.021f - tSec * 0.9f + ph * 1.7f)
+                        drawLine(
+                            Color.White.copy(alpha = 0.55f * n * fade),
+                            Offset(cx0, y0), Offset(cx0 + seg, y1),
+                            strokeWidth = (1.2f + n * 1.0f) * density,
+                            cap = StrokeCap.Round
                         )
+                        cx0 += seg
+                    }
+                }
+
+                ships.forEachIndexed { i, ship ->
+                    val baseY = rowH * (i + 0.5f)
+                    val cx = size.width / 2f
+                    val len = cell * ship.size
+                    // o navio sobe quando a frente de alguma onda passa sob o meio dele
+                    var lift = 0f
+                    waves.forEach { w ->
+                        val d = (w.frontY(cx, size.width, size.height, band, now) - baseY) / (band * 0.7f)
+                        lift += kotlin.math.exp(-d * d) * w.fade(now)
+                    }
+                    val shipY = baseY - lift.coerceAtMost(1f) * cell * 0.12f
+                    drawShip(
+                        type = ship,
+                        center = Offset(cx, shipY),
+                        lengthPx = len,
+                        thicknessPx = cell * 0.82f,
+                        vertical = false,
+                        skin = state.skin,
+                        animSeconds = now / 1000f
+                    )
+                    waves.forEach { w ->
+                        val fade = w.fade(now)
+                        // impacto no costado de cima: cada ponto do casco borrifa no instante em
+                        // que a crista encosta nele (a frente é irregular, então corre pelo casco)
+                        // borda real do casco (o desenho é mais fino que a faixa reservada ao navio)
+                        val hullTop = shipY - cell * 0.17f
+                        w.spray(i).forEach { p ->
+                            val px0 = cx - len / 2f + p.fx * len
+                            val age = now - w.crossTime(px0, hullTop, size.width, size.height, band)
+                            if (age in 0..650) {
+                                val t = age / 650f
+                                val reach = p.reachFrac * cell * 0.5f
+                                drawCircle(
+                                    Color.White.copy(alpha = (1f - t) * p.a0 * (0.5f + fade * 0.5f)),
+                                    radius = p.r * density * (1f - t * 0.4f),
+                                    center = Offset(px0 + kotlin.math.cos(p.angle) * reach * t, hullTop + kotlin.math.sin(p.angle) * reach * t)
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
-    }
+    )
 }
 
 // ------------------------------------------------------------------ jogar

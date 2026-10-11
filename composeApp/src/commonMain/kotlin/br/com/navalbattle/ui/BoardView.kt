@@ -7,11 +7,13 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -19,6 +21,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -27,6 +31,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -99,14 +104,7 @@ fun BoardView(
     LaunchedEffect(impact?.id) {
         if (impact != null) {
             delay(SHOT_TRAVEL_MS.toLong())
-            val pattern = if (impact.tone == Tone.SUNK) {
-                listOf(-16f, 13f, -9f, 6f, -3f, 0f)
-            } else if (impact.tone == Tone.HIT) {
-                listOf(-7f, 5f, -3f, 0f)
-            } else {
-                emptyList()
-            }
-            for (offsetPx in pattern) {
+            for (offsetPx in shakePattern(impact.tone)) {
                 shake.animateTo(offsetPx, tween(42, easing = LinearEasing))
             }
         }
@@ -122,7 +120,10 @@ fun BoardView(
         }
     }
 
-    Canvas(
+    // #22: o tabuleiro é uma pilha de camadas, na mesma ordem de pintura de antes. Só o
+    // que anima redesenha a cada quadro; carta (grade + navios) e marcas ficam em camadas
+    // próprias e só redesenham quando a partida muda. Nenhum Brush é criado por quadro.
+    Box(
         modifier = modifier
             .aspectRatio(1f)
             .offset { IntOffset(shake.value.roundToInt(), 0) }
@@ -139,153 +140,199 @@ fun BoardView(
                 } else Modifier
             )
     ) {
-        val cell = size.width / BOARD_SIZE
-        val center = Offset(size.width / 2f, size.height / 2f)
-
-        // abismo
-        drawRect(
-            brush = Brush.radialGradient(
-                colors = listOf(Naval.abyss2, Naval.abyss),
-                center = Offset(size.width * 0.5f, size.height * 0.45f),
-                radius = size.width * 0.75f
-            )
+        // 1. fundo estático: abismo e anéis de radar (degradê guardado por tamanho)
+        Spacer(
+            Modifier.fillMaxSize().drawWithCache {
+                val center = Offset(size.width / 2f, size.height / 2f)
+                val abyss = Brush.radialGradient(
+                    colors = listOf(Naval.abyss2, Naval.abyss),
+                    center = Offset(size.width * 0.5f, size.height * 0.45f),
+                    radius = size.width * 0.75f
+                )
+                onDrawBehind {
+                    drawRect(brush = abyss)
+                    drawCircle(Naval.greenBright.copy(alpha = 0.10f), radius = size.width * 0.46f, center = center, style = Stroke(1f))
+                    drawCircle(Naval.greenBright.copy(alpha = 0.08f), radius = size.width * 0.30f, center = center, style = Stroke(1f))
+                    drawCircle(Naval.greenBright.copy(alpha = 0.06f), radius = size.width * 0.15f, center = center, style = Stroke(1f))
+                }
+            }
         )
 
-        // anéis de radar
-        drawCircle(Naval.greenBright.copy(alpha = 0.10f), radius = size.width * 0.46f, center = center, style = Stroke(1f))
-        drawCircle(Naval.greenBright.copy(alpha = 0.08f), radius = size.width * 0.30f, center = center, style = Stroke(1f))
-        drawCircle(Naval.greenBright.copy(alpha = 0.06f), radius = size.width * 0.15f, center = center, style = Stroke(1f))
-
-        // varredura
+        // 2. varredura: desenhada uma vez e girada pela camada (girar não redesenha)
         if (sweep) {
-            rotate(sweepAngle, center) {
-                drawCircle(
-                    // a varredura gira no sentido horário: a borda acesa fica na frente
-                    // (fim do degradê) e o rastro vai apagando para trás, por onde já passou
-                    brush = Brush.sweepGradient(
-                        0.00f to Color.Transparent,
-                        0.72f to Color.Transparent,
-                        0.90f to Naval.greenBright.copy(alpha = 0.05f),
-                        1.00f to Naval.greenBright.copy(alpha = 0.22f),
-                        center = center
-                    ),
-                    radius = size.width * 0.72f,
-                    center = center
-                )
-            }
+            Spacer(
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { rotationZ = sweepAngle }
+                    .drawWithCache {
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        // a varredura gira no sentido horário: a borda acesa fica na frente
+                        // (fim do degradê) e o rastro vai apagando para trás, por onde já passou
+                        val brush = Brush.sweepGradient(
+                            0.00f to Color.Transparent,
+                            0.72f to Color.Transparent,
+                            0.90f to Naval.greenBright.copy(alpha = 0.05f),
+                            1.00f to Naval.greenBright.copy(alpha = 0.22f),
+                            center = center
+                        )
+                        onDrawBehind {
+                            drawCircle(brush = brush, radius = size.width * 0.72f, center = center)
+                        }
+                    }
+            )
         }
 
-        // malha
-        for (i in 0..BOARD_SIZE) {
-            val p = i * cell
-            drawLine(Naval.gridLine, Offset(p, 0f), Offset(p, size.height), 1f)
-            drawLine(Naval.gridLine, Offset(0f, p), Offset(size.width, p), 1f)
-        }
-
-        // frota própria
-        if (showShips) {
-            board.ships.forEach { ship ->
-                val sunk = board.isSunk(ship)
-                drawFleetShip(ship, cell, skin, if (sunk) 0.35f else 1f)
-                markTint?.let { drawShipOutline(ship, cell, it) }
+        // 3. carta: malha, frota própria e contornos. Só redesenha quando a partida muda.
+        Spacer(
+            Modifier.fillMaxSize().graphicsLayer().drawBehind {
+                // isSunk lê os acertos, que não são estado observável: ler as marcas faz a
+                // camada redesenhar junto com elas (o navio afundado esmaece na hora certa)
+                board.marks.size
+                overlay?.marks?.size
+                val cell = size.width / BOARD_SIZE
+                for (i in 0..BOARD_SIZE) {
+                    val p = i * cell
+                    drawLine(Naval.gridLine, Offset(p, 0f), Offset(p, size.height), 1f)
+                    drawLine(Naval.gridLine, Offset(0f, p), Offset(size.width, p), 1f)
+                }
+                if (showShips) {
+                    board.ships.forEach { ship ->
+                        val sunk = board.isSunk(ship)
+                        drawFleetShip(ship, cell, skin, if (sunk) 0.35f else 1f)
+                        markTint?.let { drawShipOutline(ship, cell, it) }
+                    }
+                    overlay?.ships?.forEach { ship ->
+                        val sunk = overlay.isSunk(ship)
+                        drawFleetShip(ship, cell, skin, if (sunk) 0.35f else 1f)
+                        overlayTint?.let { drawShipOutline(ship, cell, it) }
+                    }
+                }
             }
-            overlay?.ships?.forEach { ship ->
-                val sunk = overlay.isSunk(ship)
-                drawFleetShip(ship, cell, skin, if (sunk) 0.35f else 1f)
-                overlayTint?.let { drawShipOutline(ship, cell, it) }
-            }
-        }
+        )
 
-        // cortina de fumaça própria: nuvem cobrindo a frota enquanto bloqueia a
-        // próxima varredura inimiga (Board.smokeActive)
+        // 4. cortina de fumaça própria: nuvem cobrindo a frota enquanto bloqueia a
+        // próxima varredura inimiga (Board.smokeActive). Só as volutas derivam por quadro.
         if (showShips && board.smokeActive) {
-            drawSmokeScreen(size.width, size.height, sweepAngle)
-        }
-
-        // marcações — numa linha varrida pelo reconhecimento aéreo ainda em andamento,
-        // só acende a célula depois que o avião passou por cima dela
-        val activeReconRow = scan?.takeIf { it.kind == ScanKind.RECON && scanAnim.value < 1f }?.row
-        board.marks.forEach { (coord, mark) ->
-            if (activeReconRow == coord.y && (mark == Mark.SCAN_HOT || mark == Mark.SCAN_COLD)) {
-                if (coord.x > scanAnim.value * BOARD_SIZE) return@forEach
-            }
-            val topLeft = Offset(coord.x * cell, coord.y * cell)
-            drawMark(mark, topLeft, cell, markTint)
-        }
-
-        // a segunda frota divide a mesma carta: quando as duas foram atingidas na
-        // mesma coordenada, a de baixo entra menor no canto para nenhuma sumir
-        overlay?.marks?.forEach { (coord, mark) ->
-            val shared = board.marks.containsKey(coord)
-            if (shared) {
-                drawMark(
-                    mark,
-                    Offset(coord.x * cell + cell / 2f, coord.y * cell + cell / 2f),
-                    cell / 2f,
-                    overlayTint
-                )
-            } else {
-                drawMark(mark, Offset(coord.x * cell, coord.y * cell), cell, overlayTint)
-            }
-        }
-
-        // pré-visualização do posicionamento
-        preview?.let { ship ->
-            val color = if (previewValid) Naval.amber else Naval.danger
-            ship.cells.filter { it.isValid() }.forEach { c ->
-                drawRect(
-                    color.copy(alpha = 0.18f),
-                    topLeft = Offset(c.x * cell, c.y * cell),
-                    size = Size(cell, cell)
-                )
-                drawRect(
-                    color,
-                    topLeft = Offset(c.x * cell, c.y * cell),
-                    size = Size(cell, cell),
-                    style = Stroke(1.5f)
-                )
-            }
-        }
-
-        // sobrevoo do reconhecimento aéreo ou anel do sonar, por cima de tudo
-        if (scan != null && scanAnim.value < 1f) {
-            when (scan.kind) {
-                ScanKind.RECON -> scan.row?.let { row ->
-                    drawReconPlane(Offset(scanAnim.value * size.width, row * cell + cell / 2f), cell)
+            Spacer(
+                Modifier.fillMaxSize().graphicsLayer().drawBehind {
+                    drawSmokeScreen(size.width, size.height, sweepAngle)
                 }
-                ScanKind.SONAR -> scan.coord?.let { coord ->
-                    drawSonarRing(Offset(coord.x * cell + cell / 2f, coord.y * cell + cell / 2f), cell, scanAnim.value)
+            )
+        }
+
+        // 5. marcações e pré-visualização do posicionamento
+        Spacer(
+            Modifier.fillMaxSize().graphicsLayer().drawBehind {
+                val cell = size.width / BOARD_SIZE
+                // numa linha varrida pelo reconhecimento aéreo ainda em andamento, só acende
+                // a célula depois que o avião passou por cima dela
+                val activeReconRow = scan?.takeIf { it.kind == ScanKind.RECON && scanAnim.value < 1f }?.row
+                val reconProgress = if (activeReconRow != null) scanAnim.value else 1f
+                board.marks.forEach { (coord, mark) ->
+                    if (!markVisibleDuringRecon(coord, mark, activeReconRow, reconProgress)) return@forEach
+                    val topLeft = Offset(coord.x * cell, coord.y * cell)
+                    drawMark(mark, topLeft, cell, markTint)
+                }
+
+                // a segunda frota divide a mesma carta: quando as duas foram atingidas na
+                // mesma coordenada, a de baixo entra menor no canto para nenhuma sumir
+                overlay?.marks?.forEach { (coord, mark) ->
+                    val shared = board.marks.containsKey(coord)
+                    if (shared) {
+                        drawMark(
+                            mark,
+                            Offset(coord.x * cell + cell / 2f, coord.y * cell + cell / 2f),
+                            cell / 2f,
+                            overlayTint
+                        )
+                    } else {
+                        drawMark(mark, Offset(coord.x * cell, coord.y * cell), cell, overlayTint)
+                    }
+                }
+
+                preview?.let { ship ->
+                    val color = if (previewValid) Naval.amber else Naval.danger
+                    ship.cells.filter { it.isValid() }.forEach { c ->
+                        drawRect(
+                            color.copy(alpha = 0.18f),
+                            topLeft = Offset(c.x * cell, c.y * cell),
+                            size = Size(cell, cell)
+                        )
+                        drawRect(
+                            color,
+                            topLeft = Offset(c.x * cell, c.y * cell),
+                            size = Size(cell, cell),
+                            style = Stroke(1.5f)
+                        )
+                    }
                 }
             }
-        }
+        )
 
-        // projétil e impacto
-        impact?.let { imp ->
-            val target = Offset(imp.coord.x * cell + cell / 2f, imp.coord.y * cell + cell / 2f)
-            val tt = travelAnim.value
+        // 6. efeitos por cima de tudo: sobrevoo/sonar, projétil e impacto
+        Spacer(
+            Modifier.fillMaxSize().graphicsLayer().drawBehind {
+                val cell = size.width / BOARD_SIZE
+                if (scan != null && scanAnim.value < 1f) {
+                    when (scan.kind) {
+                        ScanKind.RECON -> scan.row?.let { row ->
+                            drawReconPlane(Offset(scanAnim.value * size.width, row * cell + cell / 2f), cell)
+                        }
+                        ScanKind.SONAR -> scan.coord?.let { coord ->
+                            drawSonarRing(Offset(coord.x * cell + cell / 2f, coord.y * cell + cell / 2f), cell, scanAnim.value)
+                        }
+                    }
+                }
 
-            if (tt < 1f) {
-                drawIncomingMissile(target, cell, tt)
-            } else {
-                val t = impactAnim.value
-                if (t < 1f) {
-                    drawImpactBurst(imp, target, cell, t, skin)
+                impact?.let { imp ->
+                    val target = Offset(imp.coord.x * cell + cell / 2f, imp.coord.y * cell + cell / 2f)
+                    val tt = travelAnim.value
+
+                    if (tt < 1f) {
+                        drawIncomingMissile(target, cell, tt)
+                    } else {
+                        val t = impactAnim.value
+                        if (t < 1f) {
+                            drawImpactBurst(imp, target, cell, t, skin)
+                        }
+                    }
                 }
             }
-        }
+        )
     }
 }
 
+/** Padrão do tremor do tabuleiro ao receber um tiro (px por passo de 42 ms). */
+internal fun shakePattern(tone: Tone): List<Float> = when (tone) {
+    Tone.SUNK -> listOf(-16f, 13f, -9f, 6f, -3f, 0f)
+    Tone.HIT -> listOf(-7f, 5f, -3f, 0f)
+    else -> emptyList()
+}
+
+/**
+ * Durante o reconhecimento aéreo na linha [reconRow] (null = nenhum em andamento), a
+ * leitura do radar (SCAN_HOT/SCAN_COLD) só aparece depois que o avião passou pela coluna;
+ * [progress] vai de 0 a 1 ao longo da linha. Tiros (HIT/MISS/SUNK) nunca são ocultados.
+ */
+internal fun markVisibleDuringRecon(coord: Coord, mark: Mark, reconRow: Int?, progress: Float): Boolean {
+    if (reconRow == coord.y && (mark == Mark.SCAN_HOT || mark == Mark.SCAN_COLD)) {
+        return coord.x <= progress * BOARD_SIZE
+    }
+    return true
+}
+
+/** Volutas da cortina de fumaça: (x, y, raio) em fração da largura/altura. */
+private val SMOKE_PUFFS = listOf(
+    Triple(0.22f, 0.3f, 0.24f),
+    Triple(0.55f, 0.55f, 0.3f),
+    Triple(0.78f, 0.25f, 0.2f),
+    Triple(0.35f, 0.75f, 0.26f),
+    Triple(0.68f, 0.82f, 0.22f)
+)
+
 /** Nuvem de fumaça cobrindo o tabuleiro — [drift] (0–360) faz as volutas derivarem devagar. */
 private fun DrawScope.drawSmokeScreen(w: Float, h: Float, drift: Float) {
-    val puffs = listOf(
-        Triple(0.22f, 0.3f, 0.24f),
-        Triple(0.55f, 0.55f, 0.3f),
-        Triple(0.78f, 0.25f, 0.2f),
-        Triple(0.35f, 0.75f, 0.26f),
-        Triple(0.68f, 0.82f, 0.22f)
-    )
-    puffs.forEachIndexed { i, (fx, fy, fr) ->
+    SMOKE_PUFFS.forEachIndexed { i, (fx, fy, fr) ->
         val wobble = sin((drift + i * 70f) * 3.1415926f / 180f) * w * 0.02f
         drawCircle(
             color = Naval.inkSoft.copy(alpha = 0.16f),
