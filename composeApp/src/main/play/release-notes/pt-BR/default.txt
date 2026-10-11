@@ -1,1 +1,1 @@
-Animacoes mais fluidas no Android: o menu com as ondas e o tabuleiro da batalha (radar girando, cortina de fumaca, tiros e afundamentos) desenham bem menos a cada quadro, com menos engasgos em aparelhos mais simples. Nada muda no visual nem nas regras.
+Ranking e partida rapida so com comandantes de verdade: as contas criadas pelos testes automaticos da revisao do Google ficam fora do placar, das recompensas de temporada e da partida rapida com jogadores reais. Contra a IA nada muda.

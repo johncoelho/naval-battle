@@ -173,6 +173,13 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   `drawWithCache` e separar camadas com `graphicsLayer` (girar a camada da varredura em vez de
   redesenhar), sem dependência nova e sem mudar nada visível. Virou padrão no README → Especificação
   técnica.
+- **11/10 · Contas dos testes automáticos do Google ficam fora do ranking e da partida rápida** (#23,
+  0.32.0): cada envio à Play criava contas da revisão (Firebase Test Lab) que entravam no placar.
+  O app relata `firebase.test.lab` e só o servidor marca `profiles.is_test`, num sentido só. Na
+  partida rápida, **separar em vez de bloquear** (padrão do desenho, sem resposta do John): o robô
+  continua achando partida entre robôs, sem erro novo para a revisão. **Log de diagnóstico sem modelo
+  do aparelho** (`device_checks` guarda só conta, versão, plataforma e a marca), para não mexer na
+  seção de Segurança dos dados da Play. Limpeza das contas antigas só com a lista conferida pelo John.
 
 ---
 

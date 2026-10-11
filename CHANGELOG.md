@@ -9,6 +9,35 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.74.0] — 2026-10-11 · Contas de teste do Google fora do ranking e da partida rápida
+
+App 0.32.0 (versionCode 79). Refs #23 (itens 1 e 2; a limpeza das contas antigas, item 3, segue
+pendente da lista conferida pelo John).
+
+### Adicionado
+- **Detecção do aparelho de teste** (#23): a cada envio à Play, os testes automáticos da revisão do
+  Google (Firebase Test Lab) criavam contas que entravam no ranking e na partida rápida. O Android lê
+  `firebase.test.lab` (`data/DeviceCheck.kt`, contrato `isTestLabDevice`) e relata ao servidor uma vez
+  por conta e versão (`report_device_check`, guardado em `Profile.deviceCheckSent`); o iPhone relata
+  sempre falso, como base de comparação. Sem texto nem tela nova.
+- **Banco** (`supabase/schema.sql`, `supabase/test_accounts.sql`, migração
+  `test_accounts_out_of_ranking_and_quick_match`): `profiles.is_test` (só o servidor marca, num
+  sentido só; gatilho `profiles_guard_is_test` impede o cliente de marcar ou desmarcar),
+  `is_test_user`/`my_is_test` e a tabela `device_checks` como log de diagnóstico (conta, versão,
+  plataforma e a marca; nada do aparelho).
+
+### Mudado
+- Conta de teste fica fora de `leaderboard_overall`, `leaderboard_season`, `my_rank`,
+  `season_trophies` e `claim_season_end` (posição e total também a ignoram); `record_ranked_result`
+  com conta de teste de qualquer lado não grava nada.
+- Partida rápida **separa** (não bloqueia) conta de teste de jogador real: política "sala online:
+  ler", `join_online_match` e `find_quick_offer`. Vale também para a busca do app antigo. Convite por
+  código e de amigo não mudam; contra a IA nada muda.
+- Testado antes no banco com bloco que desfaz tudo (7 cenários: marca num sentido só, trava do
+  cliente, placares, salas, ranqueada A × T, recompensa de temporada e A × B com soma zero).
+
+---
+
 ## [0.73.2] — 2026-10-10 · Animação mais fluida no Android (menu e tabuleiro)
 
 App 0.31.3 (versionCode 78). Refs #22.

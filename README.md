@@ -455,6 +455,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `GoogleAuth` | login com Google | Credential Manager | fluxo OAuth com PKCE |
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
 | `PushMessaging` | token de push | Firebase Messaging | sem push (APNs pendente) |
+| `isTestLabDevice` | aparelho dos testes automáticos do Google | `Settings.System` `firebase.test.lab` | sempre falso |
 | `DailyReminder` | lembrete diário local | `AlarmManager` | `UNUserNotificationCenter` |
 | `openStoreListing`, `shareStoreListing` | loja e compartilhar | Play Store | página `#ios` do site |
 | `SystemBackHandler` | voltar do sistema | `BackHandler` | nada |
@@ -498,6 +499,9 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   que monta o cenário, chama a RPC como cada usuário (`request.jwt.claims`) e termina com
   `raise exception` para desfazer tudo.
 - Números ajustáveis ficam em `app_config` e são lidos com `config_int(chave, padrão)`.
+- Contas `is_test` (testes automáticos da revisão do Google, `supabase/test_accounts.sql`) ficam fora
+  de ranking, recompensa de temporada e partida rápida com jogador real; a marca só vem do servidor
+  (`report_device_check`), e o cliente não consegue mudá-la (gatilho em `profiles`).
 - Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
   FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.

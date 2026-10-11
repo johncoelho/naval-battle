@@ -130,6 +130,8 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | ON-14 | P1 | B encerra a partida ainda no posicionamento | A vai para o relatório ("O adversário desistiu"), não fica preso no posicionamento |
 | ON-15 | P1 | Casual e ranqueada: B sai no posicionamento (ou antes do primeiro tiro de A) | A vê "Vitória sem combate"; XP, dobrões e milhas de A não mudam; desafio do dia não avança; na ranqueada os pontos seguem a regra de abandono; nada muda para B (#6) |
 | ON-16 | P1 | A dá pelo menos 1 tiro (ou usa 1 habilidade) e B desiste depois | XP, dobrões, milha e desafio do dia pagos como antes (#6) |
+| ON-17 | P1 | Depois de abrir o app logado na versão nova, conferir no banco `device_checks` de A e B (e `profiles.is_test`) | Uma linha por conta e versão com `test_lab = false`; `is_test` continua falso; A e B seguem no Placar e se encontram na partida rápida (#23) |
+| ON-18 | P2 | Depois da revisão do Google de cada versão, cruzar as contas criadas na janela do upload com `device_checks` | Contas da revisão com `test_lab = true` e `is_test = true`, fora do Placar; se vierem falso ou sem linha, avisar o PO (plano B) (#23) |
 
 ## 8b. Rede local (A × B)
 

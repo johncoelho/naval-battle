@@ -72,6 +72,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 ## 5. Pendências com o John
 
 - Avisar quando a conta Apple ativar.
+- #23 item 3: conferir nome a nome a lista das ~85 contas de robô antigas antes de marcar
+  `is_test`. Depois da revisão da 0.32.0, consultar `device_checks` para confirmar que os aparelhos
+  da revisão trazem `firebase.test.lab` (se não, o PO volta com plano B).
 
 ## 6. Ambiente e armadilhas conhecidas
 
