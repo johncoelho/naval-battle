@@ -29,7 +29,8 @@ pendente da lista conferida pelo John).
 ### Mudado
 - Conta de teste fica fora de `leaderboard_overall`, `leaderboard_season`, `my_rank`,
   `season_trophies` e `claim_season_end` (posição e total também a ignoram); `record_ranked_result`
-  com conta de teste de qualquer lado não grava nada.
+  com conta de teste de qualquer lado não grava nada, e a posição na temporada que ela devolve
+  também ignora contas de teste (migração `record_ranked_result_skip_test_accounts`).
 - Partida rápida **separa** (não bloqueia) conta de teste de jogador real: política "sala online:
   ler", `join_online_match` e `find_quick_offer`. Vale também para a busca do app antigo. Convite por
   código e de amigo não mudam; contra a IA nada muda.

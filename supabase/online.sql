@@ -706,7 +706,9 @@ begin
         order by s.points desc, s.wins desc,
                  (s.wins::numeric / greatest(s.matches, 1)) desc, s.updated_at asc
       ) as pos
-      from public.ranked_season_stats s where s.season_key = szn
+      from public.ranked_season_stats s
+      left join public.profiles p on p.id = s.user_id
+      where s.season_key = szn and not coalesce(p.is_test, false)
     ) x where x.user_id = me;
     points_delta := 0;
     base_points := 0;
@@ -805,7 +807,9 @@ begin
       order by s.points desc, s.wins desc,
                (s.wins::numeric / greatest(s.matches, 1)) desc, s.updated_at asc
     ) as pos
-    from public.ranked_season_stats s where s.season_key = szn
+    from public.ranked_season_stats s
+    left join public.profiles p on p.id = s.user_id
+    where s.season_key = szn and not coalesce(p.is_test, false)
   ) x where x.user_id = me;
 
   points_delta := delta_s;
