@@ -180,6 +180,16 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   continua achando partida entre robôs, sem erro novo para a revisão. **Log de diagnóstico sem modelo
   do aparelho** (`device_checks` guarda só conta, versão, plataforma e a marca), para não mexer na
   seção de Segurança dos dados da Play. Limpeza das contas antigas só com a lista conferida pelo John.
+- **12/10 · Só testador registrado vale como jogador** (#23, 0.32.1): a revisão da 0.32.0 criou conta
+  sem `firebase.test.lab` e com Gmail comum, então nem a marca do aparelho nem o domínio separam robô
+  de gente. Decisão do John: vale quem está na lista "Testadores fechados" da Play, quem abre o app
+  no iPhone (o `.ipa` não passa pela revisão do Google) ou quem é exceção manual dele; o resto é
+  `is_test`. **Lista no banco (`allowed_players`), nunca no repositório**, que é público: a migração
+  cria só a estrutura e os e-mails são carregados por SQL não versionado. **Interruptor
+  `allowlist_enforced`** para a estrutura subir inerte e a carga vir depois, sem janela marcando todo
+  mundo. **QA01/QA02 como conta de teste** (ranqueada de QA deixa de valer pontos; a fórmula do Elo
+  fica coberta pelo bloco que desfaz). **`test_lab` vira só diagnóstico** com a regra ligada. iPhone
+  vale pela plataforma informada pelo app: risco aceito durante o beta.
 
 ---
 

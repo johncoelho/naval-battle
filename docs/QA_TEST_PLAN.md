@@ -123,15 +123,15 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | ON-07 | P1 | A fica fora mais de 60s | B vence por desistência; A vê derrota ao voltar |
 | ON-08 | P1 | Cortar rede de A (`adb emu network speed`/modo avião) por 15s, no meio do turno de A | A: "Sem conexão — reconectando" e o relógio do turno para em até ~6s (a jogada não sai sozinha); B: "Adversário sem conexão" com contagem; ao voltar, jogadas guardadas chegam e o relógio retoma (#8) |
 | ON-09 | P1 | Provocações (ícone de rádio) | Bolha aparece no outro aparelho |
-| ON-10 | P1 | Ranqueada (uma vez por bateria) | Exige passe da temporada; relatório com bloco de ranking; pontos aparecem no Placar |
-| ON-11 | P1 | Conferir a pontuação da ON-10 no banco (`ranked_season_stats`) contra a fórmula de `record_ranked_result` | Vencedor e perdedor batem com o Elo calculado a partir dos pontos de ANTES da partida, sem depender de quem relatou primeiro |
+| ON-10 | P1 | Ranqueada QA01 × QA02 (uma vez por bateria) | Exige passe da temporada; a partida acontece normalmente, mas **não conta para o ranking** (QA é conta de teste desde a 0.32.1): `ranked_season_stats` e o Placar não mudam (#23) |
+| ON-11 | P2 | Fórmula do Elo de `record_ranked_result` | Coberta pelo bloco que desfaz no banco (dois usuários fictícios fora de teste), não pelos emuladores: com QA como conta de teste a ranqueada deles não grava pontos (#23) |
 | ON-12 | P2 | Cabeçalho da batalha nos dois aparelhos | Cada um vê "VS. <nome do outro>" — inclusive quem entrou na sala |
 | ON-13 | P1 | Revanche online | Recomeça; milha e pontos (na ranqueada) contam de novo |
 | ON-14 | P1 | B encerra a partida ainda no posicionamento | A vai para o relatório ("O adversário desistiu"), não fica preso no posicionamento |
 | ON-15 | P1 | Casual e ranqueada: B sai no posicionamento (ou antes do primeiro tiro de A) | A vê "Vitória sem combate"; XP, dobrões e milhas de A não mudam; desafio do dia não avança; na ranqueada os pontos seguem a regra de abandono; nada muda para B (#6) |
 | ON-16 | P1 | A dá pelo menos 1 tiro (ou usa 1 habilidade) e B desiste depois | XP, dobrões, milha e desafio do dia pagos como antes (#6) |
-| ON-17 | P1 | Depois de abrir o app logado na versão nova, conferir no banco `device_checks` de A e B (e `profiles.is_test`) | Uma linha por conta e versão com `test_lab = false`; `is_test` continua falso; A e B seguem no Placar e se encontram na partida rápida (#23) |
-| ON-18 | P2 | Depois da revisão do Google de cada versão, cruzar as contas criadas na janela do upload com `device_checks` | Contas da revisão com `test_lab = true` e `is_test = true`, fora do Placar; se vierem falso ou sem linha, avisar o PO (plano B) (#23) |
+| ON-17 | P1 | Depois de abrir o app logado na versão nova, conferir no banco `device_checks` de A e B (e `profiles.is_test`) | Uma linha por conta e versão; com `allowlist_enforced = 'true'`, QA01/QA02 têm `is_test = true` (conta de teste, `source = 'qa'`), ficam fora do Placar e continuam se encontrando na partida rápida (teste com teste) (#23) |
+| ON-18 | P2 | Depois da revisão do Google de cada versão, conferir (só leitura) as contas criadas na janela do upload | Todas com `is_test = true` (fora de `allowed_players` e sem iPhone), fora do Placar; testadores da lista e contas de iPhone com `is_test = false`. Conta de testador marcada por engano: conferir se o e-mail da Play bate com o de login e, se não bater, exceção `manual` (#23) |
 
 ## 8b. Rede local (A × B)
 

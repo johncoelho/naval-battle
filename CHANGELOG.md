@@ -9,6 +9,34 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.74.1] — 2026-10-12 · Só testador registrado vale como jogador
+
+App 0.32.1 (versionCode 80). Refs #23. Sem mudança no app (Kotlin): só banco, documentação e versão.
+
+### Mudado
+- **Quem decide `profiles.is_test`** (#23): a 0.32.0 marcava pela `firebase.test.lab`, mas os robôs da
+  revisão do Google chegaram sem a marca e com Gmail comum. Decisão do John: vale como jogador
+  (ranking, partida rápida, recompensas) só quem tem o e-mail de login na lista "Testadores fechados"
+  da Play, quem já abriu o app no iPhone (`device_checks.platform = 'ios'`) ou quem é exceção manual
+  por perfil. O resto fica `is_test = true`. Com a regra ligada, a marca vale nos dois sentidos: quem
+  entra na lista volta a valer com os pontos que já tinha.
+- **Banco** (`supabase/test_accounts.sql`, migração `allowlist_players_structure`): tabela
+  `allowed_players` (só estrutura; RLS sem política e sem grant, ninguém lê pelo app), interruptor
+  `app_config.allowlist_enforced` (nasce `'false'`), `allowlist_on` (exige o interruptor **e** a lista
+  da Play carregada), `is_allowed_player`, `refresh_is_test`, `refresh_all_is_test(p_apply)` (ensaio ou
+  passada; recusa rodar com a regra desligada), gatilho `profiles_classify_test` (conta nova já nasce
+  classificada) e `report_device_check` reclassificando pela lista quando a regra está ligada
+  (`test_lab` vira só diagnóstico). Desligado, tudo funciona como na 0.32.0.
+- Contas QA (`aigamesfactory.qa01/qa02`) ficam como conta de teste (`source = 'qa'`): pareiam entre si
+  na partida rápida, e a ranqueada entre elas deixa de gravar pontos.
+- A lista de e-mails **não está no repositório** (público): é carregada direto no banco e mantida pelo
+  passo novo da skill `beta-testers`, que também deixou de citar a tabela `beta_testers` (apagada).
+- Testado antes no banco com bloco que desfaz tudo (8 cenários com dados fictícios: testador da
+  lista, Android fora da lista, iPhone, exceção manual, QA × QA, volta a valer sem perder pontos,
+  interruptor desligado ou sem lista, cliente sem acesso à tabela e à marca).
+
+---
+
 ## [0.74.0] — 2026-10-11 · Contas de teste do Google fora do ranking e da partida rápida
 
 App 0.32.0 (versionCode 79). Refs #23 (itens 1 e 2; a limpeza das contas antigas, item 3, segue

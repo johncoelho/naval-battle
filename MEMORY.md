@@ -60,6 +60,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 
+- 12/10 · Só testador registrado vale como jogador (#23, 0.32.1): lista da Play, iPhone ou exceção
+  manual; o resto é `is_test`. Lista em `allowed_players`, **nunca no repositório** (público). QA01/QA02
+  são conta de teste (ranqueada deles não vale pontos).
 - 10/10 · Backlog inteiro no GitHub Issues; aqui só assuntos em andamento e decisões.
 - 10/10 · Testes de unidade obrigatórios para regra de jogo; bug de lógica corrigido ganha teste.
 - 10/10 · CI barra release incompleto (versão, iOS, notas, CHANGELOG).
@@ -74,9 +77,11 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 ## 5. Pendências com o John
 
 - Avisar quando a conta Apple ativar.
-- #23 item 3: conferir nome a nome a lista das ~85 contas de robô antigas antes de marcar
-  `is_test`. Depois da revisão da 0.32.0, consultar `device_checks` para confirmar que os aparelhos
-  da revisão trazem `firebase.test.lab` (se não, o PO volta com plano B).
+- #23 (12/10): estrutura `allowed_players` no banco, **inerte** (`allowlist_enforced = 'false'`, tabela
+  vazia). Falta a rodada carregar a lista da Play (esperado `play 12`, `qa 2`, `manual 2`), fazer o
+  ensaio (`refresh_all_is_test(false)`, ~95 viram teste e 12 seguem jogador) e só então ligar o
+  interruptor e rodar a passada. Se o ensaio não bater, parar e chamar o John. Testador novo na Play
+  = passo da skill `beta-testers`.
 
 ## 6. Ambiente e armadilhas conhecidas
 

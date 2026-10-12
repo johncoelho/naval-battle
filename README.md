@@ -501,7 +501,10 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 - Números ajustáveis ficam em `app_config` e são lidos com `config_int(chave, padrão)`.
 - Contas `is_test` (testes automáticos da revisão do Google, `supabase/test_accounts.sql`) ficam fora
   de ranking, recompensa de temporada e partida rápida com jogador real; a marca só vem do servidor
-  (`report_device_check`), e o cliente não consegue mudá-la (gatilho em `profiles`).
+  (`report_device_check`), e o cliente não consegue mudá-la (gatilho em `profiles`). Com
+  `app_config.allowlist_enforced = 'true'`, `is_test` = conta fora de `allowed_players` e sem
+  iPhone em `device_checks`; a lista é carregada direto no banco, fora do repositório (skill
+  `beta-testers`).
 - Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
   FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.
