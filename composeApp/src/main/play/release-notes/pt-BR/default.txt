@@ -1,1 +1,1 @@
-Ranking e partida rapida so com testadores registrados: contas automaticas da revisao do Google (e qualquer conta Android fora da lista de testadores) ficam fora do placar, das recompensas de temporada e da partida rapida com jogadores reais. Quem joga no iPhone continua valendo. Contra a IA nada muda.
+Android agora so pela Play Store oficial: o site deixou de oferecer o APK direto e todo caminho de instalacao no Android leva ao teste fechado da Play. No iPhone nada muda, o arquivo de teste continua no site. Nenhuma mudanca no jogo.

@@ -142,6 +142,11 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   início e `true` no fim, sempre. Assim dá para testar o que mexe no ranking sem poluí-lo; os pontos
   do teste ficam invisíveis fora da sessão, nada é zerado e as contas nunca são removidas.
   Substitui "contas QA saem do placar" (09/10). A #24 (deixá-las sempre valendo) foi cancelada.
+- **13/10 · Android só pela Play Store oficial** (#25, pedido do John: "vamos manter só a play store
+  oficial"): o site deixa de oferecer o APK direto e todo caminho de Android leva ao teste fechado. A
+  loja é o caminho mais seguro (assinatura oficial, atualização automática) e o APK avulso já não era
+  necessário. O iPhone segue com o `.ipa` do Sideloadly até o TestFlight (08/10). O CI continua gerando o
+  APK na release `latest`; parar de publicá-lo mexe em workflow e vira outra issue, com o OK do John.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo

@@ -9,6 +9,22 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.74.2] — 2026-10-13 · Site: Android só pela Play Store
+
+App 0.32.2 (versionCode 81). Refs #25. Sem mudança no app (Kotlin): só site, documentação e versão.
+
+### Mudado
+- **Android só pela Play Store oficial** (#25, pedido do John): o site (`site/index.html`) não tem mais
+  o botão "Baixar o APK direto", os passos de instalação do APK nem a nota da compilação de depuração.
+  O botão do topo leva à página de beta tester (inscrição no teste fechado) e o texto da seção Baixar
+  diz que o Android é instalado só pela Play.
+- O script de "Última compilação" passa a mostrar só o `.ipa`; o selo do topo fica fixo em
+  "Android em teste fechado · iOS em beta".
+- `site/beta.html`: a dúvida "Já tenho o APK antigo do site instalado" avisa que o site não oferece mais o APK.
+- **iPhone igual**: seção `#ios` com o `.ipa` do Sideloadly mantida até o TestFlight.
+- Fora do escopo: o CI continua gerando o APK na release `latest` (mexer no `android.yml` precisa do OK do John).
+- Documentação: README (como instalar), `docs/BUILD.md` (site), HISTORY e caso INST-07 no `docs/QA_TEST_PLAN.md`.
+
 ## [0.74.1] — 2026-10-12 · Só testador registrado vale como jogador
 
 App 0.32.1 (versionCode 80). Refs #23. Sem mudança no app (Kotlin): só banco, documentação e versão.
