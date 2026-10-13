@@ -11,7 +11,7 @@ comando naval noturno. Todo o jogo é desenhado em Canvas: não há uma única i
 | **Idiomas** | Português (BR), inglês, espanhol |
 | **Pacote** | `br.com.navalbattle` |
 | **Site** | [johncoelho.github.io/naval-battle](https://johncoelho.github.io/naval-battle/) |
-| **APK de teste** | [release `latest`](https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk) |
+| **Instalar** | Android só pela Play Store (teste fechado, [página de beta tester](https://johncoelho.github.io/naval-battle/beta.html)) · iPhone pelo `.ipa` da [release `latest`](https://github.com/johncoelho/naval-battle/releases/download/latest/NavalBattle.ipa) com Sideloadly |
 
 Documentação complementar: [especificação técnica](#especificação-técnica) · [processo de build](docs/BUILD.md) ·
 [design system](docs/DESIGN_SYSTEM.md) · [roteiro de testes](docs/QA_TEST_PLAN.md) · [histórico e decisões](HISTORY.md) ·

@@ -216,8 +216,8 @@
 
       <div class="cta">
         <a class="btn btn-primary" id="download"
-           href="#baixar">
-          ↓ Baixar para Android
+           href="./beta.html">
+          ↓ Android pela Play Store
         </a>
         <a class="btn btn-ghost" href="#baixar">↓ Baixar para iPhone</a>
       </div>
@@ -388,7 +388,7 @@
   <div class="wrap">
     <div class="sechead">
       <h2>Baixar</h2>
-      <p>O Android está em teste fechado na Play Store, com APK de teste direto. O iPhone tem um .ipa de beta para instalação manual. Os arquivos diretos são atualizados na release do GitHub.</p>
+      <p>O Android está em teste fechado e é instalado só pela Play Store oficial. O iPhone tem um .ipa de beta para instalação manual, atualizado na release do GitHub.</p>
     </div>
 
     <div class="grid">
@@ -403,24 +403,9 @@
             <a class="btn btn-primary" href="./beta.html">Quero ser beta tester</a>
           </div>
         </div>
-        <p style="margin:0 0 14px;font-size:13.5px;color:var(--muted)">
-          Enquanto a liberação não sai, dá para usar o APK direto, que instala sem convite.
-        </p>
-        <div class="cta" style="margin:0 0 14px">
-          <a class="btn btn-ghost"
-             href="https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk">
-            ↓ Baixar o APK direto
-          </a>
-        </div>
-        <p class="meta" id="release-meta-android">Carregando dados da última versão…</p>
-        <ol>
-          <li>Baixe o APK no próprio celular.</li>
-          <li>Abra o arquivo e permita a instalação de <b style="color:var(--ink)">fontes desconhecidas</b>
-              para o aplicativo que estiver abrindo (navegador ou gerenciador de arquivos).</li>
-          <li>Instale por cima da versão anterior — o progresso é preservado.</li>
-        </ol>
         <p style="margin:14px 0 0;font-size:13.5px;color:var(--muted)">
-          Android 8.0 ou superior. O APK direto é uma compilação de depuração para testes; a versão distribuída pela Play Store segue o canal fechado.
+          Android 8.0 ou superior. A instalação e as atualizações chegam pela Play Store,
+          na conta Google cadastrada.
         </p>
       </div>
 
@@ -485,12 +470,10 @@
 </footer>
 
 <script>
-  // mostra data e tamanho da última compilação, direto da release rolante —
-  // uma release só, com os dois arquivos (APK do android.yml, .ipa do ios.yml)
+  // mostra data e tamanho da última compilação do .ipa, direto da release rolante.
+  // O Android é só pela Play Store (#25), então o APK da release não aparece aqui.
   (async () => {
-    const androidAlvos = [document.getElementById('release-meta'), document.getElementById('release-meta-android')];
     const iosAlvos = [document.getElementById('release-meta-ios')];
-    const todos = androidAlvos.concat(iosAlvos);
     try {
       const r = await fetch('https://api.github.com/repos/johncoelho/naval-battle/releases/tags/latest');
       if (!r.ok) throw new Error('sem resposta');
@@ -502,7 +485,6 @@
       const formata = (iso) => new Date(iso).toLocaleDateString('pt-BR', {
         day: '2-digit', month: 'long', year: 'numeric'
       });
-      const apk = (data.assets || []).find(a => a.name.endsWith('.apk'));
       const ipa = (data.assets || []).find(a => a.name.endsWith('.ipa'));
       const detalhe = (asset) => {
         if (!asset) return '';
@@ -510,10 +492,9 @@
         const baixados = asset.download_count ? ' · ' + asset.download_count + ' downloads' : '';
         return ' · <b>' + mb + '</b>' + baixados;
       };
-      androidAlvos.forEach(el => { if (el && apk) el.innerHTML = 'Última compilação: <b>' + formata(apk.updated_at) + '</b>' + detalhe(apk); });
       iosAlvos.forEach(el => { if (el && ipa) el.innerHTML = 'Última compilação: <b>' + formata(ipa.updated_at) + '</b>' + detalhe(ipa); });
     } catch (e) {
-      todos.forEach(el => { if (el) el.textContent = 'Versão de teste · consulte a release para conferir o build'; });
+      iosAlvos.forEach(el => { if (el) el.textContent = 'Versão de teste · consulte a release para conferir o build'; });
     }
   })();
 </script>

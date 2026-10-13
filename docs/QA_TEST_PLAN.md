@@ -77,6 +77,7 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | INST-04 | P1 | Permissão de notificação | Pedida ao chegar no menu (Android 13+), uma vez só |
 | INST-05 | P1 | Janela de versão nova | Não aparece com a versão mais recente instalada |
 | INST-06 | P2 | Girar/voltar no meio da abertura | Nada quebra; voltar no menu fecha o app |
+| INST-07 | P1 | Site (`johncoelho.github.io/naval-battle`), seção Baixar e botão do topo | Nenhum link ou instrução de APK; todo caminho de Android leva à página de beta tester / Play Store; seção do iPhone com o `.ipa` e a data da última compilação |
 
 ## 4. Conta e login (A e B)
 

@@ -44,7 +44,8 @@ O APK sai em `composeApp/build/outputs/apk/debug/`.
 | `upload-artifact` | guarda o APK como artefato da execução |
 | `gh release create latest` | recria a release rolante `latest` com o APK |
 
-Link fixo do APK, sempre apontando para a última versão:
+Link fixo do APK, sempre apontando para a última versão (uso interno; o site não oferece mais
+o APK — Android só pela Play Store):
 
 ```
 https://github.com/johncoelho/naval-battle/releases/download/latest/naval-battle-debug.apk
@@ -385,11 +386,12 @@ que roda a cada mudança em `site/` (e sob demanda). A origem do Pages está con
 
 Endereço: **https://johncoelho.github.io/naval-battle/**
 
-O botão de download aponta para a release rolante:
-`releases/download/latest/naval-battle-debug.apk`. Como o build de APK recria essa release a
-cada push na `main`, **o endereço do link nunca precisa ser editado** — o arquivo por trás
-dele é que troca sozinho. O rodapé da página também busca data e tamanho do APK atual na
-API do GitHub ao carregar, então esse texto também se atualiza sozinho.
+O Android no site leva só à Play Store (página de beta tester, `site/beta.html`); o APK da
+release não tem mais link na página (#25, 13/10). O botão do iPhone aponta para a release
+rolante: `releases/download/latest/NavalBattle.ipa`. Como o CI sobe o arquivo de novo a cada
+push na `main`, **o endereço do link nunca precisa ser editado** — o arquivo por trás dele é
+que troca sozinho. A seção do iPhone também busca data e tamanho do `.ipa` atual na API do
+GitHub ao carregar, então esse texto também se atualiza sozinho.
 
 Mesmo assim, **a cada APK novo o site é aberto e conferido de verdade** (passo 6 do
 [caminho curto](#o-caminho-curto)) — a API do GitHub pode estar com limite de chamadas
