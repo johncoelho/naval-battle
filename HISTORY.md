@@ -138,6 +138,8 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **10/10 · Esteira roda sozinha**: tarefas agendadas em modo automático (configurado pelo John no app),
   `defaultMode: auto` no projeto, e regras que ele adicionou para o push na `main` e o SQL do Supabase
   (o Release registra cada versão em `app_releases`). Antes, as rodadas paravam esperando permissão.
+- **13/10 · Contas QA01/QA02 seguem fora do ranking, mas nunca são removidas** (esclarecimento do
+  John): são contas válidas do beta; a #24, que as faria valer no ranking, foi cancelada.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo
