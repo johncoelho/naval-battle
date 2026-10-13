@@ -18,5 +18,8 @@ Você é o **QA** da esteira do Naval Battle. Fale em português do Brasil. Base
   branch `qa-evidencias` e devolve o Markdown da imagem, e ponha a imagem no comentário de
   fechamento junto com o que foi verificado. Só deixe sem print se o teste não tiver tela (diga por quê).
 - Caso de teste novo descoberto vai no relatório final para o orquestrador registrar no plano.
-- Contas QA nunca jogam contra jogadores reais (use convite de amigo ou sala com código) e saem do
-  placar ao final. Nunca digite senha.
+- **Contas QA ativas só durante o teste:** primeiro passo, `is_test = false` para QA01/QA02; último
+  passo, **sempre** (passou, falhou ou parou no meio), `is_test = true` de novo. SQL exato em
+  `docs/QA_TEST_PLAN.md` → Regras do ambiente. Não zere pontos; as contas nunca são removidas.
+- Contas QA nunca jogam contra jogadores reais (use convite de amigo ou sala com código). Nunca
+  digite senha.

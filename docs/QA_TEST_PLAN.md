@@ -21,6 +21,14 @@ servidor, push, partida online entre dois aparelhos).
 | Servidor | Supabase de produção (mesmo dos jogadores) |
 
 Regras do ambiente:
+- **Contas QA ativas só durante o teste** (decisão do John, 13/10). Fora dos testes elas ficam
+  `is_test = true` (fora do ranking, da partida rápida e das recompensas). **Primeiro passo de todo
+  teste** (bateria ou issue da esteira):
+  `update public.profiles set is_test = false where id in (select id from auth.users where email in ('aigamesfactory.qa01@gmail.com','aigamesfactory.qa02@gmail.com'));`
+  **Último passo, sempre** (passou, falhou ou o teste parou no meio):
+  `update public.profiles set is_test = true where id in (select id from auth.users where email in ('aigamesfactory.qa01@gmail.com','aigamesfactory.qa02@gmail.com'));`
+  Os pontos ganhos no teste ficam no banco, invisíveis enquanto `is_test = true`; não é preciso
+  zerar nada. As contas QA nunca são removidas.
 - Os dois emuladores ligados juntos: `emulator -avd QA01 -feature -Vulkan` e o mesmo para
   QA02 (Vulkan derruba o emulador). Seriais por ordem de boot — conferir com
   `adb -s <serial> emu avd name`.
@@ -123,7 +131,7 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | ON-07 | P1 | A fica fora mais de 60s | B vence por desistência; A vê derrota ao voltar |
 | ON-08 | P1 | Cortar rede de A (`adb emu network speed`/modo avião) por 15s, no meio do turno de A | A: "Sem conexão — reconectando" e o relógio do turno para em até ~6s (a jogada não sai sozinha); B: "Adversário sem conexão" com contagem; ao voltar, jogadas guardadas chegam e o relógio retoma (#8) |
 | ON-09 | P1 | Provocações (ícone de rádio) | Bolha aparece no outro aparelho |
-| ON-10 | P1 | Ranqueada QA01 × QA02 (uma vez por bateria) | Exige passe da temporada; a partida acontece normalmente, mas **não conta para o ranking** (QA é conta de teste desde a 0.32.1): `ranked_season_stats` e o Placar não mudam (#23) |
+| ON-10 | P1 | Ranqueada QA01 × QA02 (uma vez por bateria, com as contas ativas) | Exige passe da temporada; a partida conta normalmente: os pontos mudam (soma zero entre as duas) e as duas aparecem no Placar durante o teste |
 | ON-11 | P2 | Fórmula do Elo de `record_ranked_result` | Coberta pelo bloco que desfaz no banco (dois usuários fictícios fora de teste), não pelos emuladores: com QA como conta de teste a ranqueada deles não grava pontos (#23) |
 | ON-12 | P2 | Cabeçalho da batalha nos dois aparelhos | Cada um vê "VS. <nome do outro>" — inclusive quem entrou na sala |
 | ON-13 | P1 | Revanche online | Recomeça; milha e pontos (na ranqueada) contam de novo |
@@ -221,7 +229,7 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | CLEAN-02 | Apagar o feedback de teste (FB-01) no Supabase, sem aprovar recompensa | Fila de feedback só com reais |
 | CLEAN-03 | Desligar "Disponível para partida rápida" em B | Contas QA não recebem salas de jogadores reais |
 | CLEAN-04 | Conferir que nenhuma sala online ficou aberta pelas contas QA | `online_matches` sem sala `waiting` delas |
-| CLEAN-05 | Zerar a ranqueada das contas QA: apagar as linhas delas em `ranked_season_stats` e voltar `profiles.ranked_rating/matches/wins` para 1000/0/0 | Contas QA fora do placar público |
+| CLEAN-05 | Desativar as contas QA: `update public.profiles set is_test = true where id in (select id from auth.users where email in ('aigamesfactory.qa01@gmail.com','aigamesfactory.qa02@gmail.com'));` (ver Regras do ambiente) | QA01/QA02 `is_test = true`, fora do Placar público |
 
 **Excluir conta (AUTH-06)** é destrutivo e só roda quando pedido de propósito: Perfil →
 Excluir conta → confirmar → o jogo volta como convidado e o usuário some do servidor

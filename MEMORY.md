@@ -33,8 +33,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - Processo que se repete vira **skill** em `.claude/skills/`.
 - Com ele presente na conversa: **disparar a rodada da esteira na hora** quando algo entra na Fila
   (ritmo do agendamento só se ele pedir).
-- **Contas QA01/QA02:** ficam fora do ranking (`is_test`), mas são contas válidas do beta: **nunca
-  remover** nem incluir em limpeza de contas de teste.
+- **Contas QA01/QA02:** ativas **só durante o teste** (`is_test = false` no início, `true` no fim,
+  sempre); fora disso, fora do ranking. São contas válidas do beta: **nunca remover**.
 - Quando algo depende dele: **comando pronto** num bloco de shell (botão Run), um por bloco, só para
   ele executar.
 - "Bateria de testes completa" = `docs/QA_TEST_PLAN.md` (skill `qa-full-test`).
