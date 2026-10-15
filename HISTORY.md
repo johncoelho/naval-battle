@@ -147,6 +147,10 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   loja é o caminho mais seguro (assinatura oficial, atualização automática) e o APK avulso já não era
   necessário. O iPhone segue com o `.ipa` do Sideloadly até o TestFlight (08/10). O CI continua gerando o
   APK na release `latest`; parar de publicá-lo mexe em workflow e vira outra issue, com o OK do John.
+- **15/10 · Push diário convidando para jogar** (pedido do John: todo jogador jogar todo dia): tarefa
+  agendada `push-diario-naval-battle` às 12h (o lembrete local do Diário já é às 19h), uma mensagem
+  provocativa por dia da semana, via `push_broadcast` (kind `daily_invite`). Travas: só envia entre
+  11h e 15h e no máximo uma vez por dia. Só Android por enquanto (push no iPhone é a #14).
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo

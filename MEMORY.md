@@ -48,6 +48,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Push diário (15/10):** tarefa `push-diario-naval-battle`, 12h, 7 mensagens por dia da semana,
+  travas de horário (11h–15h) e de uma vez por dia. Push manual: nunca à noite.
 - **Esteira agêntica (10/10):** agentes em `.claude/agents/`, skill `esteira`, `docs/ESTEIRA.md`.
   Quadro: https://github.com/users/johncoelho/projects/1. Tarefa agendada `esteira-naval-battle`
   a cada 30 min e `esteira-qa-naval-battle` de hora em hora (só com o app aberto). Primeira entrega: #7 na 0.30.3.
