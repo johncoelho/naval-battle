@@ -82,41 +82,14 @@ $$;
 revoke all on function public.beta_store_status() from public;
 grant execute on function public.beta_store_status() to authenticated;
 
--- Compra simulada: confere badge e limite do dia e registra. O app só credita os
--- dobrões que voltam daqui (mesmo padrão do claim_feedback).
+-- Loja simulada APOSENTADA (#15, 17/10): a compra de dobrões agora é a da Google Play
+-- (supabase/dobroes.sql). Mesma assinatura, para o app antigo receber o erro e não creditar.
+-- O bloco é o mesmo de dobroes.sql; a versão antiga está no histórico do git.
 create or replace function public.buy_beta_pack(p_pack text)
 returns table (doubloons integer, spent_cents integer, limit_cents integer)
 language plpgsql security definer set search_path = public as $$
-declare
-  pk record;
-  spent integer;
-  lim integer;
 begin
-  if auth.uid() is null then
-    raise exception 'store_auth';
-  end if;
-  if not exists (select 1 from public.user_badges b where b.user_id = auth.uid() and b.badge_code = 'beta_tester') then
-    raise exception 'store_not_beta';
-  end if;
-  select * into pk from public.beta_pack(p_pack);
-  if pk.price_cents is null then
-    raise exception 'store_pack';
-  end if;
-
-  -- trava por usuário: dois toques rápidos não passam juntos pelo limite
-  perform pg_advisory_xact_lock(hashtext('beta_store:' || auth.uid()::text));
-
-  lim := public.config_int('beta_store_daily_cents', 5000);
-  select coalesce(sum(p.price_cents), 0)::integer into spent
-    from public.beta_purchases p where p.user_id = auth.uid() and p.day = public.brt_today();
-  if spent + pk.price_cents > lim then
-    raise exception 'store_limit';
-  end if;
-
-  insert into public.beta_purchases (user_id, pack, price_cents, doubloons, day)
-  values (auth.uid(), p_pack, pk.price_cents, pk.doubloons, public.brt_today());
-
-  return query select pk.doubloons, spent + pk.price_cents, lim;
+  raise exception 'store_retired';
 end $$;
 
 revoke all on function public.buy_beta_pack(text) from public;
