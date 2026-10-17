@@ -53,6 +53,9 @@ kotlin {
             // avisa quando uma versão mais nova já está publicada na faixa de teste do
             // comandante — mesma API que a própria Play Store usa, sem precisar de push
             implementation(libs.play.app.update.ktx)
+            // compra de dobrões pela Google Play (#15; stack aprovada pelo John em 17/10):
+            // só a biblioteca oficial de billing
+            implementation(libs.play.billing)
             // push de verdade (convites, amizade) pelo Firebase Cloud Messaging; a
             // configuração vem do google-services.json (ver PushMessaging.android.kt)
             implementation(project.dependencies.platform(libs.firebase.bom))

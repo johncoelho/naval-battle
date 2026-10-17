@@ -617,6 +617,50 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    // dobrões pela Google Play (#15): o servidor decide; o aparelho só pede e aplica
+    actual suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus> = call {
+        val json = post("/rest/v1/rpc/dobroes_store_status", JSONObject(), token = session.accessToken)
+        val o = JSONArray(json).getJSONObject(0)
+        CloudResult.Ok(
+            DobroesStoreStatus(
+                beta = o.optBoolean("beta", false),
+                realEnabled = o.optBoolean("real_enabled", false),
+                premioEnabled = o.optBoolean("premio_enabled", false),
+                premioClaimed = o.optBoolean("premio_claimed", false),
+                premioResetsInSeconds = o.optInt("premio_resets_in_seconds", 0)
+            )
+        )
+    }
+
+    actual suspend fun dobroesVerify(
+        session: Session,
+        productId: String,
+        purchaseToken: String
+    ): CloudResult<DobroesVerifyResult> = call {
+        val body = JSONObject().put("product_id", productId).put("purchase_token", purchaseToken)
+        val o = JSONObject(post("/functions/v1/dobroes-verify", body, token = session.accessToken))
+        CloudResult.Ok(DobroesVerifyResult(o.optString("status", "unknown"), o.optInt("doubloons", 0)))
+    }
+
+    actual suspend fun dobroesPending(session: Session): CloudResult<List<DobroesPending>> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/dobroes_pending", JSONObject(), token = session.accessToken))
+        CloudResult.Ok(
+            List(arr.length()) { i ->
+                val o = arr.getJSONObject(i)
+                DobroesPending(
+                    purchaseToken = o.getString("purchase_token"),
+                    doubloons = o.optInt("doubloons", 0),
+                    premio = o.optBoolean("premio", false)
+                )
+            }
+        )
+    }
+
+    actual suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/dobroes_ack", JSONObject().put("p_token", purchaseToken), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun recentReleases(platform: String): CloudResult<List<AppRelease>> = call {
         val live = if (platform == "ios") "ios_live" else "android_live"
         val arr = JSONArray(

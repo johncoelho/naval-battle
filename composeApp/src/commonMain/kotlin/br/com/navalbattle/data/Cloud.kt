@@ -175,6 +175,25 @@ data class SeasonEnd(
 data class BetaPurchase(val doubloons: Int, val spentCents: Int, val limitCents: Int)
 
 /**
+ * Situação da loja de dobrões pela Google Play (ver `dobroes_store_status` em
+ * `supabase/dobroes.sql`): se a conta é de testador, quais vitrines estão ligadas e
+ * se o Prêmio Beta de hoje já foi pego (o dia vira em [premioResetsInSeconds]).
+ */
+data class DobroesStoreStatus(
+    val beta: Boolean,
+    val realEnabled: Boolean,
+    val premioEnabled: Boolean,
+    val premioClaimed: Boolean,
+    val premioResetsInSeconds: Int
+)
+
+/** Resposta de `dobroes-verify`: o status do servidor e os dobrões que a compra vale. */
+data class DobroesVerifyResult(val status: String, val doubloons: Int)
+
+/** Compra conferida pelo servidor que ainda não foi somada no saldo deste aparelho. */
+data class DobroesPending(val purchaseToken: String, val doubloons: Int, val premio: Boolean)
+
+/**
  * Saldo de milhas náuticas e as regras vigentes (ver `miles_status` em
  * `supabase/economy.sql`) — os números vêm do servidor, ajustáveis sem versão nova.
  */
@@ -514,6 +533,21 @@ expect class CloudApi() {
 
     /** Compra simulada de um pacote — o servidor confere badge e limite; o app credita o que voltar. */
     suspend fun buyBetaPack(session: Session, pack: String): CloudResult<BetaPurchase>
+
+    /** Loja de dobrões pela Google Play: se a conta é de testador e o que está ligado. */
+    suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus>
+
+    /**
+     * Confere uma compra com a Play (Edge `dobroes-verify`): o servidor credita uma
+     * vez por token e consome a compra. O saldo entra pelo [dobroesPending].
+     */
+    suspend fun dobroesVerify(session: Session, productId: String, purchaseToken: String): CloudResult<DobroesVerifyResult>
+
+    /** Créditos conferidos pelo servidor que este aparelho ainda não somou. */
+    suspend fun dobroesPending(session: Session): CloudResult<List<DobroesPending>>
+
+    /** Marca um token como somado no aparelho: o servidor para de devolvê-lo. */
+    suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit>
 
     /** Saldo de milhas (já com a recarga do dia aplicada) e as regras. */
     suspend fun milesStatus(session: Session): CloudResult<MilesStatus>

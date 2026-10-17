@@ -592,6 +592,22 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    // dobrões pela Google Play não existem no iPhone ainda (#15, parte h): a aba fica fechada
+    actual suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus> =
+        CloudResult.Fail("loja indisponível no iPhone")
+
+    actual suspend fun dobroesVerify(
+        session: Session,
+        productId: String,
+        purchaseToken: String
+    ): CloudResult<DobroesVerifyResult> = CloudResult.Fail("loja indisponível no iPhone")
+
+    actual suspend fun dobroesPending(session: Session): CloudResult<List<DobroesPending>> =
+        CloudResult.Ok(emptyList())
+
+    actual suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit> =
+        CloudResult.Ok(Unit)
+
     actual suspend fun buyBetaPack(session: Session, pack: String): CloudResult<BetaPurchase> = call {
         val json = post("/rest/v1/rpc/buy_beta_pack", mapOf("p_pack" to pack), token = session.accessToken)
         val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
