@@ -1,5 +1,8 @@
 -- Push genérico (complementa supabase/push.sql).
 --
+-- * A versão vigente de register_push_token está em supabase/push_check_daily.sql (#26, 0.33.2):
+--   aqui fica a versão anterior, mantida para o histórico.
+--
 -- * Todo aparelho Android com o jogo instalado registra o token, com ou sem conta
 --   (user_id nulo = aparelho anônimo). Entrar na conta liga o token a ela; sair
 --   devolve o token ao anonimato em vez de apagar, para avisos gerais seguirem.

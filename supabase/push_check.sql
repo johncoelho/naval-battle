@@ -4,8 +4,12 @@
 -- Para cada aparelho Android registrado, a Edge Function `push-check` pede ao FCM uma
 -- validação (validate_only = true): o Google confere o token sem entregar nada a aparelho
 -- nenhum. 404/UNREGISTERED = app desinstalado; 200 = app instalado. Só grava o resultado
--- (checked_at, check_status) e NÃO apaga o token: quem tira o token dos envios é a função
--- `push`, que já faz isso com 404.
+-- (checked_at, check_status) e NÃO apaga o token. A função `push` também marca 'unregistered'
+-- (em vez de apagar) quando um envio real volta 404; os envios pulam esses tokens.
+--
+-- Agendamento: push_check_daily() (supabase/push_check_daily.sql) é o passo 0 da esteira, uma vez
+-- por dia; não há pg_cron. Redefinições deste arquivo: nenhuma; a register_push_token vigente é a de
+-- push_check_daily.sql.
 --
 -- Relatório (só para o John, por SQL): select * from public.testers_install_report();
 -- Só conta a lista da Play (allowed_players.source = 'play'); manual, qa e iPhone ficam fora.

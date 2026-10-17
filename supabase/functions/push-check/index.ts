@@ -1,7 +1,8 @@
 // Conferência de instalação por push de validação (#26). Para cada aparelho Android
 // registrado, pede ao FCM uma validação (validate_only = true): o Google confere o token
 // sem entregar nada a aparelho nenhum. 404/UNREGISTERED = app desinstalado; 200 = instalado.
-// Só grava checked_at e check_status. Não apaga token (isso é da função `push`).
+// Só grava checked_at e check_status. Não apaga token; pula os já marcados 'unregistered'.
+// Falha de rede vira 'erro' (nunca 'unregistered').
 //
 // Chamada pelo banco (supabase/push_check.sql, função push_check_run) com o cabeçalho
 // x-push-check. Sem o valor certo de app_config.push_check_key: 401, nada feito.
@@ -91,9 +92,11 @@ Deno.serve(async (req) => {
   if (!raw) return json({ error: "config" }, 503);
   const sa = JSON.parse(raw) as ServiceAccount;
 
+  // tokens já marcados como 'unregistered' não são reconferidos (NULL precisa do "is.null")
   const { data: tokens, error } = await sb.from("push_tokens")
     .select("token")
-    .eq("platform", "android");
+    .eq("platform", "android")
+    .or("check_status.is.null,check_status.neq.unregistered");
   if (error) return json({ error: "db" }, 500);
 
   let auth: string;
@@ -103,14 +106,24 @@ Deno.serve(async (req) => {
     return json({ error: "fcm_auth" }, 503);
   }
 
-  // poucas centenas por dia, em sequência: sem risco de cota
+  // lotes de 10 em paralelo: o pg_net corta a chamada em 60 s
   const counts: Record<Status, number> = { ok: 0, unregistered: 0, erro: 0 };
-  for (const { token } of tokens ?? []) {
-    const status = await check(sa, auth, token);
-    counts[status] += 1;
-    await sb.from("push_tokens")
-      .update({ check_status: status, checked_at: new Date().toISOString() })
-      .eq("token", token);
+  const list = tokens ?? [];
+  for (let i = 0; i < list.length; i += 10) {
+    const lote = list.slice(i, i + 10);
+    const statuses = await Promise.all(lote.map(async ({ token }) => {
+      let status: Status;
+      try {
+        status = await check(sa, auth, token);
+      } catch {
+        status = "erro"; // falha de rede: não marca como desinstalado
+      }
+      await sb.from("push_tokens")
+        .update({ check_status: status, checked_at: new Date().toISOString() })
+        .eq("token", token);
+      return status;
+    }));
+    for (const status of statuses) counts[status] += 1;
   }
   return json({ checked: counts.ok + counts.unregistered + counts.erro, ...counts });
 });

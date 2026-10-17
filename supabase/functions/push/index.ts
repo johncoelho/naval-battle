@@ -77,7 +77,9 @@ Deno.serve(async (req) => {
   const sa = JSON.parse(raw) as ServiceAccount;
 
   // sem destinatário = aviso geral: vai para todos os aparelhos (com ou sem conta)
-  let query = sb.from("push_tokens").select("token").eq("platform", "android");
+  // tokens marcados 'unregistered' (desinstalado, #26) ficam fora dos envios; NULL precisa do "is.null"
+  let query = sb.from("push_tokens").select("token").eq("platform", "android")
+    .or("check_status.is.null,check_status.neq.unregistered");
   if (msg.user_id) query = query.eq("user_id", msg.user_id);
   const { data: tokens } = await query;
   if (!tokens?.length) return finish("no tokens");
@@ -101,11 +103,14 @@ Deno.serve(async (req) => {
       }),
     });
     results.push(String(res.status));
-    // aparelho desinstalou ou trocou de token: tira da lista
+    // aparelho desinstalou ou trocou de token: MARCA (não apaga), para a conferência e o relatório
+    // verem o histórico; o envio seguinte pula o token marcado. Só 404/UNREGISTERED marcam.
     if (res.status === 404 || res.status === 400) {
       const text = await res.text();
       if (res.status === 404 || text.includes("UNREGISTERED")) {
-        await sb.from("push_tokens").delete().eq("token", token);
+        await sb.from("push_tokens")
+          .update({ check_status: "unregistered", checked_at: new Date().toISOString() })
+          .eq("token", token);
       }
     }
   }
