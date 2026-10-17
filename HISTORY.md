@@ -151,21 +151,35 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   agendada `push-diario-naval-battle` às 12h (o lembrete local do Diário já é às 19h), uma mensagem
   provocativa por dia da semana, via `push_broadcast` (kind `daily_invite`). Travas: só envia entre
   11h e 15h e no máximo uma vez por dia. Só Android por enquanto (push no iPhone é a #14).
+- **17/10 · Pendência do design system: cartão do Prêmio no artefato Claude Design** (#15) — o cartão
+  está em `docs/DESIGN_SYSTEM.md`, mas o artefato ainda não recebeu o cartão nem o estado "Indisponível
+  agora" da vitrine. Registrado em `docs/design-system/PENDENCIAS.md`; atualizar pela skill
+  `design-system`, passo 3.
 - **17/10 · Compras reais de dobrões aprovadas** (#15; perfil de pagamentos da Play verificado):
   camada nova **Google Play Billing** aprovada; pacotes de 04/10 (Bolsa R$ 4,90/500, Baú R$ 9,90/1.100,
   Cofre R$ 24,90/3.000, Tesouro R$ 49,90/6.500); sem teto diário. A loja simulada e o limite de
   R$ 50/dia saem: o beta tester ganha o **Pacote Prêmio Beta** (Tesouro, 1×/dia) pelo fluxo real da
-  Play como testador de licença, sem cobrança. Venda para jogador comum só depois da produção.
+  Play como testador de licença, sem cobrança. Venda para jogador comum só depois da produção
+  (venda ligada: aguarda OK do John).
 - **17/10 · Compra de dobrões: o servidor decide, o aparelho só aplica** (#15, 0.33.0) — porquê: o
   crédito não pode depender do que o aparelho diz. Compra conferida na API da Play pela Edge
-  `dobroes-verify` (conta de serviço própria, só para billing), crédito uma vez por token, consumo
-  feito pelo servidor logo depois, entrega ao aparelho por `dobroes_pending`/`dobroes_ack` (o
-  aparelho guarda os tokens já somados). Interruptores `real_billing_enabled` e `premio_beta_enabled`
-  nascem desligados. **Limite conhecido:** o saldo ainda é `profiles.credits` gravado pelo aparelho:
-  por isso a venda para jogador comum não liga antes da parte (e) do #15 (saldo autoritativo).
-  Loja simulada e `buy_beta_pack` viram `store_retired` (o app 0.32.x não credita).
-- **17/10 · iPhone sem loja de dobrões** (#15 parte h, StoreKit fora do lote) — a aba fica fechada
-  no iPhone, sem a simulada e sem o Prêmio; o `.ipa` segue com a versão antiga do jogo até lá.
+  `dobroes-verify` (com a conta de serviço do secret `PLAY_BILLING_SERVICE_ACCOUNT`; hoje a permissão
+  financeira está no `play-publisher-ci`, troca por conta só de billing aguarda o John), crédito uma
+  vez por token, consumo feito pelo servidor logo depois, entrega ao aparelho por
+  `dobroes_pending`/`dobroes_ack` (o aparelho guarda os tokens já somados). Interruptores
+  `real_billing_enabled` e `premio_beta_enabled` nascem desligados (aguarda OK do John para ligar
+  qualquer um dos dois). **Limite conhecido:** o saldo ainda é `profiles.credits` gravado pelo
+  aparelho: por isso a venda para jogador comum não liga antes da parte (e) do #15 (saldo
+  autoritativo). Entrega sem soma dupla no aparelho: saldo e conjunto de compras entregues vão no
+  mesmo lote (`Prefs.putBatch`, uma escrita no SharedPreferences do Android); no iPhone o
+  NSUserDefaults não tem transação, mas a compra não roda ali. Loja simulada e `buy_beta_pack` viram `store_retired` (o app 0.32.x não credita).
+- **17/10 · iPhone sem loja de dobrões** (recomendação aplicada, aguarda OK do John; #15 parte h,
+  StoreKit fora do lote) — a aba fica fechada no iPhone, sem a simulada e sem o Prêmio; o `.ipa`
+  segue com a versão antiga do jogo até lá.
+- **17/10 · Saldo no aparelho com a venda desligada** (recomendação aplicada, aguarda OK do John) —
+  porquê: enquanto o saldo for `profiles.credits` gravado pelo aparelho, uma venda aberta seria
+  adulterável; por isso `real_billing_enabled` nasce desligado e a venda só liga depois do saldo
+  autoritativo no servidor (#15 parte e).
 - **17/10 · Conferência de instalação por push de validação** (#26, 0.33.0) — porquê: o número de
   testadores do Play Console não diz quem instalou. A Edge `push-check` pede ao FCM `validate_only`
   (o Google confere o token sem entregar nada a aparelho) e grava só o status; não apaga token (quem

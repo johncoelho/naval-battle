@@ -440,12 +440,13 @@ sem depender da memória de ninguém.
 - Biblioteca oficial `com.android.billingclient:billing` (9.1.0, aprovada pelo John em 17/10). Nenhum
   SDK de terceiro. Permissão `BILLING` entra sozinha pelo manifesto da biblioteca.
 - Conferência no servidor: Edge Function `dobroes-verify` (`supabase/functions/dobroes-verify`), com
-  `verify_jwt` ligado. Chama a API Android Publisher com a conta de serviço **de billing**, que é
-  diferente da de publicação.
-- Segredo **`PLAY_BILLING_SERVICE_ACCOUNT`** (JSON da conta de serviço de billing) fica só em
+  `verify_jwt` ligado. Chama a API Android Publisher com a conta de serviço do secret abaixo.
+- Segredo **`PLAY_BILLING_SERVICE_ACCOUNT`** (JSON da conta de serviço usada na Edge) fica só em
   Supabase → Edge Functions → Secrets. Nunca no repositório, nunca no CI, nunca em log. Sem ele a
   Edge responde 503 e nada é gravado (a compra fica na Play e volta no próximo início do app).
-- Conta de serviço nova, com só "Ver informações financeiras" e "Gerenciar pedidos e assinaturas" no
-  Play Console (Usuários e permissões). A conta de publicação não muda.
+- Permissões financeiras: o John concedeu ao `play-publisher-ci` (a conta de **publicação**, cuja chave
+  já está no CI) em 17/10 às 17:57. Recomendado trocar por conta de serviço própria só para billing,
+  com só "Ver informações financeiras" e "Gerenciar pedidos e assinaturas" (Play Console, Usuários e
+  permissões): aguarda decisão do John. O secret `PLAY_BILLING_SERVICE_ACCOUNT` ainda não foi cadastrado.
 - Produtos no Play Console (consumíveis, ativos): `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`,
   `dobroes_tesouro`. Os IDs têm que ser exatamente esses (são os de `dobroes_products` no banco).

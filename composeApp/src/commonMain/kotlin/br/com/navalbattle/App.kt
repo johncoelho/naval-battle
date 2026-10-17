@@ -1347,10 +1347,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 pending.map { PendingCredit(it.purchaseToken, it.doubloons) },
                 deliveredTokens()
             )
-            // guarda antes de dar o saldo: se a confirmação se perder, a repetição não soma de novo
-            dobroesPrefs.putString(DELIVERED_KEY, plan.delivered.joinToString(","))
+            // saldo e conjunto de entregues na mesma escrita: se a confirmação se perder, a repetição não soma de novo
+            val delivered = plan.delivered.joinToString(",")
+            profile.grantCredits(plan.total) { putString(DELIVERED_KEY, delivered) }
             if (plan.total > 0) {
-                profile.grantCredits(plan.total)
                 dobroesNotice = t(K.DOUBLOON_BOUGHT, plan.total)
                 authed { s -> cloud.saveProfile(s, profile.snapshot()) }
             }

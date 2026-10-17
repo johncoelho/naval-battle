@@ -21,6 +21,13 @@ actual class Prefs actual constructor() {
         defaults.setInteger(value.toLong(), forKey = key)
     }
 
+    /** O NSUserDefaults não tem transação: as chaves saem em sequência. A compra de dobrões não roda no
+     * iPhone (billing indisponível), então a soma dupla não tem como acontecer por aqui. */
+    actual fun putBatch(batch: PrefsBatch) {
+        batch.strings.forEach { (key, value) -> putString(key, value) }
+        batch.ints.forEach { (key, value) -> putInt(key, value) }
+    }
+
     actual fun clear() {
         defaults.dictionaryRepresentation().keys.forEach { key ->
             (key as? String)?.let { defaults.removeObjectForKey(it) }

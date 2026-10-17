@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.Prefs
+import br.com.navalbattle.data.PrefsBatch
 import br.com.navalbattle.data.Session
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -159,10 +160,16 @@ class Profile(private val prefs: Prefs) {
         return true
     }
 
-    /** Soma dobrões: recompensa de feedback, compra na loja de dobrões, estorno. */
-    fun grantCredits(amount: Int) {
+    /**
+     * Soma dobrões: recompensa de feedback, compra na loja de dobrões, estorno. [alsoWrite] grava
+     * no mesmo lote o que tem que andar com o saldo (compras entregues), numa só escrita.
+     */
+    fun grantCredits(amount: Int, alsoWrite: PrefsBatch.() -> Unit = {}) {
         credits += amount
-        prefs.putInt(K_CREDITS, credits)
+        val batch = PrefsBatch()
+        batch.putInt(K_CREDITS, credits)
+        batch.alsoWrite()
+        prefs.putBatch(batch)
     }
 
     /** Recompensa por feedback aprovado (melhoria aceita) — presenteia uma carga da habilidade. */

@@ -40,4 +40,12 @@ class DoubloonPackTest {
         assertEquals("6.500", formatThousands(6500))
         assertEquals("500", formatThousands(500))
     }
+
+    @Test
+    fun premioSoAparecePeloTesouroListadoNaPlay() {
+        assertEquals(false, premioDisponivel(emptyList()))
+        assertEquals(false, premioDisponivel(listOf("dobroes_bolsa", "dobroes_bau", "dobroes_cofre")))
+        assertEquals(true, premioDisponivel(listOf("dobroes_tesouro")))
+        assertEquals(true, premioDisponivel(DoubloonPack.entries.map { it.code }))
+    }
 }

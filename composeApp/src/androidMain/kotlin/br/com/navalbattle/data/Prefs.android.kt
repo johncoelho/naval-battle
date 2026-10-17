@@ -22,6 +22,14 @@ actual class Prefs actual constructor() {
         store.edit().putInt(key, value).apply()
     }
 
+    /** Um único editor e um único `apply`: o arquivo do SharedPreferences é gravado uma vez, com tudo. */
+    actual fun putBatch(batch: PrefsBatch) {
+        val editor = store.edit()
+        batch.strings.forEach { (key, value) -> editor.putString(key, value) }
+        batch.ints.forEach { (key, value) -> editor.putInt(key, value) }
+        editor.apply()
+    }
+
     actual fun clear() {
         store.edit().clear().apply()
     }

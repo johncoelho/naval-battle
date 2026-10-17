@@ -28,3 +28,10 @@ enum class DoubloonPack(
 }
 
 fun brl(cents: Int): String = "R$ ${cents / 100},${(cents % 100).toString().padStart(2, '0')}"
+
+/**
+ * O Prêmio Beta passa pela Play como o Tesouro: só fica disponível se o produto `dobroes_tesouro`
+ * estiver listado na Play (mesmo critério da vitrine: lista vazia = "Indisponível agora").
+ */
+fun premioDisponivel(idsListadosNaPlay: Collection<String>): Boolean =
+    DoubloonPack.TREASURE.code in idsListadosNaPlay

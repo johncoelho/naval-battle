@@ -517,8 +517,10 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   `push-check`, que pede ao FCM uma validação sem entrega (`validate_only`) para cada aparelho e grava
   `check_status`. Relatório só da lista da Play: `testers_install_report()`.
 - Compras de dobrões (`supabase/dobroes.sql`, #15): o aparelho compra na Play; a Edge `dobroes-verify`
-  confere o token na API da Play (conta de serviço própria, secret `PLAY_BILLING_SERVICE_ACCOUNT`) e
-  chama `apply_dobroes_purchase` (só `service_role`), que credita uma vez por token e consome a compra
+  confere o token na API da Play com a conta de serviço do secret `PLAY_BILLING_SERVICE_ACCOUNT`. Estado
+  real: o John concedeu ao `play-publisher-ci` (17/10 17:57) as permissões financeiras; trocar por conta
+  de serviço própria só para billing é o recomendado e aguarda decisão do John; o secret ainda não foi
+  cadastrado (nenhum segredo no repositório) — e chama `apply_dobroes_purchase` (só `service_role`), que credita uma vez por token e consome a compra
   quando deve. O aparelho soma o que `dobroes_pending()` devolve e confirma com `dobroes_ack`; o
   guarda contra soma dupla fica no aparelho (`game/PendingCredits`).
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.

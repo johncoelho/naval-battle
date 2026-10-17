@@ -94,11 +94,12 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - Avisar quando a conta Apple ativar.
 - **Dobrões (#15), antes de ligar o Prêmio ou a venda:** (1) criar no Play Console os 4 produtos
   `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro` (ativos, IDs exatos); (2) lista de
-  testadores e contas QA como **testadores de licença**; (3) conta de serviço nova só para billing,
-  com "Ver informações financeiras" e "Gerenciar pedidos"; (4) secret `PLAY_BILLING_SERVICE_ACCOUNT`
+  testadores e contas QA como **testadores de licença**; (3) permissões financeiras: o John concedeu
+  ao `play-publisher-ci` (17/10 17:57); trocar por conta de serviço própria só para billing é o
+  recomendado, aguarda decisão do John; (4) secret `PLAY_BILLING_SERVICE_ACCOUNT` ainda não cadastrado
   na Edge `dobroes-verify`. Depois: `update public.app_config set value = 'true' where key = 'premio_beta_enabled';`.
-  Decisões do Tech Lead ainda sem resposta do John: saldo no servidor (venda só depois), iPhone sem
-  loja, conta de serviço nova (recomendada).
+  Recomendações do Tech Lead aplicadas, aguardam OK do John: saldo no servidor antes da venda, iPhone
+  sem loja, conta de serviço só para billing.
 - #23 (12/10): estrutura `allowed_players` no banco, **inerte** (`allowlist_enforced = 'false'`, tabela
   vazia). Falta a rodada carregar a lista da Play (esperado `play 12`, `qa 2`, `manual 2`), fazer o
   ensaio (`refresh_all_is_test(false)`, ~95 viram teste e 12 seguem jogador) e só então ligar o

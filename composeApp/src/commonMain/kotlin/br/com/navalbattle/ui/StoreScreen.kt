@@ -244,7 +244,6 @@ fun StoreScreen(state: AppState) {
             }
         }
 
-
         pending?.let { buy ->
             PurchaseConfirm(
                 buy = buy,

@@ -33,6 +33,7 @@ import br.com.navalbattle.design.drawDoubloon
 import br.com.navalbattle.design.drawDoubloonPack
 import br.com.navalbattle.game.DoubloonPack
 import br.com.navalbattle.game.StoreView
+import br.com.navalbattle.game.premioDisponivel
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 
@@ -112,9 +113,11 @@ private fun InfoCard(content: @Composable () -> Unit) {
 @Composable
 private fun PremioCard(state: AppState, onPick: (DoubloonPack) -> Unit) {
     val pack = DoubloonPack.TREASURE
+    val disponivel = premioDisponivel(state.dobroesProducts.map { it.productId })
     Column(
         Modifier
             .fillMaxWidth()
+            .alpha(if (disponivel) 1f else 0.45f)
             .background(Naval.surface2)
             .border(2.dp, Naval.amberStrong)
             .padding(14.dp),
@@ -140,8 +143,21 @@ private fun PremioCard(state: AppState, onPick: (DoubloonPack) -> Unit) {
         Gap(10)
         CoinLabel(formatThousands(pack.doubloons), style = NavalType.title, iconSize = 22.dp)
         Gap(12)
-        PrimaryButton(t(K.PREMIO_TAKE), modifier = Modifier.fillMaxWidth()) {
-            if (!state.dobroesBusy) onPick(pack)
+        if (disponivel) {
+            PrimaryButton(t(K.PREMIO_TAKE), modifier = Modifier.fillMaxWidth()) {
+                if (!state.dobroesBusy) onPick(pack)
+            }
+        } else {
+            // sem o produto listado na Play, nada de botão nem preço vazio: mesma legenda da vitrine
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(Naval.surface3)
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(t(K.DOUBLOON_LOCKED), style = NavalType.mono, color = Naval.muted, textAlign = TextAlign.Center)
+            }
         }
     }
 }
