@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.75.1] — 2026-10-17 · Diagnóstico das falhas da conferência de compras
+
+App 0.33.1 (versionCode 83). Refs #27. Mudança só no servidor (Edge Function `dobroes-verify`);
+o app não muda.
+
+### Mudado
+- **Falha da conferência registrada** (#27): a Edge `dobroes-verify` escreve uma linha JSON em
+  Logs da Edge por falha, com a etapa e o motivo (`secret_ausente`, `secret_invalido`,
+  `chave_privada`, `oauth`, `rede`, `compra_api`). Nunca entra segredo, chave, token de acesso,
+  token da compra, corpo de resposta da Google nem mensagem de erro.
+- **Falha de rede na compra**: a Edge responde 502 `play_error` em vez de estourar 500 sem registro.
+- Resposta ao app inalterada.
+
+### Documentação
+- README (Especificação técnica: padrão de log das Edges), HISTORY (decisão de 17/10),
+  `docs/BUILD.md` (seção Dobrões: padrão de log).
+
 ## [0.75.0] — 2026-10-17 · Compras de dobrões pela Google Play e Prêmio Beta
 
 App 0.33.0 (versionCode 82). Refs #15, #26. Mudança no app (Kotlin) e no banco (migrações

@@ -48,6 +48,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Diagnóstico da conferência de compra (#27, 0.33.1):** Edge `dobroes-verify` registra etapa e motivo
+  em Logs da Edge, sem segredo. Prova: log de `secret_ausente` após o deploy; a compra de teste (DOB-07)
+  segue com o John (secret e licença).
 - **Compras de dobrões pela Google Play (#15, 0.33.0):** servidor e app prontos (migração
   `dobroes_billing`, Edge `dobroes-verify`, Prêmio Beta, aba sem loja simulada). Os interruptores
   `real_billing_enabled` e `premio_beta_enabled` nascem **desligados**. Venda para jogador comum só

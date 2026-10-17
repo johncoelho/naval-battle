@@ -444,6 +444,10 @@ sem depender da memória de ninguém.
 - Segredo **`PLAY_BILLING_SERVICE_ACCOUNT`** (JSON da conta de serviço usada na Edge) fica só em
   Supabase → Edge Functions → Secrets. Nunca no repositório, nunca no CI, nunca em log. Sem ele a
   Edge responde 503 e nada é gravado (a compra fica na Play e volta no próximo início do app).
+- Log de falha (#27): cada falha vira uma linha JSON `dobroes_verify_falha` com a etapa
+  (`secret_ausente`, `secret_invalido`, `chave_privada`, `oauth`, `rede`, `compra_api`) e um motivo fixo
+  ou o status HTTP; aparece em Supabase → Logs → Edge Functions. Nunca entram segredo, chave, token de
+  acesso, token da compra, corpo de resposta da Google nem `err.message`.
 - Permissões financeiras: o John concedeu ao `play-publisher-ci` (a conta de **publicação**, cuja chave
   já está no CI) em 17/10 às 17:57. Recomendado trocar por conta de serviço própria só para billing,
   com só "Ver informações financeiras" e "Gerenciar pedidos e assinaturas" (Play Console, Usuários e

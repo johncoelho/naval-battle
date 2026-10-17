@@ -522,6 +522,8 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   (17/10 17:57) as permissões financeiras; trocar por conta de serviço própria só para billing
   é o recomendado e aguarda decisão do John. O secret
   `PLAY_BILLING_SERVICE_ACCOUNT` ainda não foi cadastrado (nenhum segredo no repositório).
+  Padrão de log das Edges de compra (#27): falha vira uma linha JSON `console.error` com evento e
+  etapa, sem segredo, token, corpo de resposta nem `err.message`; o motivo é fixo ou o status HTTP.
   A Edge chama `apply_dobroes_purchase` (só `service_role`), que credita uma vez por token e
   consome a compra quando deve. O aparelho soma o que `dobroes_pending()` devolve e confirma
   com `dobroes_ack`; o guarda contra soma dupla fica no aparelho (`game/PendingCredits`).

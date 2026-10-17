@@ -173,6 +173,12 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   autoritativo). Entrega sem soma dupla no aparelho: saldo e conjunto de compras entregues vão no
   mesmo lote (`Prefs.putBatch`, uma escrita no SharedPreferences do Android); no iPhone o
   NSUserDefaults não tem transação, mas a compra não roda ali. Loja simulada e `buy_beta_pack` viram `store_retired` (o app 0.32.x não credita).
+- **17/10 · Falha da conferência de compra registra etapa e motivo, nunca segredo** (#27, 0.33.1) —
+  porquê: a Edge respondia 503 sem registro (secret, JSON, chave e OAuth caíam no mesmo caso) e a
+  compra do QA não creditava sem diagnóstico. Uma linha JSON por falha, com etapa e motivo fixo ou
+  status HTTP. Não se loga `err.message` (o `JSON.parse` e a URL da rede podem trazer segredo ou token
+  da compra) nem corpo da Google. Resposta ao app inalterada; a rede da compra passa de 500 para 502.
+  Sobe versão porque o push na `main` publica; o app não muda.
 - **17/10 · iPhone sem loja de dobrões** (recomendação aplicada, aguarda OK do John; #15 parte h,
   StoreKit fora do lote) — a aba fica fechada no iPhone, sem a simulada e sem o Prêmio; o `.ipa`
   segue com a versão antiga do jogo até lá.
