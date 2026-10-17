@@ -200,11 +200,45 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | LOJA-01 | P1 | Loja → abas cascos, camuflagens, habilidades, dobrões | Itens com preço; sem saldo: apagado, cadeado e "faltam ◆ X" |
 | LOJA-02 | P1 | Comprar uma camuflagem | Cartão de confirmação com saldo antes/depois; item vai para o Estaleiro |
 | LOJA-03 | P1 | Comprar cartucho de habilidade | Contador aumenta; usado em IA-06 |
-| LOJA-04 | P1 | Aba Dobrões (compra simulada) | Credita sem cobrança; respeita limite de R$ 50/dia |
+| LOJA-04 | P1 | Aba Dobrões, conta de testador de licença (ver DOB-07) | Aparece só o Prêmio Beta; a vitrine paga não aparece |
 | LOJA-05 | P2 | Oferta do dia | Selo "-30%" no atalho; camuflagem no topo com desconto |
 | EST-01 | P1 | Estaleiro: equipar casco e camuflagem | Frota do menu e da batalha mudam; prévia desliza pelas 5 classes |
 | SEA-01 | P1 | Passe de temporada (gratuito) | Popup da estação pede aceite; aderir libera ranqueada |
 | RANK-01 | P1 | Placar | Abas geral, temporada e Troféus; posição própria mesmo fora do topo |
+
+### 12b. Compras de dobrões pela Google Play (#15)
+
+Pré-requisitos (passos do John, no Play Console e no Supabase): os quatro produtos
+`dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro` ativos; QA01/QA02 e a lista
+de testadores como testadores de licença; secret `PLAY_BILLING_SERVICE_ACCOUNT` na Edge
+`dobroes-verify`. Sem eles, só DOB-10 vale. Para ligar a venda ou o Prêmio: os blocos SQL do
+PR/commit de #15 (um por bloco). Compra real de teste nunca é cobrada: a Play marca como teste.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| DOB-01 | P0 | Venda real ligada (`real_billing_enabled = 'true'`), conta comum, Dobrões → toca num pacote | Quatro cards com o preço que a Play devolve (R$ 4,90 · 9,90 · 24,90 · 49,90); toque abre a folha da Play |
+| DOB-02 | P0 | Concluir a compra de teste na folha da Play (conta de licença) | Saldo sobe exatamente a quantidade do pacote, uma vez; nenhuma cobrança |
+| DOB-03 | P0 | Reabrir o app depois da compra (ou repetir a conferência) | Saldo não sobe de novo (um token, um crédito) |
+| DOB-04 | P0 | Cancelar na folha da Play | Saldo não muda; nenhum erro aparece |
+| DOB-05 | P1 | Fechar o app logo depois do pagamento, antes da conferência; reabrir | A compra é conferida e creditada sem o jogador tocar em nada |
+| DOB-06 | P1 | Conta fora da lista de testadores com compra de teste | Nada é creditado (`not_beta`) |
+| DOB-07 | P0 | Conta de testador (lista da Play), `premio_beta_enabled = 'true'`, aba Dobrões | Mostra o Prêmio Beta (6.500 dobrões, "Pegar o Prêmio"); pegar credita 6.500 uma vez |
+| DOB-08 | P1 | Mesmo testador, tocar de novo no mesmo dia | Aparece "Você já pegou o Prêmio de hoje" com o contador; não credita |
+| DOB-09 | P1 | `premio_beta_enabled = 'false'`, conta de testador | Aba fechada ("A compra de dobrões chega em breve."); nada é cobrado |
+| DOB-10 | P0 | Produto ausente na Play (ou Play fora) | Aba mostra "Dobrões indisponíveis agora"; nenhum cartão e nenhuma cobrança |
+| DOB-11 | P2 | iPhone, aba Dobrões | Aba fechada; nada de loja simulada |
+
+### 12c. Conferência de instalação por push (#26)
+
+Conferência da lista da Play, só para o John (indicador; o número oficial é o do Play Console).
+Rodar `select public.push_check_run();` (SQL) e depois `select * from public.testers_install_report();`.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| CHK-01 | P1 | Rodar a conferência com QA01 instalado | Conferência roda; nenhuma notificação aparece no QA01 |
+| CHK-02 | P1 | Desinstalar o app no QA02 e rodar a conferência | Relatório mostra `desinstalado` para QA02 (prova do `validate_only`) |
+| CHK-03 | P1 | Reinstalar no QA02, abrir, rodar a conferência | Relatório mostra `instalado` com o token novo; o antigo não conta |
+| CHK-04 | P2 | Relatório completo | Uma linha por testador da lista da Play; sem iPhone, `manual` nem `qa` |
 
 ## 13. Ajustes, notificações, feedback e idioma
 

@@ -225,8 +225,11 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
   completa: partidas, vitórias, aproveitamento, precisão, navios afundados e sequências.
   **Excluir conta** fica no próprio Perfil, com confirmação: apaga tudo no servidor
   (`supabase/account.sql`) e a carreira do aparelho volta ao começo.
-- **Dobrões** (a moeda do jogo) compram na loja. Beta testers têm uma aba Dobrões com compra
-  simulada (até R$ 50/dia, sem cobrança real); a Google Play Billing entra depois.
+- **Dobrões** (a moeda do jogo) compram na loja, pela Google Play (aba Dobrões). Quem testa o jogo
+  (lista de testadores de licença) ganha o **Prêmio Beta**: o pacote do Tesouro (6.500 dobrões)
+  uma vez por dia, sem cobrança. A venda para jogador comum fica fechada até o servidor ser a única
+  fonte do saldo e o app estar em produção na Play (interruptor `real_billing_enabled`, padrão
+  desligado). A loja simulada saiu. No iPhone a aba fica fechada até a parte StoreKit.
 - **Passe de temporada**: para jogar ranqueada é preciso aderir à temporada da estação —
   Passe Gratuito (só participa) ou Passe de Temporada (dobrões: camuflagem exclusiva da
   estação, dobrões e milhas bônus; upgrade depois sai mais caro). Fim de temporada premia
@@ -412,8 +415,9 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Login Google (Android) | Credential Manager (`androidx.credentials` 1.3.0 + `googleid` 1.1.1) | aprovado em 0.11 |
 | Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
 | Push (Android) | Firebase Cloud Messaging (`firebase-bom` 33.7.0, plugin `google-services` 4.4.2 só se houver `google-services.json`) | aprovado em 0.60 |
+| Compras (Android) | Google Play Billing (`com.android.billingclient:billing` 9.1.0): lista produtos, abre a folha de compra e lê o que já foi comprado. O crédito é decidido no servidor | aprovado pelo John em 17/10 (#15) |
 | Publicação | Gradle Play Publisher 3.13.0 (faixa Alpha do teste fechado) | aprovado em 0.16 |
-| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Function `push` (Deno) | `supabase/` |
+| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check` e `dobroes-verify` (Deno) | `supabase/` |
 | Site | HTML estático no GitHub Pages | `site/`, `pages.yml` |
 | Testes | `kotlin.test` em `composeApp/src/commonTest` (JVM e simulador iOS) | aprovado em 10/10/2026 |
 | CI | GitHub Actions: `android.yml` (trava de release + testes + APK + `.aab` + Play), `ios.yml` (testes no simulador + framework + `.ipa`), `pages.yml` | JDK 21 Temurin |
@@ -440,6 +444,8 @@ composeApp/src/
 iosApp/             projeto Xcode (Info.plist com a versão)
 supabase/*.sql      fonte da verdade do banco, um arquivo por domínio
 supabase/functions/push/   Edge Function que envia FCM
+supabase/functions/push-check/     Edge Function: conferência de instalação (validate_only, sem entrega)
+supabase/functions/dobroes-verify/ Edge Function: confere a compra na Play e manda o crédito ao banco
 site/               landing page e página de beta tester
 docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 .claude/skills/     processos repetíveis (ciclo de desenvolvimento, release, QA, …)
@@ -507,6 +513,14 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   `beta-testers`).
 - Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
   FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).
+- Conferência de instalação (`supabase/push_check.sql`, #26): `push_check_run()` chama a Edge
+  `push-check`, que pede ao FCM uma validação sem entrega (`validate_only`) para cada aparelho e grava
+  `check_status`. Relatório só da lista da Play: `testers_install_report()`.
+- Compras de dobrões (`supabase/dobroes.sql`, #15): o aparelho compra na Play; a Edge `dobroes-verify`
+  confere o token na API da Play (conta de serviço própria, secret `PLAY_BILLING_SERVICE_ACCOUNT`) e
+  chama `apply_dobroes_purchase` (só `service_role`), que credita uma vez por token e consome a compra
+  quando deve. O aparelho soma o que `dobroes_pending()` devolve e confirma com `dobroes_ack`; o
+  guarda contra soma dupla fica no aparelho (`game/PendingCredits`).
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.
 
 ### Versão, release e entrega
@@ -583,7 +597,9 @@ as duas faixas de combate precisam ter o mesmo andamento e duração para a troc
 - [x] Ranqueada com temporadas por estação do ano e tela de Placar (geral e por
       temporada)
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
-- [ ] Compras com pagamento real (Google Play Billing) vendendo dobrões
+- [~] Compras com pagamento real (Google Play Billing) vendendo dobrões: compra, conferência no
+      servidor e Prêmio Beta prontos (0.33.0, #15). Falta: saldo autoritativo no servidor (#15 e),
+      venda ligada para jogador comum (f), reembolso automático (g) e StoreKit no iPhone (h)
 - [~] Alvo iOS: preferências, nuvem, modo Online e áudio já têm `actual` de verdade;
       rede local e login com Google ainda são pendências (mudos/desativados por
       enquanto, para o resto do jogo compilar) — ver [docs/BUILD.md](docs/BUILD.md#ios--em-andamento).

@@ -1,1 +1,1 @@
-Android agora so pela Play Store oficial: o site deixou de oferecer o APK direto e todo caminho de instalacao no Android leva ao teste fechado da Play. No iPhone nada muda, o arquivo de teste continua no site. Nenhuma mudanca no jogo.
+Aba Dobroes: a loja simulada saiu. Quem testa o jogo ganha o Premio Beta, um pacote de 6500 dobroes por dia. A compra de dobroes pela Google Play vem em breve. Tambem melhoramos a conferencia de instalacao dos testadores.

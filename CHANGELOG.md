@@ -9,6 +9,47 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.75.0] — 2026-10-17 · Compras de dobrões pela Google Play e Prêmio Beta
+
+App 0.33.0 (versionCode 82). Refs #15, #26. Mudança no app (Kotlin) e no banco (migrações
+`dobroes_billing` e `push_check`, Edge Functions `dobroes-verify` e `push-check`).
+
+### Mudado
+- **Aba Dobrões pela Google Play** (#15): a loja simulada e o limite de R$ 50/dia saíram. A
+  compra usa a folha da Play (Google Play Billing, `com.android.billingclient:billing` 9.1.0,
+  aprovada pelo John). O preço mostrado é o que a própria Play devolve.
+- **Prêmio Beta** (#15): quem está na lista de testadores de licença vê um pacote de 6.500
+  dobrões por dia (Tesouro), sem cobrança. Uma vez por dia, dia de Brasília.
+- **Servidor decide, aparelho aplica**: a Edge `dobroes-verify` confere a compra na API da Play e
+  o banco credita uma vez por token. O aparelho soma o que o servidor devolve e confirma com
+  `dobroes_ack`; compras pendentes são conferidas de novo ao abrir a aba, ao voltar ao app e ao
+  abrir a conta.
+- **Venda para jogador comum fechada**: o interruptor `real_billing_enabled` nasce desligado. Só
+  liga depois do saldo autoritativo no servidor (#15 parte e) e da produção na Play.
+- **iPhone**: a aba Dobrões fica fechada (StoreKit é issue própria).
+- **Conferência de instalação** (#26): a Edge `push-check` pede ao FCM uma validação sem entrega
+  para cada aparelho Android e grava se o app está instalado. Relatório (`testers_install_report`)
+  só com a lista da Play.
+
+### Banco
+- `supabase/dobroes.sql` (`dobroes_billing`): produtos, compras por token, Prêmio Beta, interruptores,
+  `apply_dobroes_purchase` (só `service_role`), `dobroes_pending` e `dobroes_ack`.
+- `supabase/economy.sql`: `buy_beta_pack` vira `store_retired` (o app antigo recebe o erro e não credita).
+- `supabase/push_check.sql` (`push_check`): colunas `checked_at` e `check_status` em `push_tokens`,
+  chave `push_check_key`, `push_check_run()` e `testers_install_report()`.
+
+### Documentação
+- README (Especificação técnica: biblioteca de billing na stack, Edges novas, conferência de
+  instalação e compras), HISTORY (decisões de 17/10), `docs/QA_TEST_PLAN.md` (DOB-01 a DOB-11 e
+  CHK-01 a CHK-04), skill `beta-testers` (licença e conferência).
+
+### Pendente do John (não bloqueia a publicação)
+- Criar no Play Console os produtos `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre` e
+  `dobroes_tesouro` (ativos, IDs exatos).
+- Adicionar a lista de testadores e as contas QA como testadores de licença.
+- Criar a conta de serviço de billing (só "Ver informações financeiras" e "Gerenciar pedidos") e
+  cadastrar o JSON como secret `PLAY_BILLING_SERVICE_ACCOUNT` na Edge `dobroes-verify`.
+
 ## [0.74.2] — 2026-10-13 · Site: Android só pela Play Store
 
 App 0.32.2 (versionCode 81). Refs #25. Sem mudança no app (Kotlin): só site, documentação e versão.

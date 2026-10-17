@@ -156,6 +156,20 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   Cofre R$ 24,90/3.000, Tesouro R$ 49,90/6.500); sem teto diário. A loja simulada e o limite de
   R$ 50/dia saem: o beta tester ganha o **Pacote Prêmio Beta** (Tesouro, 1×/dia) pelo fluxo real da
   Play como testador de licença, sem cobrança. Venda para jogador comum só depois da produção.
+- **17/10 · Compra de dobrões: o servidor decide, o aparelho só aplica** (#15, 0.33.0) — porquê: o
+  crédito não pode depender do que o aparelho diz. Compra conferida na API da Play pela Edge
+  `dobroes-verify` (conta de serviço própria, só para billing), crédito uma vez por token, consumo
+  feito pelo servidor logo depois, entrega ao aparelho por `dobroes_pending`/`dobroes_ack` (o
+  aparelho guarda os tokens já somados). Interruptores `real_billing_enabled` e `premio_beta_enabled`
+  nascem desligados. **Limite conhecido:** o saldo ainda é `profiles.credits` gravado pelo aparelho:
+  por isso a venda para jogador comum não liga antes da parte (e) do #15 (saldo autoritativo).
+  Loja simulada e `buy_beta_pack` viram `store_retired` (o app 0.32.x não credita).
+- **17/10 · iPhone sem loja de dobrões** (#15 parte h, StoreKit fora do lote) — a aba fica fechada
+  no iPhone, sem a simulada e sem o Prêmio; o `.ipa` segue com a versão antiga do jogo até lá.
+- **17/10 · Conferência de instalação por push de validação** (#26, 0.33.0) — porquê: o número de
+  testadores do Play Console não diz quem instalou. A Edge `push-check` pede ao FCM `validate_only`
+  (o Google confere o token sem entregar nada a aparelho) e grava só o status; não apaga token (quem
+  apaga é a função `push`, com 404). Relatório só da lista da Play; iPhone, `manual` e `qa` ficam fora.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo

@@ -85,6 +85,20 @@ esquerda. A próxima variação nova vira componente compartilhado em `ui/Compon
 **Cantos retos em tudo.** Círculo só em selo numérico, avatar e indicador de status. Sem
 sombra: profundidade vem de superfície mais clara + borda.
 
+### Cartão de pacote da loja (Dobrões, #15)
+
+- **Vitrine paga**: cartão com arte grande sobre brilho dourado (`Brush.radialGradient` de âmbar a
+  abismo), nome do pacote em caixa-alta, dobrões em `CoinLabel` e o preço da Play num faixa âmbar
+  embaixo. Sem o produto carregado, o cartão fica apagado (alpha 0,45), não clicável, com a legenda
+  "Limite de hoje atingido" trocada por "Indisponível agora".
+- **Prêmio Beta**: cartão de largura total com borda âmbar forte (2 dp), arte de 120 dp e o botão
+  "Pegar o Prêmio" (`PrimaryButton`). Quem já pegou vê o aviso com o contador até a meia-noite de
+  Brasília, em `InfoCard`.
+- **Aba fechada**: `InfoCard` com o texto "A compra de dobrões chega em breve." Nada de faixa de
+  "compra de teste" nem de limite diário.
+- Padrão novo, por isso entra aqui. O artefato do Claude Design ainda precisa receber este cartão
+  (pendente, ver HISTORY 17/10).
+
 ## Arte das embarcações
 
 Cada classe é desenhada num viewBox de `(tamanho × 50) × 50`, vista de topo, **proa à

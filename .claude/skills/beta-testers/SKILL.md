@@ -52,6 +52,30 @@ select * from public.refresh_all_is_test(true);
 - A regra só vale com `app_config.allowlist_enforced = 'true'` e ao menos uma linha `play`;
   desligado, `refresh_all_is_test` recusa rodar.
 
+## Testadores de licença (Prêmio Beta, #15)
+
+A mesma lista da Play precisa estar em **Play Console → Configurações → Teste de licença**
+(resposta "Responder normalmente"). Quem está lá, ao tocar no Prêmio Beta, passa pelo fluxo da Play
+**sem cobrança** (a compra vem marcada como teste). Quem NÃO está nessa lista e toca no Prêmio é
+**cobrado de verdade** (R$ 49,90). Por isso `premio_beta_enabled` só liga com as duas listas iguais.
+Ao adicionar ou remover testador na Play, atualizar também a lista de licença no mesmo dia.
+
+## Conferir instalação (#26)
+
+Só para o John, nunca em issue nem em commit (o relatório tem e-mails):
+
+```sql
+-- conferir agora: a Edge pede ao FCM uma validação para cada aparelho Android (nada é entregue)
+select public.push_check_run();
+-- depois de alguns segundos:
+select * from public.testers_install_report();
+```
+
+Resultado por testador: `instalado`, `desinstalado` (o FCM disse que o app não está lá),
+`sem aparelho registrado` (nunca abriu, ou não gerou token: não quer dizer que não instalou),
+`erro na conferencia` ou `ainda nao conferido`. O número oficial de testadores continua sendo o do
+Play Console; este relatório só ajuda a acompanhar quem instalou.
+
 ## Contagem para produção
 
 - Dashboard do app no Play Console → card "Apply for access to production": os três requisitos

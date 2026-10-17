@@ -48,6 +48,13 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Compras de dobrões pela Google Play (#15, 0.33.0):** servidor e app prontos (migração
+  `dobroes_billing`, Edge `dobroes-verify`, Prêmio Beta, aba sem loja simulada). Os interruptores
+  `real_billing_enabled` e `premio_beta_enabled` nascem **desligados**. Venda para jogador comum só
+  depois do saldo autoritativo no servidor (#15 parte e) e da produção na Play (≈ 23/10). Falta o
+  John: os 4 produtos, a lista de licença, a conta de serviço de billing e o secret (ver pendências).
+- **Conferência de instalação por push (#26, 0.33.0):** Edge `push-check` + `testers_install_report()`
+  (só lista da Play). Prova de desinstalado (CHK-02) é no emulador QA02.
 - **Push diário (15/10):** tarefa `push-diario-naval-battle`, 12h, 7 mensagens por dia da semana,
   travas de horário (11h–15h) e de uma vez por dia. Push manual: nunca à noite.
 - **Esteira agêntica (10/10):** agentes em `.claude/agents/`, skill `esteira`, `docs/ESTEIRA.md`.
@@ -64,6 +71,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 
+- 17/10 · Dobrões pela Google Play: biblioteca de billing aprovada; servidor decide e aparelho só
+  aplica; loja simulada e limite de R$ 50/dia saem; Prêmio Beta (Tesouro, 1×/dia) só para testador de
+  licença; iPhone com aba fechada (#15).
+- 17/10 · Conferência de instalação por `validate_only` (#26): só indicador, nunca apaga token.
 - 12/10 · Só testador registrado vale como jogador (#23, 0.32.1): lista da Play, iPhone ou exceção
   manual; o resto é `is_test`. Lista em `allowed_players`, **nunca no repositório** (público). QA01/QA02
   são conta de teste (ranqueada deles não vale pontos).
@@ -81,6 +92,13 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 ## 5. Pendências com o John
 
 - Avisar quando a conta Apple ativar.
+- **Dobrões (#15), antes de ligar o Prêmio ou a venda:** (1) criar no Play Console os 4 produtos
+  `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro` (ativos, IDs exatos); (2) lista de
+  testadores e contas QA como **testadores de licença**; (3) conta de serviço nova só para billing,
+  com "Ver informações financeiras" e "Gerenciar pedidos"; (4) secret `PLAY_BILLING_SERVICE_ACCOUNT`
+  na Edge `dobroes-verify`. Depois: `update public.app_config set value = 'true' where key = 'premio_beta_enabled';`.
+  Decisões do Tech Lead ainda sem resposta do John: saldo no servidor (venda só depois), iPhone sem
+  loja, conta de serviço nova (recomendada).
 - #23 (12/10): estrutura `allowed_players` no banco, **inerte** (`allowlist_enforced = 'false'`, tabela
   vazia). Falta a rodada carregar a lista da Play (esperado `play 12`, `qa 2`, `manual 2`), fazer o
   ensaio (`refresh_all_is_test(false)`, ~95 viram teste e 12 seguem jogador) e só então ligar o
