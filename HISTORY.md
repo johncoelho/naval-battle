@@ -151,6 +151,11 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   agendada `push-diario-naval-battle` às 12h (o lembrete local do Diário já é às 19h), uma mensagem
   provocativa por dia da semana, via `push_broadcast` (kind `daily_invite`). Travas: só envia entre
   11h e 15h e no máximo uma vez por dia. Só Android por enquanto (push no iPhone é a #14).
+- **17/10 · Compras reais de dobrões aprovadas** (#15; perfil de pagamentos da Play verificado):
+  camada nova **Google Play Billing** aprovada; pacotes de 04/10 (Bolsa R$ 4,90/500, Baú R$ 9,90/1.100,
+  Cofre R$ 24,90/3.000, Tesouro R$ 49,90/6.500); sem teto diário. A loja simulada e o limite de
+  R$ 50/dia saem: o beta tester ganha o **Pacote Prêmio Beta** (Tesouro, 1×/dia) pelo fluxo real da
+  Play como testador de licença, sem cobrança. Venda para jogador comum só depois da produção.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo
