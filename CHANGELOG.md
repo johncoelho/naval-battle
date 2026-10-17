@@ -46,7 +46,7 @@ App 0.33.0 (versionCode 82). Refs #15, #26. Mudança no app (Kotlin) e no banco 
 ### Pendente do John (não bloqueia a publicação)
 - Criar no Play Console os produtos `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre` e
   `dobroes_tesouro` (ativos, IDs exatos).
-- Adicionar a lista de testadores e as contas QA como testadores de licença.
+- Testadores de licença: a lista "Testadores fechados" já está marcada (17/10). Conferir se as contas QA também estão.
 - Permissões financeiras: o John concedeu ao `play-publisher-ci` (17/10 17:57). Trocar por conta de
   serviço própria só para billing (só "Ver informações financeiras" e "Gerenciar pedidos") é o
   recomendado e aguarda decisão do John. Cadastrar o JSON como secret `PLAY_BILLING_SERVICE_ACCOUNT`

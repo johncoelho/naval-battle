@@ -1,1 +1,1 @@
-Aba Dobroes: a loja simulada saiu e a aba fica sem compras por enquanto. A compra de dobroes pela Google Play e o Premio Beta vem depois, em versao futura. Tambem melhoramos a conferencia de instalacao dos testadores.
+Aba Dobroes: a loja simulada saiu e a aba fica sem compras por enquanto. A compra de dobroes pela Google Play e o Premio Beta ainda nao tem data. Tambem melhoramos a conferencia de instalacao dos testadores.

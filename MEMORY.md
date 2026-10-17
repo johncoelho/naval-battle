@@ -93,8 +93,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 - Avisar quando a conta Apple ativar.
 - **Dobrões (#15), antes de ligar o Prêmio ou a venda:** (1) criar no Play Console os 4 produtos
-  `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro` (ativos, IDs exatos); (2) lista de
-  testadores e contas QA como **testadores de licença**; (3) permissões financeiras: o John concedeu
+  `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro` (ativos, IDs exatos); (2) contas QA como
+  **testadores de licença**, se faltarem; (3) permissões financeiras: o John concedeu
   ao `play-publisher-ci` (17/10 17:57); trocar por conta de serviço própria só para billing é o
   recomendado, aguarda decisão do John; (4) secret `PLAY_BILLING_SERVICE_ACCOUNT` ainda não cadastrado
   na Edge `dobroes-verify`. Depois: `update public.app_config set value = 'true' where key = 'premio_beta_enabled';`.
