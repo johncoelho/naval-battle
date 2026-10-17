@@ -1,1 +1,1 @@
-Ajuste interno na conferencia das compras de dobroes: o servidor passa a registrar o motivo de uma falha para diagnostico. Nenhuma mudanca visivel para o jogador.
+Ajuste interno na conferencia de instalacao dos testadores: a conferencia passa a rodar sozinha uma vez por dia, e o servidor marca aparelhos desinstalados em vez de apagar o registro. Nenhuma mudanca visivel para o jogador.

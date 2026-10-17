@@ -239,6 +239,8 @@ Rodar `select public.push_check_run();` (SQL) e depois `select * from public.tes
 | CHK-02 | P1 | Desinstalar o app no QA02 e rodar a conferência | Relatório mostra `desinstalado` para QA02 (prova do `validate_only`) |
 | CHK-03 | P1 | Reinstalar no QA02, abrir, rodar a conferência | Relatório mostra `instalado` com o token novo; o antigo não conta |
 | CHK-04 | P2 | Relatório completo | Uma linha por testador da lista da Play; sem iPhone, `manual` nem `qa` |
+| CHK-05 | P1 | Rodada da esteira num dia com conferência: 1ª rodada (depois das 8 h) dispara; 2ª rodada, ~30 min depois | 1ª devolve "Conferência de instalação disparada"; 2ª devolve o resumo com contagens e usuários, sem e-mail; a 3ª rodada do dia devolve nada |
+| CHK-06 | P1 | Token `unregistered` (QA02 desinstalado) e um envio real (ex.: FR-02 ou PUSH-01) | A `push` marca o token (não apaga a linha) e o envio seguinte pula esse token; reinstalar e registrar zera a marca |
 
 ## 13. Ajustes, notificações, feedback e idioma
 

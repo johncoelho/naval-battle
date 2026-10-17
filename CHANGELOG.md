@@ -9,6 +9,30 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.33.2] — 2026-10-17 · Conferência de instalação diária e marca em vez de apagar
+
+App 0.33.2 (versionCode 84). Refs #26. Mudança no banco (migração `push_check_daily`, função
+`push_check_daily()`, `register_push_token` redefinida) e nas Edges `push` e `push-check`. Nenhuma
+tela nova; o app só recebe a versão.
+
+### Mudado
+- **Conferência diária sozinha** (#26): `push_check_daily()` é o passo 0 da rodada da esteira. Na
+  primeira rodada do dia (a partir das 8 h de Brasília) dispara a conferência; na rodada seguinte
+  devolve o resumo para o John (contagens e nomes de usuário, nunca e-mail). Se algum aparelho não
+  responder em 2 h, o resumo sai marcado como incompleto. Sem pg_cron e sem workflow novo.
+- **Desinstalado é marcado, não apagado** (#26): a Edge `push`, num envio real, marca o token como
+  `unregistered` (404/UNREGISTERED) em vez de apagar a linha; os envios seguintes pulam esse token.
+  O histórico que o relatório usa fica preservado.
+- **Reinstalar zera a marca**: `register_push_token` limpa `check_status` e `checked_at` quando o
+  aparelho volta com um token que estava `unregistered`. Token `ok` ou `erro` não é mexido.
+- **Edge `push-check`**: não reconfere tokens já `unregistered` e confere em lotes de 10, para caber
+  no timeout de 60 s do `pg_net`. Falha de rede vira `erro`, nunca `desinstalado`.
+
+### Documentação
+- README (Back-end: conferência diária e marca de desinstalado), HISTORY (decisão de 17/10),
+  skills `esteira` e `beta-testers`, `docs/ESTEIRA.md` (passo 0), `docs/QA_TEST_PLAN.md` (CHK-05 e
+  CHK-06).
+
 ## [0.75.1] — 2026-10-17 · Diagnóstico das falhas da conferência de compras
 
 App 0.33.1 (versionCode 83). Refs #27. Mudança só no servidor (Edge Function `dobroes-verify`);

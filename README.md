@@ -515,7 +515,12 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).
 - Conferência de instalação (`supabase/push_check.sql`, #26): `push_check_run()` chama a Edge
   `push-check`, que pede ao FCM uma validação sem entrega (`validate_only`) para cada aparelho e grava
-  `check_status`. Relatório só da lista da Play: `testers_install_report()`.
+  `check_status`; pula os já `unregistered` e confere em lotes de 10. Relatório só da lista da Play:
+  `testers_install_report()`.
+- Conferência diária (`supabase/push_check_daily.sql`, 0.33.2): `push_check_daily()` é o passo 0 da
+  rodada da esteira (sem pg_cron). Em duas fases: a primeira rodada do dia dispara, a seguinte devolve
+  o resumo (contagens e usuários, sem e-mail). A Edge `push` marca `unregistered` em vez de apagar
+  (404/UNREGISTERED) e pula esses tokens; `register_push_token` zera a marca quando o aparelho volta.
 - Compras de dobrões (`supabase/dobroes.sql`, #15): o aparelho compra na Play; a Edge
   `dobroes-verify` confere o token na API da Play com a conta de serviço do secret
   `PLAY_BILLING_SERVICE_ACCOUNT`. Estado real: o John concedeu ao `play-publisher-ci`
