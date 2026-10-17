@@ -84,9 +84,8 @@ fun StoreScreen(state: AppState) {
     var aisle by remember { mutableStateOf(Aisle.entries.getOrElse(state.storeAisle) { Aisle.FLEETS }) }
     var notice by remember { mutableStateOf<String?>(null) }
     var pending by remember { mutableStateOf<PendingBuy?>(null) }
-    var pendingPack by remember { mutableStateOf<DoubloonPack?>(null) }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(aisle) { if (aisle == Aisle.DOUBLOONS) state.loadBetaStore() }
+    LaunchedEffect(aisle) { if (aisle == Aisle.DOUBLOONS) state.loadDobroesStore() }
 
     // item fora do alcance: explica como chegar lá em vez de não fazer nada
     val locked: (Int) -> Unit = { price -> notice = t(K.STORE_EARN_HINT, price - profile.credits) }
@@ -130,7 +129,8 @@ fun StoreScreen(state: AppState) {
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (aisle == Aisle.DOUBLOONS) {
-                    DoubloonAisle(state, onPick = { pendingPack = it })
+                    // a própria folha da Play confirma a compra: não há confirmação do app
+                    DoubloonAisle(state, onPick = { pack -> scope.launch { state.buyDobroesPack(pack) } })
                 } else if (aisle == Aisle.ABILITIES) {
                     Ability.entries.filter { it.active }.forEach { ability ->
                         val price = abilityPrice(ability)
@@ -244,14 +244,6 @@ fun StoreScreen(state: AppState) {
             }
         }
 
-        pendingPack?.let { pack ->
-            PackConfirm(
-                pack = pack,
-                credits = profile.credits,
-                onConfirm = { pendingPack = null; scope.launch { state.buyBetaPack(pack) } },
-                onCancel = { pendingPack = null }
-            )
-        }
 
         pending?.let { buy ->
             PurchaseConfirm(

@@ -27,7 +27,10 @@ import br.com.navalbattle.audio.AppForeground
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.audio.THEME_PLAYLIST
-import br.com.navalbattle.data.BetaStoreStatus
+import br.com.navalbattle.data.BuyOutcome
+import br.com.navalbattle.data.DobroesStoreStatus
+import br.com.navalbattle.data.StoreBilling
+import br.com.navalbattle.data.StoreProduct
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.MilesStatus
 import br.com.navalbattle.data.AppRelease
@@ -84,6 +87,10 @@ import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
+import br.com.navalbattle.game.PendingCredit
+import br.com.navalbattle.game.PendingCredits
+import br.com.navalbattle.game.StoreView
+import br.com.navalbattle.game.storeView
 import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Profile
 import br.com.navalbattle.game.QuickOfferKind
@@ -140,6 +147,9 @@ internal fun screenForPushKind(kind: String): Screen? = when (kind) {
     "friend_online" -> Screen.FRIENDS
     else -> null
 }
+
+/** Chave (no Prefs do aparelho) dos tokens de dobrões já somados (#15). */
+private const val DELIVERED_KEY = "dobroes_delivered"
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
@@ -1247,50 +1257,111 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
     }
 
-    // ---------------- loja de dobrões (simulada para beta testers) ----------------
+    // ---------------- loja de dobrões (Google Play, #15) ----------------
 
-    var betaStore by mutableStateOf<BetaStoreStatus?>(null)
+    private val billing = StoreBilling()
+    private val dobroesPrefs = Prefs()
+    private var recovering = false
+
+    var dobroesStatus by mutableStateOf<DobroesStoreStatus?>(null)
         private set
 
-    var betaStoreNotice by mutableStateOf<String?>(null)
+    var dobroesProducts by mutableStateOf<List<StoreProduct>>(emptyList())
         private set
 
-    var betaStoreBusy by mutableStateOf(false)
+    var dobroesNotice by mutableStateOf<String?>(null)
         private set
 
-    suspend fun loadBetaStore() {
+    var dobroesBusy by mutableStateOf(false)
+        private set
+
+    /** O que a aba mostra agora; nulo enquanto a situação da conta ainda não chegou. */
+    val dobroesView: StoreView?
+        get() {
+            if (!billing.available) return StoreView.CLOSED
+            val s = dobroesStatus ?: return null
+            return storeView(s.beta, s.realEnabled, s.premioEnabled, s.premioClaimed)
+        }
+
+    /** Abrir a aba: situação da conta, preços da Play e compras que ficaram para trás. */
+    suspend fun loadDobroesStore() {
         if (profile.currentSession() == null) {
-            betaStore = null
+            dobroesStatus = null
             return
         }
-        (authed { session -> cloud.betaStoreStatus(session) } as? CloudResult.Ok)?.value?.let { betaStore = it }
+        if (!billing.available) return
+        dobroesProducts = billing.products()
+        refreshDobroesStatus()
+        recoverPending()
+    }
+
+    private suspend fun refreshDobroesStatus() {
+        (authed { session -> cloud.dobroesStoreStatus(session) } as? CloudResult.Ok)?.value?.let { dobroesStatus = it }
     }
 
     /**
-     * Compra simulada: o servidor confere badge e limite do dia e registra; só os
-     * dobrões que voltam de lá entram no saldo (mesmo padrão do feedback).
+     * Compra pela folha da Play. A Play confirma; o servidor confere e credita, e o saldo
+     * só entra por [recoverPending] (uma vez por token).
      */
-    suspend fun buyBetaPack(pack: DoubloonPack) {
-        if (betaStoreBusy) return
-        betaStoreBusy = true
-        val r = authed { session -> cloud.buyBetaPack(session, pack.code) }
-        betaStoreBusy = false
-        when (r) {
-            is CloudResult.Ok -> {
-                profile.grantCredits(r.value.doubloons)
-                betaStore = betaStore?.copy(spentCents = r.value.spentCents, limitCents = r.value.limitCents)
-                betaStoreNotice = t(K.DOUBLOON_BOUGHT, r.value.doubloons)
-            }
-            is CloudResult.Fail -> {
-                betaStoreNotice = when {
-                    r.message.contains("store_limit") -> t(K.DOUBLOON_LIMIT_REACHED)
-                    r.message.contains("store_not_beta") -> t(K.DOUBLOON_BETA_ONLY)
-                    else -> t(K.DOUBLOON_BUY_FAILED)
+    suspend fun buyDobroesPack(pack: DoubloonPack) {
+        val session = profile.currentSession() ?: return
+        if (dobroesBusy) return
+        dobroesBusy = true
+        dobroesNotice = null
+        try {
+            when (val outcome = billing.buy(pack.code, session.userId)) {
+                is BuyOutcome.Purchased -> when (val v = authed { s -> cloud.dobroesVerify(s, outcome.productId, outcome.token) }) {
+                    is CloudResult.Ok -> dobroesNotice = when (v.value.status) {
+                        "premio_done" -> t(K.PREMIO_DONE_NOTICE)
+                        "billing_off", "premio_off", "premio_only" -> t(K.DOUBLOON_CLOSED)
+                        "credited", "premio", "already" -> null // o saldo entra em recoverPending
+                        else -> t(K.DOUBLOON_BUY_FAILED)
+                    }
+                    is CloudResult.Fail -> dobroesNotice = t(K.DOUBLOON_BUY_FAILED)
                 }
-                loadBetaStore()
+                BuyOutcome.Cancelled -> Unit
+                BuyOutcome.Pending -> dobroesNotice = t(K.DOUBLOON_PENDING)
+                is BuyOutcome.Failed -> dobroesNotice = t(K.DOUBLOON_BUY_FAILED)
             }
+        } finally {
+            dobroesBusy = false
+        }
+        recoverPending()
+        refreshDobroesStatus()
+    }
+
+    /**
+     * Soma no saldo o que o servidor conferiu e este aparelho ainda não somou. Antes repete
+     * a conferência das compras que a Play já confirmou (queda de rede, app fechado no meio).
+     * Roda ao abrir a aba, ao voltar para o app e ao abrir o jogo com conta.
+     */
+    suspend fun recoverPending() {
+        if (recovering || profile.currentSession() == null || !billing.available) return
+        recovering = true
+        try {
+            billing.purchasedTokens().forEach { p ->
+                authed { s -> cloud.dobroesVerify(s, p.productId, p.token) }
+            }
+            val pending = (authed { s -> cloud.dobroesPending(s) } as? CloudResult.Ok)?.value ?: return
+            val plan = PendingCredits.plan(
+                pending.map { PendingCredit(it.purchaseToken, it.doubloons) },
+                deliveredTokens()
+            )
+            // guarda antes de dar o saldo: se a confirmação se perder, a repetição não soma de novo
+            dobroesPrefs.putString(DELIVERED_KEY, plan.delivered.joinToString(","))
+            if (plan.total > 0) {
+                profile.grantCredits(plan.total)
+                dobroesNotice = t(K.DOUBLOON_BOUGHT, plan.total)
+                authed { s -> cloud.saveProfile(s, profile.snapshot()) }
+            }
+            plan.toAck.forEach { token -> authed { s -> cloud.dobroesAck(s, token) } }
+        } finally {
+            recovering = false
         }
     }
+
+    private fun deliveredTokens(): Set<String> =
+        dobroesPrefs.getString(DELIVERED_KEY, "").split(',').filter { it.isNotBlank() }.toSet()
 
     // ---------------- placar ----------------
 
@@ -1793,6 +1864,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (!profile.signedIn) return
         renew()
         mergeWithCloud()
+        recoverPending()
     }
 
     /**
@@ -1954,6 +2026,8 @@ fun App() {
     // próprio sistema já suspende as corrotinas de turno enquanto o app não está
     // em primeiro plano, então não precisa de aviso nenhum
     LaunchedEffect(AppForeground.active) { state.onForegroundChanged(AppForeground.active) }
+    // voltou para o app: confere compras que ficaram pendentes (queda de rede, app fechado)
+    LaunchedEffect(AppForeground.active) { if (AppForeground.active) state.recoverPending() }
 
     // avisa se já existe uma versão mais nova publicada, sem precisar de servidor de push —
     // também ao voltar do segundo plano, senão quem deixa o app aberto nunca via o aviso

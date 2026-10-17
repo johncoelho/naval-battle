@@ -592,31 +592,6 @@ actual class CloudApi actual constructor() {
 
     // ------------------------------------------------------------------ economia
 
-    actual suspend fun betaStoreStatus(session: Session): CloudResult<BetaStoreStatus> = call {
-        val json = post("/rest/v1/rpc/beta_store_status", JSONObject(), token = session.accessToken)
-        val o = JSONArray(json).getJSONObject(0)
-        CloudResult.Ok(
-            BetaStoreStatus(
-                eligible = o.optBoolean("eligible", false),
-                spentCents = o.optInt("spent_cents", 0),
-                limitCents = o.optInt("limit_cents", 5000),
-                resetsInSeconds = o.optInt("resets_in_seconds", 0)
-            )
-        )
-    }
-
-    actual suspend fun buyBetaPack(session: Session, pack: String): CloudResult<BetaPurchase> = call {
-        val json = post("/rest/v1/rpc/buy_beta_pack", JSONObject().put("p_pack", pack), token = session.accessToken)
-        val o = JSONArray(json).getJSONObject(0)
-        CloudResult.Ok(
-            BetaPurchase(
-                doubloons = o.optInt("doubloons", 0),
-                spentCents = o.optInt("spent_cents", 0),
-                limitCents = o.optInt("limit_cents", 5000)
-            )
-        )
-    }
-
     // dobrões pela Google Play (#15): o servidor decide; o aparelho só pede e aplica
     actual suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus> = call {
         val json = post("/rest/v1/rpc/dobroes_store_status", JSONObject(), token = session.accessToken)

@@ -579,19 +579,6 @@ actual class CloudApi actual constructor() {
 
     // ------------------------------------------------------------------ economia
 
-    actual suspend fun betaStoreStatus(session: Session): CloudResult<BetaStoreStatus> = call {
-        val json = post("/rest/v1/rpc/beta_store_status", emptyMap<String, Any?>(), token = session.accessToken)
-        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
-        CloudResult.Ok(
-            BetaStoreStatus(
-                eligible = (o["eligible"] as? Boolean) ?: false,
-                spentCents = o.intOr("spent_cents", 0),
-                limitCents = o.intOr("limit_cents", 5000),
-                resetsInSeconds = o.intOr("resets_in_seconds", 0)
-            )
-        )
-    }
-
     // dobrões pela Google Play não existem no iPhone ainda (#15, parte h): a aba fica fechada
     actual suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus> =
         CloudResult.Fail("loja indisponível no iPhone")
@@ -607,18 +594,6 @@ actual class CloudApi actual constructor() {
 
     actual suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit> =
         CloudResult.Ok(Unit)
-
-    actual suspend fun buyBetaPack(session: Session, pack: String): CloudResult<BetaPurchase> = call {
-        val json = post("/rest/v1/rpc/buy_beta_pack", mapOf("p_pack" to pack), token = session.accessToken)
-        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
-        CloudResult.Ok(
-            BetaPurchase(
-                doubloons = o.intOr("doubloons", 0),
-                spentCents = o.intOr("spent_cents", 0),
-                limitCents = o.intOr("limit_cents", 5000)
-            )
-        )
-    }
 
     actual suspend fun recentReleases(platform: String): CloudResult<List<AppRelease>> = call {
         val live = if (platform == "ios") "ios_live" else "android_live"

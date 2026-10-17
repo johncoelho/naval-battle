@@ -125,20 +125,6 @@ data class RankedOutcome(
 )
 
 /**
- * Situação da loja de dobrões simulada (ver `beta_store_status` em
- * `supabase/economy.sql`): só beta tester compra, até [limitCents] por dia
- * (Brasília), e o dia vira em [resetsInSeconds].
- */
-data class BetaStoreStatus(
-    val eligible: Boolean,
-    val spentCents: Int,
-    val limitCents: Int,
-    val resetsInSeconds: Int
-) {
-    val remainingCents: Int get() = (limitCents - spentCents).coerceAtLeast(0)
-}
-
-/**
  * Passe da temporada corrente (ver `season_pass_status` em `supabase/season.sql`).
  * [tier] nulo = ainda não aderiu — e sem adesão não há ranqueada.
  */
@@ -170,9 +156,6 @@ data class SeasonEnd(
     val doubloons: Int,
     val miles: Int
 )
-
-/** Resultado de uma compra simulada: os dobrões que entram e o gasto do dia já somado. */
-data class BetaPurchase(val doubloons: Int, val spentCents: Int, val limitCents: Int)
 
 /**
  * Situação da loja de dobrões pela Google Play (ver `dobroes_store_status` em
@@ -527,12 +510,6 @@ expect class CloudApi() {
 
     /** Badges conquistados pelo comandante — concedidos só pelo servidor. */
     suspend fun myBadges(session: Session): CloudResult<List<UserBadge>>
-
-    /** Loja simulada: quem pode comprar, quanto já gastou hoje e quando o dia vira. */
-    suspend fun betaStoreStatus(session: Session): CloudResult<BetaStoreStatus>
-
-    /** Compra simulada de um pacote — o servidor confere badge e limite; o app credita o que voltar. */
-    suspend fun buyBetaPack(session: Session, pack: String): CloudResult<BetaPurchase>
 
     /** Loja de dobrões pela Google Play: se a conta é de testador e o que está ligado. */
     suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus>

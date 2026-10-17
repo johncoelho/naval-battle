@@ -4,24 +4,18 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -31,21 +25,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.data.StoreProduct
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawCompassRose
 import br.com.navalbattle.design.drawDoubloon
 import br.com.navalbattle.design.drawDoubloonPack
 import br.com.navalbattle.game.DoubloonPack
-import br.com.navalbattle.game.brl
+import br.com.navalbattle.game.StoreView
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 
 /**
- * Aba Dobrões da loja. Hoje a compra é simulada para beta testers (limite diário
- * controlado no servidor, nenhum cartão real); o aviso de teste fica sempre visível.
- * Cada pacote tem arte própria — bolsa, baú, cofre, tesouro — para dizer de longe o
- * que se está comprando.
+ * Aba Dobrões da loja (#15): compra pela Google Play. Testador de licença vê o Prêmio
+ * Beta (um pacote por dia, de graça); jogador comum vê a vitrine só com a venda real
+ * ligada no servidor; no iPhone e com a venda desligada, a aba fica fechada.
+ * Cada pacote tem arte própria: bolsa, baú, cofre, tesouro.
  */
 @Composable
 fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit) {
@@ -57,60 +52,27 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit) {
         }
         return
     }
-    val st = state.betaStore
-    if (st == null) {
-        HudLabel(t(K.DOUBLOON_LOADING), Naval.muted)
-        return
-    }
-    if (!st.eligible) {
-        InfoCard { Text(t(K.DOUBLOON_BETA_ONLY), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center) }
-        return
-    }
-
-    // aviso de compra de teste + quanto resta hoje
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .background(Naval.surface2)
-            .border(1.dp, Naval.amber)
-            .padding(14.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Canvas(Modifier.size(22.dp)) { drawDoubloon(Offset(size.width / 2f, size.height / 2f), size.minDimension) }
-            Spacer(Modifier.width(8.dp))
-            Text(t(K.DOUBLOON_TEST_TITLE).uppercase(), style = NavalType.mono, color = Naval.amberStrong)
+    when (state.dobroesView) {
+        null -> {
+            HudLabel(t(K.DOUBLOON_LOADING), Naval.muted)
+            return
         }
-        Gap(8)
-        Text(t(K.DOUBLOON_TEST_BODY, brl(st.limitCents)), style = NavalType.body, color = Naval.ink)
-        Gap(12)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            HudLabel(t(K.DOUBLOON_REMAINING, brl(st.remainingCents)), Naval.amberStrong)
-            HudLabel(t(K.DOUBLOON_RESETS, countdown(st.resetsInSeconds)), Naval.muted)
+        StoreView.CLOSED -> InfoCard {
+            Text(t(K.DOUBLOON_CLOSED), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
         }
-        Gap(6)
-        // barra do gasto do dia
-        val used = if (st.limitCents == 0) 1f else (st.spentCents.toFloat() / st.limitCents).coerceIn(0f, 1f)
-        Box(Modifier.fillMaxWidth().height(6.dp).background(Naval.lineSoft)) {
-            Box(Modifier.fillMaxWidth(used).height(6.dp).background(Naval.amber))
+        StoreView.PREMIO -> PremioCard(state, onPick)
+        StoreView.PREMIO_DONE -> InfoCard {
+            Text(
+                t(K.PREMIO_TAKEN, countdown(state.dobroesStatus?.premioResetsInSeconds ?: 0)),
+                style = NavalType.body,
+                color = Naval.inkSoft,
+                textAlign = TextAlign.Center
+            )
         }
+        StoreView.PAID -> Vitrine(state, onPick)
     }
 
-    // vitrine em duas colunas
-    DoubloonPack.entries.chunked(2).forEach { row ->
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            row.forEach { pack ->
-                PackCard(
-                    pack = pack,
-                    locked = pack.priceCents > st.remainingCents,
-                    busy = state.betaStoreBusy,
-                    modifier = Modifier.weight(1f),
-                    onClick = { onPick(pack) }
-                )
-            }
-        }
-    }
-
-    state.betaStoreNotice?.let { HudLabel(it, Naval.amberStrong) }
+    state.dobroesNotice?.let { HudLabel(it, Naval.amberStrong) }
 
     // milhas náuticas também se compram com dobrões
     state.miles?.let { m ->
@@ -146,16 +108,80 @@ private fun InfoCard(content: @Composable () -> Unit) {
     ) { content() }
 }
 
-/** Cartão de um pacote: arte grande sobre brilho dourado, nome, dobrões, bônus e preço. */
+/** Prêmio Beta: o pacote do tesouro, de graça para o testador, uma vez por dia (Brasília). */
 @Composable
-private fun PackCard(pack: DoubloonPack, locked: Boolean, busy: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun PremioCard(state: AppState, onPick: (DoubloonPack) -> Unit) {
+    val pack = DoubloonPack.TREASURE
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(Naval.surface2)
+            .border(2.dp, Naval.amberStrong)
+            .padding(14.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(
+                    Brush.radialGradient(listOf(Naval.amber.copy(alpha = 0.35f), Naval.abyss), radius = 260f)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(Modifier.size(92.dp)) {
+                drawDoubloonPack(pack.art, Offset(size.width / 2f, size.height / 2f), size.minDimension)
+            }
+        }
+        Gap(10)
+        Text(t(K.PREMIO_TITLE).uppercase(), style = NavalType.mono, color = Naval.amberStrong, textAlign = TextAlign.Center)
+        Gap(6)
+        Text(t(K.PREMIO_BODY), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+        Gap(10)
+        CoinLabel(formatThousands(pack.doubloons), style = NavalType.title, iconSize = 22.dp)
+        Gap(12)
+        PrimaryButton(t(K.PREMIO_TAKE), modifier = Modifier.fillMaxWidth()) {
+            if (!state.dobroesBusy) onPick(pack)
+        }
+    }
+}
+
+/** Vitrine paga: os quatro pacotes com o preço que a Play devolve. */
+@Composable
+private fun Vitrine(state: AppState, onPick: (DoubloonPack) -> Unit) {
+    val products: List<StoreProduct> = state.dobroesProducts
+    if (products.isEmpty()) {
+        InfoCard {
+            Text(t(K.DOUBLOON_UNAVAILABLE), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+        }
+        return
+    }
+    val prices = products.associate { it.productId to it.formattedPrice }
+    DoubloonPack.entries.chunked(2).forEach { row ->
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            row.forEach { pack ->
+                PackCard(
+                    pack = pack,
+                    price = prices[pack.code],
+                    busy = state.dobroesBusy,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onPick(pack) }
+                )
+            }
+        }
+    }
+}
+
+/** Cartão de um pacote: arte grande sobre brilho dourado, nome, dobrões, bônus e preço da Play. */
+@Composable
+private fun PackCard(pack: DoubloonPack, price: String?, busy: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val best = pack == DoubloonPack.TREASURE
     Column(
         modifier
-            .alpha(if (locked) 0.45f else 1f)
+            .alpha(if (price == null) 0.45f else 1f)
             .background(Naval.surface)
             .border(if (best) 2.dp else 1.dp, if (best) Naval.amberStrong else Naval.amber)
-            .clickable(enabled = !locked && !busy, onClick = onClick),
+            .clickable(enabled = price != null && !busy, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
@@ -209,71 +235,16 @@ private fun PackCard(pack: DoubloonPack, locked: Boolean, busy: Boolean, modifie
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .background(if (locked) Naval.surface3 else Naval.amber)
+                    .background(if (price == null) Naval.surface3 else Naval.amber)
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    if (locked) t(K.DOUBLOON_LOCKED) else pack.priceLabel,
+                    price ?: t(K.DOUBLOON_LOCKED),
                     style = NavalType.mono,
-                    color = if (locked) Naval.muted else Naval.amberInk,
+                    color = if (price == null) Naval.muted else Naval.amberInk,
                     textAlign = TextAlign.Center
                 )
-            }
-        }
-    }
-}
-
-/**
- * Confirmação da compra simulada: pacote, dobrões que entram, preço de mentira e o
- * saldo depois — e de novo o aviso de que nada é cobrado. Tocar fora cancela.
- */
-@Composable
-fun PackConfirm(pack: DoubloonPack, credits: Int, onConfirm: () -> Unit, onCancel: () -> Unit) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Naval.bg.copy(alpha = 0.86f))
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onCancel)
-            .windowInsetsPadding(WindowInsets.systemBars)
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .background(Naval.surface2)
-                .border(1.dp, Naval.amber)
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-                .padding(20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Canvas(Modifier.size(96.dp)) {
-                drawDoubloonPack(pack.art, Offset(size.width / 2f, size.height / 2f), size.minDimension)
-            }
-            Gap(8)
-            HudLabel(t(K.STORE_CONFIRM_TITLE), Naval.muted)
-            Gap(4)
-            Text(t(pack.key).uppercase(), style = NavalType.title, color = Naval.ink)
-            Gap(14)
-            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                HudLabel(t(K.DOUBLOON_CONFIRM_GET), Naval.muted)
-                CoinLabel(formatThousands(pack.doubloons), style = NavalType.mono)
-            }
-            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                HudLabel(t(K.DOUBLOON_CONFIRM_PRICE), Naval.muted)
-                Text(pack.priceLabel, style = NavalType.mono, color = Naval.inkSoft)
-            }
-            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                HudLabel(t(K.STORE_CONFIRM_AFTER), Naval.muted)
-                CoinLabel(formatThousands(credits + pack.doubloons), Naval.ink, NavalType.mono)
-            }
-            Gap(10)
-            HudLabel(t(K.DOUBLOON_NO_CHARGE), Naval.greenBright)
-            Gap(16)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SecondaryButton(t(K.CANCEL), modifier = Modifier.weight(1f), onClick = onCancel)
-                PrimaryButton(t(K.STORE_CONFIRM_BUY), modifier = Modifier.weight(1f), onClick = onConfirm)
             }
         }
     }
