@@ -218,6 +218,12 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **18/10 · Gate antes de tirar testador da licença** (#28, 0.33.3) — porquê: quem ficar fora da
   lista de teste de licença com app antigo seria cobrado no Prêmio pela Play. `dobroes_gate_licenca()`
   lista quem ainda não tem 0.33.3 em `device_checks`; a lista de licença só muda com essa consulta vazia.
+- **18/10 · Anúncios premiados opcionais aprovados** (#29): camada nova **SDK Google Mobile Ads
+  (AdMob)** aprovada pelo John; só anúncio que o jogador escolhe ver, para ganhar algo ou multiplicar
+  um prêmio (nada de anúncio forçado nem banner). Recompensa decidida pelo servidor (SSV). Conta
+  AdMob criada por ele; app e blocos configurados; `app-ads.txt` na raiz `johncoelho.github.io`.
+- **18/10 · Loja beta com as duas opções** (#28): prêmio diário grátis resgatado no servidor (sem
+  Play) e pacotes pagos com cobrança real para os testadores; lista de licença só com as contas QA.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo
