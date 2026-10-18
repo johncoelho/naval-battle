@@ -227,6 +227,10 @@ PR/commit de #15 (um por bloco). Compra real de teste nunca é cobrada: a Play m
 | DOB-09 | P1 | `premio_beta_enabled = 'false'`, conta de testador | Aba fechada ("A compra de dobrões chega em breve."); nada é cobrado |
 | DOB-10 | P0 | Produto ausente na Play (ou Play fora) | Aba mostra "Dobrões indisponíveis agora"; nenhum cartão e nenhuma cobrança |
 | DOB-11 | P2 | iPhone, aba Dobrões | Aba fechada; nada de loja simulada |
+| DOB-12 | P0 | Pagar o Prêmio e, com a Play ainda em "Processing", fechar o app (`am force-stop`) e desligar Wi-Fi e dados; depois religar e reabrir | Crédito cai uma vez (+6.500) ao reabrir; reabrir de novo não soma |
+| DOB-13 | P0 | Servidor (bloco que desfaz): `apply_dobroes_purchase` duas vezes com o mesmo token | 1ª credita; 2ª `already` 0; token novo no mesmo dia `premio_done` 0 |
+| DOB-14 | P0 | Servidor: compra de teste de conta fora de `allowed_players`; compra real com `real_billing_enabled = false` | `not_beta` 0; `billing_off` sem gravar |
+| DOB-15 | P0 | Servidor: estado pendente (2), cancelado ou nulo; produto desconhecido; conta que não confere; promoção; teste de outro pacote | Nenhum credita (`not_purchased`, `unknown_product`, `account_mismatch`, `promo_refused`, `premio_only`) |
 
 ### 12c. Conferência de instalação por push (#26)
 
