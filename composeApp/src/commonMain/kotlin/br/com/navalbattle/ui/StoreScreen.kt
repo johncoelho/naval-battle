@@ -130,7 +130,11 @@ fun StoreScreen(state: AppState) {
             ) {
                 if (aisle == Aisle.DOUBLOONS) {
                     // a própria folha da Play confirma a compra: não há confirmação do app
-                    DoubloonAisle(state, onPick = { pack -> scope.launch { state.buyDobroesPack(pack) } })
+                    DoubloonAisle(
+                        state,
+                        onPick = { pack -> scope.launch { state.buyDobroesPack(pack) } },
+                        onClaim = { scope.launch { state.claimPremio() } }
+                    )
                 } else if (aisle == Aisle.ABILITIES) {
                     Ability.entries.filter { it.active }.forEach { ability ->
                         val price = abilityPrice(ability)

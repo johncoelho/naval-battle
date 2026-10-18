@@ -32,19 +32,18 @@ import br.com.navalbattle.design.drawCompassRose
 import br.com.navalbattle.design.drawDoubloon
 import br.com.navalbattle.design.drawDoubloonPack
 import br.com.navalbattle.game.DoubloonPack
-import br.com.navalbattle.game.StoreView
-import br.com.navalbattle.game.premioDisponivel
+import br.com.navalbattle.game.PremioState
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 
 /**
- * Aba Dobrões da loja (#15): compra pela Google Play. Testador de licença vê o Prêmio
- * Beta (um pacote por dia, de graça); jogador comum vê a vitrine só com a venda real
- * ligada no servidor; no iPhone e com a venda desligada, a aba fica fechada.
- * Cada pacote tem arte própria: bolsa, baú, cofre, tesouro.
+ * Aba Dobrões da loja (#15, #28). Duas partes independentes: o Prêmio Beta (testador de
+ * licença pega 6.500 por dia pelo servidor, sem a Play) e a vitrine paga (pacotes pela
+ * Play: para todos com a venda real ligada, e para testador com a vitrine beta ligada).
+ * No iPhone a aba fica fechada. Cada pacote tem arte própria: bolsa, baú, cofre, tesouro.
  */
 @Composable
-fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit) {
+fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -> Unit) {
     if (!state.profile.signedIn) {
         InfoCard {
             Text(t(K.DOUBLOON_SIGN_IN), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
@@ -53,24 +52,48 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit) {
         }
         return
     }
-    when (state.dobroesView) {
-        null -> {
-            HudLabel(t(K.DOUBLOON_LOADING), Naval.muted)
-            return
-        }
-        StoreView.CLOSED -> InfoCard {
+    if (!state.dobroesDisponivel) {
+        InfoCard {
             Text(t(K.DOUBLOON_CLOSED), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
         }
-        StoreView.PREMIO -> PremioCard(state, onPick)
-        StoreView.PREMIO_DONE -> InfoCard {
+        return
+    }
+    val status = state.dobroesStatus
+    if (status == null) {
+        HudLabel(t(K.DOUBLOON_LOADING), Naval.muted)
+        return
+    }
+    val premio = state.premioView ?: PremioState.ESCONDIDO
+    val vitrine = state.vitrineAberta
+    if (premio == PremioState.ESCONDIDO && !vitrine) {
+        InfoCard {
+            Text(t(K.DOUBLOON_CLOSED), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+        }
+    }
+    when (premio) {
+        PremioState.PEGAR -> PremioCard(onClaim)
+        PremioState.JA_PEGOU -> InfoCard {
             Text(
-                t(K.PREMIO_TAKEN, countdown(state.dobroesStatus?.premioResetsInSeconds ?: 0)),
+                t(K.PREMIO_TAKEN, countdown(status.premioResetsInSeconds)),
                 style = NavalType.body,
                 color = Naval.inkSoft,
                 textAlign = TextAlign.Center
             )
         }
-        StoreView.PAID -> Vitrine(state, onPick)
+        PremioState.ESCONDIDO -> Unit
+    }
+    if (vitrine) {
+        if (premio != PremioState.ESCONDIDO) {
+            Gap(12)
+            HudLabel(t(K.DOUBLOON_PACKS_SECTION), Naval.muted)
+            Gap(6)
+        }
+        if (status.beta) {
+            // testador: a vitrine cobra de verdade (exceto na compra de teste da Play)
+            Text(t(K.DOUBLOON_BETA_CHARGE), style = NavalType.mono, color = Naval.amberStrong, textAlign = TextAlign.Center)
+            Gap(8)
+        }
+        Vitrine(state, onPick)
     }
 
     state.dobroesNotice?.let { HudLabel(it, Naval.amberStrong) }
@@ -109,15 +132,13 @@ private fun InfoCard(content: @Composable () -> Unit) {
     ) { content() }
 }
 
-/** Prêmio Beta: o pacote do tesouro, de graça para o testador, uma vez por dia (Brasília). */
+/** Prêmio Beta (#28): 6.500 dobrões de graça para o testador, uma vez por dia (Brasília), sem a Play. */
 @Composable
-private fun PremioCard(state: AppState, onPick: (DoubloonPack) -> Unit) {
+private fun PremioCard(onClaim: () -> Unit) {
     val pack = DoubloonPack.TREASURE
-    val disponivel = premioDisponivel(state.dobroesProducts.map { it.productId })
     Column(
         Modifier
             .fillMaxWidth()
-            .alpha(if (disponivel) 1f else 0.45f)
             .background(Naval.surface2)
             .border(2.dp, Naval.amberStrong)
             .padding(14.dp),
@@ -143,22 +164,7 @@ private fun PremioCard(state: AppState, onPick: (DoubloonPack) -> Unit) {
         Gap(10)
         CoinLabel(formatThousands(pack.doubloons), style = NavalType.title, iconSize = 22.dp)
         Gap(12)
-        if (disponivel) {
-            PrimaryButton(t(K.PREMIO_TAKE), modifier = Modifier.fillMaxWidth()) {
-                if (!state.dobroesBusy) onPick(pack)
-            }
-        } else {
-            // sem o produto listado na Play, nada de botão nem preço vazio: mesma legenda da vitrine
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(Naval.surface3)
-                    .padding(vertical = 8.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(t(K.DOUBLOON_LOCKED), style = NavalType.mono, color = Naval.muted, textAlign = TextAlign.Center)
-            }
-        }
+        PrimaryButton(t(K.PREMIO_TAKE), modifier = Modifier.fillMaxWidth()) { onClaim() }
     }
 }
 

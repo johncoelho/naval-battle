@@ -1,18 +1,42 @@
 package br.com.navalbattle.game
 
-/** O que a aba Dobrões mostra (#15): o Prêmio Beta, o Prêmio já pego hoje, a vitrine paga ou nada. */
-enum class StoreView { PREMIO, PREMIO_DONE, PAID, CLOSED }
+import br.com.navalbattle.i18n.K
+
+/** Prêmio Beta na aba Dobrões (#28): escondido, pronto para pegar ou já pego hoje. */
+enum class PremioState { ESCONDIDO, PEGAR, JA_PEGOU }
 
 /**
- * Regra da aba Dobrões, pura para testar. Testador só vê o Prêmio (e nunca a vitrine
- * paga, mesmo com a venda ligada); com o Prêmio desligado, a aba de testador fica
- * fechada. Jogador comum vê a vitrine só com a venda real ligada.
+ * Regra do Prêmio Beta, pura para testar. Só testador, e só com o interruptor
+ * `premio_beta_enabled` ligado no servidor. O Prêmio não passa pela Play.
  */
-fun storeView(beta: Boolean, realEnabled: Boolean, premioEnabled: Boolean, premioClaimed: Boolean): StoreView =
+fun premioState(beta: Boolean, premioEnabled: Boolean, premioClaimed: Boolean): PremioState =
     when {
-        beta && premioEnabled && premioClaimed -> StoreView.PREMIO_DONE
-        beta && premioEnabled -> StoreView.PREMIO
-        beta -> StoreView.CLOSED
-        realEnabled -> StoreView.PAID
-        else -> StoreView.CLOSED
+        !beta || !premioEnabled -> PremioState.ESCONDIDO
+        premioClaimed -> PremioState.JA_PEGOU
+        else -> PremioState.PEGAR
     }
+
+/**
+ * A vitrine paga aparece com a venda real ligada (todos) ou com a vitrine beta ligada
+ * (`beta_store_enabled`, só para testador; o servidor já devolve a flag só para conta de testador).
+ */
+fun vitrineVisivel(realEnabled: Boolean, vitrineBeta: Boolean): Boolean = realEnabled || vitrineBeta
+
+/**
+ * Aviso de uma compra da vitrine conforme o status do servidor. Null: nada a dizer (o saldo
+ * entra por `dobroes_pending`, com o próprio aviso de "dobrões entraram").
+ */
+fun avisoCompra(status: String): K? = when (status) {
+    "credited", "premio", "already" -> null
+    "premio_done" -> K.PREMIO_DONE_NOTICE
+    "billing_off", "premio_off", "premio_only" -> K.DOUBLOON_CLOSED
+    else -> K.DOUBLOON_BUY_FAILED
+}
+
+/** Aviso do resgate do Prêmio Beta (RPC `claim_premio_beta`): premio | already | off | not_beta. */
+fun avisoPremio(status: String): K? = when (status) {
+    "premio" -> null
+    "already" -> K.PREMIO_DONE_NOTICE
+    "off", "not_beta" -> K.DOUBLOON_CLOSED
+    else -> K.DOUBLOON_BUY_FAILED
+}

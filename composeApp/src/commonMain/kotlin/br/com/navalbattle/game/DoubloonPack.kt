@@ -20,7 +20,7 @@ enum class DoubloonPack(
     POUCH("dobroes_bolsa", K.DOUBLOON_PACK_POUCH, 490, 500, 0, DoubloonPackArt.POUCH),
     CHEST("dobroes_bau", K.DOUBLOON_PACK_CHEST, 990, 1100, 10, DoubloonPackArt.CHEST),
     STRONGBOX("dobroes_cofre", K.DOUBLOON_PACK_STRONGBOX, 2490, 3000, 20, DoubloonPackArt.STRONGBOX),
-    /** Também é o Prêmio Beta (#15, parte c): o testador ganha este pacote de graça, uma vez por dia. */
+    /** Também é o Prêmio Beta (#28): o testador ganha 6.500 de graça, uma vez por dia, sem a Play. */
     TREASURE("dobroes_tesouro", K.DOUBLOON_PACK_TREASURE, 4990, 6500, 30, DoubloonPackArt.TREASURE);
 
     /** "R$ 9,90" — formatado à mão: não há NumberFormat no código comum. */
@@ -28,10 +28,3 @@ enum class DoubloonPack(
 }
 
 fun brl(cents: Int): String = "R$ ${cents / 100},${(cents % 100).toString().padStart(2, '0')}"
-
-/**
- * O Prêmio Beta passa pela Play como o Tesouro: só fica disponível se o produto `dobroes_tesouro`
- * estiver listado na Play (mesmo critério da vitrine: lista vazia = "Indisponível agora").
- */
-fun premioDisponivel(idsListadosNaPlay: Collection<String>): Boolean =
-    DoubloonPack.TREASURE.code in idsListadosNaPlay

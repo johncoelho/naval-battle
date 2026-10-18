@@ -158,16 +158,17 @@ data class SeasonEnd(
 )
 
 /**
- * Situação da loja de dobrões pela Google Play (ver `dobroes_store_status` em
- * `supabase/dobroes.sql`): se a conta é de testador, quais vitrines estão ligadas e
- * se o Prêmio Beta de hoje já foi pego (o dia vira em [premioResetsInSeconds]).
+ * Situação da loja de dobrões (ver `dobroes_store_status` em `supabase/dobroes.sql`): se a conta
+ * é de testador, quais vitrines estão ligadas, se o Prêmio Beta de hoje já foi pego (o dia vira em
+ * [premioResetsInSeconds]) e se a vitrine paga beta está ligada para esta conta ([vitrineBeta]).
  */
 data class DobroesStoreStatus(
     val beta: Boolean,
     val realEnabled: Boolean,
     val premioEnabled: Boolean,
     val premioClaimed: Boolean,
-    val premioResetsInSeconds: Int
+    val premioResetsInSeconds: Int,
+    val vitrineBeta: Boolean
 )
 
 /** Resposta de `dobroes-verify`: o status do servidor e os dobrões que a compra vale. */
@@ -515,10 +516,17 @@ expect class CloudApi() {
     suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus>
 
     /**
-     * Confere uma compra com a Play (Edge `dobroes-verify`): o servidor credita uma
-     * vez por token e consome a compra. O saldo entra pelo [dobroesPending].
+     * Prêmio Beta (#28): pede o resgate do dia ao servidor (RPC `claim_premio_beta`), sem a Play.
+     * Devolve o status (premio | already | off | not_beta). O saldo entra pelo [dobroesPending].
      */
-    suspend fun dobroesVerify(session: Session, productId: String, purchaseToken: String): CloudResult<DobroesVerifyResult>
+    suspend fun dobroesClaimPremio(session: Session): CloudResult<String>
+
+    /**
+     * Confere uma compra com a Play (Edge `dobroes-verify`): o servidor credita uma
+     * vez por token e consome a compra. O saldo entra pelo [dobroesPending]. [origem] =
+     * "vitrine" para pacote da vitrine (app 0.33.3+); null mantém o caminho antigo do Prêmio.
+     */
+    suspend fun dobroesVerify(session: Session, productId: String, purchaseToken: String, origem: String?): CloudResult<DobroesVerifyResult>
 
     /** Créditos conferidos pelo servidor que este aparelho ainda não somou. */
     suspend fun dobroesPending(session: Session): CloudResult<List<DobroesPending>>

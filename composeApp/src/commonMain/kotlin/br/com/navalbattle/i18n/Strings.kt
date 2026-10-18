@@ -878,6 +878,8 @@ enum class K(val pt: String, val en: String, val es: String) {
     PREMIO_TAKE("Pegar o Prêmio", "Claim the prize", "Reclamar el premio"),
     PREMIO_TAKEN("Você já pegou o Prêmio de hoje. Volta em %s.", "You already claimed today's prize. It comes back in %s.", "Ya reclamaste el premio de hoy. Vuelve en %s."),
     PREMIO_DONE_NOTICE("Você já pegou o Prêmio de hoje. Ele volta amanhã.", "You already claimed today's prize. It comes back tomorrow.", "Ya reclamaste el premio de hoy. Vuelve mañana."),
+    DOUBLOON_PACKS_SECTION("Pacotes pagos", "Paid packs", "Paquetes pagados"),
+    DOUBLOON_BETA_CHARGE("Pacotes pagos podem cobrar de verdade no seu Google Play. Só compre se quiser testar a cobrança.", "Paid packs may charge your real Google Play account. Only buy if you want to test the charge.", "Los paquetes pagados pueden cobrar de verdad en tu Google Play. Compra solo si quieres probar el cobro."),
     MILES_TITLE("Milhas náuticas", "Nautical miles", "Millas náuticas"),
     MILES_EXPLAIN("Cada partida online custa 1 milha. Todo dia sua reserva volta a %1 milhas grátis. Vitória ranqueada rende +%2 e vitória casual +%3.", "Each online match costs 1 mile. Every day your reserve refills to %1 free miles. A ranked win gives +%2 and a casual win +%3.", "Cada partida en línea cuesta 1 milla. Cada día tu reserva vuelve a %1 millas gratis. Una victoria clasificatoria da +%2 y una casual +%3."),
     MILES_OFFLINE_FREE("Contra a IA, no mesmo aparelho e na rede local é sempre grátis.", "Against the AI, on the same device and on the local network it is always free.", "Contra la IA, en el mismo dispositivo y en la red local siempre es gratis."),

@@ -602,17 +602,26 @@ actual class CloudApi actual constructor() {
                 realEnabled = o.optBoolean("real_enabled", false),
                 premioEnabled = o.optBoolean("premio_enabled", false),
                 premioClaimed = o.optBoolean("premio_claimed", false),
-                premioResetsInSeconds = o.optInt("premio_resets_in_seconds", 0)
+                premioResetsInSeconds = o.optInt("premio_resets_in_seconds", 0),
+                vitrineBeta = o.optBoolean("vitrine_beta", false)
             )
         )
+    }
+
+    // Prêmio Beta (#28): RPC do servidor, sem a Play; devolve o texto do status
+    actual suspend fun dobroesClaimPremio(session: Session): CloudResult<String> = call {
+        val status = post("/rest/v1/rpc/claim_premio_beta", JSONObject(), token = session.accessToken)
+        CloudResult.Ok(status.trim().trim('"'))
     }
 
     actual suspend fun dobroesVerify(
         session: Session,
         productId: String,
-        purchaseToken: String
+        purchaseToken: String,
+        origem: String?
     ): CloudResult<DobroesVerifyResult> = call {
         val body = JSONObject().put("product_id", productId).put("purchase_token", purchaseToken)
+        if (origem != null) body.put("origem", origem)
         val o = JSONObject(post("/functions/v1/dobroes-verify", body, token = session.accessToken))
         CloudResult.Ok(DobroesVerifyResult(o.optString("status", "unknown"), o.optInt("doubloons", 0)))
     }

@@ -89,8 +89,11 @@ import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.PendingCredit
 import br.com.navalbattle.game.PendingCredits
-import br.com.navalbattle.game.StoreView
-import br.com.navalbattle.game.storeView
+import br.com.navalbattle.game.PremioState
+import br.com.navalbattle.game.avisoCompra
+import br.com.navalbattle.game.avisoPremio
+import br.com.navalbattle.game.premioState
+import br.com.navalbattle.game.vitrineVisivel
 import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Profile
 import br.com.navalbattle.game.QuickOfferKind
@@ -1275,12 +1278,21 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var dobroesBusy by mutableStateOf(false)
         private set
 
-    /** O que a aba mostra agora; nulo enquanto a situação da conta ainda não chegou. */
-    val dobroesView: StoreView?
+    /** Sem a Play (iPhone) a aba fica fechada: nem Prêmio nem vitrine. */
+    val dobroesDisponivel: Boolean get() = billing.available
+
+    /** Prêmio Beta de hoje (#28): nulo enquanto a situação da conta ainda não chegou. */
+    val premioView: PremioState?
         get() {
-            if (!billing.available) return StoreView.CLOSED
             val s = dobroesStatus ?: return null
-            return storeView(s.beta, s.realEnabled, s.premioEnabled, s.premioClaimed)
+            return premioState(s.beta, s.premioEnabled, s.premioClaimed)
+        }
+
+    /** Vitrine paga visível: venda real, ou vitrine beta da conta de testador (#28). */
+    val vitrineAberta: Boolean
+        get() {
+            val s = dobroesStatus ?: return false
+            return vitrineVisivel(s.realEnabled, s.vitrineBeta)
         }
 
     /** Abrir a aba: situação da conta, preços da Play e compras que ficaram para trás. */
@@ -1310,18 +1322,34 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         dobroesNotice = null
         try {
             when (val outcome = billing.buy(pack.code, session.userId)) {
-                is BuyOutcome.Purchased -> when (val v = authed { s -> cloud.dobroesVerify(s, outcome.productId, outcome.token) }) {
-                    is CloudResult.Ok -> dobroesNotice = when (v.value.status) {
-                        "premio_done" -> t(K.PREMIO_DONE_NOTICE)
-                        "billing_off", "premio_off", "premio_only" -> t(K.DOUBLOON_CLOSED)
-                        "credited", "premio", "already" -> null // o saldo entra em recoverPending
-                        else -> t(K.DOUBLOON_BUY_FAILED)
-                    }
+                is BuyOutcome.Purchased -> when (val v = authed { s -> cloud.dobroesVerify(s, outcome.productId, outcome.token, "vitrine") }) {
+                    // o saldo entra em recoverPending (aviso "dobrões entraram")
+                    is CloudResult.Ok -> dobroesNotice = avisoCompra(v.value.status)?.let { t(it) }
                     is CloudResult.Fail -> dobroesNotice = t(K.DOUBLOON_BUY_FAILED)
                 }
                 BuyOutcome.Cancelled -> Unit
                 BuyOutcome.Pending -> dobroesNotice = t(K.DOUBLOON_PENDING)
                 is BuyOutcome.Failed -> dobroesNotice = t(K.DOUBLOON_BUY_FAILED)
+            }
+        } finally {
+            dobroesBusy = false
+        }
+        recoverPending()
+        refreshDobroesStatus()
+    }
+
+    /**
+     * Prêmio Beta (#28): pede o resgate ao servidor, sem abrir a folha da Play. O saldo entra por
+     * [recoverPending], uma vez por token.
+     */
+    suspend fun claimPremio() {
+        if (dobroesBusy || profile.currentSession() == null) return
+        dobroesBusy = true
+        dobroesNotice = null
+        try {
+            dobroesNotice = when (val r = authed { s -> cloud.dobroesClaimPremio(s) }) {
+                is CloudResult.Ok -> avisoPremio(r.value)?.let { t(it) }
+                is CloudResult.Fail -> t(K.DOUBLOON_BUY_FAILED)
             }
         } finally {
             dobroesBusy = false
@@ -1340,7 +1368,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         recovering = true
         try {
             billing.purchasedTokens().forEach { p ->
-                authed { s -> cloud.dobroesVerify(s, p.productId, p.token) }
+                authed { s -> cloud.dobroesVerify(s, p.productId, p.token, "vitrine") }
             }
             val pending = (authed { s -> cloud.dobroesPending(s) } as? CloudResult.Ok)?.value ?: return
             val plan = PendingCredits.plan(

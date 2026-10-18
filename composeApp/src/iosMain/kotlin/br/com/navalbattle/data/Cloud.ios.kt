@@ -583,10 +583,14 @@ actual class CloudApi actual constructor() {
     actual suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus> =
         CloudResult.Fail("loja indisponível no iPhone")
 
+    actual suspend fun dobroesClaimPremio(session: Session): CloudResult<String> =
+        CloudResult.Fail("loja indisponível no iPhone")
+
     actual suspend fun dobroesVerify(
         session: Session,
         productId: String,
-        purchaseToken: String
+        purchaseToken: String,
+        origem: String?
     ): CloudResult<DobroesVerifyResult> = CloudResult.Fail("loja indisponível no iPhone")
 
     actual suspend fun dobroesPending(session: Session): CloudResult<List<DobroesPending>> =
