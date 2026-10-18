@@ -1,4 +1,5 @@
 -- Conferência diária de instalação (#26, 2ª rodada): passo 0 da rodada da esteira.
+-- PENDENTE: só roda sozinha depois que o John incluir o passo 0 na skill esteira.
 -- Rode depois de push.sql, push_broadcast.sql e push_check.sql. Idempotente.
 --
 -- 1. push_check_daily(): duas fases, porque o pg_net só envia a requisição depois do commit

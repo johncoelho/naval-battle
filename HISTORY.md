@@ -190,10 +190,13 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   testadores do Play Console não diz quem instalou. A Edge `push-check` pede ao FCM `validate_only`
   (o Google confere o token sem entregar nada a aparelho) e grava só o status; não apaga token (quem
   apaga é a função `push`, com 404). Relatório só da lista da Play; iPhone, `manual` e `qa` ficam fora.
-- **17/10 · Conferência diária sozinha, sem pg_cron** (#26, 0.33.2) — porquê: a conferência só rodava
-  quando alguém executava o SQL. Sem pg_cron (extensão nova) e sem mexer em `.github/workflows` (exige
-  OK do John), ela virou o passo 0 da rodada da esteira: `push_check_daily()` em duas fases, porque o
-  `pg_net` só envia depois do commit (dispara numa rodada, devolve o resumo na seguinte).
+- **17/10 · Conferência diária sem pg_cron, pendente do passo 0 na skill `esteira`** (#26, 0.33.2) —
+  porquê: a conferência só rodava quando alguém executava o SQL. Sem pg_cron (extensão nova) e sem
+  mexer em `.github/workflows` (exige OK do John), a escolha é o passo 0 da rodada da esteira:
+  `push_check_daily()` em duas fases, porque o `pg_net` só envia depois do commit (dispara numa rodada,
+  devolve o resumo na seguinte). Estado: a função está no banco e no repositório, mas **a edição da
+  skill `esteira` foi negada pelo classificador de permissão** e não foi tentada de novo; até o John
+  incluir o passo 0, a conferência é manual.
 - **17/10 · Desinstalado é marcado, não apagado** (#26, 0.33.2; revisa o item de 0.33.0 acima) — porquê:
   apagar o token com 404 perdia o sinal "desinstalado" e fazia o relatório dizer "sem aparelho
   registrado", que é falso para quem desinstalou (visto no QA do 0.33.0). Agora a `push` marca

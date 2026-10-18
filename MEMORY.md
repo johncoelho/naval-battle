@@ -57,8 +57,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   depois do saldo autoritativo no servidor (#15 parte e) e da produção na Play (≈ 23/10). Falta o
   John: os 4 produtos, a lista de licença, a conta de serviço de billing e o secret (ver pendências).
 - **Conferência de instalação por push (#26, 0.33.2):** Edge `push-check` + `testers_install_report()`
-  (só lista da Play). Conferência diária pelo passo 0 da esteira (`push_check_daily()`). A `push` marca
-  desinstalado em vez de apagar. Falta o QA dos CHK-05 e CHK-06 depois da publicação.
+  (só lista da Play). A `push` marca desinstalado em vez de apagar. **Pendente do John:** incluir o
+  passo 0 (`select public.push_check_daily();`) na skill `esteira`; sem isso a conferência diária não
+  roda sozinha (a edição foi negada, não tentar de novo). Falta o QA dos CHK-05 e CHK-06.
 - **Push diário (15/10):** tarefa `push-diario-naval-battle`, 12h, 7 mensagens por dia da semana,
   travas de horário (11h–15h) e de uma vez por dia. Push manual: nunca à noite.
 - **Esteira agêntica (10/10):** agentes em `.claude/agents/`, skill `esteira`, `docs/ESTEIRA.md`.
@@ -78,8 +79,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - 17/10 · Dobrões pela Google Play: biblioteca de billing aprovada; servidor decide e aparelho só
   aplica; loja simulada e limite de R$ 50/dia saem; Prêmio Beta (Tesouro, 1×/dia) só para testador de
   licença; iPhone com aba fechada (#15).
-- 17/10 · Conferência de instalação (#26, 0.33.2): diária pelo passo 0 da esteira (sem pg_cron); a
-  `push` marca desinstalado e não apaga token; reinstalar zera a marca. Só indicador.
+- 17/10 · Conferência de instalação (#26, 0.33.2): a `push` marca desinstalado e não apaga token;
+  reinstalar zera a marca. Conferência diária pelo passo 0 da `esteira` (sem pg_cron), **pendente** do
+  John incluir o passo na skill. Só indicador.
 - 12/10 · Só testador registrado vale como jogador (#23, 0.32.1): lista da Play, iPhone ou exceção
   manual; o resto é `is_test`. Lista em `allowed_players`, **nunca no repositório** (público). QA01/QA02
   são conta de teste (ranqueada deles não vale pontos).

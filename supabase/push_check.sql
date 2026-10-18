@@ -7,8 +7,9 @@
 -- (checked_at, check_status) e NÃO apaga o token. A função `push` também marca 'unregistered'
 -- (em vez de apagar) quando um envio real volta 404; os envios pulam esses tokens.
 --
--- Agendamento: push_check_daily() (supabase/push_check_daily.sql) é o passo 0 da esteira, uma vez
--- por dia; não há pg_cron. Redefinições deste arquivo: nenhuma; a register_push_token vigente é a de
+-- Agendamento: push_check_daily() (supabase/push_check_daily.sql) foi criada para ser o passo 0 da
+-- esteira, uma vez por dia; não há pg_cron. PENDENTE: o John ainda precisa incluir esse passo na
+-- skill esteira, então hoje a conferência é manual. A register_push_token vigente é a de
 -- push_check_daily.sql.
 --
 -- Relatório (só para o John, por SQL): select * from public.testers_install_report();

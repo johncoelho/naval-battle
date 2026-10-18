@@ -62,9 +62,9 @@ Ao adicionar ou remover testador na Play, atualizar também a lista de licença 
 
 ## Conferir instalação (#26)
 
-A conferência roda sozinha, uma vez por dia, pelo passo 0 da esteira (`push_check_daily()`), e o
-resumo chega na rodada seguinte, sem e-mail. Para conferir agora, à mão, só para o John, nunca em
-issue nem em commit (o relatório tem e-mails):
+Hoje a conferência é manual. A versão diária (`push_check_daily()`) ainda não roda sozinha: falta o
+John incluir o passo 0 na skill `esteira`. Para conferir agora, à mão, só para o John, nunca em issue
+nem em commit (o relatório tem e-mails):
 
 ```sql
 -- conferir agora: a Edge pede ao FCM uma validação para cada aparelho Android (nada é entregue)

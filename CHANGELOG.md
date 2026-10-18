@@ -9,16 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
-## [0.33.2] — 2026-10-17 · Conferência de instalação diária e marca em vez de apagar
+## [0.75.2] — 2026-10-17 · Conferência de instalação e marca em vez de apagar
 
 App 0.33.2 (versionCode 84). Refs #26. Mudança no banco (migração `push_check_daily`, função
 `push_check_daily()`, `register_push_token` redefinida) e nas Edges `push` e `push-check`. Nenhuma
 tela nova; o app só recebe a versão.
 
 ### Mudado
-- **Conferência diária sozinha** (#26): `push_check_daily()` é o passo 0 da rodada da esteira. Na
-  primeira rodada do dia (a partir das 8 h de Brasília) dispara a conferência; na rodada seguinte
-  devolve o resumo para o John (contagens e nomes de usuário, nunca e-mail). Se algum aparelho não
+- **Conferência diária (PENDENTE)** (#26): `push_check_daily()` foi criada e testada, mas a
+  conferência diária só roda depois que o John incluir o passo 0 (`select public.push_check_daily();`)
+  na skill `esteira`. Até lá ninguém a dispara sozinho; a conferência segue manual (skill
+  `beta-testers`). Quando rodar: na primeira rodada do dia (a partir das 8 h de Brasília) dispara; na
+  seguinte devolve o resumo (contagens e nomes de usuário, nunca e-mail). Se algum aparelho não
   responder em 2 h, o resumo sai marcado como incompleto. Sem pg_cron e sem workflow novo.
 - **Desinstalado é marcado, não apagado** (#26): a Edge `push`, num envio real, marca o token como
   `unregistered` (404/UNREGISTERED) em vez de apagar a linha; os envios seguintes pulam esse token.
@@ -29,9 +31,10 @@ tela nova; o app só recebe a versão.
   no timeout de 60 s do `pg_net`. Falha de rede vira `erro`, nunca `desinstalado`.
 
 ### Documentação
-- README (Back-end: conferência diária e marca de desinstalado), HISTORY (decisão de 17/10),
-  skills `esteira` e `beta-testers`, `docs/ESTEIRA.md` (passo 0), `docs/QA_TEST_PLAN.md` (CHK-05 e
-  CHK-06).
+- README (Back-end: marca de desinstalado e conferência diária pendente), HISTORY (decisão de 17/10),
+  skill `beta-testers`, `docs/ESTEIRA.md` (passo 0 pendente), `docs/QA_TEST_PLAN.md` (CHK-05 e
+  CHK-06, com o ensaio em `supabase/tests/push_check_daily_ensaio.sql`).
+- Pendente do John: incluir o passo 0 (`select public.push_check_daily();`) na skill `esteira`.
 
 ## [0.75.1] — 2026-10-17 · Diagnóstico das falhas da conferência de compras
 

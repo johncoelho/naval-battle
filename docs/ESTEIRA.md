@@ -54,8 +54,9 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 
 ## Rodada (skill `esteira`, agendada)
 
-0. Conferência de instalação (#26): `select public.push_check_daily();` no SQL. Texto devolvido
-   entra no relatório (resumo para o John); null = nada a dizer. Uma conferência por dia, sem pg_cron.
+0. **PENDENTE** (#26): `select public.push_check_daily();` no SQL, quando o John incluir este passo na
+   skill `esteira`. Só então a conferência diária roda sozinha. Texto devolvido entra no relatório
+   (resumo para o John); null = nada a dizer. Enquanto não entrar, não há conferência automática.
 1. Suporte faz a triagem (issues novas e feedback pendente).
 2. PO escreve proposta para melhorias novas e ordena a Fila.
 3. Se nada estiver **Em andamento**: pega **toda a Fila** como um lote → Tech Lead desenha (se preciso) → Dev
