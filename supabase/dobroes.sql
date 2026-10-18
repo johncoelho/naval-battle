@@ -247,14 +247,15 @@ grant execute on function public.apply_dobroes_purchase(uuid, text, text, text, 
 create or replace function public.dobroes_gate_licenca()
 returns table (email text, user_id uuid)
 language sql stable security definer set search_path = public as $$
-  select a.email, u.id
+  select a.email, coalesce(u.id, a.user_id) as user_id
     from public.allowed_players a
-    left join auth.users u on lower(trim(u.email)) = a.email
+    left join auth.users u on u.id = a.user_id or lower(trim(u.email)) = a.email
    where a.source in ('play', 'manual')
      and not exists (
            select 1 from public.device_checks d
-            where d.user_id = u.id and public.app_version_at_least(d.app_version, '0.33.3'))
-   order by a.email;
+            where d.user_id = coalesce(u.id, a.user_id)
+              and public.app_version_at_least(d.app_version, '0.33.3'))
+   order by a.email nulls last, user_id;
 $$;
 revoke all on function public.dobroes_gate_licenca() from public, anon, authenticated;
 
