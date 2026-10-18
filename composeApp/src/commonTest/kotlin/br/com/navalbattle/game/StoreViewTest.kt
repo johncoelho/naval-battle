@@ -55,8 +55,8 @@ class StoreViewTest {
     fun avisoDoPremioPorStatusDaRpc() {
         assertEquals(null, avisoPremio("premio"))
         assertEquals(K.PREMIO_DONE_NOTICE, avisoPremio("already"))
-        assertEquals(K.DOUBLOON_CLOSED, avisoPremio("off"))
-        assertEquals(K.DOUBLOON_CLOSED, avisoPremio("not_beta"))
+        assertEquals(K.PREMIO_UNAVAILABLE, avisoPremio("off"))
+        assertEquals(K.PREMIO_UNAVAILABLE, avisoPremio("not_beta"))
         assertEquals(K.DOUBLOON_BUY_FAILED, avisoPremio("erro_qualquer"))
     }
 }

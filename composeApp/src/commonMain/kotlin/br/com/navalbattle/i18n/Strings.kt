@@ -878,6 +878,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     PREMIO_TAKE("Pegar o Prêmio", "Claim the prize", "Reclamar el premio"),
     PREMIO_TAKEN("Você já pegou o Prêmio de hoje. Volta em %s.", "You already claimed today's prize. It comes back in %s.", "Ya reclamaste el premio de hoy. Vuelve en %s."),
     PREMIO_DONE_NOTICE("Você já pegou o Prêmio de hoje. Ele volta amanhã.", "You already claimed today's prize. It comes back tomorrow.", "Ya reclamaste el premio de hoy. Vuelve mañana."),
+    PREMIO_UNAVAILABLE("Prêmio indisponível agora.", "Prize unavailable right now.", "Premio no disponible ahora."),
     DOUBLOON_PACKS_SECTION("Pacotes pagos", "Paid packs", "Paquetes pagados"),
     DOUBLOON_BETA_CHARGE("Pacotes pagos podem cobrar de verdade no seu Google Play. Só compre se quiser testar a cobrança.", "Paid packs may charge your real Google Play account. Only buy if you want to test the charge.", "Los paquetes pagados pueden cobrar de verdad en tu Google Play. Compra solo si quieres probar el cobro."),
     MILES_TITLE("Milhas náuticas", "Nautical miles", "Millas náuticas"),

@@ -37,6 +37,6 @@ fun avisoCompra(status: String): K? = when (status) {
 fun avisoPremio(status: String): K? = when (status) {
     "premio" -> null
     "already" -> K.PREMIO_DONE_NOTICE
-    "off", "not_beta" -> K.DOUBLOON_CLOSED
+    "off", "not_beta" -> K.PREMIO_UNAVAILABLE
     else -> K.DOUBLOON_BUY_FAILED
 }
