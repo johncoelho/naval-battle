@@ -201,6 +201,21 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   apagar o token com 404 perdia o sinal "desinstalado" e fazia o relatório dizer "sem aparelho
   registrado", que é falso para quem desinstalou (visto no QA do 0.33.0). Agora a `push` marca
   `unregistered` e os envios pulam o token; reinstalar zera a marca. Relatório e resumo, sem e-mail.
+- **18/10 · Prêmio Beta sai da Play e vira resgate no servidor** (#28, 0.33.3; substitui o desenho de
+  17/10 "Prêmio pela Play como compra de testador") — porquê: a Play trata testador de licença por
+  conta inteira. Toda compra dele vira teste, e o prêmio grátis não podia coexistir com pacote pago
+  cobrado de verdade na mesma conta. Agora `claim_premio_beta()` credita 6.500 1× por dia (Brasília),
+  com token estável por conta e dia; o prêmio não depende de a Play listar o produto.
+- **18/10 · Vitrine paga para testador nasce desligada (`beta_store_enabled`)** (#28, 0.33.3) — porquê:
+  sem o secret `PLAY_BILLING_SERVICE_ACCOUNT`, um pacote pago cobraria e não creditaria. O pedido era
+  "já agora"; a recomendação do Tech Lead, levada à rodada, é ligar só depois do secret e dos 4
+  produtos. Desvio registrado; o John liga quando estiver pronto.
+- **18/10 · Compra de teste da vitrine credita o pacote; o caminho legado do Prêmio fica só para o
+  app antigo** (#28, 0.33.3) — porquê: a origem `vitrine` chega na Edge. Sem origem (0.33.0 a
+  0.33.2) a regra antiga do Tesouro 1× por dia continua, e sai quando esses apps saírem.
+- **18/10 · Gate antes de tirar testador da licença** (#28, 0.33.3) — porquê: quem ficar fora da
+  lista de teste de licença com app antigo seria cobrado no Prêmio pela Play. `dobroes_gate_licenca()`
+  lista quem ainda não tem 0.33.3 em `device_checks`; a lista de licença só muda com essa consulta vazia.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo

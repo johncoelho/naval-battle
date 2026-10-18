@@ -9,6 +9,40 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.33.3] — 2026-10-18 · Prêmio Beta pelo servidor e vitrine beta (desligada)
+
+App 0.33.3 (versionCode 85). Refs #28. Mudança no banco (`supabase/dobroes.sql`, migração
+`dobroes_premio_beta`: `claim_premio_beta`, `apply_dobroes_purchase` com `p_origin`,
+`dobroes_store_status` com `vitrine_beta`, `dobroes_gate_licenca`, `beta_store_enabled` nascendo
+`false`) e na Edge `dobroes-verify` (repassa `origem`). **Edge ainda sem deploy** (pendente do John).
+
+### Mudado
+- **Prêmio Beta sem a Play** (#28): o botão "Pegar o Prêmio" chama o servidor e não abre mais a
+  folha da Play. 6.500 dobrões, 1× por dia (dia de Brasília), idempotente. Só testador de licença,
+  com `premio_beta_enabled` ligado.
+- **Aba Dobrões em duas partes** (#28): Prêmio e vitrine paga. Testador vê o Prêmio e, quando a vitrine
+  beta for ligada, os pacotes pagos com um aviso de cobrança. Jogador comum continua só com a venda real.
+- **Pacotes pagos para testador: DESLIGADOS** (#28). Desvio do pedido "já agora" da issue: o
+  `beta_store_enabled` nasce `false` porque, sem o secret `PLAY_BILLING_SERVICE_ACCOUNT`, um pacote pago
+  cobraria e não creditaria. O John liga depois do secret e dos 4 produtos.
+- **Prêmio não depende da Play listar o produto** (#28): some a regra "Indisponível agora" no Prêmio.
+- Textos novos em pt, en e es: "Pacotes pagos" e o aviso de cobrança para testador (a aprovar pelo John).
+
+### Corrigido
+- Compra de teste da vitrine (origem `vitrine`) credita o pacote; o caminho antigo do Prêmio pela Play
+  fica só para apps 0.33.0 a 0.33.2 (sem origem), e sai quando eles saírem.
+
+### Testes
+- `./gradlew :composeApp:testDebugUnitTest` verde: `StoreViewTest` reescrito, `DoubloonPackTest` sem o
+  critério da Play.
+- Banco: bloco que desfaz com as contas QA (claim, vitrine, legado, gate e versão por partes) passou.
+- Casos novos no `docs/QA_TEST_PLAN.md` (DOB-16 a DOB-21, LOJA-06).
+
+### Documentação
+- README (loja, compras e roadmap), HISTORY (decisões de 18/10), MEMORY (assunto e pendências).
+- Pendência de versionamento: o cabeçalho desta lista usava `0.75.2` (numeração de outra coisa). A entrada
+  nova segue a versão do app, como o `release-check` exige; o John decide a numeração.
+
 ## [0.75.2] — 2026-10-17 · Conferência de instalação e marca em vez de apagar
 
 App 0.33.2 (versionCode 84). Refs #26. Mudança no banco (migração `push_check_daily`, função

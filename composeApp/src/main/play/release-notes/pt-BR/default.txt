@@ -1,1 +1,1 @@
-Ajuste interno na conferencia de instalacao dos testadores: o servidor marca aparelhos desinstalados em vez de apagar o registro. Nenhuma mudanca visivel para o jogador.
+Testadores: o Premio Beta agora e pego direto no jogo, sem abrir a loja do Google. Toque em Pegar o Premio e ganhe 6.500 dobrões, uma vez por dia. A aba Dobrões mostra o Premio e, quando liberados, os pacotes pagos. Sem mudanca para quem nao testa.

@@ -51,6 +51,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Diagnóstico da conferência de compra (#27, 0.33.1):** Edge `dobroes-verify` registra etapa e motivo
   em Logs da Edge, sem segredo. Prova: log de `secret_ausente` após o deploy; a compra de teste (DOB-07)
   segue com o John (secret e licença).
+- **Loja beta de dobrões (#28, 0.33.3):** Prêmio Beta por RPC `claim_premio_beta` (sem Play, 6.500 1×/dia);
+  vitrine paga para testador com `beta_store_enabled` **desligada** (sem secret, pacote cobraria e não
+  creditaria). Migração aplicada no banco; Edge `dobroes-verify` com `origem` **sem deploy**. Gate:
+  `dobroes_gate_licenca()` antes de tirar qualquer testador da licença (17 ainda sem 0.33.3 em 18/10).
 - **Compras de dobrões pela Google Play (#15, 0.33.0):** servidor e app prontos (migração
   `dobroes_billing`, Edge `dobroes-verify`, Prêmio Beta, aba sem loja simulada). Os interruptores
   `real_billing_enabled` e `premio_beta_enabled` nascem **desligados**. Venda para jogador comum só
@@ -76,6 +80,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 
+- 18/10 · Prêmio Beta sai da Play (#28, 0.33.3): RPC `claim_premio_beta`; a vitrine beta nasce desligada
+  até o secret e os 4 produtos. Desvio do "já agora" da issue, aceito na rodada.
 - 17/10 · Dobrões pela Google Play: biblioteca de billing aprovada; servidor decide e aparelho só
   aplica; loja simulada e limite de R$ 50/dia saem; Prêmio Beta (Tesouro, 1×/dia) só para testador de
   licença; iPhone com aba fechada (#15).
@@ -99,6 +105,11 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 ## 5. Pendências com o John
 
 - Avisar quando a conta Apple ativar.
+- **Loja beta (#28), antes de ligar a vitrine para testador:** (1) deploy da Edge `dobroes-verify` (com `origem`);
+  (2) secret `PLAY_BILLING_SERVICE_ACCOUNT`; (3) os 4 produtos no Play Console; (4) gate
+  `select * from public.dobroes_gate_licenca();` vazio antes de mudar a lista de licença para só QA01/QA02;
+  (5) `update public.app_config set value = 'true' where key = 'premio_beta_enabled';` e, depois de 2 e 3,
+  `beta_store_enabled`. Textos novos (aviso de cobrança para testador, "Pacotes pagos") aguardam o OK do John.
 - **Dobrões (#15), antes de ligar o Prêmio ou a venda:** (1) criar no Play Console os 4 produtos
   `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro` (ativos, IDs exatos); (2) contas QA como
   **testadores de licença**, se faltarem; (3) permissões financeiras: o John concedeu

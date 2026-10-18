@@ -200,7 +200,8 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | LOJA-01 | P1 | Loja → abas cascos, camuflagens, habilidades, dobrões | Itens com preço; sem saldo: apagado, cadeado e "faltam ◆ X" |
 | LOJA-02 | P1 | Comprar uma camuflagem | Cartão de confirmação com saldo antes/depois; item vai para o Estaleiro |
 | LOJA-03 | P1 | Comprar cartucho de habilidade | Contador aumenta; usado em IA-06 |
-| LOJA-04 | P1 | Aba Dobrões, conta de testador de licença (ver DOB-07) | Aparece só o Prêmio Beta; a vitrine paga não aparece |
+| LOJA-04 | P1 | Aba Dobrões, conta de testador de licença, `beta_store_enabled = 'false'` (ver DOB-07) | Aparece só o Prêmio Beta; a vitrine paga não aparece |
+| LOJA-06 | P1 | Aba Dobrões, testador, `beta_store_enabled = 'true'` (ver DOB-16) | Prêmio e, abaixo, "Pacotes pagos" com aviso de cobrança |
 | LOJA-05 | P2 | Oferta do dia | Selo "-30%" no atalho; camuflagem no topo com desconto |
 | EST-01 | P1 | Estaleiro: equipar casco e camuflagem | Frota do menu e da batalha mudam; prévia desliza pelas 5 classes |
 | SEA-01 | P1 | Passe de temporada (gratuito) | Popup da estação pede aceite; aderir libera ranqueada |
@@ -222,15 +223,21 @@ PR/commit de #15 (um por bloco). Compra real de teste nunca é cobrada: a Play m
 | DOB-04 | P0 | Cancelar na folha da Play | Saldo não muda; nenhum erro aparece |
 | DOB-05 | P1 | Fechar o app logo depois do pagamento, antes da conferência; reabrir | A compra é conferida e creditada sem o jogador tocar em nada |
 | DOB-06 | P1 | Conta fora da lista de testadores com compra de teste | Nada é creditado (`not_beta`) |
-| DOB-07 | P0 | Conta de testador (lista da Play), `premio_beta_enabled = 'true'`, aba Dobrões | Mostra o Prêmio Beta (6.500 dobrões, "Pegar o Prêmio"); pegar credita 6.500 uma vez |
-| DOB-08 | P1 | Mesmo testador, tocar de novo no mesmo dia | Aparece "Você já pegou o Prêmio de hoje" com o contador; não credita |
-| DOB-09 | P1 | `premio_beta_enabled = 'false'`, conta de testador | Aba fechada ("A compra de dobrões chega em breve."); nada é cobrado |
+| DOB-07 | P0 | Conta de testador (lista da Play), `premio_beta_enabled = 'true'`, aba Dobrões, toca "Pegar o Prêmio" | Abre sem a folha da Play; credita 6.500 uma vez ("6.500 dobrões entraram no seu cofre") |
+| DOB-08 | P1 | Mesmo testador, tocar de novo no mesmo dia (ou repetir a RPC) | Aparece "Você já pegou o Prêmio de hoje" com o contador; não credita |
+| DOB-09 | P1 | `premio_beta_enabled = 'false'`, conta de testador | Sem cartão do Prêmio; vitrine só se `beta_store_enabled` ligado; nada é cobrado |
 | DOB-10 | P0 | Produto ausente na Play (ou Play fora) | Aba mostra "Dobrões indisponíveis agora"; nenhum cartão e nenhuma cobrança |
 | DOB-11 | P2 | iPhone, aba Dobrões | Aba fechada; nada de loja simulada |
-| DOB-12 | P0 | Pagar o Prêmio e, com a Play ainda em "Processing", fechar o app (`am force-stop`) e desligar Wi-Fi e dados; depois religar e reabrir | Crédito cai uma vez (+6.500) ao reabrir; reabrir de novo não soma |
+| DOB-12 | P0 | Comprar um pacote da vitrine (conta de licença), com a Play em "Processing", fechar o app (`am force-stop`) e desligar Wi-Fi e dados; depois religar e reabrir | Crédito cai uma vez ao reabrir; reabrir de novo não soma |
 | DOB-13 | P0 | Servidor (bloco que desfaz): `apply_dobroes_purchase` duas vezes com o mesmo token | 1ª credita; 2ª `already` 0; token novo no mesmo dia `premio_done` 0 |
 | DOB-14 | P0 | Servidor: compra de teste de conta fora de `allowed_players`; compra real com `real_billing_enabled = false` | `not_beta` 0; `billing_off` sem gravar |
-| DOB-15 | P0 | Servidor: estado pendente (2), cancelado ou nulo; produto desconhecido; conta que não confere; promoção; teste de outro pacote | Nenhum credita (`not_purchased`, `unknown_product`, `account_mismatch`, `promo_refused`, `premio_only`) |
+| DOB-15 | P0 | Servidor: estado pendente (2), cancelado ou nulo; produto desconhecido; conta que não confere; promoção; teste de outro pacote sem origem (legado) | Nenhum credita (`not_purchased`, `unknown_product`, `account_mismatch`, `promo_refused`, `premio_only`) |
+| DOB-16 | P0 | Testador com `beta_store_enabled = 'true'`: pacote da vitrine em licença de teste (origem `vitrine`) | Credita o pacote uma vez (`credited`); nenhuma cobrança |
+| DOB-17 | P0 | Testador com `beta_store_enabled = 'false'`: pacote da vitrine em licença de teste | `billing_off`, nada gravado; Play devolve em 3 dias |
+| DOB-18 | P0 | Conta de fora da licença com `beta_store_enabled = 'true'`: compra real (John, cobrança de verdade) | Credita o pacote uma vez; com `beta_store_enabled = 'false'` e `real_billing_enabled = 'false'`, `billing_off` |
+| DOB-19 | P0 | Servidor (bloco que desfaz): `claim_premio_beta()` com `premio_beta_enabled` `'false'` e `'true'`, duas vezes no mesmo dia | `off`; depois `premio` e `already`; `dobroes_pending` mostra 6.500 premio uma vez |
+| DOB-20 | P1 | Servidor (bloco que desfaz): `dobroes_gate_licenca()` | Lista só testadores `play`/`manual` sem `device_checks` 0.33.3 ou mais novo; `app_version_at_least('0.33.10','0.33.3')` = true, `('0.33.2','0.33.3')` = false |
+| DOB-21 | P1 | App 0.33.3 com a Edge ainda antiga (sem `origem`) | Compra de teste de pacote cai no legado (1× por dia pelo Tesouro); nada é cobrado; pacote de outro produto vira `premio_only` |
 
 ### 12c. Conferência de instalação por push (#26)
 

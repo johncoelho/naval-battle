@@ -226,8 +226,10 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
   **Excluir conta** fica no próprio Perfil, com confirmação: apaga tudo no servidor
   (`supabase/account.sql`) e a carreira do aparelho volta ao começo.
 - **Dobrões** (a moeda do jogo) compram na loja, pela Google Play (aba Dobrões). Quem testa o jogo
-  (lista de testadores de licença) ganha o **Prêmio Beta**: o pacote do Tesouro (6.500 dobrões)
-  uma vez por dia, sem cobrança. A venda para jogador comum fica fechada até o servidor ser a única
+  (lista de testadores de licença) ganha o **Prêmio Beta**: 6.500 dobrões uma vez por dia, pegos
+  direto no servidor (`claim_premio_beta`, sem a Play, sem cobrança). Testador também vê os
+  **pacotes pagos** quando a vitrine beta estiver ligada (`beta_store_enabled`, padrão desligado até
+  o secret e os 4 produtos estarem prontos; (#28)). A venda para jogador comum fica fechada até o servidor ser a única
   fonte do saldo e o app estar em produção na Play (interruptor `real_billing_enabled`, padrão
   desligado). A loja simulada saiu. No iPhone a aba fica fechada até a parte StoreKit.
 - **Passe de temporada**: para jogar ranqueada é preciso aderir à temporada da estação —
@@ -534,6 +536,10 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   A Edge chama `apply_dobroes_purchase` (só `service_role`), que credita uma vez por token e
   consome a compra quando deve. O aparelho soma o que `dobroes_pending()` devolve e confirma
   com `dobroes_ack`; o guarda contra soma dupla fica no aparelho (`game/PendingCredits`).
+  Desde 0.33.3 (#28): o Prêmio Beta é a RPC `claim_premio_beta()` (token `premio:<uid>:<dia>`,
+  unique por conta e dia); a compra da vitrine manda `origem = "vitrine"` à Edge; sem origem é o
+  caminho legado do Prêmio pela Play (apps 0.33.0 a 0.33.2). `dobroes_gate_licenca()` lista os
+  testadores sem o 0.33.3, antes de tirar alguém da lista de teste de licença.
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.
 
 ### Versão, release e entrega
@@ -611,7 +617,7 @@ as duas faixas de combate precisam ter o mesmo andamento e duração para a troc
       temporada)
 - [ ] Partida local por Nearby Connections (Bluetooth / Wi-Fi Direct)
 - [~] Compras com pagamento real (Google Play Billing) vendendo dobrões: compra, conferência no
-      servidor e Prêmio Beta prontos (0.33.0, #15). Falta: saldo autoritativo no servidor (#15 e),
+      servidor, Prêmio Beta por RPC e vitrine beta prontos (0.33.0 e 0.33.3, #15 e #28). Falta: saldo autoritativo no servidor (#15 e),
       venda ligada para jogador comum (f), reembolso automático (g) e StoreKit no iPhone (h)
 - [~] Alvo iOS: preferências, nuvem, modo Online e áudio já têm `actual` de verdade;
       rede local e login com Google ainda são pendências (mudos/desativados por
