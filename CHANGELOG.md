@@ -37,11 +37,16 @@ App 0.33.3 (versionCode 85). Refs #28. Mudança no banco (`supabase/dobroes.sql`
 - `./gradlew :composeApp:testDebugUnitTest` verde: `StoreViewTest` reescrito, `DoubloonPackTest` sem o
   critério da Play.
 - Banco: `supabase/tests/dobroes_ensaio.sql` (bloco que desfaz) executado no projeto de produção em
-  18/10: 22 trechos batem com o esperado, cobrindo DOB-13 a DOB-21 (Prêmio, vitrine, legado, estados
-  da Play, compra real com as flags, gate da licença e comparação de versão). Achado do ensaio e
+  18/10: 23 trechos batem com o esperado (todos os 23 do cabeçalho do arquivo), cobrindo DOB-13 a
+  DOB-20, e DOB-21 só no lado do servidor (Prêmio, vitrine, legado, estados da Play, compra real com as
+  flags, gate da licença e comparação de versão). O bloco termina em `raise exception` de propósito, e
+  a resposta da ferramenta é esse aviso com o `RESULTADO`; nada ficou gravado. Achado do ensaio e
   corrigido nesta versão: `dobroes_gate_licenca` não listava quem tinha só `user_id` em
   `allowed_players` (migração `dobroes_gate_licenca_fix`). DOB-12 segue manual (aparelho).
 - Casos novos no `docs/QA_TEST_PLAN.md` (DOB-16 a DOB-21, LOJA-06).
+- Estado de produção em 18/10 (conferido, não alterado): `premio_beta_enabled` = `'true'`, `beta_store_enabled`
+  = `'false'`, `real_billing_enabled` = `'false'`. A flag do Prêmio já estava ligada antes deste lote; quem
+  ligou não se sabe pelo repositório, e o John confirma na issue #28.
 
 ### Documentação
 - README (loja, compras e roadmap), HISTORY (decisões de 18/10), MEMORY (assunto e pendências).

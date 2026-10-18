@@ -168,7 +168,9 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   vez por token, consumo feito pelo servidor logo depois, entrega ao aparelho por
   `dobroes_pending`/`dobroes_ack` (o aparelho guarda os tokens já somados). Interruptores
   `real_billing_enabled` e `premio_beta_enabled` nascem desligados (aguarda OK do John para ligar
-  qualquer um dos dois). **Limite conhecido:** o saldo ainda é `profiles.credits` gravado pelo
+  qualquer um dos dois). **Estado real conferido em 18/10:** `premio_beta_enabled` está `'true'` em
+  produção, ligada antes do lote 0.33.3; quem ligou não se sabe pelo repositório, e o John confirma na
+  issue #28. Não foi alterada no lote. **Limite conhecido:** o saldo ainda é `profiles.credits` gravado pelo
   aparelho: por isso a venda para jogador comum não liga antes da parte (e) do #15 (saldo
   autoritativo). Entrega sem soma dupla no aparelho: saldo e conjunto de compras entregues vão no
   mesmo lote (`Prefs.putBatch`, uma escrita no SharedPreferences do Android); no iPhone o

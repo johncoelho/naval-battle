@@ -57,7 +57,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   `dobroes_gate_licenca()` antes de tirar qualquer testador da licença (17 ainda sem 0.33.3 em 18/10).
 - **Compras de dobrões pela Google Play (#15, 0.33.0):** servidor e app prontos (migração
   `dobroes_billing`, Edge `dobroes-verify`, Prêmio Beta, aba sem loja simulada). Os interruptores
-  `real_billing_enabled` e `premio_beta_enabled` nascem **desligados**. Venda para jogador comum só
+  `real_billing_enabled` nasce **desligado**; `premio_beta_enabled` está **ligada** em produção (`'true'`,
+  conferido em 18/10; já estava ligada antes do lote 0.33.3, quem ligou não se sabe pelo repo; o John
+  confirma na issue #28). Venda para jogador comum só
   depois do saldo autoritativo no servidor (#15 parte e) e da produção na Play (≈ 23/10). Falta o
   John: os 4 produtos, a lista de licença, a conta de serviço de billing e o secret (ver pendências).
 - **Conferência de instalação por push (#26, 0.33.2):** Edge `push-check` + `testers_install_report()`
@@ -108,8 +110,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Loja beta (#28), antes de ligar a vitrine para testador:** (1) deploy da Edge `dobroes-verify` (com `origem`);
   (2) secret `PLAY_BILLING_SERVICE_ACCOUNT`; (3) os 4 produtos no Play Console; (4) gate
   `select * from public.dobroes_gate_licenca();` vazio antes de mudar a lista de licença para só QA01/QA02;
-  (5) `update public.app_config set value = 'true' where key = 'premio_beta_enabled';` e, depois de 2 e 3,
-  `beta_store_enabled`. Textos novos (aviso de cobrança para testador, "Pacotes pagos") aguardam o OK do John.
+  (5) `premio_beta_enabled` já está `'true'` em produção (ligada antes do lote; o John confirma na issue #28);
+  `beta_store_enabled` segue `'false'` e só liga depois de 2 e 3. Textos novos (aviso de cobrança para testador, "Pacotes pagos") aguardam o OK do John.
 - **Dobrões (#15), antes de ligar o Prêmio ou a venda:** (1) criar no Play Console os 4 produtos
   `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro` (ativos, IDs exatos); (2) contas QA como
   **testadores de licença**, se faltarem; (3) permissões financeiras: o John concedeu
