@@ -27,9 +27,9 @@ Remover alguém: mesma lista, lixeira da linha, salvar; depois o passo abaixo.
 
 ## Teste de licença (compras sem cobrança)
 
-Play Console → Configurações → **Teste de licença** usa a lista **"Licenca sem cobranca"**: todos os
-testadores **menos o John** (ele testa pagamento real) e com QA01/QA02. Testador novo entra nas
-**duas** listas ("Testadores fechados" e "Licenca sem cobranca"); removido, sai das duas.
+Play Console → Configurações → **Teste de licença** usa só a lista **"Licenca QA"** (QA01 e QA02),
+decisão do John em 18/10: todo beta tester paga de verdade nos pacotes pagos; o prêmio diário grátis
+é resgatado no servidor (não passa pela Play). Testador novo **não** entra nessa lista.
 
 ## Manter `allowed_players` (ao adicionar ou remover alguém na lista da Play)
 
