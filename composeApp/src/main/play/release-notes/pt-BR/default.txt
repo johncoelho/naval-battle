@@ -1,1 +1,1 @@
-Testadores: o Premio Beta agora e pego direto no jogo, sem abrir a loja do Google. Toque em Pegar o Premio e ganhe 6.500 dobroes, uma vez por dia. A aba Dobroes mostra o Premio e, quando liberados, os pacotes pagos. Sem mudanca para quem nao testa.
+Testadores: o Premio Beta agora aparece tambem no iPhone, na aba Dobroes. Toque em Pegar o Premio e ganhe 6.500 dobroes, uma vez por dia, direto no servidor. No iPhone os pacotes pagos seguem ocultos. Sem mudanca para quem nao testa.

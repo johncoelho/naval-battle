@@ -232,7 +232,8 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
   até o secret e os 4 produtos estarem prontos; #28). A venda para jogador comum fica fechada até o
   servidor ser a única fonte do saldo e o app estar em produção na Play (interruptor
   `real_billing_enabled`, padrão
-  desligado). A loja simulada saiu. No iPhone a aba fica fechada até a parte StoreKit.
+  desligado). A loja simulada saiu. No iPhone a aba mostra só o Prêmio Beta (testador); os pacotes
+  ficam ocultos até a parte StoreKit (#30, 0.33.4).
 - **Passe de temporada**: para jogar ranqueada é preciso aderir à temporada da estação —
   Passe Gratuito (só participa) ou Passe de Temporada (dobrões: camuflagem exclusiva da
   estação, dobrões e milhas bônus; upgrade depois sai mais caro). Fim de temporada premia
@@ -464,6 +465,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `GoogleAuth` | login com Google | Credential Manager | fluxo OAuth com PKCE |
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
 | `PushMessaging` | token de push | Firebase Messaging | sem push (APNs pendente) |
+| `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes, a aba mostra só o Prêmio Beta (#30) |
 | `isTestLabDevice` | aparelho dos testes automáticos do Google | `Settings.System` `firebase.test.lab` | sempre falso |
 | `DailyReminder` | lembrete diário local | `AlarmManager` | `UNUserNotificationCenter` |
 | `openStoreListing`, `shareStoreListing` | loja e compartilhar | Play Store | página `#ios` do site |

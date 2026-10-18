@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.33.4] — 2026-10-18 · iPhone vê só o Prêmio Beta na aba Dobrões
+
+App 0.33.4 (versionCode 86). Refs #30. Só app: sem banco, sem Edge, sem secret.
+
+### Mudado
+- **iPhone: aba Dobrões só com o Prêmio Beta** (#30, aprovado pelo John na issue): o testador de
+  licença vê o cartão "Pegar o Prêmio" (6.500 dobrões, 1× por dia, pelo servidor). Os pacotes pagos
+  ficam ocultos no iPhone, sempre (sem a Play não há venda). A aba não fecha mais no iPhone.
+- Não-testador no iPhone vê "A compra de dobrões chega em breve.", sem pacote.
+- Milhas náuticas compradas com dobrões aparecem no iPhone (não são pacote pago; a confirmar).
+- O Prêmio chega ao aparelho por `dobroes_pending` também no iPhone; a repetição das compras da
+  Play (`purchasedTokens`) só roda com a Play.
+
+### Testes
+- `./gradlew :composeApp:testDebugUnitTest` verde: `StoreViewTest` (iPhone nunca vê vitrine) e
+  `PendingCreditsTest` (token `premio:` somado uma vez, mesmo repetido pelo servidor).
+- `tools/release-check.sh` verde.
+
 ## [0.33.3] — 2026-10-18 · Prêmio Beta pelo servidor e vitrine beta (desligada)
 
 App 0.33.3 (versionCode 85). Refs #28. Mudança no banco (`supabase/dobroes.sql`, migração

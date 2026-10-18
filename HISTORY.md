@@ -218,6 +218,10 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **18/10 · Gate antes de tirar testador da licença** (#28, 0.33.3) — porquê: quem ficar fora da
   lista de teste de licença com app antigo seria cobrado no Prêmio pela Play. `dobroes_gate_licenca()`
   lista quem ainda não tem 0.33.3 em `device_checks`; a lista de licença só muda com essa consulta vazia.
+- **18/10 · iPhone mostra só o Prêmio Beta na aba Dobrões; pacotes pagos ficam ocultos** (#30, 0.33.4) —
+  porquê: sem a Play não há venda, e o Prêmio não depende da Play (é resgate no servidor). Antes a aba
+  inteira fechava no iPhone e o Prêmio sumia junto. A vitrine é gateada pela Play (`billing.available`),
+  não pelo servidor: nunca aparece no iPhone, mesmo com a venda ligada. Pedido e aprovado pelo John na #30.
 - **18/10 · Anúncios premiados opcionais aprovados** (#29): camada nova **SDK Google Mobile Ads
   (AdMob)** aprovada pelo John; só anúncio que o jogador escolhe ver, para ganhar algo ou multiplicar
   um prêmio (nada de anúncio forçado nem banner). Recompensa decidida pelo servidor (SSV). Conta

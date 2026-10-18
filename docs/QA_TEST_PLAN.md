@@ -227,7 +227,7 @@ PR/commit de #15 (um por bloco). Compra real de teste nunca é cobrada: a Play m
 | DOB-08 | P1 | Mesmo testador, tocar de novo no mesmo dia (ou repetir a RPC) | Aparece "Você já pegou o Prêmio de hoje" com o contador; não credita |
 | DOB-09 | P1 | `premio_beta_enabled = 'false'`, conta de testador | Sem cartão do Prêmio; vitrine só se `beta_store_enabled` ligado; nada é cobrado |
 | DOB-10 | P0 | Produto ausente na Play (ou Play fora) | Aba mostra "Dobrões indisponíveis agora"; nenhum cartão e nenhuma cobrança |
-| DOB-11 | P2 | iPhone, aba Dobrões | Aba fechada; nada de loja simulada |
+| DOB-11 | P2 | iPhone, aba Dobrões (0.33.4). (a) Conta de testador: pegar o Prêmio Beta; (b) conta de não-testador | (a) só o cartão do Prêmio, nenhum pacote; o saldo sobe 6.500 uma vez ao voltar ao app; repetir não soma. (b) "A compra de dobrões chega em breve.", sem pacote. Nada de loja simulada |
 | DOB-12 | P0 | Comprar um pacote da vitrine (conta de licença), com a Play em "Processing", fechar o app (`am force-stop`) e desligar Wi-Fi e dados; depois religar e reabrir | Crédito cai uma vez ao reabrir; reabrir de novo não soma |
 | DOB-13 | P0 | Servidor (bloco que desfaz): `apply_dobroes_purchase` duas vezes com o mesmo token | 1ª credita; 2ª `already` 0; token novo no mesmo dia `premio_done` 0 |
 | DOB-14 | P0 | Servidor: compra de teste de conta fora de `allowed_players`; compra real com `real_billing_enabled = false` | `not_beta` 0; `billing_off` sem gravar |
