@@ -134,6 +134,8 @@ Deno.serve(async (req) => {
   if (!PRODUCTS.has(productId) || typeof token !== "string" || token.length < 10 || token.length > 4096) {
     return json({ error: "bad_request" }, 400);
   }
+  // origem opcional (#28): "vitrine" = pacote do app 0.33.3+; ausente = app antigo (Prêmio legado)
+  const origem = body?.origem === "vitrine" ? "vitrine" : null;
 
   let access: string;
   try {
@@ -177,6 +179,7 @@ Deno.serve(async (req) => {
     p_purchase_type: typeof p.purchaseType === "number" ? p.purchaseType : null,
     p_state: typeof p.purchaseState === "number" ? p.purchaseState : null,
     p_account_ok: p.obfuscatedExternalAccountId === userId,
+    p_origin: origem,
   });
   if (error) return json({ error: "db" }, 500);
   const row = Array.isArray(data) ? data[0] : data;
