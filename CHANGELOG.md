@@ -9,6 +9,16 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Não lançado] — 2026-10-18 · Correção: compra de dobrões em conta de licença
+
+Sem mudança de app e sem banco. Refs #28.
+
+### Correções
+- Compra de dobrões em conta de licença volta a creditar: Edge `dobroes-verify` redeployada
+  (versão 6, código igual ao do repositório). A versão 5 em produção não tinha `origem` nem
+  `p_origin`, e a compra de teste de pacote caía no caminho legado (`premio_only`): nada era
+  creditado. Deploy com `supabase functions deploy`; diff do código implantado vazio.
+
 ## [0.33.4] — 2026-10-18 · iPhone vê só o Prêmio Beta na aba Dobrões
 
 App 0.33.4 (versionCode 86). Refs #30. Só app: sem banco, sem Edge, sem secret.

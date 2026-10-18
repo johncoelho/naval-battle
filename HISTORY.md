@@ -228,6 +228,12 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   AdMob criada por ele; app e blocos configurados; `app-ads.txt` na raiz `johncoelho.github.io`.
 - **18/10 · Loja beta com as duas opções** (#28): prêmio diário grátis resgatado no servidor (sem
   Play) e pacotes pagos com cobrança real para os testadores; lista de licença só com as contas QA.
+- **18/10 · Edge `dobroes-verify` redeployada com `p_origin`** (#28, correção sem versão de app) —
+  porquê: a versão 5 em produção não tinha o commit 828eda1 (`origem` e `p_origin`), então a compra
+  de teste de pacote caía no legado (`premio_only`) e não creditava (QA da 0.33.4, critério 3). A
+  conferência de 18/10 afirmou "versão 5 igual ao repositório" sem comparar o código; isso estava
+  errado, e o erro fica registrado. Corrigido com `supabase functions deploy` (versão 6) e diff vazio
+  contra o repositório. Processo: depois de qualquer mudança em Edge, conferir implantado = repositório.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo
