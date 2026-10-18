@@ -42,7 +42,7 @@ App 0.33.4 (versionCode 86). Refs #30. Só app: sem banco, sem Edge, sem secret.
 App 0.33.3 (versionCode 85). Refs #28. Mudança no banco (`supabase/dobroes.sql`, migração
 `dobroes_premio_beta`: `claim_premio_beta`, `apply_dobroes_purchase` com `p_origin`,
 `dobroes_store_status` com `vitrine_beta`, `dobroes_gate_licenca`, `beta_store_enabled` nascendo
-`false`) e na Edge `dobroes-verify` (repassa `origem`). **Edge ainda sem deploy** (pendente do John).
+`false`) e na Edge `dobroes-verify` (repassa `origem`). **Edge redeployada** (versão 6, igual ao repositório, 18/10; ver Correções).
 
 ### Mudado
 - **Prêmio Beta sem a Play** (#28): o botão "Pegar o Prêmio" chama o servidor e não abre mais a

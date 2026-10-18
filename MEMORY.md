@@ -56,7 +56,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   no iPhone (decisão: manter) e que não-testador segue com "chega em breve".
 - **Loja beta de dobrões (#28, 0.33.3):** Prêmio Beta por RPC `claim_premio_beta` (sem Play, 6.500 1×/dia);
   vitrine paga para testador com `beta_store_enabled` **desligada** (sem secret, pacote cobraria e não
-  creditaria). Migração aplicada no banco; Edge `dobroes-verify` com `origem` **sem deploy**. Gate:
+  creditaria). Migração aplicada no banco; Edge `dobroes-verify` redeployada em 18/10 (versão 6, igual ao repositório). Gate:
   `dobroes_gate_licenca()` antes de tirar qualquer testador da licença (17 ainda sem 0.33.3 em 18/10).
 - **Compras de dobrões pela Google Play (#15, 0.33.0):** servidor e app prontos (migração
   `dobroes_billing`, Edge `dobroes-verify`, Prêmio Beta, aba sem loja simulada). Os interruptores
@@ -112,7 +112,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 ## 5. Pendências com o John
 
 - Avisar quando a conta Apple ativar.
-- **Loja beta (#28), antes de ligar a vitrine para testador:** (1) deploy da Edge `dobroes-verify` (com `origem`);
+- **Loja beta (#28), antes de ligar a vitrine para testador:** (1) feito em 18/10: Edge `dobroes-verify` versão 6, igual ao repositório;
   (2) secret `PLAY_BILLING_SERVICE_ACCOUNT`; (3) os 4 produtos no Play Console; (4) gate
   `select * from public.dobroes_gate_licenca();` vazio antes de mudar a lista de licença para só QA01/QA02;
   (5) `premio_beta_enabled` já está `'true'` em produção (ligada antes do lote; o John confirma na issue #28);
