@@ -25,14 +25,29 @@ class StoreViewTest {
 
     @Test
     fun jogadorComumSoVeAVitrinaComAVendaLigada() {
-        assertEquals(true, vitrineVisivel(realEnabled = true, vitrineBeta = false))
-        assertEquals(false, vitrineVisivel(realEnabled = false, vitrineBeta = false))
+        assertEquals(true, vitrineVisivel(vendaPelaPlay = true, realEnabled = true, vitrineBeta = false))
+        assertEquals(false, vitrineVisivel(vendaPelaPlay = true, realEnabled = false, vitrineBeta = false))
     }
 
     @Test
     fun testadorVeAVitrinaSoComAVitrinaBetaLigada() {
-        assertEquals(true, vitrineVisivel(realEnabled = false, vitrineBeta = true))
-        assertEquals(true, vitrineVisivel(realEnabled = true, vitrineBeta = true))
+        assertEquals(true, vitrineVisivel(vendaPelaPlay = true, realEnabled = false, vitrineBeta = true))
+        assertEquals(true, vitrineVisivel(vendaPelaPlay = true, realEnabled = true, vitrineBeta = true))
+    }
+
+    @Test
+    fun iPhoneNuncaVeAVitrinaMesmoComVendaOuBetaLigadas() {
+        // iPhone não vende pela Play (#30): nenhum interruptor do servidor abre a vitrine
+        assertEquals(false, vitrineVisivel(vendaPelaPlay = false, realEnabled = true, vitrineBeta = false))
+        assertEquals(false, vitrineVisivel(vendaPelaPlay = false, realEnabled = false, vitrineBeta = true))
+        assertEquals(false, vitrineVisivel(vendaPelaPlay = false, realEnabled = true, vitrineBeta = true))
+    }
+
+    @Test
+    fun iPhoneDeTestadorVeOPremioMasNaoAVitrina() {
+        // o Prêmio não depende da Play: premioState segue valendo no iPhone
+        assertEquals(PremioState.PEGAR, premioState(beta = true, premioEnabled = true, premioClaimed = false))
+        assertEquals(false, vitrineVisivel(vendaPelaPlay = false, realEnabled = false, vitrineBeta = true))
     }
 
     @Test

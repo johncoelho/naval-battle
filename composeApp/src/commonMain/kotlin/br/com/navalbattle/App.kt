@@ -1278,31 +1278,30 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var dobroesBusy by mutableStateOf(false)
         private set
 
-    /** Sem a Play (iPhone) a aba fica fechada: nem Prêmio nem vitrine. */
-    val dobroesDisponivel: Boolean get() = billing.available
-
-    /** Prêmio Beta de hoje (#28): nulo enquanto a situação da conta ainda não chegou. */
+    /** Prêmio Beta de hoje (#28): nulo enquanto a situação da conta ainda não chegou. No iPhone também vale (#30). */
     val premioView: PremioState?
         get() {
             val s = dobroesStatus ?: return null
             return premioState(s.beta, s.premioEnabled, s.premioClaimed)
         }
 
-    /** Vitrine paga visível: venda real, ou vitrine beta da conta de testador (#28). */
+    /** Vitrine paga visível: só com a Play (não no iPhone, #30), e com venda real ou vitrine beta (#28). */
     val vitrineAberta: Boolean
         get() {
             val s = dobroesStatus ?: return false
-            return vitrineVisivel(s.realEnabled, s.vitrineBeta)
+            return vitrineVisivel(billing.available, s.realEnabled, s.vitrineBeta)
         }
 
-    /** Abrir a aba: situação da conta, preços da Play e compras que ficaram para trás. */
+    /**
+     * Abrir a aba: situação da conta (Prêmio) e, com a Play, preços dos pacotes e compras que
+     * ficaram para trás. No iPhone a aba só mostra o Prêmio (#30).
+     */
     suspend fun loadDobroesStore() {
         if (profile.currentSession() == null) {
             dobroesStatus = null
             return
         }
-        if (!billing.available) return
-        dobroesProducts = billing.products()
+        if (billing.available) dobroesProducts = billing.products()
         refreshDobroesStatus()
         recoverPending()
     }
@@ -1364,10 +1363,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * Roda ao abrir a aba, ao voltar para o app e ao abrir o jogo com conta.
      */
     suspend fun recoverPending() {
-        if (recovering || profile.currentSession() == null || !billing.available) return
+        if (recovering || profile.currentSession() == null) return
         recovering = true
         try {
-            billing.purchasedTokens().forEach { p ->
+            // só a Play tem recibos para repetir; o Prêmio (token premio:) chega direto por dobroes_pending (#30)
+            if (billing.available) billing.purchasedTokens().forEach { p ->
                 authed { s -> cloud.dobroesVerify(s, p.productId, p.token, "vitrine") }
             }
             val pending = (authed { s -> cloud.dobroesPending(s) } as? CloudResult.Ok)?.value ?: return

@@ -17,10 +17,12 @@ fun premioState(beta: Boolean, premioEnabled: Boolean, premioClaimed: Boolean): 
     }
 
 /**
- * A vitrine paga aparece com a venda real ligada (todos) ou com a vitrine beta ligada
- * (`beta_store_enabled`, só para testador; o servidor já devolve a flag só para conta de testador).
+ * A vitrine paga aparece só onde a Play vende ([vendaPelaPlay], falso no iPhone), e então com a
+ * venda real ligada (todos) ou com a vitrine beta ligada (`beta_store_enabled`, só para testador;
+ * o servidor já devolve a flag só para conta de testador). No iPhone nunca aparece (#30).
  */
-fun vitrineVisivel(realEnabled: Boolean, vitrineBeta: Boolean): Boolean = realEnabled || vitrineBeta
+fun vitrineVisivel(vendaPelaPlay: Boolean, realEnabled: Boolean, vitrineBeta: Boolean): Boolean =
+    vendaPelaPlay && (realEnabled || vitrineBeta)
 
 /**
  * Aviso de uma compra da vitrine conforme o status do servidor. Null: nada a dizer (o saldo

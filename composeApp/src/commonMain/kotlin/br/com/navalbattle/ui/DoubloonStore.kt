@@ -40,7 +40,7 @@ import br.com.navalbattle.i18n.t
  * Aba Dobrões da loja (#15, #28). Duas partes independentes: o Prêmio Beta (testador de
  * licença pega 6.500 por dia pelo servidor, sem a Play) e a vitrine paga (pacotes pela
  * Play: para todos com a venda real ligada, e para testador com a vitrine beta ligada).
- * No iPhone a aba fica fechada. Cada pacote tem arte própria: bolsa, baú, cofre, tesouro.
+ * No iPhone a aba mostra só o Prêmio (#30): sem Play, nenhum pacote. Cada pacote tem arte própria: bolsa, baú, cofre, tesouro.
  */
 @Composable
 fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -> Unit) {
@@ -49,12 +49,6 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -
             Text(t(K.DOUBLOON_SIGN_IN), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
             Gap(12)
             PrimaryButton(t(K.DOUBLOON_SIGN_IN_CTA)) { state.openLogin(Screen.STORE) }
-        }
-        return
-    }
-    if (!state.dobroesDisponivel) {
-        InfoCard {
-            Text(t(K.DOUBLOON_CLOSED), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
         }
         return
     }
