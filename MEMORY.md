@@ -52,8 +52,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   em Logs da Edge, sem segredo. Prova: log de `secret_ausente` após o deploy; a compra de teste (DOB-07)
   segue com o John (secret e licença).
 - **iPhone com Prêmio Beta (#30, 0.33.4):** aba Dobrões no iPhone mostra só o Prêmio do testador;
-  pacotes ocultos (sem Play). Pendente: QA do DOB-11 no iPhone; o Tech Lead confirma que milhas com
-  dobrões aparecem no iPhone (proposta: manter) e que não-testador segue com "chega em breve".
+  pacotes ocultos (sem Play). Pendente: John confirma no QA do DOB-11 que milhas com dobrões aparecem
+  no iPhone (decisão: manter) e que não-testador segue com "chega em breve".
 - **Loja beta de dobrões (#28, 0.33.3):** Prêmio Beta por RPC `claim_premio_beta` (sem Play, 6.500 1×/dia);
   vitrine paga para testador com `beta_store_enabled` **desligada** (sem secret, pacote cobraria e não
   creditaria). Migração aplicada no banco; Edge `dobroes-verify` com `origem` **sem deploy**. Gate:
