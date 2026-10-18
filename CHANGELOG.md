@@ -25,7 +25,8 @@ App 0.33.3 (versionCode 85). Refs #28. Mudança no banco (`supabase/dobroes.sql`
 - **Pacotes pagos para testador: DESLIGADOS** (#28). Desvio do pedido "já agora" da issue: o
   `beta_store_enabled` nasce `false` porque, sem o secret `PLAY_BILLING_SERVICE_ACCOUNT`, um pacote pago
   cobraria e não creditaria. O John liga depois do secret e dos 4 produtos.
-- **Prêmio não depende da Play listar o produto** (#28): some a regra "Indisponível agora" no Prêmio.
+- **Prêmio não depende da Play listar o produto** (#28): o Prêmio nunca consulta a Play. Com o Prêmio
+  desligado no servidor ou fora da conta de testador, aparece "Prêmio indisponível agora." (texto novo).
 - Textos novos em pt, en e es: "Pacotes pagos" e o aviso de cobrança para testador (a aprovar pelo John).
 
 ### Corrigido
@@ -35,7 +36,11 @@ App 0.33.3 (versionCode 85). Refs #28. Mudança no banco (`supabase/dobroes.sql`
 ### Testes
 - `./gradlew :composeApp:testDebugUnitTest` verde: `StoreViewTest` reescrito, `DoubloonPackTest` sem o
   critério da Play.
-- Banco: bloco que desfaz com as contas QA (claim, vitrine, legado, gate e versão por partes) passou.
+- Banco: `supabase/tests/dobroes_ensaio.sql` (bloco que desfaz) executado no projeto de produção em
+  18/10: 22 trechos batem com o esperado, cobrindo DOB-13 a DOB-21 (Prêmio, vitrine, legado, estados
+  da Play, compra real com as flags, gate da licença e comparação de versão). Achado do ensaio e
+  corrigido nesta versão: `dobroes_gate_licenca` não listava quem tinha só `user_id` em
+  `allowed_players` (migração `dobroes_gate_licenca_fix`). DOB-12 segue manual (aparelho).
 - Casos novos no `docs/QA_TEST_PLAN.md` (DOB-16 a DOB-21, LOJA-06).
 
 ### Documentação

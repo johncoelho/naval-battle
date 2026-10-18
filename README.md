@@ -227,10 +227,11 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
   (`supabase/account.sql`) e a carreira do aparelho volta ao começo.
 - **Dobrões** (a moeda do jogo) compram na loja, pela Google Play (aba Dobrões). Quem testa o jogo
   (lista de testadores de licença) ganha o **Prêmio Beta**: 6.500 dobrões uma vez por dia, pegos
-  direto no servidor (`claim_premio_beta`, sem a Play, sem cobrança). Testador também vê os
-  **pacotes pagos** quando a vitrine beta estiver ligada (`beta_store_enabled`, padrão desligado até
-  o secret e os 4 produtos estarem prontos; (#28)). A venda para jogador comum fica fechada até o servidor ser a única
-  fonte do saldo e o app estar em produção na Play (interruptor `real_billing_enabled`, padrão
+  direto no servidor (`claim_premio_beta`, sem a Play e sem cobrança). Testador também vê os
+  **pacotes pagos** quando a vitrine beta estiver ligada (`beta_store_enabled`, desligada por padrão
+  até o secret e os 4 produtos estarem prontos; #28). A venda para jogador comum fica fechada até o
+  servidor ser a única fonte do saldo e o app estar em produção na Play (interruptor
+  `real_billing_enabled`, padrão
   desligado). A loja simulada saiu. No iPhone a aba fica fechada até a parte StoreKit.
 - **Passe de temporada**: para jogar ranqueada é preciso aderir à temporada da estação —
   Passe Gratuito (só participa) ou Passe de Temporada (dobrões: camuflagem exclusiva da
