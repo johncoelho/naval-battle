@@ -9,6 +9,29 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.1] — 2026-10-18 · Tela Novidades completa (#31)
+
+App 0.34.1 (versionCode 88). Refs #31. Só app: sem banco, sem Edge, sem mudança no jogo.
+
+### Corrigido
+- **Novidades parada na 0.25.0** (#31): a tela não ganhou linha nas minors 0.26.0 a 0.34.0. Agora
+  mostra uma linha por minor, de 0.34.0 até 0.26.0, com os textos de `app_releases` em pt, en e es.
+  Os textos da lista são fixos no app; ler `app_releases` pela tela segue como melhoria pendente.
+
+### Alterado
+- `i18n/Strings.kt`: chaves `RN_V0260` a `RN_V0340` (pt/en/es).
+- `ui/ReleaseNotesScreen.kt`: nove linhas em ordem decrescente; a lista ficou `internal` para o teste.
+- Skills `dev-cycle` e `play-store-release`: minor nova leva a linha em Novidades.
+
+### Testes
+- `ReleaseNotesTest` (novo): primeira linha é a minor instalada, toda chave RN tem pt/en/es, versões
+  em ordem decrescente sem repetição. Caso SET-07 no `docs/QA_TEST_PLAN.md`.
+
+### Commits
+- `d31d570` Novidades: linhas de 0.26.0 a 0.34.0 e teste da lista (0.34.1)
+- `5671500` Skills: minor nova leva linha em Novidades (0.34.1)
+- `82ea65b` Docs: caso SET-07 da tela Novidades e decisão no HISTORY (0.34.1)
+
 ## [0.34.0] — 2026-10-18 · Anúncios premiados opcionais (preparação, desligados)
 
 App 0.34.0 (versionCode 87). Refs #29. Banco: migração `ads_rewarded_ssv`. Edge nova `ads-reward`

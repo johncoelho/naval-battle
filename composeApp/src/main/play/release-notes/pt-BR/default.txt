@@ -1,1 +1,1 @@
-Preparacao para anuncios premiados opcionais: o jogador escolhe assistir um anuncio para dobrar os dobroes de uma vitoria, o check-in ou o desafio do dia, ou ganhar 1 milha quando acabarem. O recurso chega desligado nesta versao e nao aparece para ninguem ainda. Nada de anuncio forcado, banner ou anuncio durante a partida.
+Tela Novidades completa: agora ela mostra todas as versoes desde a 0.26.0, incluindo a 0.27.0 a 0.34.0, cada uma com o resumo do que mudou. Nada muda no jogo.

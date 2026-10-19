@@ -134,6 +134,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   na Edge `dobroes-verify`. Depois: `update public.app_config set value = 'true' where key = 'premio_beta_enabled';`.
   Recomendações do Tech Lead aplicadas, aguardam OK do John: saldo no servidor antes da venda, conta
   de serviço só para billing. (iPhone sem pacotes: feito em 0.33.4, #30.)
+- Novidades (#31, 0.34.1): tela com uma linha por minor (0.26.0 a 0.34.0). **Pendente do John:** a tela
+  ler `app_releases` (melhoria; decidir se a linha passa a ser por patch). Sem OK, fica como está.
 - #23 (12/10): estrutura `allowed_players` no banco, **inerte** (`allowlist_enforced = 'false'`, tabela
   vazia). Falta a rodada carregar a lista da Play (esperado `play 12`, `qa 2`, `manual 2`), fazer o
   ensaio (`refresh_all_is_test(false)`, ~95 viram teste e 12 seguem jogador) e só então ligar o
