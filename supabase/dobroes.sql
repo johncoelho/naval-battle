@@ -54,10 +54,11 @@ create table if not exists public.dobroes_purchases (
   created_at     timestamptz not null default now()
 );
 
--- kind: 'real' (cobrança), 'test' (licença de testador pela Play), 'premio' (resgate sem Play)
+-- kind: 'real' (cobrança), 'test' (licença de testador pela Play), 'premio' (resgate sem Play),
+-- 'ad' (anúncio premiado conferido pelo Google, #29: token ad:<transaction_id>, ver ads.sql)
 alter table public.dobroes_purchases drop constraint if exists dobroes_purchases_kind_check;
 alter table public.dobroes_purchases add constraint dobroes_purchases_kind_check
-  check (kind in ('real', 'test', 'premio'));
+  check (kind in ('real', 'test', 'premio', 'ad'));
 
 -- Prêmio: no máximo um por conta e dia (Brasília), vindo da RPC ou do legado
 create unique index if not exists dobroes_premio_one_per_day
