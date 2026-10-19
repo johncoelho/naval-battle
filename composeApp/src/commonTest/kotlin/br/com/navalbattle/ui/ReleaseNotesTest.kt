@@ -17,10 +17,16 @@ class ReleaseNotesTest {
 
     @Test
     fun primeiraLinhaEhAMinorInstalada() {
+        // No simulador iOS o teste roda dentro do host do XCTest: NSBundle.mainBundle não é o app,
+        // então a versão lida ali não é a instalada (cai no "0"). Nesse caso a checagem fica com o
+        // Android, onde BuildConfig é a versão real do build, e com o release-check da CI, que
+        // garante Info.plist == versionName.
+        val instalada = appVersionName
+        if (!Regex("""\d+\.\d+(\.\d+)?""").matches(instalada)) return
         assertEquals(
-            majorMinor(appVersionName),
+            majorMinor(instalada),
             majorMinor(releaseNotes.first().version),
-            "A tela Novidades precisa de uma linha para a minor ${majorMinor(appVersionName)} " +
+            "A tela Novidades precisa de uma linha para a minor ${majorMinor(instalada)} " +
                 "(acrescente RN_Vxxxx em i18n/Strings.kt e a linha em ui/ReleaseNotesScreen.kt)."
         )
     }
