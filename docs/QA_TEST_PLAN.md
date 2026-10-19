@@ -293,6 +293,7 @@ Rodar `select public.push_check_run();` (SQL) e depois `select * from public.tes
 | SET-04 | P1 | Bloquear notificações no sistema | Ajustes mostra aviso com atalho para o sistema |
 | SET-06 | P1 | Ajustes → Online (conta nova ou existente) | "Avisar quando um amigo ficar online" aparece ligado; com "Receber convites" desligado fica inativo (#19) |
 | SET-05 | P2 | Sobre → Novidades / Compartilhar | Lista de versões; compartilhar abre a folha do sistema com o link da loja |
+| SET-07 | P1 | Sobre → Novidades, em PT, EN e ES (#31) | A primeira linha é a versão instalada (hoje 0.34.0) e a lista chega até ela (0.26.0 a 0.34.0), em ordem decrescente, textos no idioma escolhido; sem rede a tela abre igual |
 | PUSH-01 | P1 | Com o app fechado em B, A faz FR-02/FR-05 | Notificação do sistema aparece em B; tocar abre o jogo |
 | PUSH-02 | P2 | Tocar na notificação com o jogo minimizado (não fechado) | Volta para o jogo onde estava, sem passar pela abertura de novo |
 | ABL-01 | P1 | Tático: ativar Barragem dupla e acertar o 1º tiro | A barragem continua valendo: um erro depois ainda dá o tiro extra |

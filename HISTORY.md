@@ -310,6 +310,11 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   mundo. **QA01/QA02 como conta de teste** (ranqueada de QA deixa de valer pontos; a fórmula do Elo
   fica coberta pelo bloco que desfaz). **`test_lab` vira só diagnóstico** com a regra ligada. iPhone
   vale pela plataforma informada pelo app: risco aceito durante o beta.
+- **18/10 · Novidades com uma linha por minor, sem patch** (#31, 0.34.1): a tela parou na 0.25.0 porque
+  a lista não ganhou linha ao subir as minors. Correção: linhas 0.26.0 a 0.34.0 com os textos de
+  `app_releases`, e a regra da minor no `dev-cycle` e no `play-store-release`, com `ReleaseNotesTest`
+  para quebrar se faltar linha. **Ler `app_releases` pela tela continua pendente** (é melhoria; o John
+  decide se a fonte passa a ser o banco e se a linha vira por patch).
 
 ---
 
