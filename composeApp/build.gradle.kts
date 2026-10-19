@@ -56,6 +56,11 @@ kotlin {
             // compra de dobrões pela Google Play (#15; stack aprovada pelo John em 17/10):
             // só a biblioteca oficial de billing
             implementation(libs.play.billing)
+            // anúncio premiado opcional (#29; stack aprovada pelo John em 18/10): SDK do
+            // Google Mobile Ads (AdMob) e o formulário de consentimento (UMP). Só inicia
+            // depois do primeiro toque num botão de anúncio (RewardedAds.android.kt)
+            implementation(libs.play.services.ads)
+            implementation(libs.ump)
             // push de verdade (convites, amizade) pelo Firebase Cloud Messaging; a
             // configuração vem do google-services.json (ver PushMessaging.android.kt)
             implementation(project.dependencies.platform(libs.firebase.bom))

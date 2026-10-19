@@ -49,6 +49,8 @@ import androidx.compose.material3.Text
 @Composable
 fun SettingsScreen(state: AppState) {
     val profile = state.profile
+    // "Privacidade dos anúncios" (#29) só aparece com anúncio ligado no servidor
+    LaunchedEffect(Unit) { state.loadAds() }
 
     Column(
         Modifier
@@ -175,6 +177,15 @@ fun SettingsScreen(state: AppState) {
             SecondaryButton(t(K.SETTINGS_SHARE_STORE), t(K.SETTINGS_SHARE_STORE_SUB)) { shareStoreListing() }
             Gap(8)
             SecondaryButton(t(K.SETTINGS_FEEDBACK), t(K.SETTINGS_FEEDBACK_SUB)) { state.openFeedback(Screen.SETTINGS) }
+            // anúncio premiado (#29): reabre o consentimento do Google (UMP); só com anúncio ligado
+            if (state.adPrivacyShows) {
+                Gap(8)
+                SecondaryButton(t(K.AD_PRIVACY), t(K.AD_PRIVACY_SUB)) { state.openAdPrivacy() }
+                state.adPrivacyNotice?.let {
+                    Gap(6)
+                    HudLabel(it, Naval.muted)
+                }
+            }
         }
 
         Gap(14)

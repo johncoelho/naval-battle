@@ -701,6 +701,41 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(o.optInt("doubloons", 0))
     }
 
+    // anúncio premiado (#29): o servidor decide; o Google confirma pela Edge ads-reward
+    actual suspend fun adsStatus(session: Session, platform: String): CloudResult<AdsStatus> = call {
+        val json = post("/rest/v1/rpc/ads_status", JSONObject().put("p_platform", platform), token = session.accessToken)
+        val o = JSONArray(json).getJSONObject(0)
+        CloudResult.Ok(
+            AdsStatus(
+                enabled = o.optBoolean("enabled", false),
+                testAds = o.optBoolean("test_ads", true),
+                winCan = o.optBoolean("win_can", false),
+                winCap = o.optInt("win_cap", 0),
+                checkinCan = o.optBoolean("checkin_can", false),
+                checkinAmount = o.optInt("checkin_amount", 0),
+                challengeCan = o.optBoolean("challenge_can", false),
+                challengeAmount = o.optInt("challenge_amount", 0),
+                mileCan = o.optBoolean("mile_can", false),
+                mileAmount = o.optInt("mile_amount", 0),
+                mileLimit = o.optBoolean("mile_limit", false)
+            )
+        )
+    }
+
+    actual suspend fun adRewardStart(session: Session, place: String, ref: String?, amount: Int?): CloudResult<AdStart> = call {
+        val body = JSONObject().put("p_place", place)
+        if (ref != null) body.put("p_ref", ref)
+        if (amount != null) body.put("p_amount", amount)
+        val o = JSONArray(post("/rest/v1/rpc/ad_reward_start", body, token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(AdStart(o.optString("status", "off"), o.stringOrNull("vale"), o.optInt("amount", 0)))
+    }
+
+    actual suspend fun adRewardStatus(session: Session, vale: String): CloudResult<String> = call {
+        val body = JSONObject().put("p_vale", vale)
+        val o = JSONArray(post("/rest/v1/rpc/ad_reward_status", body, token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(o.optString("status", "unknown"))
+    }
+
     actual suspend fun milesStatus(session: Session): CloudResult<MilesStatus> = call {
         val json = post("/rest/v1/rpc/miles_status", JSONObject(), token = session.accessToken)
         val o = JSONArray(json).getJSONObject(0)

@@ -47,6 +47,21 @@ class PendingCreditsTest {
     }
 
     @Test
+    fun anuncioPremiadoSomaUmaVezMesmoRepetido() {
+        // #29: o dobrão do anúncio chega pelo mesmo dobroes_pending, com token ad:<transaction_id>
+        val token = "ad:tx-123"
+        val primeira = PendingCredits.plan(
+            listOf(PendingCredit(token, 130), PendingCredit(token, 130)),
+            delivered = emptySet()
+        )
+        assertEquals(130, primeira.total)
+        assertEquals(listOf(token), primeira.toAck)
+        val repetida = PendingCredits.plan(listOf(PendingCredit(token, 130)), delivered = primeira.delivered)
+        assertEquals(0, repetida.total)
+        assertEquals(listOf(token), repetida.toAck)
+    }
+
+    @Test
     fun listaVaziaNaoMudaNada() {
         val plan = PendingCredits.plan(emptyList(), delivered = setOf("T0"))
         assertEquals(0, plan.total)

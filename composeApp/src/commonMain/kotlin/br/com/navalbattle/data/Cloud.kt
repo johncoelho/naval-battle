@@ -174,6 +174,29 @@ data class DobroesStoreStatus(
 /** Resposta de `dobroes-verify`: o status do servidor e os dobrões que a compra vale. */
 data class DobroesVerifyResult(val status: String, val doubloons: Int)
 
+/**
+ * Anúncio premiado hoje (#29, `ads_status` em `supabase/ads.sql`): o que cada lugar ainda pode.
+ * [enabled] falso (interruptor desligado, iPhone ou servidor fora) esconde todos os botões.
+ * [testAds]: conta QA ou do John, usa a unidade de teste do Google. [mileLimit]: saldo zero e o
+ * limite de anúncio de milha do dia acabou.
+ */
+data class AdsStatus(
+    val enabled: Boolean,
+    val testAds: Boolean,
+    val winCan: Boolean,
+    val winCap: Int,
+    val checkinCan: Boolean,
+    val checkinAmount: Int,
+    val challengeCan: Boolean,
+    val challengeAmount: Int,
+    val mileCan: Boolean,
+    val mileAmount: Int,
+    val mileLimit: Boolean
+)
+
+/** Vale de `ad_reward_start`: status (ok | off | limit | not_eligible | already), id e valor. */
+data class AdStart(val status: String, val vale: String?, val amount: Int)
+
 /** Compra conferida pelo servidor que ainda não foi somada no saldo deste aparelho. */
 data class DobroesPending(val purchaseToken: String, val doubloons: Int, val premio: Boolean)
 
@@ -533,6 +556,15 @@ expect class CloudApi() {
 
     /** Marca um token como somado no aparelho: o servidor para de devolvê-lo. */
     suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit>
+
+    /** Anúncio premiado (#29): o que cada lugar ainda pode hoje, para [platform] ("android"/"ios"). */
+    suspend fun adsStatus(session: Session, platform: String): CloudResult<AdsStatus>
+
+    /** Pede o vale de um anúncio: [ref] e [amount] só no lugar "win" (o servidor corta no teto). */
+    suspend fun adRewardStart(session: Session, place: String, ref: String?, amount: Int?): CloudResult<AdStart>
+
+    /** Situação do vale depois do anúncio: applied | pending | expired | unknown. */
+    suspend fun adRewardStatus(session: Session, vale: String): CloudResult<String>
 
     /** Saldo de milhas (já com a recarga do dia aplicada) e as regras. */
     suspend fun milesStatus(session: Session): CloudResult<MilesStatus>

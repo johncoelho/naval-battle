@@ -40,6 +40,7 @@ import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawMedal
 import br.com.navalbattle.design.drawShip
+import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.game.Award
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Medal
@@ -70,7 +71,10 @@ fun ResultScreen(state: AppState, match: Match) {
     var rewardCapped by remember(match) { mutableStateOf(false) }
     // vitória sem combate (#6): conta no histórico, mas não paga carreira nem desafio
     val noCombat = online && match.wonWithoutCombat(me)
+    // referência desta vitória para o "dobrar dobrões" (#29), fotografada antes de a sala fechar
+    val adRef = remember(match) { state.adWinRef(match) }
     LaunchedEffect(match) {
+        state.clearAdNotice(AdPlace.WIN)
         if (match.opponent == Opponent.AI) {
             award = state.profile.registerMatch(
                 victory = victory,
@@ -112,6 +116,8 @@ fun ResultScreen(state: AppState, match: Match) {
         }
         // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
         if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
+        // anúncio premiado (#29): só lê o servidor; o botão aparece se ele liberar
+        if (victory && (award?.credits ?: 0) > 0) state.loadAds()
     }
 
     Column(
@@ -240,6 +246,18 @@ fun ResultScreen(state: AppState, match: Match) {
             RematchSection(state, match)
         } else {
             PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
+        }
+        // anúncio premiado opcional (#29): secundário, abaixo da ação principal, nunca prende o resto
+        val credits = award?.credits ?: 0
+        if (state.adWinShows(match, credits, adRef)) {
+            Gap(8)
+            AdButton(state, AdPlace.WIN, t(K.AD_DOUBLE_WIN), t(K.AD_WATCH_PLUS, state.adWinAmount(credits))) {
+                state.watchAd(AdPlace.WIN, adRef, credits)
+            }
+        }
+        state.adNotice(AdPlace.WIN)?.let {
+            Gap(6)
+            HudLabel(it, Naval.amberStrong)
         }
         Gap(8)
         SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }

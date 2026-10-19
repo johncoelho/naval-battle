@@ -13,6 +13,8 @@ playAppUpdate = "2.1.0"
 playBilling = "9.1.0"
 firebaseBom = "33.7.0"
 googleServices = "4.4.2"
+playServicesAds = "25.2.0"
+ump = "4.0.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -24,6 +26,8 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 play-app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "playAppUpdate" }
 play-billing = { module = "com.android.billingclient:billing", version.ref = "playBilling" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+ump = { module = "com.google.android.ump:user-messaging-platform", version.ref = "ump" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

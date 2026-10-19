@@ -24,6 +24,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -39,6 +40,7 @@ import br.com.navalbattle.AppState
 import br.com.navalbattle.data.DailyStatus
 import br.com.navalbattle.design.DoubloonPackArt
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawDoubloon
 import br.com.navalbattle.design.drawDoubloonPack
@@ -68,6 +70,8 @@ fun DailyPopup(state: AppState) {
     val scope = rememberCoroutineScope()
     // dia que o check-in de hoje vai marcar (ou marcou) na trilha
     val todaySlot = if (d.checkedIn) d.streak else d.streak + 1
+    // anúncio premiado (#29): só lê o servidor ao abrir; o SDK só começa no toque
+    LaunchedEffect(Unit) { state.loadAds() }
 
     Box(
         Modifier
@@ -111,6 +115,17 @@ fun DailyPopup(state: AppState) {
             Gap(12)
             if (d.checkedIn) {
                 SecondaryButton(t(K.DAILY_CHECKED), enabled = false, modifier = Modifier.fillMaxWidth()) {}
+                if (state.adAvailable(AdPlace.CHECKIN)) {
+                    Gap(8)
+                    val amount = state.adsStatus?.checkinAmount ?: d.checkinReward
+                    AdButton(state, AdPlace.CHECKIN, t(K.AD_DOUBLE_CHECKIN), t(K.AD_WATCH_PLUS, amount)) {
+                        state.watchAd(AdPlace.CHECKIN)
+                    }
+                }
+                state.adNotice(AdPlace.CHECKIN)?.let {
+                    Gap(6)
+                    HudLabel(it, Naval.amberStrong)
+                }
             } else {
                 PrimaryButton(
                     t(K.DAILY_CHECKIN),
@@ -154,8 +169,20 @@ fun DailyPopup(state: AppState) {
                 }
                 Gap(12)
                 when {
-                    d.challengeClaimed ->
+                    d.challengeClaimed -> {
                         SecondaryButton(t(K.DAILY_CLAIMED), enabled = false, modifier = Modifier.fillMaxWidth()) {}
+                        if (state.adAvailable(AdPlace.CHALLENGE)) {
+                            Gap(8)
+                            val amount = state.adsStatus?.challengeAmount ?: d.challengeReward
+                            AdButton(state, AdPlace.CHALLENGE, t(K.AD_DOUBLE_CHALLENGE), t(K.AD_WATCH_PLUS, amount)) {
+                                state.watchAd(AdPlace.CHALLENGE)
+                            }
+                        }
+                        state.adNotice(AdPlace.CHALLENGE)?.let {
+                            Gap(6)
+                            HudLabel(it, Naval.amberStrong)
+                        }
+                    }
                     state.dailyChallengeDone && !d.checkedIn ->
                         HudLabel(t(K.DAILY_CHALLENGE_LOCKED), Naval.amberStrong)
                     else -> PrimaryButton(

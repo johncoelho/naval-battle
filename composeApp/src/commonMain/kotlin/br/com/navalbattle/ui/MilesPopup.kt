@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -30,6 +31,7 @@ import br.com.navalbattle.AppState
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawCompassRose
+import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import kotlinx.coroutines.launch
@@ -44,6 +46,8 @@ fun MilesPopup(state: AppState) {
     if (!state.milesPopup) return
     val m = state.miles ?: return
     val scope = rememberCoroutineScope()
+    // anúncio premiado (#29): o servidor diz se a milha por anúncio vale agora
+    LaunchedEffect(m.miles) { if (m.miles < 1) state.loadAds() }
 
     Box(
         Modifier
@@ -111,6 +115,17 @@ fun MilesPopup(state: AppState) {
                     HudLabel(t(K.MILES_CARD_SUB), Naval.muted)
                 }
                 CoinLabel(m.packPrice.toString(), style = NavalType.mono)
+            }
+            if (m.miles < 1 && state.adAvailable(AdPlace.MILE)) {
+                Gap(10)
+                AdButton(state, AdPlace.MILE, t(K.AD_EARN_MILE), t(K.AD_WATCH)) { state.watchAd(AdPlace.MILE) }
+            } else if (m.miles < 1 && state.adMileLimit) {
+                Gap(10)
+                HudLabel(t(K.AD_LIMIT), Naval.muted)
+            }
+            state.adNotice(AdPlace.MILE)?.let {
+                Gap(6)
+                HudLabel(it, Naval.amberStrong)
             }
             state.milesNotice?.let {
                 Gap(10)

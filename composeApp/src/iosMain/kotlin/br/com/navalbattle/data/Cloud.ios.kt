@@ -659,6 +659,43 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(o.intOr("doubloons", 0))
     }
 
+    // anúncio premiado (#29): o servidor devolve tudo desligado para "ios"; os métodos existem
+    // para o contrato ficar igual nas duas plataformas
+    actual suspend fun adsStatus(session: Session, platform: String): CloudResult<AdsStatus> = call {
+        val json = post("/rest/v1/rpc/ads_status", mapOf("p_platform" to platform), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            AdsStatus(
+                enabled = (o["enabled"] as? Boolean) ?: false,
+                testAds = (o["test_ads"] as? Boolean) ?: true,
+                winCan = (o["win_can"] as? Boolean) ?: false,
+                winCap = o.intOr("win_cap", 0),
+                checkinCan = (o["checkin_can"] as? Boolean) ?: false,
+                checkinAmount = o.intOr("checkin_amount", 0),
+                challengeCan = (o["challenge_can"] as? Boolean) ?: false,
+                challengeAmount = o.intOr("challenge_amount", 0),
+                mileCan = (o["mile_can"] as? Boolean) ?: false,
+                mileAmount = o.intOr("mile_amount", 0),
+                mileLimit = (o["mile_limit"] as? Boolean) ?: false
+            )
+        )
+    }
+
+    actual suspend fun adRewardStart(session: Session, place: String, ref: String?, amount: Int?): CloudResult<AdStart> = call {
+        val body = mutableMapOf<String, Any?>("p_place" to place)
+        if (ref != null) body["p_ref"] = ref
+        if (amount != null) body["p_amount"] = amount
+        val json = post("/rest/v1/rpc/ad_reward_start", body, token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(AdStart(o.strOr("status", "off"), o["vale"] as? String, o.intOr("amount", 0)))
+    }
+
+    actual suspend fun adRewardStatus(session: Session, vale: String): CloudResult<String> = call {
+        val json = post("/rest/v1/rpc/ad_reward_status", mapOf("p_vale" to vale), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(o.strOr("status", "unknown"))
+    }
+
     actual suspend fun milesStatus(session: Session): CloudResult<MilesStatus> = call {
         val json = post("/rest/v1/rpc/miles_status", emptyMap<String, Any?>(), token = session.accessToken)
         val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()

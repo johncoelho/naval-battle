@@ -36,7 +36,12 @@ import androidx.compose.material3.Text
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawAbilityIcon
+import br.com.navalbattle.AppState
 import br.com.navalbattle.game.Ability
+import br.com.navalbattle.game.AdPhase
+import br.com.navalbattle.game.AdPlace
+import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 import br.com.navalbattle.game.Callout
 import br.com.navalbattle.game.Tone
 import kotlinx.coroutines.delay
@@ -113,6 +118,28 @@ fun SecondaryButton(
             )
         }
     }
+}
+
+/**
+ * Botão de anúncio premiado (#29): o [SecondaryButton] de sempre (título em cima à esquerda,
+ * legenda embaixo à direita), abaixo da ação principal. Enquanto carrega ou confirma, a legenda
+ * vira "Carregando anúncio…" / "Confirmando o prêmio…" e o botão não aceita outro toque.
+ * Sem token novo.
+ */
+@Composable
+fun AdButton(state: AppState, place: AdPlace, title: String, subtitle: String, onClick: () -> Unit) {
+    val phase = state.adPhase(place)
+    SecondaryButton(
+        title,
+        subtitle = when (phase) {
+            AdPhase.LOADING -> t(K.AD_LOADING)
+            AdPhase.CONFIRMING -> t(K.AD_CONFIRMING)
+            AdPhase.IDLE -> subtitle
+        },
+        enabled = phase == AdPhase.IDLE,
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick
+    )
 }
 
 /**

@@ -42,6 +42,11 @@
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />
 
+        <!-- AdMob (#29): App ID público. Sem ele o SDK derruba o app ao abrir -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-4691964664970287~5089211464" />
+
         <receiver
             android:name=".data.DailyReminderReceiver"
             android:exported="false">

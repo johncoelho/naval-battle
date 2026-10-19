@@ -241,11 +241,25 @@ class Match(
         return true
     }
 
+    /**
+     * Vitória por ausência do outro (#29): ele saiu, caiu ou ficou fora além do prazo. A vitória
+     * conta, mas não dá o botão de dobrar dobrões por anúncio.
+     */
+    var wonByAbsence by mutableStateOf(false)
+        private set
+
     /** O adversário deixou a partida: quem ficou leva a vitória. */
     fun abandon(winnerSide: Side) {
         if (phase == Phase.RESULT) return
+        if (winnerSide == mySide) wonByAbsence = true
         finish(winnerSide)
     }
+
+    /**
+     * Id desta partida no aparelho: referência do "dobrar dobrões" contra a IA (cada vitória
+     * dobra uma vez). Usa o sorteio padrão, nunca o [random] da partida (não muda o jogo).
+     */
+    val localId: String = buildString { repeat(32) { append("0123456789abcdef"[Random.Default.nextInt(16)]) } }
 
     /**
      * Marcado quando ESTE aparelho ficou 60s em segundo plano numa partida online

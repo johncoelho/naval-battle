@@ -30,6 +30,8 @@ import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.BuyOutcome
 import br.com.navalbattle.data.DobroesStoreStatus
 import br.com.navalbattle.data.StoreBilling
+import br.com.navalbattle.data.AdsStatus
+import br.com.navalbattle.data.RewardedAds
 import br.com.navalbattle.data.StoreProduct
 import br.com.navalbattle.data.CloudApi
 import br.com.navalbattle.data.MilesStatus
@@ -78,6 +80,10 @@ import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
 import br.com.navalbattle.game.Ability
+import br.com.navalbattle.game.AdPhase
+import br.com.navalbattle.game.AdPlace
+import br.com.navalbattle.game.AdRules
+import br.com.navalbattle.game.AdShowOutcome
 import br.com.navalbattle.game.DoubloonPack
 import br.com.navalbattle.game.Badge
 import br.com.navalbattle.game.EarnedBadge
@@ -153,6 +159,10 @@ internal fun screenForPushKind(kind: String): Screen? = when (kind) {
 
 /** Chave (no Prefs do aparelho) dos tokens de dobrões já somados (#15). */
 private const val DELIVERED_KEY = "dobroes_delivered"
+
+/** Espera da confirmação do Google depois do anúncio (#29): 10 consultas a cada 2 s, cerca de 20 s. */
+private const val AD_CONFIRM_TRIES = 10
+private const val AD_CONFIRM_STEP_MS = 2000L
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
@@ -1140,6 +1150,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         // momento em que o comandante está engajado: pede a notificação aqui, não na abertura
         if (profile.reminderOn) DailyReminder.requestPermission()
         scheduleReminder()
+        // o "dobrar check-in" (#29) só existe depois do check-in de hoje
+        loadAds()
     }
 
     suspend fun claimDailyChallenge() {
@@ -1157,6 +1169,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         profile.grantCredits(pay)
         daily = d.copy(challengeClaimed = true)
         if (pay > 0) dailyNotice = t(K.DAILY_GOT, pay)
+        loadAds()
     }
 
     fun closeDailyPopup() {
@@ -1257,6 +1270,150 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         } else {
             miles = m.copy(miles = after)
             milesNotice = t(K.MILES_BOUGHT, m.packSize)
+        }
+    }
+
+    // ---------------- anúncio premiado opcional (#29) ----------------
+
+    private val rewardedAds = RewardedAds()
+
+    /** O que cada lugar ainda pode hoje (servidor). Nulo: sem conta, iPhone ou servidor fora. */
+    var adsStatus by mutableStateOf<AdsStatus?>(null)
+        private set
+
+    private var adPhases by mutableStateOf<Map<AdPlace, AdPhase>>(emptyMap())
+    private var adNotices by mutableStateOf<Map<AdPlace, String>>(emptyMap())
+
+    /** Vitórias já dobradas (ou com o prêmio a caminho) nesta sessão: o botão some daquela tela. */
+    private var adWinsDone by mutableStateOf<Set<String>>(emptySet())
+
+    fun adPhase(place: AdPlace): AdPhase = adPhases[place] ?: AdPhase.IDLE
+
+    fun adNotice(place: AdPlace): String? = adNotices[place]
+
+    fun clearAdNotice(place: AdPlace) {
+        adNotices = adNotices - place
+    }
+
+    /** O servidor libera este lugar agora (ou o fluxo dele já está andando). */
+    fun adAvailable(place: AdPlace): Boolean {
+        if (adPhase(place) != AdPhase.IDLE) return true
+        val s = adsStatus ?: return false
+        if (!rewardedAds.supported || !s.enabled) return false
+        return when (place) {
+            AdPlace.WIN -> s.winCan
+            AdPlace.CHECKIN -> s.checkinCan
+            AdPlace.CHALLENGE -> s.challengeCan
+            AdPlace.MILE -> s.mileCan
+        }
+    }
+
+    /** Saldo zero e o limite de anúncio de milha de hoje já acabou: o aviso aparece no lugar do botão. */
+    val adMileLimit: Boolean
+        get() = rewardedAds.supported && adsStatus?.enabled == true && adsStatus?.mileLimit == true &&
+            adPhase(AdPlace.MILE) == AdPhase.IDLE
+
+    /** Referência desta vitória para o "dobrar dobrões": sala no online, id do aparelho contra a IA. */
+    fun adWinRef(m: Match): String =
+        AdRules.winRef(if (m.opponent == Opponent.ONLINE) onlineMatchId else null, m.localId)
+
+    /** Botão de dobrar a vitória: regra do app ([AdRules.winEligible]) e o servidor liberando. */
+    fun adWinShows(m: Match, credits: Int, ref: String): Boolean =
+        ref !in adWinsDone && adAvailable(AdPlace.WIN) && AdRules.winEligible(
+            opponent = m.opponent,
+            victory = m.winner == m.mySide,
+            credits = credits,
+            wonWithoutCombat = m.wonWithoutCombat(m.mySide),
+            wonByAbsence = m.wonByAbsence,
+            forfeitedBySelf = m.forfeitedBySelf
+        )
+
+    /** Dobrões que a vitória pede: os dela, até o teto que o servidor informou hoje. */
+    fun adWinAmount(credits: Int): Int = AdRules.winAmount(credits, adsStatus?.winCap ?: 0)
+
+    /** Só lê o servidor (RPC). O SDK de anúncio não é tocado aqui: só no toque do botão. */
+    suspend fun loadAds() {
+        if (!rewardedAds.supported || profile.currentSession() == null) {
+            adsStatus = null
+            return
+        }
+        adsStatus = (authed { s -> cloud.adsStatus(s, platformName) } as? CloudResult.Ok)?.value
+    }
+
+    /**
+     * Toque num botão de anúncio. Vale no servidor, anúncio (UMP antes, se a região pedir),
+     * espera da confirmação do Google (até ~20 s) e crédito pelo caminho de sempre. Roda no
+     * escopo do app: sair da tela não corta o fluxo nem prende o "Continuar".
+     */
+    fun watchAd(place: AdPlace, ref: String? = null, amount: Int? = null) {
+        if (adPhase(place) != AdPhase.IDLE) return
+        val scope = uiScope ?: return
+        adPhases = adPhases + (place to AdPhase.LOADING)
+        adNotices = adNotices - place
+        scope.launch {
+            try {
+                runAd(place, ref, amount)
+            } finally {
+                adPhases = adPhases - place
+            }
+            loadAds()
+        }
+    }
+
+    private suspend fun runAd(place: AdPlace, ref: String?, amount: Int?) {
+        val session = profile.currentSession() ?: return
+        val start = (authed { s -> cloud.adRewardStart(s, place.code, ref, amount) } as? CloudResult.Ok)?.value
+        val vale = start?.vale
+        if (start == null || start.status != "ok" || vale == null) {
+            if (start?.status == "already" && ref != null) adWinsDone = adWinsDone + ref
+            adNotices = adNotices + (place to t(start?.let { AdRules.startNotice(it.status) } ?: K.AD_UNAVAILABLE))
+            return
+        }
+        val unit = AdRules.unitFor(place, rewardedAds.buildUsesTestAds, adsStatus?.testAds ?: true)
+        val outcome = rewardedAds.show(unit, session.userId, vale)
+        var serverStatus: String? = null
+        if (outcome == AdShowOutcome.EARNED) {
+            // assistiu até o fim: a vitória não volta a oferecer, mesmo se a confirmação atrasar
+            if (ref != null) adWinsDone = adWinsDone + ref
+            adPhases = adPhases + (place to AdPhase.CONFIRMING)
+            serverStatus = waitAdConfirmation(vale)
+        }
+        val k = AdRules.notice(outcome, serverStatus)
+        val text = when {
+            k != null -> t(k)
+            place == AdPlace.MILE -> t(K.AD_MILE_DONE)
+            else -> t(K.DOUBLOON_BOUGHT, start.amount)
+        }
+        adNotices = adNotices + (place to text)
+        if (serverStatus == "applied") {
+            if (place == AdPlace.MILE) loadMiles() else recoverPending()
+        }
+    }
+
+    /** Consulta o vale até o Google confirmar (applied) ou o prazo passar. */
+    private suspend fun waitAdConfirmation(vale: String): String {
+        var last = "pending"
+        repeat(AD_CONFIRM_TRIES) {
+            val st = (authed { s -> cloud.adRewardStatus(s, vale) } as? CloudResult.Ok)?.value
+            if (st != null) last = st
+            if (last == "applied" || last == "expired" || last == "unknown") return last
+            delay(AD_CONFIRM_STEP_MS)
+        }
+        return last
+    }
+
+    var adPrivacyNotice by mutableStateOf<String?>(null)
+        private set
+
+    /** Ajustes: "Privacidade dos anúncios" só aparece com anúncio ligado no servidor. */
+    val adPrivacyShows: Boolean
+        get() = rewardedAds.supported && adsStatus?.enabled == true
+
+    fun openAdPrivacy() {
+        val scope = uiScope ?: return
+        adPrivacyNotice = null
+        scope.launch {
+            if (!rewardedAds.openPrivacyOptions()) adPrivacyNotice = t(K.AD_PRIVACY_NONE)
         }
     }
 
