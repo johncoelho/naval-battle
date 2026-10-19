@@ -1,1 +1,1 @@
-Tela Novidades completa: agora ela mostra todas as versoes desde a 0.26.0, incluindo a 0.27.0 a 0.34.0, cada uma com o resumo do que mudou. Nada muda no jogo.
+Tela Novidades completa: agora ela mostra todas as versoes desde a 0.26.0, incluindo a 0.27.0 a 0.34.0, cada uma com o resumo do que mudou. Correcao interna de testes no iPhone. Nada muda no jogo.

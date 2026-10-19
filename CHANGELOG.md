@@ -9,6 +9,19 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.2] — 2026-10-18 · Correção do teste de Novidades no iPhone (#31)
+
+App 0.34.2 (versionCode 89). Refs #31. Só testes: nenhuma mudança no jogo nem na tela.
+
+### Corrigido
+- **CI do iPhone reprovava** `ReleaseNotesTest.primeiraLinhaEhAMinorInstalada` (0.34.1): no simulador o
+  teste roda dentro do host do XCTest, e `NSBundle.mainBundle` não é o app, então a versão lida caía
+  em "0". A checagem da minor continua valendo no Android (versão do `BuildConfig`) e no
+  `tools/release-check.sh` (Info.plist igual ao versionName). A lista não mudou.
+
+### Commits
+- Correção do teste (Refs #31) e versão 0.34.2, nesta mesma entrada.
+
 ## [0.34.1] — 2026-10-18 · Tela Novidades completa (#31)
 
 App 0.34.1 (versionCode 88). Refs #31. Só app: sem banco, sem Edge, sem mudança no jogo.
