@@ -197,6 +197,9 @@ data class AdsStatus(
 /** Vale de `ad_reward_start`: status (ok | off | limit | not_eligible | already), id e valor. */
 data class AdStart(val status: String, val vale: String?, val amount: Int)
 
+/** Situação do vale (applied | pending | expired | unknown) e o valor creditado de fato. */
+data class AdValeStatus(val status: String, val amount: Int)
+
 /** Compra conferida pelo servidor que ainda não foi somada no saldo deste aparelho. */
 data class DobroesPending(val purchaseToken: String, val doubloons: Int, val premio: Boolean)
 
@@ -563,8 +566,8 @@ expect class CloudApi() {
     /** Pede o vale de um anúncio: [ref] e [amount] só no lugar "win" (o servidor corta no teto). */
     suspend fun adRewardStart(session: Session, place: String, ref: String?, amount: Int?): CloudResult<AdStart>
 
-    /** Situação do vale depois do anúncio: applied | pending | expired | unknown. */
-    suspend fun adRewardStatus(session: Session, vale: String): CloudResult<String>
+    /** Situação do vale depois do anúncio (applied | pending | expired | unknown) e o valor creditado. */
+    suspend fun adRewardStatus(session: Session, vale: String): CloudResult<AdValeStatus>
 
     /** Saldo de milhas (já com a recarga do dia aplicada) e as regras. */
     suspend fun milesStatus(session: Session): CloudResult<MilesStatus>

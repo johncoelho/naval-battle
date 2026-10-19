@@ -35,6 +35,9 @@ versão nenhum botão aparece e o SDK não inicia.
   usam a unidade de teste do Google; debug e `.preview` também, sempre.
 - Ajustes → **"Privacidade dos anúncios"** reabre o consentimento do Google (UMP), só com o anúncio
   ligado. O UMP aparece antes do primeiro anúncio, nunca na abertura.
+- Permissão `com.google.android.gms.permission.AD_ID`, que o SDK injeta, **removida do manifest**
+  (`tools:node="remove"`) enquanto o anúncio está desligado: ligar exige versão nova que a devolva e a
+  declaração de ID de publicidade atualizada na Play.
 - Componente `AdButton` (o `SecondaryButton`, com "Carregando anúncio…" e "Confirmando o prêmio…" na
   legenda), sem token novo. Textos `AD_*` nas três línguas.
 

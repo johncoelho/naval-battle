@@ -239,6 +239,11 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   Multiplatform e no iOS; `-Xskip-metadata-version-check` esconderia incompatibilidade de qualquer
   biblioteca. Decisão do coordenador com o John presente: ficar na maior 25.x que compila (a medição
   inicial apontou 25.3.0; com o código usando o SDK, a 25.3.0 também falhou e ficou a 25.2.0).
+- **18/10 · Permissão `AD_ID` fora do app enquanto o anúncio está desligado** (#29, 0.34.0) — porquê: o
+  SDK injeta a permissão e a Play recusa o envio quando a declaração de ID de publicidade diz "não
+  usa"; a declaração só muda perto da ativação. Consequência: ligar os anúncios exige uma versão nova
+  que devolva a `AD_ID` e a declaração de ID de publicidade/Segurança dos dados atualizada na Play;
+  virar `ads_enabled` sozinho não basta (sem `AD_ID` o anúncio sai com ID de publicidade zerado).
 - **18/10 · Conta de teste de anúncio fora do repositório** (#29) — porquê: o John está na lista da
   Play, não em `manual`, e o repositório é público. QA vem de `allowed_players.source = 'qa'`; o John,
   de `app_config.ads_test_emails`, preenchido direto no banco.

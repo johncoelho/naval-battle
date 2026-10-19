@@ -30,6 +30,7 @@ import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.BuyOutcome
 import br.com.navalbattle.data.DobroesStoreStatus
 import br.com.navalbattle.data.StoreBilling
+import br.com.navalbattle.data.AdValeStatus
 import br.com.navalbattle.data.AdsStatus
 import br.com.navalbattle.data.RewardedAds
 import br.com.navalbattle.data.StoreProduct
@@ -1371,18 +1372,20 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
         val unit = AdRules.unitFor(place, rewardedAds.buildUsesTestAds, adsStatus?.testAds ?: true)
         val outcome = rewardedAds.show(unit, session.userId, vale)
-        var serverStatus: String? = null
+        var confirmed: AdValeStatus? = null
         if (outcome == AdShowOutcome.EARNED) {
             // assistiu até o fim: a vitória não volta a oferecer, mesmo se a confirmação atrasar
             if (ref != null) adWinsDone = adWinsDone + ref
             adPhases = adPhases + (place to AdPhase.CONFIRMING)
-            serverStatus = waitAdConfirmation(vale)
+            confirmed = waitAdConfirmation(vale)
         }
+        val serverStatus = confirmed?.status
         val k = AdRules.notice(outcome, serverStatus)
         val text = when {
             k != null -> t(k)
             place == AdPlace.MILE -> t(K.AD_MILE_DONE)
-            else -> t(K.DOUBLOON_BOUGHT, start.amount)
+            // o que o servidor creditou de fato (o teto do dia pode ter cortado na aplicação)
+            else -> t(K.DOUBLOON_BOUGHT, confirmed?.amount ?: start.amount)
         }
         adNotices = adNotices + (place to text)
         if (serverStatus == "applied") {
@@ -1391,12 +1394,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** Consulta o vale até o Google confirmar (applied) ou o prazo passar. */
-    private suspend fun waitAdConfirmation(vale: String): String {
-        var last = "pending"
+    private suspend fun waitAdConfirmation(vale: String): AdValeStatus {
+        var last = AdValeStatus("pending", 0)
         repeat(AD_CONFIRM_TRIES) {
             val st = (authed { s -> cloud.adRewardStatus(s, vale) } as? CloudResult.Ok)?.value
             if (st != null) last = st
-            if (last == "applied" || last == "expired" || last == "unknown") return last
+            if (last.status == "applied" || last.status == "expired" || last.status == "unknown") return last
             delay(AD_CONFIRM_STEP_MS)
         }
         return last

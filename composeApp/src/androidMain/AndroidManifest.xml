@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- conta do comandante e sincronização da carreira com a base do jogo -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- lembrete diário do Diário de bordo (notificação local, sem push) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- AdMob (#29): o SDK injeta a AD_ID. Fica fora enquanto os anúncios estão desligados: a Play
+         recusa o envio com a declaração de ID de publicidade "não usa". Ligar os anúncios exige
+         uma versão nova sem esta linha e a declaração da Play atualizada -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
     <application
         android:allowBackup="true"
