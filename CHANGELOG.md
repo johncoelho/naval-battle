@@ -9,6 +9,48 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.0] — 2026-10-18 · Anúncios premiados opcionais (preparação, desligados)
+
+App 0.34.0 (versionCode 87). Refs #29. Banco: migração `ads_rewarded_ssv`. Edge nova `ads-reward`
+(versão 1, `verify_jwt` desligado). **Tudo atrás de `app_config.ads_enabled = 'false'`**: nesta
+versão nenhum botão aparece e o SDK não inicia.
+
+### Adicionado
+- **Anúncio premiado em quatro lugares** (só se o jogador tocar): (A) "Dobrar dobrões" no resultado de
+  uma vitória contra a IA ou online que rendeu dobrões (até 150, 2 por dia); (B) "Dobrar check-in"
+  (+25, o bônus de 300 do 7º dia não dobra) e (C) "Dobrar desafio" (+50) no Diário, 1 por dia cada;
+  (D) "Ganhar 1 milha" no aviso de milhas com saldo zero (2 por dia, sem passar do teto). Teto geral
+  de 6 anúncios e 375 dobrões por conta e dia (Brasília). Nada de intersticial, banner nem anúncio na
+  abertura ou na partida.
+- **Servidor decide o prêmio** (`supabase/ads.sql`): `ad_reward_start` grava um vale (15 min) com o
+  valor decidido no servidor; o Google confirma pela verificação no servidor (SSV) na Edge
+  `ads-reward`, que confere a assinatura ECDSA sobre a query crua (DER para r‖s, chaves de
+  `verifier-keys.json` em cache) e chama `apply_ad_reward` (só `service_role`). Crédito uma vez por
+  `transaction_id` e por vale, limites conferidos de novo sob o lock `dobroes:<uid>`. Dobrões entram
+  por `dobroes_purchases` com `kind = 'ad'` (token `ad:<transaction_id>`) e `dobroes_pending`, o
+  mesmo caminho do Prêmio Beta; a milha soma no perfil sem passar de `miles_cap`. Limite contado
+  na aplicação: fechar o anúncio não gasta.
+- `ads_status(plataforma)`: o que cada lugar ainda pode hoje; iPhone sempre desligado. Conta QA
+  (`allowed_players.source = 'qa'`) e e-mails de `app_config.ads_test_emails` (valor só no banco)
+  usam a unidade de teste do Google; debug e `.preview` também, sempre.
+- Ajustes → **"Privacidade dos anúncios"** reabre o consentimento do Google (UMP), só com o anúncio
+  ligado. O UMP aparece antes do primeiro anúncio, nunca na abertura.
+- Componente `AdButton` (o `SecondaryButton`, com "Carregando anúncio…" e "Confirmando o prêmio…" na
+  legenda), sem token novo. Textos `AD_*` nas três línguas.
+
+### Stack (aprovada pelo John em 18/10)
+- `com.google.android.gms:play-services-ads` **25.2.0** e `com.google.android.ump:user-messaging-platform`
+  4.0.0, só no `androidMain`, atrás de `RewardedAds` (`expect/actual`; iPhone vazio). A aprovação
+  citava a 25.5.0, mas a 25.3.0 em diante traz metadata Kotlin 2.3 e o projeto está no Kotlin 2.1.0:
+  a 25.2.0 é a maior que compila sem subir Kotlin nem AGP e sem desligar a checagem de metadata.
+
+### Testes
+- `AdRulesTest` (elegibilidade da vitória, teto de 150 e 205, referência, unidade de teste, avisos,
+  `Match.wonByAbsence`, `Match.localId`) e `PendingCreditsTest` (token `ad:` repetido soma uma vez).
+- Ensaio que desfaz tudo `supabase/tests/ads_ensaio.sql`: callback repetido soma uma vez; vale de
+  outra conta, vencido, usado ou inventado não credita; teto de 150 e de 375; 3ª vitória, 2º check-in
+  e 3ª milha bloqueados; milha só com saldo zero; iPhone desligado; sala online inexistente recusada.
+
 ## [Não lançado] — 2026-10-18 · Correção: compra de dobrões em conta de licença
 
 Sem mudança de app e sem banco. Refs #28.

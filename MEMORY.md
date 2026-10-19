@@ -48,6 +48,13 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Anúncios premiados (#29, 0.34.0):** servidor (`supabase/ads.sql`, migração `ads_rewarded_ssv`),
+  Edge `ads-reward` (versão 1, `verify_jwt` desligado) e app prontos, **desligados**
+  (`ads_enabled = 'false'`). Falta: colar a URL `https://cwtslesnthbenxswdcbv.supabase.co/functions/v1/ads-reward`
+  no SSV dos 4 blocos do AdMob; mensagem GDPR do UMP; e-mail do John em `app_config.ads_test_emails`
+  (só no banco); QA com anúncio de teste (ADS-01 a ADS-18); Play Console ("Contém anúncios", ID de
+  publicidade, Segurança dos dados) longe do pedido de produção; ligar só com o OK do John. SDK
+  25.2.0 (25.3+ exige Kotlin 2.3).
 - **Diagnóstico da conferência de compra (#27, 0.33.1):** Edge `dobroes-verify` registra etapa e motivo
   em Logs da Edge, sem segredo. Prova: log de `secret_ausente` após o deploy; a compra de teste (DOB-07)
   segue com o John (secret e licença).

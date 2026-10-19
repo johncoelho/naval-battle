@@ -241,6 +241,34 @@ PR/commit de #15 (um por bloco). Compra real de teste nunca é cobrada: a Play m
 | DOB-22 | P0 | Licença QA01 (conta de teste da lista "Licenca QA"), app 0.33.3 ou mais novo, `beta_store_enabled = 'true'`: comprar cada um dos 4 pacotes da vitrine (origem `vitrine`), 1 vez cada | Cada pacote credita uma vez (`credited`): o saldo sobe a quantidade do pacote; a Play consome a compra (não fica pendente); nenhuma cobrança |
 | DOB-23 | P0 | Reabrir a aba Dobrões com a compra presa da Bolsa de 18/10 (QA01, `dobroes_bolsa`, não consumida na Play). Depois, reabrir de novo | Credita 500 (`kind = test`) uma vez ao reabrir; reabrir de novo não soma. Se não entrar, conferir a Play antes de 3 dias (a Play devolve sozinha depois disso) |
 
+### 12d. Anúncios premiados opcionais (#29)
+
+Pré-requisitos: `ads_enabled = 'true'` só durante o teste (volta a `'false'` no fim, sempre);
+URL da Edge `ads-reward` no SSV dos 4 blocos do AdMob; QA01/QA02 em `allowed_players` com
+`source = 'qa'` (anúncio de teste, rótulo "Test Ad"). **Nunca tocar em anúncio real** (clique
+inválido suspende a conta AdMob). Servidor: `supabase/tests/ads_ensaio.sql` (bloco que desfaz).
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| ADS-01 | P0 | `ads_enabled = 'false'`: vencer, abrir o Diário, ficar sem milha | Nenhum botão de anúncio aparece |
+| ADS-02 | P0 | Ligado, vitória contra a IA que rendeu 130: tocar "DOBRAR DOBRÕES" e assistir até o fim | +130 uma vez ("130 dobrões entraram no seu cofre"); o botão some daquela tela |
+| ADS-03 | P0 | Vitória que rendeu 205: dobrar | +150 (`ads_win_double_cap`) |
+| ADS-04 | P0 | Duas vitórias já dobradas hoje; vencer a terceira | Sem botão de dobrar |
+| ADS-05 | P0 | Derrota, 2 jogadores, rede local, vitória sem combate, vitória por ausência do outro, online acima de 3 por adversário | Sem botão de anúncio |
+| ADS-06 | P0 | Check-in feito: "DOBRAR CHECK-IN" e assistir; repetir no 7º dia | +25; no 7º dia continua +25 (o bônus de 300 não dobra) |
+| ADS-07 | P0 | Desafio resgatado: dobrar | +50; o botão não volta no mesmo dia |
+| ADS-08 | P0 | Saldo de milhas 0: "GANHAR 1 MILHA" e assistir | Saldo 1 (do servidor); entra numa partida online |
+| ADS-09 | P1 | Duas milhas por anúncio hoje e saldo 0 de novo; abrir o aviso | "Limite de anúncios de hoje atingido."; sem botão |
+| ADS-10 | P0 | Qualquer botão: fechar o anúncio antes do fim | "Anúncio fechado antes do fim: sem prêmio desta vez."; nada credita; o limite não diminui |
+| ADS-11 | P1 | Sem rede ou sem anúncio disponível: tocar o botão | "Nenhum anúncio disponível agora…", sem popup de erro; "Continuar" funciona |
+| ADS-12 | P0 | Servidor: `apply_ad_reward` sem assinatura (Edge), com vale de outra conta, vencido, usado ou inventado | Nada credita (`403`, `user_mismatch`, `expired`, `used`, `unknown_vale`); log da Edge só com etapa e motivo |
+| ADS-13 | P0 | Servidor: o mesmo `transaction_id` duas vezes | Crédito uma vez (`already`); `dobroes_pending` com um token `ad:` |
+| ADS-14 | P1 | Máximo do dia (6 anúncios ou 375 dobrões) | Nenhum botão; à meia-noite de Brasília os limites voltam |
+| ADS-15 | P0 | QA01/QA02 ou o build `.preview`: abrir qualquer anúncio | Anúncio de teste do Google ("Test Ad") |
+| ADS-16 | P2 | Região que exige consentimento (VPN UE): primeiro anúncio; depois Ajustes → "Privacidade dos anúncios" | Formulário do UMP antes do anúncio; o botão dos Ajustes o reabre (no Brasil: "Sem ajuste de privacidade…") |
+| ADS-17 | P1 | Anúncio assistido com a confirmação atrasada (> 20 s) | "O prêmio entra assim que o Google confirmar."; o crédito aparece na próxima abertura, sem somar duas vezes |
+| ADS-18 | P1 | iPhone: vencer, ficar sem milhas | Sem botão de anúncio |
+
 ### 12c. Conferência de instalação por push (#26)
 
 Conferência da lista da Play, só para o John (indicador; o número oficial é o do Play Console).

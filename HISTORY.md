@@ -226,6 +226,25 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   (AdMob)** aprovada pelo John; só anúncio que o jogador escolhe ver, para ganhar algo ou multiplicar
   um prêmio (nada de anúncio forçado nem banner). Recompensa decidida pelo servidor (SSV). Conta
   AdMob criada por ele; app e blocos configurados; `app-ads.txt` na raiz `johncoelho.github.io`.
+- **18/10 · Anúncios premiados implementados atrás de `ads_enabled = 'false'`** (#29, 0.34.0) — porquê:
+  o servidor e o app sobem juntos e testáveis com anúncio de teste, e o John liga quando a Play Console
+  ("Contém anúncios", Segurança dos dados) estiver pronta, longe do pedido de produção. Correções do
+  Tech Lead aplicadas: Edge `ads-reward` com `verify_jwt` desligado (o Google não manda JWT; a
+  segurança é a assinatura); assinatura conferida sobre a query crua; o vale guarda o valor no
+  servidor; limite contado na aplicação (fechar o anúncio não gasta); `dobroes_purchases` reaproveitada
+  com `kind = 'ad'` (um caminho de crédito só); milha sob o lock e com `miles_cap`; SDK e UMP só depois
+  do primeiro toque; unidade de teste em debug, `.preview`, QA e na conta do John.
+- **18/10 · `play-services-ads` 25.2.0 em vez da 25.5.0** (#29) — porquê: da 25.3.0 em diante o SDK traz
+  metadata Kotlin 2.3 e não compila com o Kotlin 2.1.0 do projeto. Subir Kotlin mexe em Compose
+  Multiplatform e no iOS; `-Xskip-metadata-version-check` esconderia incompatibilidade de qualquer
+  biblioteca. Decisão do coordenador com o John presente: ficar na maior 25.x que compila (a medição
+  inicial apontou 25.3.0; com o código usando o SDK, a 25.3.0 também falhou e ficou a 25.2.0).
+- **18/10 · Conta de teste de anúncio fora do repositório** (#29) — porquê: o John está na lista da
+  Play, não em `manual`, e o repositório é público. QA vem de `allowed_players.source = 'qa'`; o John,
+  de `app_config.ads_test_emails`, preenchido direto no banco.
+- **18/10 · Vitória por ausência do outro não dobra** (#29) — porquê: a SPEC exclui; `Match.wonByAbsence`
+  marca o `abandon` do lado que ficou. Ref da vitória: id gerado no aparelho contra a IA (o servidor
+  limita a 2 por dia e 150) e id da sala no online (o servidor confere participação e tiro).
 - **18/10 · Loja beta com as duas opções** (#28): prêmio diário grátis resgatado no servidor (sem
   Play) e pacotes pagos com cobrança real para os testadores; lista de licença só com as contas QA.
 - **18/10 · Edge `dobroes-verify` redeployada com `p_origin`** (#28, correção sem versão de app) —

@@ -1,1 +1,1 @@
-Testadores: o Premio Beta agora aparece tambem no iPhone, na aba Dobroes. Toque em Pegar o Premio e ganhe 6.500 dobroes, uma vez por dia, direto no servidor. No iPhone os pacotes pagos seguem ocultos. Sem mudanca para quem nao testa.
+Preparacao para anuncios premiados opcionais: o jogador escolhe assistir um anuncio para dobrar os dobroes de uma vitoria, o check-in ou o desafio do dia, ou ganhar 1 milha quando acabarem. O recurso chega desligado nesta versao e nao aparece para ninguem ainda. Nada de anuncio forcado, banner ou anuncio durante a partida.

@@ -65,6 +65,7 @@ Rótulos passam por `HudLabel`, que aplica caixa alta — não escreva `.upperca
 |---|---|
 | `PrimaryButton` | a ação principal da tela; fundo âmbar, no máximo um por tela; título em cima à esquerda, legenda embaixo à direita (nunca lado a lado) |
 | `SecondaryButton` | alternativas e navegação; contorno, fundo de superfície |
+| `AdButton` | anúncio premiado opcional (#29): o `SecondaryButton` abaixo da ação principal; título (ex.: "DOBRAR DOBRÕES") em cima à esquerda, legenda "Assistir anúncio · +n" embaixo à direita, que vira "Carregando anúncio…" / "Confirmando o prêmio…" com o botão travado. Sem token novo |
 | `ModeChip` | escolha entre poucas opções lado a lado |
 | `UnderlineTab` | abas de navegação (Loja, Placar): texto + sublinhado âmbar de 2 dp |
 | `Shortcut` (deque) | atalho com ícone de traço, selo numérico `danger` circular e etiqueta âmbar |

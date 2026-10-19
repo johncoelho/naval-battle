@@ -419,9 +419,10 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Login Google (Android) | Credential Manager (`androidx.credentials` 1.3.0 + `googleid` 1.1.1) | aprovado em 0.11 |
 | Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
 | Push (Android) | Firebase Cloud Messaging (`firebase-bom` 33.7.0, plugin `google-services` 4.4.2 só se houver `google-services.json`) | aprovado em 0.60 |
+| Anúncio premiado (Android) | Google Mobile Ads (`play-services-ads` 25.2.0) e consentimento UMP (`user-messaging-platform` 4.0.0), só anúncio premiado opcional; SDK e UMP só depois do primeiro toque. 25.2.0 é a maior que compila com o Kotlin 2.1.0 (25.3+ trazem metadata Kotlin 2.3) | aprovado pelo John em 18/10 (#29) |
 | Compras (Android) | Google Play Billing (`com.android.billingclient:billing` 9.1.0): lista produtos, abre a folha de compra e lê o que já foi comprado. O crédito é decidido no servidor | aprovado pelo John em 17/10 (#15) |
 | Publicação | Gradle Play Publisher 3.13.0 (faixa Alpha do teste fechado) | aprovado em 0.16 |
-| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check` e `dobroes-verify` (Deno) | `supabase/` |
+| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check`, `dobroes-verify` e `ads-reward` (Deno) | `supabase/` |
 | Site | HTML estático no GitHub Pages | `site/`, `pages.yml` |
 | Testes | `kotlin.test` em `composeApp/src/commonTest` (JVM e simulador iOS) | aprovado em 10/10/2026 |
 | CI | GitHub Actions: `android.yml` (trava de release + testes + APK + `.aab` + Play), `ios.yml` (testes no simulador + framework + `.ipa`), `pages.yml` | JDK 21 Temurin |
@@ -450,6 +451,7 @@ supabase/*.sql      fonte da verdade do banco, um arquivo por domínio
 supabase/functions/push/   Edge Function que envia FCM
 supabase/functions/push-check/     Edge Function: conferência de instalação (validate_only, sem entrega)
 supabase/functions/dobroes-verify/ Edge Function: confere a compra na Play e manda o crédito ao banco
+supabase/functions/ads-reward/     Edge Function: callback SSV do AdMob (assinatura do Google, sem JWT)
 site/               landing page e página de beta tester
 docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 .claude/skills/     processos repetíveis (ciclo de desenvolvimento, release, QA, …)
@@ -466,6 +468,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
 | `PushMessaging` | token de push | Firebase Messaging | sem push (APNs pendente) |
 | `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes, a aba mostra só o Prêmio Beta (#30) |
+| `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque (`supported = true`) | vazio (`supported = false`) |
 | `isTestLabDevice` | aparelho dos testes automáticos do Google | `Settings.System` `firebase.test.lab` | sempre falso |
 | `DailyReminder` | lembrete diário local | `AlarmManager` | `UNUserNotificationCenter` |
 | `openStoreListing`, `shareStoreListing` | loja e compartilhar | Play Store | página `#ios` do site |
@@ -543,6 +546,12 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   unique por conta e dia); a compra da vitrine manda `origem = "vitrine"` à Edge; sem origem é o
   caminho legado do Prêmio pela Play (apps 0.33.0 a 0.33.2). `dobroes_gate_licenca()` lista os
   testadores sem o 0.33.3, antes de tirar alguém da lista de teste de licença.
+- Anúncio premiado (`supabase/ads.sql`, #29): `ads_status`, `ad_reward_start` (vale de 15 min com o
+  valor decidido no servidor), `ad_reward_status` e `apply_ad_reward` (só `service_role`, chamada pela
+  Edge `ads-reward`). A Edge tem `verify_jwt` desligado de propósito: quem chama é o Google, e a
+  segurança é a assinatura ECDSA sobre a query crua. Dobrões pelo mesmo `dobroes_pending`
+  (`kind = 'ad'`); milha direto no perfil, até `miles_cap`. Interruptor `ads_enabled` (nasce
+  `'false'`); números em `app_config` (`ads_*`); `ads_test_emails` só no banco.
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.
 
 ### Versão, release e entrega
