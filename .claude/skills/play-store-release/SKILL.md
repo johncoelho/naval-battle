@@ -118,6 +118,11 @@ values ('<versionName>', <versionCode>, '<pt>', '<en>', '<es>', true);
   — on iPhone the table alone decides, and the button opens the site's `#ios` section.
 - Notes: user-facing, 1–3 short sentences per language (accents allowed here, unlike the
   Play release notes file).
+- **Minor nova (0.X.0)**: also add the screen's line, in the same push. Key `RN_V0X00` with
+  pt/en/es in `i18n/Strings.kt` (copy the minor's `app_releases` row) and
+  `ReleaseNote("0.X.0", K.RN_V0X00)` at the top of `releaseNotes` in
+  `ui/ReleaseNotesScreen.kt`. Patch releases get no line. `ReleaseNotesTest` fails until
+  this is done (issue #31: the screen stayed on 0.25.0 for nine minors).
 
 ## 5. Manual upload path (fallback only — normally not needed anymore)
 

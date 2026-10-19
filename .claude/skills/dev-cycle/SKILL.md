@@ -73,6 +73,10 @@ bash "<scratchpad>/preview.sh" :composeApp:compileKotlinIosSimulatorArm64
 - `iosApp/iosApp/Info.plist`: `CFBundleShortVersionString` igual ao `versionName`.
 - `composeApp/src/main/play/release-notes/pt-BR/default.txt`: o que o jogador nota, ≤ 500
   caracteres, **sem acento**.
+- **Minor nova (0.X.0)**: acrescentar `RN_V0X00` em `i18n/Strings.kt` (pt/en/es, textos da linha
+  de `app_releases` da minor) e a linha `ReleaseNote("0.X.0", K.RN_V0X00)` no topo de
+  `releaseNotes` em `ui/ReleaseNotesScreen.kt`, na ordem decrescente. Sem isso a tela Novidades
+  fica parada na versão antiga; `ReleaseNotesTest` quebra e lembra o passo (issue #31).
 
 ## 5. Documentação (mesmo commit)
 
