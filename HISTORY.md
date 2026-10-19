@@ -258,6 +258,11 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   conferência de 18/10 afirmou "versão 5 igual ao repositório" sem comparar o código; isso estava
   errado, e o erro fica registrado. Corrigido com `supabase functions deploy` (versão 6) e diff vazio
   contra o repositório. Proposta do desenho, aguarda OK do John: depois de qualquer mudança em Edge, conferir implantado = repositório.
+- **19/10 · iPhone não bloqueia a esteira**: o iOS só é compilado para adiantar; passou no QA do
+  Android, a issue sai da fila. Teste em iPhone fica no backlog (John).
+- **19/10 · Anúncios em modo "teste"**: `ads_enabled` ganha o valor `'test'` (liga só para as contas de
+  anúncio de teste: QA e `ads_test_emails`), para o QA testar sem jogador real ver botão. Ligado em
+  `'test'` agora; `'true'` (todos) só com o OK do John e a versão com a AD_ID de volta.
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo

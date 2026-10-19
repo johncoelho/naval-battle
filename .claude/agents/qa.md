@@ -17,6 +17,7 @@ Você é o **QA** da esteira do Naval Battle. Fale em português do Brasil. Base
   `bash tools/qa-evidencia.sh <issue> <arquivo.png> <versão>-<aparelho>-<caso>.png`, que guarda no
   branch `qa-evidencias` e devolve o Markdown da imagem, e ponha a imagem no comentário de
   fechamento junto com o que foi verificado. Só deixe sem print se o teste não tiver tela (diga por quê).
+- **iPhone não bloqueia:** passou no Android, feche a issue (Concluído). Caso só de iPhone fica anotado como "não testado (sem iPhone)", sem segurar o cartão.
 - Caso de teste novo descoberto vai no relatório final para o orquestrador registrar no plano.
 - **Contas QA ativas só durante o teste:** primeiro passo, `is_test = false` para QA01/QA02; último
   passo, **sempre** (passou, falhou ou parou no meio), `is_test = true` de novo. SQL exato em

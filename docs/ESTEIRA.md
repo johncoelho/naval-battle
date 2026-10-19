@@ -50,6 +50,9 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
   lote e o resto segue.
 - Feedback de jogador vira issue, mas aprovar, recusar ou recompensar continua sendo do John.
 - Nada em `.github/workflows`, stack nova ou dinheiro sem o OK dele.
+- **iPhone não bloqueia** (decisão do John, 19/10): o iOS só é compilado para adiantar; o teste no
+  iPhone fica para depois. Item que passou no QA do **Android** sai da fila (Concluído), mesmo sem
+  teste em iPhone.
 - Item em **Em andamento** há mais de 3 horas sem commit: a rodada seguinte retoma ou devolve à Fila.
 
 ## Rodada (skill `esteira`, agendada)

@@ -89,6 +89,19 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 revoke all on function public.ads_test_account(uuid) from public, anon, authenticated;
 
+-- Anúncio ligado para esta conta. ads_enabled = 'true' liga para todos; 'test' liga só para as
+-- contas de anúncio de teste (QA e ads_test_emails), para o QA testar sem nenhum jogador real ver
+-- botão (decisão do John, 19/10); qualquer outro valor desliga.
+create or replace function public.ads_on_for(p_user uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select case coalesce((select value from public.app_config where key = 'ads_enabled'), 'false')
+           when 'true' then true
+           when 'test' then p_user is not null and public.ads_test_account(p_user)
+           else false
+         end;
+$$;
+revoke all on function public.ads_on_for(uuid) from public, anon, authenticated;
+
 -- o que já foi aplicado hoje: total de anúncios, dobrões e por lugar
 create or replace function public.ads_used_today(p_user uuid, p_place text default null)
 returns integer language sql stable security definer set search_path = public as $$
@@ -162,7 +175,7 @@ declare
   cur integer;
   mile_amt integer := public.config_int('ads_mile_amount', 1);
 begin
-  on_ := uid is not null and public.ads_on() and coalesce(p_platform, 'android') = 'android';
+  on_ := uid is not null and public.ads_on_for(uid) and coalesce(p_platform, 'android') = 'android';
   if not on_ then
     return query select false, false, false, 0, false, 0, false, 0, false, 0, false;
     return;
@@ -204,7 +217,7 @@ declare
   room_id uuid;
   v uuid;
 begin
-  if uid is null or not public.ads_on() then
+  if uid is null or not public.ads_on_for(uid) then
     return query select 'off'::text, null::uuid, 0; return;
   end if;
   if p_place not in ('win', 'checkin', 'challenge', 'mile') then
@@ -321,7 +334,7 @@ begin
   end if;
   if v.status = 'applied' then return query select 'used'::text, 0; return; end if;
   if v.expires_at < now() then return query select 'expired'::text, 0; return; end if;
-  if not public.ads_on() then return query select 'off'::text, 0; return; end if;
+  if not public.ads_on_for(v.user_id) then return query select 'off'::text, 0; return; end if;
   if not public.ads_room(v.user_id, v.place)
      or (v.place <> 'mile' and public.ads_ref_used(v.user_id, v.place, v.ref)) then
     return query select 'limit'::text, 0; return;
