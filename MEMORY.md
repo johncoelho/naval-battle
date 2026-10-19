@@ -48,6 +48,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Anúncio de teste no emulador (#32, 0.34.3):** conta de teste (`'test'`) recebe o bloco real só em emulador,
+  para o SSV creditar no QA. Pré-requisito: colar o SSV nos 4 blocos (ver #29).
 - **Anúncios premiados (#29, 0.34.0):** servidor (`supabase/ads.sql`, migração `ads_rewarded_ssv`),
   Edge `ads-reward` (versão 1, `verify_jwt` desligado) e app prontos, **desligados**
   (`ads_enabled = 'false'`). Falta: colar a URL `https://cwtslesnthbenxswdcbv.supabase.co/functions/v1/ads-reward`
@@ -94,6 +96,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 
+- 19/10 · Conta de teste ganha bloco real só em emulador (#32, 0.34.3): o exemplo não dispara o SSV.
 - 18/10 · iPhone mostra só o Prêmio Beta (#30, 0.33.4): pacotes ocultos no iPhone, a aba não fecha mais.
   Aprovado pelo John na issue.
 - 18/10 · Prêmio Beta sai da Play (#28, 0.33.3): RPC `claim_premio_beta`; a vitrine beta nasce desligada

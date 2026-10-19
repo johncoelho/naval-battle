@@ -263,6 +263,11 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **19/10 · Anúncios em modo "teste"**: `ads_enabled` ganha o valor `'test'` (liga só para as contas de
   anúncio de teste: QA e `ads_test_emails`), para o QA testar sem jogador real ver botão. Ligado em
   `'test'` agora; `'true'` (todos) só com o OK do John e a versão com a AD_ID de volta.
+- **19/10 · Conta de teste recebe bloco real só em emulador** (#32, 0.34.3) — porquê: o bloco de
+  exemplo não dispara o SSV, então o QA nunca via o vale `applied`. No emulador o Google já trata o
+  aparelho como teste (sem clique real), e o bloco real é a única forma de o SSV creditar. Aparelho
+  físico segue com o exemplo, e a produção ('true') não muda. Desenho aprovado pelo Tech Lead.
+  Pré-requisito: a URL do SSV colada nos 4 blocos do AdMob (pendente do John).
 - **10/10 · Ambiente de teste do banco (branch do Supabase) adiado** — por ora, testes que desfazem
   tudo em produção (skill `supabase-change`).
 - **10/10 · Vitória sem combate não rende carreira** (#6, 0.31.0): combate = o vencedor deu pelo

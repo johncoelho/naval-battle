@@ -9,6 +9,31 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.3] — 2026-10-19 · Anúncio de teste credita no emulador (#32)
+
+App 0.34.3 (versionCode 90). Refs #32. Só app: sem banco, sem Edge, sem mudança no jogo dos jogadores
+(anúncios seguem desligados em produção).
+
+### Corrigido
+- **Anúncio premiado de conta de teste não creditava** (#32): no QA a conta de teste sempre recebia o
+  bloco de exemplo do Google, que não dispara a confirmação no servidor (SSV), então o vale ficava
+  `pending`. Agora, com `ads_enabled = 'test'`, a conta de teste recebe o bloco real do lugar **só em
+  emulador** (o Google trata emulador como aparelho de teste, sem clique real). Aparelho físico com
+  conta de teste segue com o exemplo. Debug, `.preview` e a produção (`'true'`) não mudam.
+
+### Alterado
+- `AdRules.unitFor` recebe `emulator`; `AdRules.isEmulatorBuild` com os sinais de emulador do Android
+  (Genymotion incluído). Na dúvida, não é emulador.
+- `RewardedAds.runsOnEmulator`: `expect/actual`. Android lê `android.os.Build`; iOS devolve falso.
+  Sem dependência nova.
+
+### Testes
+- `AdRulesTest`: 16 casos, incluindo a matriz de unidade (debug, produção, conta de teste em emulador e
+  em aparelho) e os sinais de emulador e de aparelho comum.
+
+### Commits
+- Correção (Refs #32) e versão 0.34.3, nesta mesma entrada.
+
 ## [0.34.2] — 2026-10-18 · Correção do teste de Novidades no iPhone (#31)
 
 App 0.34.2 (versionCode 89). Refs #31. Só testes: nenhuma mudança no jogo nem na tela.
