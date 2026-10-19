@@ -68,14 +68,49 @@ class AdRulesTest {
 
     @Test
     fun unidadeDeTesteEmDebugEContaDeTeste() {
-        assertEquals(AdRules.TEST_REWARDED_UNIT, AdRules.unitFor(AdPlace.MILE, buildTest = true, serverTest = false))
-        assertEquals(AdRules.TEST_REWARDED_UNIT, AdRules.unitFor(AdPlace.WIN, buildTest = false, serverTest = true))
-        assertEquals(
-            "ca-app-pub-4691964664970287/4873589041",
-            AdRules.unitFor(AdPlace.MILE, buildTest = false, serverTest = false)
-        )
+        // debug e .preview: sempre exemplo, mesmo em emulador e conta comum
+        assertEquals(AdRules.TEST_REWARDED_UNIT, AdRules.unitFor(AdPlace.MILE, buildTest = true, serverTest = false, emulator = false))
+        assertEquals(AdRules.TEST_REWARDED_UNIT, AdRules.unitFor(AdPlace.MILE, buildTest = true, serverTest = true, emulator = true))
         // um bloco real por lugar, todos diferentes
         assertEquals(4, AdRules.REAL_UNITS.values.toSet().size)
+    }
+
+    @Test
+    fun contaComumRecebeBlocoRealEmQualquerAparelho() {
+        // produção ('true'): bloco real do lugar, emulador ou não
+        assertEquals(
+            "ca-app-pub-4691964664970287/4873589041",
+            AdRules.unitFor(AdPlace.MILE, buildTest = false, serverTest = false, emulator = false)
+        )
+        assertEquals(
+            "ca-app-pub-4691964664970287/4873589041",
+            AdRules.unitFor(AdPlace.MILE, buildTest = false, serverTest = false, emulator = true)
+        )
+    }
+
+    @Test
+    fun contaDeTesteSoGanhaBlocoRealEmEmulador() {
+        // QA01/QA02 no emulador: bloco real de cada lugar (SSV dispara)
+        for (lugar in AdPlace.values()) {
+            assertEquals(AdRules.REAL_UNITS.getValue(lugar), AdRules.unitFor(lugar, buildTest = false, serverTest = true, emulator = true))
+        }
+        // aparelho físico com conta de teste: exemplo, nunca o bloco real
+        for (lugar in AdPlace.values()) {
+            assertEquals(AdRules.TEST_REWARDED_UNIT, AdRules.unitFor(lugar, buildTest = false, serverTest = true, emulator = false))
+        }
+    }
+
+    @Test
+    fun sinaisDeEmuladorDoAndroid() {
+        // emuladores comuns
+        assertTrue(AdRules.isEmulatorBuild("google/sdk_gphone64_arm64/emu64a:14/UE1A/eng:userdebug/test-keys", "sdk_gphone64_arm64", "ranchu", "sdk_gphone64_arm64", "Google"))
+        assertTrue(AdRules.isEmulatorBuild("generic/sdk_phone_x86/generic_x86:11/RSR1/eng:userdebug", "Android SDK built for x86", "goldfish", "sdk_phone_x86", "Google"))
+        assertTrue(AdRules.isEmulatorBuild("unknown", "Emulator", "goldfish", "vbox86p", "Genymotion"))
+        // Genymotion só pelo fabricante
+        assertTrue(AdRules.isEmulatorBuild("samsung/x/y:14/z", "SM-S911B", "qcom", "x", "Genymotion"))
+        // aparelhos comuns
+        assertFalse(AdRules.isEmulatorBuild("google/cheetah/cheetah:14/AP1A/123:user/release-keys", "Pixel 7 Pro", "cheetah", "cheetah", "Google"))
+        assertFalse(AdRules.isEmulatorBuild("samsung/dm1qxxx/dm1q:14/UP1A/S911BXXU1:user/release-keys", "SM-S911B", "qcom", "dm1qxxx", "samsung"))
     }
 
     @Test

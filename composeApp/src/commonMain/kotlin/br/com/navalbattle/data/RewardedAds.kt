@@ -17,6 +17,9 @@ expect class RewardedAds() {
     /** Build de debug ou `.preview`: sempre a unidade de teste do Google. */
     val buildUsesTestAds: Boolean
 
+    /** Verdadeiro quando o app roda em emulador (Android). Usado só pela conta de teste (#32). */
+    val runsOnEmulator: Boolean
+
     /**
      * Consentimento (UMP) quando a região exige, carrega e mostra o anúncio [adUnitId]. [userId]
      * e [customData] (o vale do servidor) vão na verificação no servidor (SSV).

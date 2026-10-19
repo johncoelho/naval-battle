@@ -1,8 +1,10 @@
 package br.com.navalbattle.data
 
 import android.app.Activity
+import android.os.Build
 import br.com.navalbattle.ActivityHolder
 import br.com.navalbattle.BuildConfig
+import br.com.navalbattle.game.AdRules
 import br.com.navalbattle.game.AdShowOutcome
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
@@ -33,6 +35,15 @@ actual class RewardedAds actual constructor() {
     // build de debug e a prévia .preview (que é um debug com outro applicationId)
     actual val buildUsesTestAds: Boolean
         get() = BuildConfig.DEBUG || BuildConfig.APPLICATION_ID.endsWith(".preview")
+
+    actual val runsOnEmulator: Boolean
+        get() = AdRules.isEmulatorBuild(
+            fingerprint = Build.FINGERPRINT,
+            model = Build.MODEL,
+            hardware = Build.HARDWARE,
+            product = Build.PRODUCT,
+            manufacturer = Build.MANUFACTURER
+        )
 
     actual suspend fun show(adUnitId: String, userId: String, customData: String): AdShowOutcome =
         withContext(Dispatchers.Main) {

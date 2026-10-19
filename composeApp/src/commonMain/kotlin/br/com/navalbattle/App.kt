@@ -1370,7 +1370,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             adNotices = adNotices + (place to t(start?.let { AdRules.startNotice(it.status) } ?: K.AD_UNAVAILABLE))
             return
         }
-        val unit = AdRules.unitFor(place, rewardedAds.buildUsesTestAds, adsStatus?.testAds ?: true)
+        val unit = AdRules.unitFor(place, rewardedAds.buildUsesTestAds, adsStatus?.testAds ?: true, rewardedAds.runsOnEmulator)
         val outcome = rewardedAds.show(unit, session.userId, vale)
         var confirmed: AdValeStatus? = null
         if (outcome == AdShowOutcome.EARNED) {

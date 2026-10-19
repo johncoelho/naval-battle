@@ -32,9 +32,41 @@ object AdRules {
         AdPlace.MILE to "ca-app-pub-4691964664970287/4873589041"
     )
 
-    /** [buildTest] = debug ou `.preview`; [serverTest] = `test_ads` do servidor (QA, John). */
-    fun unitFor(place: AdPlace, buildTest: Boolean, serverTest: Boolean): String =
-        if (buildTest || serverTest) TEST_REWARDED_UNIT else REAL_UNITS.getValue(place)
+    /**
+     * Escolhe a unidade do anúncio. [buildTest] = debug ou `.preview` → sempre exemplo. [serverTest]
+     * = conta de teste do servidor (`ads_enabled = 'test'`): bloco real só em emulador (o Google
+     * já trata emulador como aparelho de teste, então não há clique real), e no aparelho físico
+     * segue o exemplo (#32). Conta comum (produção `'true'`) recebe o bloco real.
+     */
+    fun unitFor(place: AdPlace, buildTest: Boolean, serverTest: Boolean, emulator: Boolean): String = when {
+        buildTest -> TEST_REWARDED_UNIT
+        !serverTest -> REAL_UNITS.getValue(place)
+        emulator -> REAL_UNITS.getValue(place)
+        else -> TEST_REWARDED_UNIT
+    }
+
+    /**
+     * Sinais de emulador do Android (Genymotion incluído). Na dúvida, não é emulador: o aparelho
+     * físico nunca cai no bloco real pela conta de teste. Valores de `android.os.Build`.
+     */
+    fun isEmulatorBuild(
+        fingerprint: String,
+        model: String,
+        hardware: String,
+        product: String,
+        manufacturer: String
+    ): Boolean {
+        val fp = fingerprint.lowercase()
+        val md = model.lowercase()
+        val hw = hardware.lowercase()
+        val pr = product.lowercase()
+        val mf = manufacturer.lowercase()
+        return hw == "goldfish" || hw == "ranchu" ||
+            fp.startsWith("generic") || fp.startsWith("unknown") ||
+            md.contains("sdk_gphone") || md.contains("emulator") || md.contains("android sdk built for") ||
+            pr.startsWith("sdk") || pr == "google_sdk" || pr == "vbox86p" ||
+            mf == "genymotion"
+    }
 
     /**
      * O botão "dobrar dobrões" do resultado: só em vitória contra a IA ou online que rendeu

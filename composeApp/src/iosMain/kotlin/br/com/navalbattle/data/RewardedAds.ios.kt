@@ -11,6 +11,8 @@ actual class RewardedAds actual constructor() {
 
     actual val buildUsesTestAds: Boolean get() = true
 
+    actual val runsOnEmulator: Boolean get() = false
+
     actual suspend fun show(adUnitId: String, userId: String, customData: String): AdShowOutcome =
         AdShowOutcome.UNAVAILABLE
 
