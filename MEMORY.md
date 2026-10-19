@@ -82,7 +82,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   travas de horário (11h–15h) e de uma vez por dia. Push manual: nunca à noite.
 - **Esteira agêntica (10/10):** agentes em `.claude/agents/`, skill `esteira`, `docs/ESTEIRA.md`.
   Quadro: https://github.com/users/johncoelho/projects/1. Tarefa agendada `esteira-naval-battle`
-  às 7h, 12h e 18h e `esteira-qa-naval-battle` de hora em hora (só com o app aberto). Primeira entrega: #7 na 0.30.3.
+  às 7h, 12h e 18h e `esteira-qa-naval-battle` às 7h, 12h e 18h (só com o app aberto). Primeira entrega: #7 na 0.30.3.
 - **Base de conhecimento e qualidade (10/10):** CLAUDE.md, HISTORY.md, MEMORY.md, especificação técnica
   no README, design system no Claude Design, skills; testes de unidade (`commonTest`) e trava de
   release no CI (`tools/release-check.sh`).

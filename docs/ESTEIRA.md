@@ -67,7 +67,7 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 4. QA **não** roda na rodada: tem tarefa própria.
 5. Relatório curto para o John (o que entrou, o que saiu, o que espera dele).
 
-## Rodada do QA (tarefa `esteira-qa-naval-battle`, de hora em hora)
+## Rodada do QA (tarefa `esteira-qa-naval-battle`, às 7h, 12h e 18h)
 
 O sinal de "liberado para testes" vem do **Play Console**, não do emulador (decisão do John):
 [Submission activity](https://play.google.com/console/u/0/developers/6665366169429730164/app/4973862797492773091/publishing/submission-activity)
