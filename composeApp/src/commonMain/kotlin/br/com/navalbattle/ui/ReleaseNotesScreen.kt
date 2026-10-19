@@ -22,14 +22,24 @@ import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 
 /** Uma versão publicada e o resumo do que mudou nela, em uma linha por idioma. */
-private data class ReleaseNote(val version: String, val key: K)
+internal data class ReleaseNote(val version: String, val key: K)
 
 /**
  * O que já foi publicado, da mais recente para a mais antiga — resumo curto de cada
  * versão, não o changelog técnico inteiro (esse fica em CHANGELOG.md, para quem lê
  * código). Cresce a cada release; ver [K] para o texto nos três idiomas.
+ * Uma linha por minor (0.X.0): patch não ganha linha. Teste em ReleaseNotesTest.
  */
-private val releaseNotes = listOf(
+internal val releaseNotes = listOf(
+    ReleaseNote("0.34.0", K.RN_V0340),
+    ReleaseNote("0.33.0", K.RN_V0330),
+    ReleaseNote("0.32.0", K.RN_V0320),
+    ReleaseNote("0.31.0", K.RN_V0310),
+    ReleaseNote("0.30.0", K.RN_V0300),
+    ReleaseNote("0.29.0", K.RN_V0290),
+    ReleaseNote("0.28.0", K.RN_V0280),
+    ReleaseNote("0.27.0", K.RN_V0270),
+    ReleaseNote("0.26.0", K.RN_V0260),
     ReleaseNote("0.25.0", K.RN_V0250),
     ReleaseNote("0.24.0", K.RN_V0240),
     ReleaseNote("0.23.0", K.RN_V0230),
