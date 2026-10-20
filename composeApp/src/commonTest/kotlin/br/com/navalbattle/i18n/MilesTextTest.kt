@@ -15,7 +15,7 @@ class MilesTextTest {
     private fun emCadaIdioma(bloco: (Lang) -> Unit) {
         val original = I18n.lang
         try {
-            Lang.values().forEach { lang ->
+            Lang.entries.forEach { lang ->
                 I18n.lang = lang
                 bloco(lang)
             }
