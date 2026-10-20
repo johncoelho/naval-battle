@@ -34,6 +34,7 @@ import br.com.navalbattle.design.drawCompassRose
 import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
+import br.com.navalbattle.i18n.tMilesBalance
 import kotlinx.coroutines.launch
 
 /**
@@ -74,7 +75,7 @@ fun MilesPopup(state: AppState) {
             HudLabel(t(K.MILES_TITLE), Naval.muted)
             Gap(4)
             Text(
-                t(K.MILES_BALANCE, m.miles),
+                tMilesBalance(m.miles),
                 style = NavalType.title,
                 color = if (m.miles > 0) Naval.ink else Naval.danger,
                 textAlign = TextAlign.Center

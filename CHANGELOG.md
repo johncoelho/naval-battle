@@ -9,6 +9,27 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.4] — 2026-10-20 · Milhas: texto do popup corrigido (#33)
+
+App 0.34.4 (versionCode 91). Refs #33. Só app: sem banco, sem Edge, sem mudança de regra nem de
+preço. Corrige texto de interface.
+
+### Corrigido
+- **"COMPRAR %1 MILHAS" no popup de milhas** (#33): a função que monta o texto só trocava `%s`, e a
+  frase de compra usava `%1`. Agora a frase usa `%s` e mostra o tamanho do pacote (ex.: "COMPRAR 5
+  MILHAS") nos três idiomas.
+- **"Você tem 1 milhas"** (#33): saldo de exatamente 1 usa a forma no singular ("Você tem 1 milha",
+  "You have 1 mile", "Tienes 1 milla"). Zero e demais valores seguem o plural.
+
+### Alterado
+- `tMilesBalance(miles)` em `i18n/Strings.kt`: escolhe singular ou plural para o saldo. Usada no popup
+  de milhas e no cartão de dobrões da loja.
+- Nova chave `K.MILES_BALANCE_ONE` (pt/en/es).
+
+### Testes
+- `MilesTextTest` (commonTest): compra com o número do pacote nos três idiomas (sem `%` sobrando), saldo
+  1 no singular, zero e plural para os demais.
+
 ## [0.34.3] — 2026-10-19 · Anúncio de teste credita no emulador (#32)
 
 App 0.34.3 (versionCode 90). Refs #32. Só app: sem banco, sem Edge, sem mudança no jogo dos jogadores

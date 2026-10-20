@@ -35,6 +35,10 @@ fun t(key: K, arg: Any): String = t(key).replace("%s", arg.toString())
 
 fun t(key: K, a: Any, b: Any): String = t(key).replace("%1", a.toString()).replace("%2", b.toString())
 
+/** Saldo de milhas: "1 milha" no singular; zero e demais valores seguem o plural. */
+fun tMilesBalance(miles: Int): String =
+    if (miles == 1) t(K.MILES_BALANCE_ONE, miles) else t(K.MILES_BALANCE, miles)
+
 fun t(key: K, a: Any, b: Any, c: Any): String =
     t(key).replace("%1", a.toString()).replace("%2", b.toString()).replace("%3", c.toString())
 
@@ -912,9 +916,10 @@ enum class K(val pt: String, val en: String, val es: String) {
     MILES_EXPLAIN("Cada partida online custa 1 milha. Todo dia sua reserva volta a %1 milhas grátis. Vitória ranqueada rende +%2 e vitória casual +%3.", "Each online match costs 1 mile. Every day your reserve refills to %1 free miles. A ranked win gives +%2 and a casual win +%3.", "Cada partida en línea cuesta 1 milla. Cada día tu reserva vuelve a %1 millas gratis. Una victoria clasificatoria da +%2 y una casual +%3."),
     MILES_OFFLINE_FREE("Contra a IA, no mesmo aparelho e na rede local é sempre grátis.", "Against the AI, on the same device and on the local network it is always free.", "Contra la IA, en el mismo dispositivo y en la red local siempre es gratis."),
     MILES_BALANCE("Você tem %s milhas", "You have %s miles", "Tienes %s millas"),
+    MILES_BALANCE_ONE("Você tem %s milha", "You have %s mile", "Tienes %s milla"),
     MILES_EMPTY("Suas milhas acabaram. Compre mais ou espere a recarga.", "You are out of miles. Buy more or wait for the refill.", "Te quedaste sin millas. Compra más o espera la recarga."),
     MILES_RESETS("Recarga em %s", "Refill in %s", "Recarga en %s"),
-    MILES_BUY("Comprar %1 milhas", "Buy %1 miles", "Comprar %1 millas"),
+    MILES_BUY("Comprar %s milhas", "Buy %s miles", "Comprar %s millas"),
     MILES_BUY_SUB("por %s dobrões", "for %s doubloons", "por %s doblones"),
     MILES_NO_DOUBLOONS("Faltam %s dobrões para o pacote de milhas", "%s doubloons short for the mile pack", "Faltan %s doblones para el paquete de millas"),
     MILES_CAP_REACHED("O máximo é %s milhas guardadas", "You can hold at most %s miles", "El máximo es %s millas guardadas"),

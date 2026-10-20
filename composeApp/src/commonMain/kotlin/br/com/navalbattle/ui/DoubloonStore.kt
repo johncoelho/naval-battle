@@ -35,6 +35,7 @@ import br.com.navalbattle.game.DoubloonPack
 import br.com.navalbattle.game.PremioState
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
+import br.com.navalbattle.i18n.tMilesBalance
 
 /**
  * Aba Dobrões da loja (#15, #28). Duas partes independentes: o Prêmio Beta (testador de
@@ -108,7 +109,7 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(t(K.MILES_TITLE).uppercase(), style = NavalType.mono, color = Naval.ink)
-                HudLabel(t(K.MILES_BALANCE, m.miles), Naval.muted)
+                HudLabel(tMilesBalance(m.miles), Naval.muted)
             }
             CoinLabel(m.packPrice.toString(), style = NavalType.mono)
         }

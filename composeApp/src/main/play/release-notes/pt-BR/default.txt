@@ -1,1 +1,1 @@
-Correcao no anuncio premiado para contas de teste: no emulador, o premio agora e creditado. Para os jogadores, nada muda no jogo.
+Milhas: o botao de compra agora mostra a quantidade do pacote (ex.: COMPRAR 5 MILHAS) e o saldo de 1 mostra no singular. Nada muda no jogo.
