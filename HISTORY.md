@@ -355,6 +355,7 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   John) — porquê: a lista deixa de ser a porta de entrada da conta de jogador (todo mundo vale) e a
   lista da Play não dá mais brinde (só QA e o John). Fica para o gate da licença e a conferência de
   instalação de quem já estava no teste fechado.
+- **25/10 · Beta fecha na aprovação da produção** (#35) — porquê: o John decidiu; `beta_ends_at` fica nulo até lá.
 - **25/10 · Venda aberta só depois do saldo no servidor** (#34) — `real_billing_enabled` segue
   desligado na produção até o saldo autoritativo; nada cobra sem creditar enquanto isso.
 

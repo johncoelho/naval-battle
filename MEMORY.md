@@ -143,6 +143,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   de serviço só para billing. (iPhone sem pacotes: feito em 0.33.4, #30.)
 - Novidades (#31, 0.34.1): tela com uma linha por minor (0.26.0 a 0.34.0). **Pendente do John:** a tela
   ler `app_releases` (melhoria; decidir se a linha passa a ser por patch). Sem OK, fica como está.
+- **No dia da aprovação da produção:** gravar `beta_ends_at` com a data e hora da aprovação, horário de
+  Brasília (junto com ligar `launch_notice_enabled`, #36, e tirar o Vietnã, #50). Decisão do John:
+  `beta_ends_at` fica nulo até lá (hoje o gatilho ainda dá a medalha Beta Tester a conta nova).
 
 ## 6. Ambiente e armadilhas conhecidas
 
