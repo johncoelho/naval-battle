@@ -7,6 +7,17 @@ package br.com.navalbattle.game
  */
 enum class AgeBand { ADULT, TEEN, CHILD, UNKNOWN }
 
+/**
+ * Resultado de uma leitura. [answered] falso = erro ou tempo esgotado: a faixa vale (UNKNOWN) só
+ * para aquele anúncio e não é guardada, para perguntar de novo no próximo toque. A Play ter
+ * respondido "não compartilhou" é resposta ([answered] verdadeiro) e é guardada por 24 h.
+ */
+data class AgeReading(val band: AgeBand, val answered: Boolean) {
+    companion object {
+        val FAILED = AgeReading(AgeBand.UNKNOWN, answered = false)
+    }
+}
+
 /** Classificação máxima de conteúdo do anúncio pedida ao AdMob. [NONE] = sem limite (adulto). */
 enum class AdRating { NONE, G, PG }
 
@@ -43,6 +54,13 @@ object AgeRules {
             else -> AgeBand.UNKNOWN
         }
     }
+
+    /** Leitura completa: erro vira [AgeReading.FAILED]; qualquer resposta da Play é guardada. */
+    fun reading(status: Int?, lower: Int?, upper: Int?, error: Boolean): AgeReading =
+        if (error) AgeReading.FAILED else AgeReading(band(status, lower, upper, error = false), answered = true)
+
+    /** Só resposta da Play é guardada por 24 h; falha não. */
+    fun shouldCache(reading: AgeReading): Boolean = reading.answered
 
     /** Anúncio por faixa. Desconhecido é tratado como adolescente (decisão registrada na #49). */
     fun audience(band: AgeBand): AdAudience = when (band) {

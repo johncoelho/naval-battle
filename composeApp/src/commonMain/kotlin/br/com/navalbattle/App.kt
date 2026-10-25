@@ -1303,12 +1303,15 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val checkedAt = agePrefs.getString(AGE_CHECKED_KEY, "").toLongOrNull() ?: 0L
         val now = nowMillis()
         if (!AgeRules.checkDue(checkedAt, now)) return AgeRules.parse(agePrefs.getString(AGE_BAND_KEY, ""))
-        val band = ageSignals.read()
-        agePrefs.putBatch(PrefsBatch().apply {
-            putString(AGE_BAND_KEY, band.name)
-            putString(AGE_CHECKED_KEY, now.toString())
-        })
-        return band
+        val reading = ageSignals.read()
+        // falha (erro, tempo esgotado): vale UNKNOWN só neste anúncio e pergunta de novo no próximo
+        if (AgeRules.shouldCache(reading)) {
+            agePrefs.putBatch(PrefsBatch().apply {
+                putString(AGE_BAND_KEY, reading.band.name)
+                putString(AGE_CHECKED_KEY, now.toString())
+            })
+        }
+        return reading.band
     }
 
     /** Só a leitura guardada, sem abrir o aviso da Play (Ajustes → Privacidade dos anúncios). */

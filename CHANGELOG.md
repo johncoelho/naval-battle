@@ -19,10 +19,13 @@ App 0.34.7 (versionCode 94). Refs #49. Banco: `supabase/ads.sql` (chave `ads_min
   nesse momento; nada na abertura do app) e guardada por 24 h no aparelho como faixa (ADULT, TEEN, CHILD
   ou UNKNOWN) com a hora, nunca a idade nem o `installId`.
 - **Anúncio por faixa:** adulto segue personalizado. Adolescente, criança e **idade desconhecida** (não
-  compartilhou, fora do Brasil, sem resposta em 5 s, app fora da Play) recebem anúncio **não
+  compartilhou, fora do Brasil, erro ou sem resposta, app fora da Play) recebem anúncio **não
   personalizado**: `tag_for_under_age_of_consent`, `npa=1` e classificação máxima PG; criança também com
   `tag_for_child_directed_treatment` e classificação G. As marcas valem antes do `MobileAds.initialize`,
   de cada carregamento e do UMP (que não mostra formulário para menor, inclusive em "Privacidade dos anúncios").
+- **Falha não é guardada:** erro ou tempo esgotado na leitura valem UNKNOWN só naquele anúncio e a Play é
+  consultada de novo no próximo toque. O pedido de acesso (que abre o aviso da Play) espera até 60 s; só a
+  consulta da faixa tem 5 s, então o anúncio nunca abre por cima do aviso.
 - **A idade não sai do aparelho** (os termos da API proíbem uso em publicidade, perfilamento e analytics):
   não vai para a rede de anúncios, o servidor nem o log.
 - **Build de prévia/debug com faixa falsa:** `-PageFake=child|teen|adult|unknown` troca o manager pelo

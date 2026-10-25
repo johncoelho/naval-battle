@@ -87,6 +87,19 @@ class AgeRulesTest {
     }
 
     @Test
+    fun falhaNaoEhGuardadaMasRespostaDaPlayE() {
+        val falha = AgeRules.reading(null, null, null, error = true)
+        assertEquals(AgeBand.UNKNOWN, falha.band)
+        assertFalse(AgeRules.shouldCache(falha))
+        val naoCompartilhou = AgeRules.reading(2, null, null, error = false)
+        assertEquals(AgeBand.UNKNOWN, naoCompartilhou.band)
+        assertTrue(AgeRules.shouldCache(naoCompartilhou))
+        val teen = AgeRules.reading(AgeRules.STATUS_SHARED, 13, 15, error = false)
+        assertEquals(AgeBand.TEEN, teen.band)
+        assertTrue(AgeRules.shouldCache(teen))
+    }
+
+    @Test
     fun faixaGuardadaInvalidaVoltaParaDesconhecido() {
         assertEquals(AgeBand.UNKNOWN, AgeRules.parse(""))
         assertEquals(AgeBand.UNKNOWN, AgeRules.parse("xyz"))

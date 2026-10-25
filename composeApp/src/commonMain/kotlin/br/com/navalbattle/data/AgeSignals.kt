@@ -1,6 +1,6 @@
 package br.com.navalbattle.data
 
-import br.com.navalbattle.game.AgeBand
+import br.com.navalbattle.game.AgeReading
 
 /**
  * Faixa etária da loja (Play Age Signals API, #49; stack aprovada pelo John em 25/10). Só o
@@ -14,6 +14,9 @@ expect class AgeSignals() {
     /** Falso no iPhone (Declared Age Range da Apple fica para a App Store, issue própria). */
     val supported: Boolean
 
-    /** Pede acesso e lê a faixa. Nunca lança: sem Activity, erro ou 5 s de espera → [AgeBand.UNKNOWN]. */
-    suspend fun read(): AgeBand
+    /**
+     * Pede acesso (espera o jogador no aviso da Play, até 60 s) e lê a faixa (5 s). Nunca lança:
+     * sem Activity, erro ou tempo esgotado → [AgeReading.FAILED] (UNKNOWN só neste anúncio, sem guardar).
+     */
+    suspend fun read(): AgeReading
 }
