@@ -16,7 +16,7 @@ on:
         default: status
         options: [status, promote, advance, halt, resume]
       version_code:
-        description: "versionCode (obrigatório, menos em status)"
+        description: "versionCode (obrigatório, menos em status; no halt, vazio pausa o único release em andamento)"
         type: string
         required: false
       fraction:
@@ -29,9 +29,10 @@ on:
         type: boolean
         default: false
 
-# nunca duas edições de produção ao mesmo tempo
+# nunca duas edições de produção ao mesmo tempo; o status (só leitura) fica fora do grupo para
+# não cancelar um halt que esteja na fila (o GitHub cancela o pendente quando chega outro)
 concurrency:
-  group: play-production
+  group: play-production-${{ inputs.action == 'status' && github.run_id || 'write' }}
   cancel-in-progress: false
 
 permissions:
@@ -39,10 +40,13 @@ permissions:
 
 jobs:
   rollout:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Play rollout
         env:

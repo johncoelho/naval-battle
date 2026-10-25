@@ -5,7 +5,7 @@
 # Uso: tools/play-rollout.sh <ação> [versionCode] [fração]
 #   promote  <vc> [0.2]   leva o versionCode da Alpha para a produção em 20%
 #   advance  <vc> <0.5|1> sobe a fração de um release em andamento (1 = conclui, 100%)
-#   halt     <vc>         pausa o release em andamento (ninguém mais recebe a versão)
+#   halt     [vc]         pausa o release em andamento (sem vc: o único em andamento)
 #   resume   <vc>         retoma um release pausado na mesma fração
 #   status                só leitura: mostra Alpha e produção
 #
@@ -158,7 +158,7 @@ do_status() {
 # ---- ações que mudam a produção: calculam o corpo novo da faixa em $NEW_TRACK ----
 
 plan_promote() {
-  local alpha prod rel max inprog name notes newrel
+  local alpha prod rel max inprog big name notes newrel
   [ -n "$FRACTION" ] || FRACTION=0.2
   [ "$FRACTION" = "0.2" ] || die "O promote sempre começa em 20% (fraction=0.2). Use advance para 50% e 100%."
 
@@ -181,6 +181,7 @@ plan_promote() {
 
   # trava 3: maior que tudo o que já passou pela produção
   max=$(printf '%s' "$prod" | jq -r '[(.releases // [])[] | (.versionCodes // [])[] | tonumber] | max // 0')
+  case "$max" in ''|*[!0-9]*) die "Trava 3: não consegui ler o maior versionCode da produção (veio \"$max\"). Nada foi enviado." ;; esac
   if [ "$VERSION_CODE" -le "$max" ]; then
     die "Trava 3: o versionCode $VERSION_CODE não é maior que o maior da produção ($max)."
   fi
@@ -188,9 +189,12 @@ plan_promote() {
   # release em andamento na produção: a Play não aceita dois
   inprog=$(printf '%s' "$prod" | jq -c '[(.releases // [])[] | select(.status == "inProgress" or .status == "halted")] | .[0] // empty')
   if [ -n "$inprog" ]; then
-    if printf '%s' "$inprog" | jq -e '.status == "inProgress" and ((.userFraction // 0) >= 0.5)' >/dev/null; then
-      die "A produção tem um release em andamento em 50% ou mais ($(printf '%s' "$inprog" | jq -r '.versionCodes | join(",")')). Conclua o antigo (advance, fraction=1) e promova a nova depois."
-    fi
+    big=$(printf '%s' "$inprog" | jq -r '(.status == "inProgress") and ((.userFraction // 0) >= 0.5)') || die "Não consegui avaliar o release em andamento da produção."
+    case "$big" in
+      false) ;;
+      true) die "A produção tem um release em andamento em 50% ou mais ($(printf '%s' "$inprog" | jq -r '.versionCodes | join(",")')). Conclua o antigo (advance, fraction=1) e promova a nova depois." ;;
+      *) die "Não consegui avaliar a fração do release em andamento da produção (resposta \"$big\"). Nada foi enviado." ;;
+    esac
     note "AVISO: o release $(printf '%s' "$inprog" | jq -r '(.versionCodes // []) | join(",")') ($(printf '%s' "$inprog" | jq -r '.status')) será substituído pelo $VERSION_CODE, que recomeça em 20%."
   fi
 
@@ -228,16 +232,30 @@ plan_advance() {
     die "O versionCode $VERSION_CODE já está em $(jq -n --argjson c "$cur" '$c * 100 | round')%; a fração nova ($FRACTION) precisa ser maior."
   fi
   NEW_TRACK=$(printf '%s' "$PROD" | jq -c --arg v "$VERSION_CODE" --argjson f "$FRACTION" '
-    {track: "production", releases: [(.releases // [])[]
-      | if .status == "inProgress" and ((.versionCodes // []) | index($v))
-        then (if $f == 1 then (.status = "completed" | del(.userFraction)) else (.userFraction = $f) end)
-        else . end]}')
+    if $f == 1 then
+      # concluir: a Play quer só o release que está sendo concluído
+      {track: "production", releases: [(.releases // [])[]
+        | select(.status == "inProgress" and ((.versionCodes // []) | index($v)))
+        | (.status = "completed" | del(.userFraction))]}
+    else
+      {track: "production", releases: [(.releases // [])[]
+        | if .status == "inProgress" and ((.versionCodes // []) | index($v)) then (.userFraction = $f) else . end]}
+    end')
   if [ "$FRACTION" = "1" ]; then MSG="Produção: 100% (versionCode $VERSION_CODE)"; else MSG="Produção: 50% (versionCode $VERSION_CODE)"; fi
 }
 
 plan_halt() {
-  local rel
+  local rel n
   track_get production; PROD="$RESP"
+  if [ -z "$VERSION_CODE" ]; then
+    # sem versionCode: pausa o único release em andamento
+    n=$(printf '%s' "$PROD" | jq -r '[(.releases // [])[] | select(.status == "inProgress")] | length') || die "Não consegui ler a produção."
+    case "$n" in
+      1) VERSION_CODE=$(printf '%s' "$PROD" | jq -r '[(.releases // [])[] | select(.status == "inProgress")] | .[0].versionCodes[0]') ;;
+      0) die "Não há release em andamento na produção para pausar." ;;
+      *) die "Há $n releases em andamento na produção; informe o versionCode para pausar." ;;
+    esac
+  fi
   rel=$(find_release inProgress)
   [ -n "$rel" ] || die "Não há release em andamento (inProgress) com o versionCode $VERSION_CODE na produção."
   NEW_TRACK=$(printf '%s' "$PROD" | jq -c --arg v "$VERSION_CODE" '
@@ -295,7 +313,7 @@ main() {
     promote|advance|halt|resume|status) ;;
     *) echo "Uso: tools/play-rollout.sh <promote|advance|halt|resume|status> [versionCode] [fração]" >&2; exit 2 ;;
   esac
-  if [ "$ACTION" != "status" ]; then
+  if [ "$ACTION" != "status" ] && ! { [ "$ACTION" = "halt" ] && [ -z "$VERSION_CODE" ]; }; then
     case "$VERSION_CODE" in
       ''|*[!0-9]*) die "Informe o versionCode (só números) para a ação $ACTION." ;;
     esac
@@ -311,7 +329,7 @@ main() {
   while :; do
     tries=$((tries + 1))
     set +e
-    ( attempt )
+    ( set -e; attempt )
     rc=$?
     set -e
     [ "$rc" -ne 75 ] && break

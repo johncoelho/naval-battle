@@ -37,9 +37,14 @@ Refs #39. Sem mudança de banco nem de código Kotlin.
 - Agentes `qa` e `release`, skills `esteira` e `play-store-release` e `docs/ESTEIRA.md` com o fluxo
   Alpha → QA → 20% → 50% → 100%, o halt automático e os gatilhos (falha > 1,09%, ANR > 0,47%, P0).
 
+### Revisão do Tech Lead (volta 1)
+- `promote`: trava 3 e recusa em 50% ou mais agora param se a leitura falhar; `attempt` roda com `set -e`;
+  `advance` a 100% manda só o release concluído; `halt` sem versionCode pausa o único em andamento.
+  Workflow: `status` fora do grupo de concurrency, `persist-credentials: false`, só na `main`.
+- Vitals (falha e ANR por versionCode) ficam para a #51; até lá o halt vem da P0 e do log de diagnóstico.
+
 ### Pendente do John
-- Permissões de produção e de relatórios da `play-publisher-ci` no Play Console, Reporting API no Google Cloud e
-  `PLAY_PRODUCTION_LIVE = true` depois do *Published* da produção 91. Até lá, só `status` e `dry_run`.
+- Só `PLAY_PRODUCTION_LIVE = true` depois do *Published* da produção 91 (permissões e Reporting API já feitas).
 
 ---
 

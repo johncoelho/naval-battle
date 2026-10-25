@@ -82,7 +82,7 @@ O sinal de "liberado para testes" vem do **Play Console**, não do emulador (dec
 lista cada envio com o status (*In review* / *Published*); o detalhe do envio mostra a versão
 (ex.: envio 65 = 0.30.3, *Published*). Lido no Chrome do John (já logado), só leitura.
 
-1. Sem cartão em **Publicado** nem em **Liberado para testes**: termina.
+1. Sem cartão em **Publicado**, **Liberado para testes** nem **Em produção**: termina.
 2. Cartão em **Publicado**: abre o Submission activity no Chrome e procura o envio da versão do
    cartão. *Published* → move os cartões dessa versão para **Liberado para testes**. Ainda em
    revisão → termina sem ligar emulador.
@@ -93,7 +93,10 @@ lista cada envio com o status (*In review* / *Published*); o detalhe do envio mo
    move para **Em produção** (a issue **não** fecha mais aqui) e devolve à **Fila** o que falhou. **Todo fechamento leva print de evidência** no comentário, passou ou
    falhou (`tools/qa-evidencia.sh` → branch `qa-evidencias`). Desliga os emuladores e **desativa as
    contas QA** (`is_test = true`), sempre, mesmo se o teste falhar.
-4. **Release, no fim da tarefa do QA** (produção, #39): ver a seção abaixo.
+4. **Release, no fim da tarefa do QA** (produção, #39): com cartões em **Em produção**, a tarefa abre o
+   Submission activity no Chrome (só ela tem o Chrome; o agente `release` não tem), lê o status e a data do
+   *Published* do envio de produção e passa os dois ao `release`, que roda `status`, `promote` ou `advance`.
+   Ver a seção abaixo.
 
 ## Produção e liberação gradual (#39)
 
@@ -122,15 +125,16 @@ O histórico de runs (`gh run list -w promote-production.yml`) é o registro das
   O Release interrompe **sem esperar o John** e avisa depois, na issue e no relatório, quando: falha percebida
   > 1,09% ou ANR percebido > 0,47% no Android vitals (Play Developer Reporting API, `crashRateMetricSet` e
   `anrRateMetricSet` por versionCode, só com ≥ 100 usuários no dia; chegam com 1 a 2 dias de atraso), ou P0 aberta
-  pelo Suporte contra a versão, ou falha em lote no log de diagnóstico. A correção da P0 sai em versão nova
+  pelo Suporte contra a versão, ou falha em lote no log de diagnóstico. **Enquanto a ação `vitals` (#51, aguarda o
+  John) não existe, o script não lê o Android vitals: o halt vem só da P0 e do log de diagnóstico.** A correção da P0 sai em versão nova
   pelo caminho normal e substitui o release `halted`. Problema numa função com chave em `app_config`: desliga a chave antes.
 - **Comentário:** a cada etapa, o Release comenta em cada issue da versão `Produção: 20% (versionCode N)`
   (e 50%, 100%). Ao chegar a 100%: cartão para **Concluído** e fecha a issue.
-- **O John pausa pelo celular:** GitHub → Actions → *Promote production* → Run workflow → `halt`.
-- **Pendente do John** (a #39 deixa o workflow pronto; até lá só `status` e `dry_run`): no Play Console,
-  `play-publisher-ci` ganha *Lançar no ambiente de produção…* e *Ver informações do app e baixar relatórios em
-  massa*; no Google Cloud (`aigamesfactory`) ativar a Play Developer Reporting API. Depois do *Published* da
-  91: `gh variable set PLAY_PRODUCTION_LIVE --body true`.
+- **O John pausa pelo celular:** GitHub → Actions → *Promote production* → Run workflow → `halt` (sem
+  versionCode: pausa o único release em andamento).
+- **Permissões prontas (John, 25/10):** `play-publisher-ci` com produção e relatórios no Play Console e a
+  Reporting API ativada. **Única pendência:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do
+  *Published* da produção 91 (até lá `promote` real é barrado; `status`, `dry_run`, `advance`, `halt` funcionam).
 - iOS fica fora: o `.ipa` do Sideloadly segue na release `latest`.
 
 ## Comandos do quadro

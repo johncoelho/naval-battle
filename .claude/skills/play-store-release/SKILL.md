@@ -142,9 +142,9 @@ depois do QA aprovar a versão no emulador:
   fração de release já aprovado não passa por nova revisão.
 - Halt: `halted` não devolve versionCode a quem já recebeu. Gatilhos e limites (falha > 1,09%, ANR > 0,47%,
   ≥ 100 usuários, P0) estão em `docs/ESTEIRA.md`. `resume` volta na mesma fração.
-- Mesma conta de serviço e mesmo secret (`PLAY_SERVICE_ACCOUNT_JSON`); **o John** concede no Play Console as
-  permissões de produção e de relatórios e ativa a Play Developer Reporting API no Google Cloud. Até lá, só
-  `status` e `dry_run` funcionam. Notas só em pt-BR por enquanto (en-US e es-ES: issue à parte).
+- Mesma conta de serviço e mesmo secret (`PLAY_SERVICE_ACCOUNT_JSON`); o John já concedeu as permissões de
+  produção e de relatórios e ativou a Reporting API (25/10). Falta só `PLAY_PRODUCTION_LIVE=true` depois do
+  *Published* da 91. O script ainda não lê vitals (#51). Notas só em pt-BR por enquanto (en-US e es-ES: issue à parte).
 - Conflito de edição com o upload da Alpha: o script tenta de novo até 3 vezes, 60 s entre elas.
 
 ## 5. Manual upload path (fallback only — normally not needed anymore)

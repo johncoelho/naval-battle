@@ -26,18 +26,20 @@ Dispare sempre com o versionCode **explícito** (o que o QA anotou, nunca "a úl
 `gh workflow run promote-production.yml -R johncoelho/naval-battle -f action=<ação> -f version_code=N -f fraction=<f>`
 e acompanhe com `gh run list -w promote-production.yml` / `gh run watch <id> --exit-status`.
 
-1. `action=status` primeiro (só leitura): mostra Alpha e produção. Envio de produção em *In review* no
-   Submission activity (Chrome do John, só leitura) bloqueia o promote.
+1. `action=status` primeiro (só leitura): mostra Alpha e produção. Você **não tem o Chrome**: o status e a data
+   do *Published* do envio de produção no Submission activity vêm da tarefa do QA, que os passa no prompt. Sem
+   essa informação, não avance nem promova. Envio de produção em *In review* bloqueia o promote.
 2. **promote** (20%): só com **todos** os cartões da versão aprovados pelo QA (em **Em produção**). As travas do
    script barram (`PLAY_PRODUCTION_LIVE`, versionCode fora da Alpha ou não maior que o da produção). Já há release
    em 50% ou mais: conclua-o antes (`advance` `fraction=1`). Comente em cada issue da versão
    `Produção: 20% (versionCode N)`.
-3. **advance** (`fraction=0.5`, depois `fraction=1`): ≥ 24 h depois do *Published* da produção (Submission
-   activity, não do run) na etapa anterior, Android vitals dentro do limite e nenhuma P0 aberta contra a versão.
+3. **advance** (`fraction=0.5`, depois `fraction=1`): ≥ 24 h depois do *Published* da produção (informado pelo QA,
+   não a hora do run) na etapa anterior, Android vitals dentro do limite e nenhuma P0 aberta contra a versão.
    Comente `Produção: 50% (versionCode N)` / `Produção: 100% (versionCode N)`. A 100%: mova os cartões para
    **Concluído** e feche as issues citando a versão.
-4. **halt**, sem esperar o John: falha percebida > 1,09% ou ANR percebido > 0,47% (≥ 100 usuários no dia, Play
-   Developer Reporting API), P0 aberta contra a versão ou falha em lote no log de diagnóstico. Rode
+4. **halt**, sem esperar o John: P0 aberta contra a versão ou falha em lote no log de diagnóstico. **Vitals ainda
+   não são lidos** (ação `vitals` na #51, aguarda o John); quando existir, também falha percebida > 1,09% ou ANR
+   percebido > 0,47% (≥ 100 usuários no dia). Rode
    `action=halt`, comente nas issues; o cartão fica em **Em produção** e a P0 vai para a Fila. `resume` volta
    na mesma fração. Chave em `app_config` desligada antes do halt.
 5. Dúvida, permissão negada na Play ou `PLAY_PRODUCTION_LIVE` ainda `false`: não insista, comente e diga no
