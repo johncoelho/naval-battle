@@ -311,6 +311,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_CREDITS_CHECKING("conferindo dobrões…", "checking doubloons…", "comprobando doblones…"),
     RESULT_CREDITS_RETRY("Os dobrões desta partida serão conferidos na próxima vez que o jogo abrir com internet.", "This match's doubloons will be checked the next time the game opens with internet.", "Los doblones de esta partida se comprobarán la próxima vez que el juego abra con internet."),
     RESULT_AI_TRAINING("Treino contra a IA rende XP e estatísticas, sem dobrões. Dobrões vêm das partidas online.", "Training against the AI earns XP and stats, no doubloons. Doubloons come from online matches.", "El entrenamiento contra la IA da XP y estadísticas, sin doblones. Los doblones vienen de las partidas en línea."),
+    RESULT_DAILY_CAP("Você atingiu o limite diário de dobrões das partidas online. O XP desta partida valeu; volte amanhã para ganhar mais dobrões.", "You've reached today's doubloon limit for online matches. This match's XP counted; come back tomorrow for more doubloons.", "Alcanzaste el límite diario de doblones de las partidas en línea. El XP de esta partida valió; vuelve mañana para ganar más doblones."),
     WALLET_OFFLINE("Sem conexão: esta compra precisa da internet.", "No connection: this purchase needs internet.", "Sin conexión: esta compra necesita internet."),
 
     // condecorações

@@ -41,6 +41,27 @@ class WalletTest {
     }
 
     @Test
+    fun pedidoDoCartuchoReaproveitaOIdGuardadoDaMesmaHabilidade() {
+        val guardado = ChargeRequest.encode("2X", "abc123")
+        assertEquals("abc123", ChargeRequest.pick(guardado, "2X", fresh = "novo"))
+        // outra habilidade, lixo ou vazio: id novo
+        assertEquals("novo", ChargeRequest.pick(guardado, "SNR", fresh = "novo"))
+        assertEquals("novo", ChargeRequest.pick("", "2X", fresh = "novo"))
+        assertEquals("novo", ChargeRequest.pick("2X|", "2X", fresh = "novo"))
+    }
+
+    @Test
+    fun pedidoDoCartuchoSoSomeQuandoOServidorDecidiu() {
+        // resposta perdida (rede) mantém o id para a nova tentativa não cobrar duas vezes
+        assertFalse(ChargeRequest.finished("offline"))
+        assertFalse(ChargeRequest.finished("busy"))
+        assertFalse(ChargeRequest.finished("no_wallet"))
+        assertTrue(ChargeRequest.finished("ok"))
+        assertTrue(ChargeRequest.finished("insufficient"))
+        assertTrue(ChargeRequest.finished("not_found"))
+    }
+
+    @Test
     fun filaGuardaEDevolveAsPartidas() {
         val a = PendingAward("sala-1", 30, 20, 3, 25, true)
         val b = PendingAward("sala-2", 10, 2, 0, 40, false)

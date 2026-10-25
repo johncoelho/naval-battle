@@ -224,6 +224,10 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | DOB-49 | P0 | Partida online QA01 × QA02 (casual e ranqueada, com tiros dos dois lados) | A linha de dobrões mostra "conferindo dobrões…" e depois "+N" igual ao do servidor; botão de dobrar aparece só na vitória com dobrões; saldo sobe N; sem combate: sem dobrões |
 | DOB-50 | P1 | Partida online sem internet no fim (matar o sinal antes do resultado) e reabrir o app com internet | Aviso de que os dobrões serão conferidos depois; na próxima abertura o servidor paga uma vez (e não duplica se abrir de novo) |
 | DOB-51 | P1 | Convidado com 500 dobrões que comprou uma pintura, depois cria conta ou entra pela 1ª vez | A pintura e o saldo (o maior com o do servidor) vão para a conta uma vez; sair da conta zera o saldo local; entrar em outra conta não leva dobrões |
+| DOB-52 | P0 | Servidor: `dobroes_buy('charge', '2X', '<id>')` com o mesmo id duas vezes (resposta perdida) | Cobra uma vez (uma linha `store_charge` no razão); a repetição devolve `ok` com o saldo atual, sem cobrar; sem id, cada chamada cobra |
+| DOB-53 | P0 | Servidor: `claim_feedback` de feedback aprovado (150 ou 300) sem e com carteira, e o 2º resgate | Sem carteira: devolve a linha e o saldo fica igual (o aparelho soma); com carteira: +N uma vez, uma linha `feedback` no razão; o 2º resgate não devolve linha |
+| DOB-54 | P1 | App: tocar duas vezes seguidas em comprar (e confirmar) na loja | O segundo toque é ignorado, sem aviso de "sem conexão"; o botão Comprar fica desabilitado enquanto a compra corre |
+| DOB-55 | P1 | App: partida online além de 3 contra o mesmo adversário, e depois do teto diário (500) | No `limit`: aviso "já foram 3 partidas recompensadas…" sem "+0"; no teto: aviso de limite diário de dobrões em pt/en/es |
 | LOJA-06 | P1 | Aba Dobrões, testador, `beta_store_enabled = 'true'` (ver DOB-16) | Prêmio e, abaixo, "Pacotes pagos" com aviso de cobrança |
 | LOJA-05 | P2 | Oferta do dia | Selo "-30%" no atalho; camuflagem no topo com desconto |
 | EST-01 | P1 | Estaleiro: equipar casco e camuflagem | Frota do menu e da batalha mudam; prévia desliza pelas 5 classes |

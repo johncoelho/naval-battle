@@ -26,6 +26,27 @@ object Wallet {
     fun aiCredits(victory: Boolean): Int = 0
 }
 
+/**
+ * Pedido de compra de cartucho (`dobroes_buy` com `p_request`): o id nasce no aparelho e fica guardado
+ * até o servidor responder. Se a resposta se perder, a nova tentativa reenvia o MESMO id e o servidor
+ * não cobra de novo (e o aparelho ainda ganha a carga). Guardado como `<habilidade>|<id>`.
+ */
+object ChargeRequest {
+    fun encode(item: String, id: String): String = "$item|$id"
+
+    /** O id guardado, se for da mesma habilidade; senão o [fresh]. */
+    fun pick(stored: String, item: String, fresh: String): String {
+        val parts = stored.split("|")
+        return if (parts.size == 2 && parts[0] == item && parts[1].isNotBlank()) parts[1] else fresh
+    }
+
+    /**
+     * Resposta em que o pedido acabou (o servidor decidiu): apaga o guardado. Só rede/erro mantém,
+     * para a nova tentativa reaproveitar o id.
+     */
+    fun finished(status: String): Boolean = status != "offline" && status != "busy" && status != "no_wallet"
+}
+
 /** Partida online cuja recompensa o servidor ainda não confirmou. */
 data class PendingAward(
     val matchId: String,

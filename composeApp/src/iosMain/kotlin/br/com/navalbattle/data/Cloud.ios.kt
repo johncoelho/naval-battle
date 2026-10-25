@@ -626,8 +626,10 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(walletOf(firstRow(json)))
     }
 
-    actual suspend fun dobroesBuy(session: Session, kind: String, item: String): CloudResult<WalletBuy> = call {
-        val json = post("/rest/v1/rpc/dobroes_buy", mapOf("p_kind" to kind, "p_item" to item), token = session.accessToken)
+    actual suspend fun dobroesBuy(session: Session, kind: String, item: String, request: String?): CloudResult<WalletBuy> = call {
+        val body = mutableMapOf<String, Any?>("p_kind" to kind, "p_item" to item)
+        if (request != null) body["p_request"] = request
+        val json = post("/rest/v1/rpc/dobroes_buy", body, token = session.accessToken)
         val o = firstRow(json)
         CloudResult.Ok(WalletBuy(o.strOr("status", "unknown"), o.intOr("balance", 0), o.strOr("owned", "std,br"), o.strOr("fleets", "std")))
     }

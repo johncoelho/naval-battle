@@ -24,6 +24,10 @@
 --   compra_repetida=owned/sem cobrar     item que a conta já tem                                (DOB-33)
 --   casco_sem_saldo=insufficient/igual   nada muda                                              (DOB-34)
 --   cartucho_2x=ok/-200                  duas compras de 100                                    (DOB-33)
+--   cartucho_pedido=-100 repetido=ok/sem cobrar ledger 1   mesmo p_request reenviado: cobra uma vez   (DOB-52)
+--   feedback_legado=1 linha/reward 150/saldo igual/2o 0    sem carteira o servidor não credita        (DOB-53)
+--   feedback_carteira=1 linha/+300/ledger 1/2o 0 saldo igual   com carteira credita uma vez          (DOB-53)
+--   tabelas=false/false/true/true/false  cliente sem TRUNCATE no razão; wallets só authenticated; store_items leitura (DOB-43)
 --   item_inexistente=not_found           inclui pintura de temporada e item incluso             (DOB-33)
 --   passe_sem_saldo=dobroes_insufficient/sem passe/saldo igual                                  (DOB-34)
 --   passe_com_saldo=<saldo+500-1200>     debita, credita o bônus e põe a pintura da estação     (DOB-35)
@@ -53,7 +57,7 @@
 do $$
 declare
   a uuid; b uuid; r record; n int; t text; out text := '';
-  bal int; bal2 int; offer text; oprice int; m1 uuid; m2 uuid; m3 uuid; m4 uuid; m5 uuid;
+  bal int; bal2 int; offer text; oprice int; m1 uuid; m2 uuid; m3 uuid; m4 uuid; m5 uuid; fb1 uuid;
   vale uuid; tk text; mi int; seas text; soma_antes bigint; soma_depois bigint; mission record;
 begin
   select id into a from auth.users where email = 'aigamesfactory.qa01@gmail.com';
@@ -103,6 +107,16 @@ begin
   out := out || 'legado_ad_ia=' || t || ' | ';
   delete from public.ad_vales where user_id in (a, b);
   update public.app_config set value = 'false' where key = 'ads_enabled';
+
+  -- claim_feedback sem carteira (b): devolve a linha com a recompensa, mas o servidor não credita; 2º resgate vazio
+  insert into public.feedback (user_id, username, kind, message, status, reward_credits, reviewed_at)
+    values (b, 'qa02', 'bug', 'mensagem de ensaio com mais de vinte caracteres', 'approved', 150, now())
+    returning id into fb1;
+  select credits into bal from public.profiles where id = b;
+  select count(*), coalesce(max(f.reward_credits), 0) into n, bal2 from public.claim_feedback(fb1) f;
+  out := out || 'feedback_legado=' || n || ' linha/reward ' || bal2 || '/saldo '
+       || case when (select credits from public.profiles where id = b) = bal then 'igual' else 'MUDOU' end
+       || '/2o ' || (select count(*) from public.claim_feedback(fb1)) || ' | ';
 
   ---------------------------------------------------------------- abertura (conta a: servidor maior + pendentes)
   insert into public.dobroes_purchases (purchase_token, user_id, product_id, kind, credited, premio, delivered_at) values
@@ -159,6 +173,12 @@ begin
   select x.balance into bal2 from public.dobroes_buy('charge', '2X') x;
   out := out || 'cartucho_2x=ok/' || (bal2 - bal) || ' | ';
   bal := bal2;
+  select x.balance into bal2 from public.dobroes_buy('charge', '2X', 'req-ensaio-1') x;
+  out := out || 'cartucho_pedido=' || (bal2 - bal);
+  bal := bal2;
+  select x.status, x.balance into r from public.dobroes_buy('charge', '2X', 'req-ensaio-1') x;
+  out := out || ' repetido=' || r.status || '/' || case when r.balance = bal then 'sem cobrar' else 'COBROU' end
+       || ' ledger ' || (select count(*) from public.dobroes_ledger where user_id = a and reason = 'store_charge' and ref = 'req-ensaio-1') || ' | ';
   out := out || 'item_inexistente=' || (select x.status from public.dobroes_buy('paint', 'zzz') x)
        || '/' || (select x.status from public.dobroes_buy('paint', 's_ver') x)
        || '/' || (select x.status from public.dobroes_buy('fleet', 'std') x) || ' | ';
@@ -277,6 +297,18 @@ begin
   out := out || 'online_limite=' || t || ' | ';
 
   ---------------------------------------------------------------- anuncio de vitoria com carteira
+  -- claim_feedback com carteira (a): +300 uma vez, uma linha no razão, 2º resgate vazio
+  insert into public.feedback (user_id, username, kind, message, status, reward_credits, reviewed_at)
+    values (a, 'qa01', 'bug', 'mensagem de ensaio com mais de vinte caracteres', 'approved', 300, now())
+    returning id into fb1;
+  select credits into bal from public.profiles where id = a;
+  select count(*) into n from public.claim_feedback(fb1);
+  out := out || 'feedback_carteira=' || n || ' linha/+' || ((select credits from public.profiles where id = a) - bal)
+       || '/ledger ' || (select count(*) from public.dobroes_ledger where user_id = a and reason = 'feedback' and ref = fb1::text);
+  select credits into bal from public.profiles where id = a;
+  out := out || '/2o ' || (select count(*) from public.claim_feedback(fb1)) || ' saldo '
+       || case when (select credits from public.profiles where id = a) = bal then 'igual' else 'MUDOU' end || ' | ';
+
   update public.app_config set value = 'true' where key = 'ads_enabled';
   select q.status into t from public.ad_reward_start('win', 'ai:abcdefgh-1234', 50) q;
   out := out || 'ia_ad_carteira=' || t || ' | ';
@@ -306,6 +338,11 @@ begin
 
   out := out || 'invariante=' || (select count(*) from public.dobroes_wallets w join public.profiles p on p.id = w.user_id
             where p.credits <> (select coalesce(sum(l.delta), 0) from public.dobroes_ledger l where l.user_id = w.user_id)) || ' | ';
+  out := out || 'tabelas=' || has_table_privilege('authenticated', 'public.dobroes_ledger', 'truncate')
+       || '/' || has_table_privilege('anon', 'public.dobroes_wallets', 'select')
+       || '/' || has_table_privilege('authenticated', 'public.dobroes_wallets', 'select')
+       || '/' || has_table_privilege('anon', 'public.store_items', 'select')
+       || '/' || has_table_privilege('authenticated', 'public.store_items', 'insert') || ' | ';
   out := out || 'privilegios=' || has_function_privilege('authenticated', 'public.dobroes_apply(uuid,integer,text,text)', 'execute')
        || '/' || has_function_privilege('authenticated', 'public.dobroes_open_all()', 'execute')
        || '/' || has_function_privilege('authenticated', 'public.dobroes_open_core(uuid,integer,text[],text)', 'execute');

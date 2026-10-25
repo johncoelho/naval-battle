@@ -199,6 +199,9 @@ begin
   if public.is_test_user(auth.uid()) then
     return;
   end if;
+  -- ordem de locks (#34): o advisory dobroes:<uid> vem ANTES de qualquer linha de profiles
+  -- (miles_refresh trava a linha); dobroes_apply repete o mesmo lock, que é reentrante
+  perform pg_advisory_xact_lock(hashtext('dobroes:' || auth.uid()::text));
   select c.season_key into szn from public.current_season() c;
 
   select s.season_key into target

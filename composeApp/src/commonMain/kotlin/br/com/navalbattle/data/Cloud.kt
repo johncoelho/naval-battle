@@ -596,8 +596,11 @@ expect class CloudApi() {
     /** Saldo e itens do servidor (RPC `dobroes_balance`). */
     suspend fun dobroesBalance(session: Session): CloudResult<WalletState>
 
-    /** Compra no servidor (RPC `dobroes_buy`): [kind] paint | fleet | charge, [item] o id ou o código da habilidade. */
-    suspend fun dobroesBuy(session: Session, kind: String, item: String): CloudResult<WalletBuy>
+    /**
+     * Compra no servidor (RPC `dobroes_buy`): [kind] paint | fleet | charge, [item] o id ou o código da
+     * habilidade. [request] (só cartucho) é o id de idempotência gerado no aparelho: repetir o mesmo não cobra de novo.
+     */
+    suspend fun dobroesBuy(session: Session, kind: String, item: String, request: String? = null): CloudResult<WalletBuy>
 
     /** Recompensa de dobrões de uma partida online (RPC `award_online_match`); o servidor confere e paga uma vez por sala. */
     suspend fun awardOnlineMatch(

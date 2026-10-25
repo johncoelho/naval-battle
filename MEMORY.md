@@ -104,7 +104,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   CI publica só na Alpha; a promoção para a produção (#39) está pronta: `promote-production.yml` + `tools/play-rollout.sh`, 20% → 50% → 100% (docs/ESTEIRA.md). **Pendente do John:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do *Published* da 91 (hoje `false`; permissões e Reporting API já feitas). Vitals no script: #51.
 - **Saldo de dobrões no servidor (#34, 0.34.9):** migração `dobroes_saldo` aplicada (inerte, nenhuma carteira
   aberta; abre por conta quando o 0.34.9 entra). **Pendência** (decisão 8 do John, pode rodar sozinho): com a
-  0.34.9 na **produção** e o QA aprovado (bateria completa, casos DOB-30 a DOB-43), conferir os 4 produtos no
+  0.34.9 na **produção** e o QA aprovado (bateria completa, casos DOB-30 a DOB-55), conferir os 4 produtos no
   Play Console, rodar `select public.dobroes_open_all();` e só então `real_billing_enabled = 'true'`.
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)

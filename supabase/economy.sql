@@ -285,6 +285,9 @@ begin
   if p_packs is null or p_packs < 1 or p_packs > 10 then
     raise exception 'miles_packs';
   end if;
+  -- ordem de locks (#34): o advisory dobroes:<uid> vem ANTES de qualquer linha de profiles
+  -- (miles_refresh trava a linha); dobroes_apply repete o mesmo lock, que é reentrante
+  perform pg_advisory_xact_lock(hashtext('dobroes:' || auth.uid()::text));
   cur := public.miles_refresh(auth.uid());
   cap := public.config_int('miles_cap', 50);
   extra := p_packs * public.config_int('miles_pack_size', 5);

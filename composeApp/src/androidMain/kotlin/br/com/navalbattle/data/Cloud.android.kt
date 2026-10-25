@@ -684,8 +684,9 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(walletOf(o))
     }
 
-    actual suspend fun dobroesBuy(session: Session, kind: String, item: String): CloudResult<WalletBuy> = call {
+    actual suspend fun dobroesBuy(session: Session, kind: String, item: String, request: String?): CloudResult<WalletBuy> = call {
         val body = JSONObject().put("p_kind", kind).put("p_item", item)
+        if (request != null) body.put("p_request", request)
         val o = JSONArray(post("/rest/v1/rpc/dobroes_buy", body, token = session.accessToken)).getJSONObject(0)
         CloudResult.Ok(
             WalletBuy(o.optString("status", "unknown"), o.optInt("balance", 0), o.optString("owned", "std,br"), o.optString("fleets", "std"))

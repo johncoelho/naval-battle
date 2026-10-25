@@ -285,17 +285,24 @@ private fun CareerReport(state: AppState, match: Match, a: Award) {
     // dobrões: contra a IA não há (treino); online vem do servidor, que confere a partida
     val creditsText: String? = when (state.onlineAward) {
         OnlineAwardUi.CHECKING -> t(K.RESULT_CREDITS_CHECKING)
-        OnlineAwardUi.PAID, OnlineAwardUi.LIMIT -> "+${state.onlineAwardAmount}"
+        OnlineAwardUi.PAID -> "+${state.onlineAwardAmount}"
         OnlineAwardUi.RETRY -> "—"
-        OnlineAwardUi.NONE -> null
+        // limite por adversário ou teto do dia: sem "+0" mudo, o aviso explica logo abaixo
+        OnlineAwardUi.LIMIT, OnlineAwardUi.CAPPED, OnlineAwardUi.NONE -> null
     }
-    ScoreTally(a, creditsText, coin = state.onlineAward == OnlineAwardUi.PAID || state.onlineAward == OnlineAwardUi.LIMIT)
+    ScoreTally(a, creditsText, coin = state.onlineAward == OnlineAwardUi.PAID)
     if (match.opponent == Opponent.AI) {
         Gap(8)
         HudLabel(t(K.RESULT_AI_TRAINING), Naval.muted)
     } else if (state.onlineAward == OnlineAwardUi.RETRY) {
         Gap(8)
         HudLabel(t(K.RESULT_CREDITS_RETRY), Naval.muted)
+    } else if (state.onlineAward == OnlineAwardUi.LIMIT) {
+        Gap(8)
+        HudLabel(t(K.RESULT_NO_REWARD_TODAY, Profile.ONLINE_REWARDS_PER_OPPONENT), Naval.muted)
+    } else if (state.onlineAward == OnlineAwardUi.CAPPED) {
+        Gap(8)
+        HudLabel(t(K.RESULT_DAILY_CAP), Naval.muted)
     }
 
     Gap(26)

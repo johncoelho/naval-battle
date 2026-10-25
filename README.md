@@ -567,7 +567,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   `profiles_guard_credits` **ignora** (não falha) `credits`, `owned` e `fleets` gravados pelo cliente. Entradas
   usam `dobroes_credit_if_wallet` (check-in, desafio, fim de temporada, feedback, passe) ou o gatilho de
   `dobroes_purchases` (compra, Prêmio, anúncio); `award_online_match` paga partida online (a IA paga 0; teto diário `dobroes_online_daily_cap` = 500, decisão do John).
-  Saídas: `join_season`, `buy_miles`, `dobroes_buy` (preços em `store_items`). Ordem de locks:
+  Saídas: `join_season`, `buy_miles`, `dobroes_buy` (preços em `store_items`; o cartucho leva `p_request`, id de idempotência do aparelho). Tabelas novas só com `grant select`. Ordem de locks:
   `season_pass:`/`daily:` antes de `dobroes:`. App: o saldo só muda por `Profile.setServerBalance`
   (valor devolvido pelo servidor); compra pede rede, sem débito otimista; convidado mantém carteira local
   só para cosméticos. Ensaio: `supabase/tests/dobroes_saldo_ensaio.sql`.

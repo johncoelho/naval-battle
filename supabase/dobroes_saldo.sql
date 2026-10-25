@@ -1,20 +1,20 @@
--- Naval Battle · saldo de dobrões no servidor (#34, parte "e" do #15, 0.34.8).
+-- Naval Battle · saldo de dobrões no servidor (#34, parte "e" do #15, 0.34.9).
 -- Rode no SQL Editor depois de economy.sql, daily.sql, season.sql, online.sql, dobroes.sql e ads.sql.
 -- Idempotente. As funções que já existiam e mudam (daily_checkin, claim_daily_challenge, join_season,
 -- claim_season_end, buy_miles, claim_feedback, ad_reward_start) continuam nos arquivos do domínio
 -- delas; a migração `dobroes_saldo` leva este arquivo mais o texto idêntico dessas funções.
 --
 -- IDEIA CENTRAL: a carteira abre POR CONTA, e nunca fecha.
---  * Conta sem carteira (legado): tudo igual a antes. O app 0.34.4 a 0.34.7 grava `credits`, as RPCs
+--  * Conta sem carteira (legado): tudo igual a antes. O app 0.34.4 a 0.34.8 grava `credits`, as RPCs
 --    devolvem o valor e o aparelho soma. Esta migração, sozinha, NÃO abre nenhuma carteira: é inerte
 --    para todos os apps instalados.
 --  * Conta com carteira: `profiles.credits` é o saldo de verdade, alterado SÓ por RPC. Cada movimento
 --    fica no razão `dobroes_ledger`. O cliente perde o direito de gravar `credits`, `owned` e
 --    `fleets` (o gatilho IGNORA a gravação em vez de falhar, para o upsert do app antigo seguir
 --    dando 200).
---  * A carteira abre quando o app 0.34.8 entra com a conta (dobroes_open) ou pelo administrador
+--  * A carteira abre quando o app 0.34.9 entra com a conta (dobroes_open) ou pelo administrador
 --    (dobroes_open_all, abre a de quem sobrou). dobroes_open_all e `real_billing_enabled = 'true'`
---    só depois da 0.34.8 na produção, com o OK registrado no HISTORY (decisão 8 do John, #34).
+--    só depois da 0.34.9 na produção, com o OK registrado no HISTORY (decisão 8 do John, #34).
 --
 -- Regras de ouro: contra a IA são zero dobrões em qualquer resultado; online paga por
 -- award_online_match; a abertura leva o MAIOR entre o saldo do servidor e o do aparelho, até
@@ -51,7 +51,8 @@ alter table public.dobroes_wallets enable row level security;
 drop policy if exists "carteira: ler a propria" on public.dobroes_wallets;
 create policy "carteira: ler a propria" on public.dobroes_wallets
   for select using (auth.uid() = user_id);
-revoke insert, update, delete on public.dobroes_wallets from anon, authenticated;
+revoke all on public.dobroes_wallets from anon, authenticated;
+grant select on public.dobroes_wallets to authenticated;
 
 -- razão: cada entrada e saída. unique (user, reason, ref) é a trava de "uma vez só"
 create table if not exists public.dobroes_ledger (
@@ -69,7 +70,8 @@ alter table public.dobroes_ledger enable row level security;
 drop policy if exists "razao: ler o proprio" on public.dobroes_ledger;
 create policy "razao: ler o proprio" on public.dobroes_ledger
   for select using (auth.uid() = user_id);
-revoke insert, update, delete on public.dobroes_ledger from anon, authenticated;
+revoke all on public.dobroes_ledger from anon, authenticated;
+grant select on public.dobroes_ledger to authenticated;
 
 -- preços da loja (pintura, casco, cartucho): o servidor manda. O app tem a mesma lista só para
 -- mostrar (StoreCatalogTest trava a igualdade; mudou preço, mudam o teste, o SQL e o app juntos).
@@ -84,7 +86,8 @@ create table if not exists public.store_items (
 alter table public.store_items enable row level security;
 drop policy if exists "loja: leitura aberta" on public.store_items;
 create policy "loja: leitura aberta" on public.store_items for select using (true);
-revoke insert, update, delete on public.store_items from anon, authenticated;
+revoke all on public.store_items from anon, authenticated;
+grant select on public.store_items to anon, authenticated;
 
 -- mesma ordem de Paint.all; oferta do dia = preço > 0 e sem estação (Paint.dailyOffer)
 insert into public.store_items (kind, item_id, price, sort, offer_eligible) values
@@ -217,7 +220,7 @@ begin
 end $$;
 revoke all on function public.dobroes_open_core(uuid, integer, text[], text) from public, anon, authenticated;
 
--- O app 0.34.8 abre a carteira da própria conta (uma vez; chamada repetida só devolve o saldo).
+-- O app 0.34.9 abre a carteira da própria conta (uma vez; chamada repetida só devolve o saldo).
 -- balance, owned e fleets são os do servidor depois da abertura.
 drop function if exists public.dobroes_open(integer, text[]);
 create or replace function public.dobroes_open(p_local integer, p_delivered text[] default '{}')
@@ -438,9 +441,12 @@ revoke all on function public.store_offer_today(text) from public, anon, authent
 -- Compra de pintura (paint), linha de casco (fleet) ou cartucho de habilidade (charge, p_item = código
 -- da habilidade). O preço sai de store_items; a oferta do dia (30% off) é recalculada aqui. Item que a
 -- conta já tem devolve 'owned' sem cobrar. Status: ok | owned | insufficient | not_found | no_wallet.
--- O cartucho vale no aparelho (o app soma a carga quando recebe 'ok').
+-- O cartucho vale no aparelho (o app soma a carga quando recebe 'ok'). p_request (só cartucho): id
+-- gerado no aparelho e guardado até a resposta; repetir o mesmo id (resposta perdida) devolve 'ok'
+-- sem cobrar de novo. Sem id, cada chamada cobra uma vez (id aleatório no servidor).
 drop function if exists public.dobroes_buy(text, text);
-create or replace function public.dobroes_buy(p_kind text, p_item text)
+drop function if exists public.dobroes_buy(text, text, text);
+create or replace function public.dobroes_buy(p_kind text, p_item text, p_request text default null)
 returns table (status text, balance integer, owned text, fleets text)
 language plpgsql security definer set search_path = public as $$
 declare
@@ -450,6 +456,7 @@ declare
   price integer;
   bal integer;
   have text[];
+  req text;
 begin
   if uid is null then
     raise exception 'dobroes_auth';
@@ -465,6 +472,14 @@ begin
   end if;
   if p_kind = 'paint' and it.item_id like 's\_%' then
     return query select 'not_found'::text, prof.credits, prof.owned, prof.fleets; return;
+  end if;
+  if p_kind = 'charge' and p_request is not null then
+    req := nullif(left(trim(p_request), 64), '');
+    -- repetição do mesmo pedido: já foi cobrado, devolve ok sem cobrar
+    if exists (select 1 from public.dobroes_ledger l
+                where l.user_id = uid and l.reason = 'store_charge' and l.ref = req) then
+      return query select 'ok'::text, prof.credits, prof.owned, prof.fleets; return;
+    end if;
   end if;
 
   if p_kind in ('paint', 'fleet') then
@@ -483,7 +498,7 @@ begin
   end if;
 
   if p_kind = 'charge' then
-    bal := public.dobroes_apply(uid, -price, 'store_charge', gen_random_uuid()::text);
+    bal := public.dobroes_apply(uid, -price, 'store_charge', coalesce(req, gen_random_uuid()::text));
   else
     bal := public.dobroes_apply(uid, -price, 'store_' || p_kind, p_item);
     if p_kind = 'paint' then
@@ -494,5 +509,5 @@ begin
   end if;
   return query select 'ok'::text, bal, p2.owned, p2.fleets from public.profiles p2 where p2.id = uid;
 end $$;
-revoke all on function public.dobroes_buy(text, text) from public, anon;
-grant execute on function public.dobroes_buy(text, text) to authenticated;
+revoke all on function public.dobroes_buy(text, text, text) from public, anon;
+grant execute on function public.dobroes_buy(text, text, text) to authenticated;

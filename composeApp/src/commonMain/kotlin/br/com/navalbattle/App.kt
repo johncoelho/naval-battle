@@ -103,6 +103,7 @@ import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.PendingCredit
+import br.com.navalbattle.game.ChargeRequest
 import br.com.navalbattle.game.OnlineAwardQueue
 import br.com.navalbattle.game.PendingAward
 import br.com.navalbattle.game.PendingCredits
@@ -173,9 +174,10 @@ internal fun screenForPushKind(kind: String): Screen? = when (kind) {
 /** Chave (no Prefs do aparelho) dos tokens de dobrões já somados (#15). */
 private const val DELIVERED_KEY = "dobroes_delivered"
 private const val AWARDS_KEY = "online_awards_pending"
+private const val CHARGE_REQUEST_KEY = "charge_request_pending"
 
 /** Situação da recompensa de dobrões da partida online na tela de resultado (#34). */
-enum class OnlineAwardUi { NONE, CHECKING, PAID, LIMIT, RETRY }
+enum class OnlineAwardUi { NONE, CHECKING, PAID, LIMIT, CAPPED, RETRY }
 
 /** Faixa etária guardada (ADULT, TEEN, CHILD, UNKNOWN) e a hora da leitura (#49). Nunca a idade. */
 private const val AGE_BAND_KEY = "age_band"
@@ -1546,8 +1548,14 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 return if (ok) "ok" else "insufficient"
             }
             if (!ensureWallet()) return "offline"
-            val r = (authed { s -> cloud.dobroesBuy(s, kind, id) } as? CloudResult.Ok)?.value ?: return "offline"
+            // cartucho: id de idempotência do aparelho, guardado até o servidor responder (resposta perdida não cobra 2×)
+            val request = if (kind == "charge") {
+                ChargeRequest.pick(dobroesPrefs.getString(CHARGE_REQUEST_KEY, ""), id, newRequestId())
+                    .also { dobroesPrefs.putString(CHARGE_REQUEST_KEY, ChargeRequest.encode(id, it)) }
+            } else null
+            val r = (authed { s -> cloud.dobroesBuy(s, kind, id, request) } as? CloudResult.Ok)?.value ?: return "offline"
             if (r.status == "no_wallet") return "offline"
+            if (request != null && ChargeRequest.finished(r.status)) dobroesPrefs.putString(CHARGE_REQUEST_KEY, "")
             profile.setServerBalance(r.balance)
             profile.adoptServerItems(r.owned, r.fleets)
             if (r.status == "ok" && kind == "charge") {
@@ -1564,6 +1572,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineAward = OnlineAwardUi.NONE
         onlineAwardAmount = 0
     }
+
+    private fun newRequestId(): String =
+        buildString { repeat(32) { append("0123456789abcdef"[kotlin.random.Random.Default.nextInt(16)]) } }
 
     /** Estado da recompensa de dobrões da partida online no resultado. */
     var onlineAward by mutableStateOf(OnlineAwardUi.NONE)
@@ -1602,7 +1613,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             if (a.matchId == current) {
                 onlineAwardAmount = r.amount
                 onlineAward = when (r.status) {
-                    "limit", "capped" -> OnlineAwardUi.LIMIT
+                    "limit" -> OnlineAwardUi.LIMIT
+                    "capped" -> OnlineAwardUi.CAPPED
                     else -> OnlineAwardUi.PAID
                 }
             }

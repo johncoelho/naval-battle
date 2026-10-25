@@ -96,7 +96,8 @@ fun StoreScreen(state: AppState) {
             when (state.buyStoreItem(kind, id, price)) {
                 "ok", "owned" -> { onOk(); notice = okNotice }
                 "insufficient" -> notice = t(K.STORE_EARN_HINT, price - profile.credits)
-                "offline", "busy" -> notice = t(K.WALLET_OFFLINE)
+                "busy" -> Unit  // segundo toque durante a compra: ignora em silêncio
+                "offline" -> notice = t(K.WALLET_OFFLINE)
                 else -> notice = t(K.DOUBLOON_BUY_FAILED)
             }
         }
@@ -259,7 +260,8 @@ fun StoreScreen(state: AppState) {
             PurchaseConfirm(
                 buy = buy,
                 credits = profile.credits,
-                onConfirm = { pending = null; buy.confirm() },
+                busy = state.storeBusy,
+                onConfirm = { if (!state.storeBusy) { pending = null; buy.confirm() } },
                 onCancel = { pending = null }
             )
         }
@@ -271,7 +273,7 @@ fun StoreScreen(state: AppState) {
  * igual ao botão — nenhuma compra acontece com um toque só.
  */
 @Composable
-private fun PurchaseConfirm(buy: PendingBuy, credits: Int, onConfirm: () -> Unit, onCancel: () -> Unit) {
+private fun PurchaseConfirm(buy: PendingBuy, credits: Int, busy: Boolean, onConfirm: () -> Unit, onCancel: () -> Unit) {
     Box(
         Modifier
             .fillMaxSize()
@@ -300,7 +302,7 @@ private fun PurchaseConfirm(buy: PendingBuy, credits: Int, onConfirm: () -> Unit
             Gap(18)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SecondaryButton(t(K.CANCEL), modifier = Modifier.weight(1f), onClick = onCancel)
-                PrimaryButton(t(K.STORE_CONFIRM_BUY), modifier = Modifier.weight(1f), onClick = onConfirm)
+                PrimaryButton(t(K.STORE_CONFIRM_BUY), enabled = !busy, modifier = Modifier.weight(1f), onClick = onConfirm)
             }
         }
     }

@@ -42,6 +42,16 @@ desligada (`real_billing_enabled = 'false'`).
   e `dobroes_buy` (preços em `store_items`, oferta do dia recalculada no servidor).
 - Anúncio "dobrar vitória": com carteira, `ai:` é recusado e o valor sai do crédito da sala no razão.
 
+### Revisão do Tech Lead (volta 1)
+- `buy_miles` e `claim_season_end` pegam o advisory `dobroes:<uid>` antes de `miles_refresh` (sem deadlock com
+  `dobroes_apply`); as 3 tabelas novas ficam com `revoke all` para anon/authenticated e `grant select` só
+  onde a policy precisa (migração `dobroes_saldo_volta1`); `award_online_match` reaplicada com padrão 500.
+- `dobroes_buy(p_kind, p_item, p_request)`: o cartucho usa um id de idempotência gerado no aparelho e guardado
+  até a resposta; reenviar o mesmo id não cobra de novo (a assinatura de 2 argumentos saiu, a RPC é nova).
+- Loja: segundo toque durante a compra é ignorado e o botão fica desabilitado. Resultado online: `limit`
+  mostra o aviso das 3 partidas por adversário; teto diário mostra texto novo (pt/en/es), sem "+0" mudo.
+- Ensaio cobre `claim_feedback` (com e sem carteira), o pedido idempotente do cartucho e os privilégios das tabelas.
+
 ### App
 - `game/Wallet.kt` (abertura, fila de recompensa online reenviada na abertura, IA = 0), `Profile` sem
   `spendCredits`/`grantCredits` (saldo só por `setServerBalance`; `snapshot()` não leva dobrões; `reset()` e
