@@ -69,10 +69,10 @@ object AdRules {
     }
 
     /**
-     * O botão "dobrar dobrões" do resultado: só em vitória contra a IA ou online que rendeu
-     * dobrões ([credits] > 0, então já dentro do limite de 3 por adversário online), e nunca
-     * em vitória sem combate, por ausência do outro, ou de quem abandonou. 2 jogadores e rede
-     * local não pagam carreira, então também não.
+     * O botão "dobrar dobrões" do resultado: só em vitória ONLINE que rendeu dobrões ([credits] > 0,
+     * o que o servidor pagou, já dentro do limite de 3 por adversário), e nunca em vitória sem
+     * combate, por ausência do outro, ou de quem abandonou. Contra a IA não há dobrões (#34), então
+     * não há o que dobrar; 2 jogadores e rede local não pagam carreira, então também não.
      */
     fun winEligible(
         opponent: Opponent,
@@ -82,7 +82,7 @@ object AdRules {
         wonByAbsence: Boolean,
         forfeitedBySelf: Boolean
     ): Boolean =
-        (opponent == Opponent.AI || opponent == Opponent.ONLINE) &&
+        opponent == Opponent.ONLINE &&
             victory && credits > 0 && !wonWithoutCombat && !wonByAbsence && !forfeitedBySelf
 
     /** O que a vitória pede ao servidor: os dobrões dela, até o teto que o servidor informou. */

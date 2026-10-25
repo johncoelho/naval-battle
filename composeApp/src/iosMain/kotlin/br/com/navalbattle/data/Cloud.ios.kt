@@ -89,7 +89,6 @@ actual class CloudApi actual constructor() {
             "avatar" to profile.avatar,
             "lang_code" to profile.langCode,
             "xp" to profile.xp,
-            "credits" to profile.credits,
             "matches" to profile.matches,
             "wins" to profile.wins,
             "shots" to profile.shots,
@@ -606,6 +605,43 @@ actual class CloudApi actual constructor() {
 
     actual suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit> =
         CloudResult.Ok(Unit)
+
+    // carteira de dobrões no servidor (#34); booleano lido com (x as? Boolean) ?: padrão
+    private fun walletOf(o: Map<*, *>) = WalletState(
+        balance = o.intOr("balance", 0),
+        wallet = (o["wallet"] as? Boolean) ?: true,
+        owned = o.strOr("owned", "std,br"),
+        fleets = o.strOr("fleets", "std")
+    )
+
+    private fun firstRow(json: Any?): Map<*, *> = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+
+    actual suspend fun dobroesOpen(session: Session, local: Int, delivered: List<String>): CloudResult<WalletState> = call {
+        val json = post("/rest/v1/rpc/dobroes_open", mapOf("p_local" to local, "p_delivered" to delivered), token = session.accessToken)
+        CloudResult.Ok(walletOf(firstRow(json)))
+    }
+
+    actual suspend fun dobroesBalance(session: Session): CloudResult<WalletState> = call {
+        val json = post("/rest/v1/rpc/dobroes_balance", emptyMap<String, Any?>(), token = session.accessToken)
+        CloudResult.Ok(walletOf(firstRow(json)))
+    }
+
+    actual suspend fun dobroesBuy(session: Session, kind: String, item: String): CloudResult<WalletBuy> = call {
+        val json = post("/rest/v1/rpc/dobroes_buy", mapOf("p_kind" to kind, "p_item" to item), token = session.accessToken)
+        val o = firstRow(json)
+        CloudResult.Ok(WalletBuy(o.strOr("status", "unknown"), o.intOr("balance", 0), o.strOr("owned", "std,br"), o.strOr("fleets", "std")))
+    }
+
+    actual suspend fun awardOnlineMatch(
+        session: Session, matchId: String, shots: Int, hits: Int, sunk: Int, turns: Int, victory: Boolean
+    ): CloudResult<OnlineAwardResult> = call {
+        val body = mapOf(
+            "p_match_id" to matchId, "p_shots" to shots, "p_hits" to hits,
+            "p_sunk" to sunk, "p_turns" to turns, "p_victory" to victory
+        )
+        val o = firstRow(post("/rest/v1/rpc/award_online_match", body, token = session.accessToken))
+        CloudResult.Ok(OnlineAwardResult(o.strOr("status", "unknown"), o.intOr("amount", 0), o.intOr("balance", 0)))
+    }
 
     actual suspend fun recentReleases(platform: String): CloudResult<List<AppRelease>> = call {
         val live = if (platform == "ios") "ios_live" else "android_live"

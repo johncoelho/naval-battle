@@ -9,6 +9,54 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.9] — 2026-10-25 · Saldo de dobrões no servidor (#34)
+
+App 0.34.9 (versionCode 96). Refs #34. Banco: `supabase/dobroes_saldo.sql` (migração `dobroes_saldo`,
+**aplicada**, inerte: nenhuma carteira aberta), mais o texto novo de `daily_checkin`, `claim_daily_challenge`,
+`join_season`, `claim_season_end`, `buy_miles`, `claim_feedback` e `ad_reward_start`. Ensaio que desfaz
+tudo: `supabase/tests/dobroes_saldo_ensaio.sql`. Parte (e) do #15; destrava a venda aberta, que segue
+desligada (`real_billing_enabled = 'false'`).
+
+### Mudou para o jogador
+- **Contra a IA não rende mais dobrões** em nenhum resultado, derrota inclusa (decisão do John, 25/10):
+  vira treino, com XP e estatísticas. A tela de resultado mostra a nota de treino, e o botão de dobrar a
+  vitória só existe em partida online.
+- **Dobrões vêm de**: partida online (o servidor confere a sala e paga), Diário, desafio, passe/temporada,
+  compra, Prêmio Beta, anúncio e feedback. Textos da loja ajustados nas três línguas.
+- **Compras (pintura, casco, cartucho), passe e milhas pedem internet**: o servidor cobra e entrega, sem
+  débito no aparelho. Sem rede ou sem saldo, nada muda.
+
+### Segurança do saldo
+- **Carteira por conta** (`dobroes_wallets`) com razão (`dobroes_ledger`, `unique (conta, motivo, ref)`):
+  `profiles.credits` só muda por RPC. Com a carteira aberta, o cliente que grava `credits`, `owned` ou
+  `fleets` direto é **ignorado** (gatilho `profiles_guard_credits`, sem erro, para o app antigo seguir
+  dando 200). Conta sem carteira (legado) funciona exatamente como antes.
+- **Abertura** (`dobroes_open`, na primeira entrada do 0.34.9 com a conta): saldo = o **maior** entre o do
+  servidor e o do aparelho, até 200.000 (`dobroes_open_max`); compras pendentes entram uma vez e as que o
+  aparelho já somou só ganham a entrega (sem soma dupla). O convidado leva a carteira local uma vez.
+  `dobroes_open_all()` (só administrador) abre as que sobrarem: **não foi rodada**.
+- **Entradas no servidor**: check-in, desafio, fim de temporada, feedback, passe (dobrões extras e pintura da
+  estação), compra real/vitrine/Prêmio/anúncio (gatilho em `dobroes_purchases`) e `award_online_match`
+  (mesma fórmula do XP, 3 por adversário/dia, teto diário `dobroes_online_daily_cap` = 1500, os dois lados
+  precisam ter jogado, ranqueada usa o `winner_id` do servidor). **Saídas**: `join_season`, `buy_miles`
+  e `dobroes_buy` (preços em `store_items`, oferta do dia recalculada no servidor).
+- Anúncio "dobrar vitória": com carteira, `ai:` é recusado e o valor sai do crédito da sala no razão.
+
+### App
+- `game/Wallet.kt` (abertura, fila de recompensa online reenviada na abertura, IA = 0), `Profile` sem
+  `spendCredits`/`grantCredits` (saldo só por `setServerBalance`; `snapshot()` não leva dobrões; `reset()` e
+  sair da conta não zeram a carteira), `Cloud` com `dobroesOpen`, `dobroesBalance`, `dobroesBuy` e
+  `awardOnlineMatch` (Android e iOS). Ordem na entrada: renovar sessão, fusão da carreira, abrir a carteira,
+  reenviar recompensas online, conferir pendentes.
+- Testes novos: `WalletTest`, `StoreCatalogTest` (preços iguais ao seed de `store_items`); `AdRulesTest` e
+  `PendingCreditsTest` ajustados.
+
+### Ensaio (bloco que desfaz tudo, antes de aplicar)
+Saída colada na issue #34. Cobre abertura sem perder nem duplicar, débito sem saldo recusado, IA pagando 0,
+`award_online_match` com limites e o app antigo gravando `credits` (aceito no legado, ignorado com carteira).
+
+---
+
 ## [0.34.8] — 2026-10-25 · Correção do build do iPhone (#49)
 
 App 0.34.8 (versionCode 95). Refs #49.

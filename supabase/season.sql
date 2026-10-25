@@ -7,8 +7,9 @@
 --   · Passe de Temporada — pago em dobrões: camuflagem exclusiva da estação,
 --     dobrões extras e milhas náuticas bônus. Quem aderiu de graça pode fazer
 --     upgrade depois, por um preço maior que o da adesão.
--- Os dobrões ainda vivem no aparelho: o app desconta o preço e entrega os dobrões
--- do passe; aqui ficam o registro do passe, as milhas e a regra de quem pode jogar.
+-- Os dobrões: conta com carteira (dobroes_saldo.sql, #34) paga e recebe aqui, no servidor; conta sem
+-- carteira (legado) ainda é o aparelho que desconta o preço e entrega os dobrões do passe. Aqui ficam
+-- o registro do passe, as milhas e a regra de quem pode jogar.
 
 insert into public.app_config (key, value) values
   ('season_pass_price', '1200'),
@@ -114,6 +115,18 @@ begin
     update public.season_passes
        set tier = 'premium', price_paid = price_paid + cost, upgraded_at = now()
      where user_id = auth.uid() and season_key = szn;
+  end if;
+
+  -- carteira no servidor (#34): debita o preço (sem saldo desfaz tudo: dobroes_insufficient), credita
+  -- os dobrões do passe e coloca a pintura da estação nos itens. Conta sem carteira: o aparelho faz.
+  -- Ordem de locks: season_pass:<uid> (acima) e depois dobroes:<uid> (dentro de dobroes_apply).
+  if bonus > 0 and public.dobroes_has_wallet(auth.uid()) then
+    perform public.dobroes_apply(auth.uid(), -cost, 'season_pass',
+                                 szn || ':' || case when cur is null then 'premium' else 'upgrade' end);
+    perform public.dobroes_apply(auth.uid(), public.config_int('season_pass_doubloons', 500), 'season_bonus', szn);
+    update public.profiles p
+       set owned = p.owned || ',' || public.season_paint_id(szn)
+     where p.id = auth.uid() and not (public.season_paint_id(szn) = any (string_to_array(p.owned, ',')));
   end if;
 
   bal := public.miles_refresh(auth.uid());
@@ -234,6 +247,8 @@ begin
 
   perform public.miles_refresh(auth.uid());
   update public.profiles set nautical_miles = nautical_miles + mi where id = auth.uid();
+  -- carteira no servidor (#34); sem carteira o aparelho soma os dobrões devolvidos
+  perform public.dobroes_credit_if_wallet(auth.uid(), d, 'season_end', target);
 
   return query select target, public.season_label(target), pos, total::integer,
                       st.points, st.matches, st.wins, d, mi;

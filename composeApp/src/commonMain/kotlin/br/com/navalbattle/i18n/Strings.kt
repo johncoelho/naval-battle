@@ -308,6 +308,10 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_TALLY_BLITZ_CALC("%1 turnos · só em vitória", "%1 turns · victory only", "%1 turnos · solo en victoria"),
     RESULT_TALLY_XP("Experiência ganha", "Experience earned", "Experiencia ganada"),
     RESULT_TALLY_CREDITS("Dobrões", "Doubloons", "Doblones"),
+    RESULT_CREDITS_CHECKING("conferindo dobrões…", "checking doubloons…", "comprobando doblones…"),
+    RESULT_CREDITS_RETRY("Os dobrões desta partida serão conferidos na próxima vez que o jogo abrir com internet.", "This match's doubloons will be checked the next time the game opens with internet.", "Los doblones de esta partida se comprobarán la próxima vez que el juego abra con internet."),
+    RESULT_AI_TRAINING("Treino contra a IA rende XP e estatísticas, sem dobrões. Dobrões vêm das partidas online.", "Training against the AI earns XP and stats, no doubloons. Doubloons come from online matches.", "El entrenamiento contra la IA da XP y estadísticas, sin doblones. Los doblones vienen de las partidas en línea."),
+    WALLET_OFFLINE("Sem conexão: esta compra precisa da internet.", "No connection: this purchase needs internet.", "Sin conexión: esta compra necesita internet."),
 
     // condecorações
     RESULT_MEDALS("Condecorações", "Decorations", "Condecoraciones"),
@@ -387,13 +391,13 @@ enum class K(val pt: String, val en: String, val es: String) {
     STORE_MISSING("Faltam %1 dobrões para a %2", "%1 doubloons short for %2", "Faltan %1 doblones para %2"),
     STORE_COMMISSIONED("%s entrou em serviço", "%s is in service", "%s entró en servicio"),
     STORE_PAINTED("%s aplicada na frota", "%s applied to the fleet", "%s aplicada a la flota"),
-    STORE_CREDITS_HINT("Dobrões se ganham em combate e na aba Dobrões da loja", "Doubloons are earned in battle and in the store's Doubloons tab", "Los doblones se ganan en combate y en la pestaña Doblones de la tienda"),
+    STORE_CREDITS_HINT("Dobrões se ganham em partidas online, no Diário, nos desafios, no passe e na aba Dobrões da loja", "Doubloons are earned in online matches, the Daily log, challenges, the pass and the store's Doubloons tab", "Los doblones se ganan en partidas en línea, el Diario, los desafíos, el pase y la pestaña Doblones de la tienda"),
     STORE_INCLUDED("Inclusa", "Included", "Incluida"),
     STORE_OWNED("Conquistada", "Owned", "Conseguida"),
     STORE_COST("Custa %1 · você tem %2 dobrões", "Costs %1 · you have %2 doubloons", "Cuesta %1 · tienes %2 doblones"),
     STORE_IN_YARD("No seu estaleiro", "In your shipyard", "En tu astillero"),
     STORE_IN_FLEET("Em serviço na sua frota", "Serving in your fleet", "En servicio en tu flota"),
-    STORE_EARN_HINT("Faltam %s dobrões — ganhe dobrões em combate ou na aba Dobrões", "%s doubloons short — earn them in battle or in the Doubloons tab", "Faltan %s doblones — gánalos en combate o en la pestaña Doblones"),
+    STORE_EARN_HINT("Faltam %s dobrões — ganhe dobrões online, no Diário ou na aba Dobrões", "%s doubloons short — earn them online, in the Daily log or in the Doubloons tab", "Faltan %s doblones — gánalos en línea, en el Diario o en la pestaña Doblones"),
 
     // ---------------------------------------------------------------- perfil
     PROFILE_TITLE("Perfil", "Profile", "Perfil"),

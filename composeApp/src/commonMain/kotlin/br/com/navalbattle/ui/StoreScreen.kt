@@ -62,7 +62,7 @@ private enum class Aisle(val key: K) {
 }
 
 /** Preço do cartucho avulso de cada habilidade — mais caro quanto mais decisivo o efeito. */
-private fun abilityPrice(ability: Ability): Int = when (ability) {
+internal fun abilityPrice(ability: Ability): Int = when (ability) {
     Ability.DOUBLE_BARRAGE -> 100
     Ability.AIR_RECON -> 80
     Ability.SONAR_PING -> 60
@@ -89,6 +89,18 @@ fun StoreScreen(state: AppState) {
 
     // item fora do alcance: explica como chegar lá em vez de não fazer nada
     val locked: (Int) -> Unit = { price -> notice = t(K.STORE_EARN_HINT, price - profile.credits) }
+
+    // compra pelo servidor (#34): sem débito otimista; o saldo e o item só mudam com a resposta dele
+    fun purchase(kind: String, id: String, price: Int, okNotice: String, onOk: () -> Unit = {}) {
+        scope.launch {
+            when (state.buyStoreItem(kind, id, price)) {
+                "ok", "owned" -> { onOk(); notice = okNotice }
+                "insufficient" -> notice = t(K.STORE_EARN_HINT, price - profile.credits)
+                "offline", "busy" -> notice = t(K.WALLET_OFFLINE)
+                else -> notice = t(K.DOUBLOON_BUY_FAILED)
+            }
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         Column(
@@ -146,9 +158,7 @@ fun StoreScreen(state: AppState) {
                             onLocked = { locked(price) },
                             onBuy = {
                                 pending = PendingBuy(ability.label, price) {
-                                    if (profile.buyAbilityCharge(ability, price)) {
-                                        notice = t(K.STORE_ABILITY_BOUGHT, ability.label)
-                                    }
+                                    purchase("charge", ability.code, price, t(K.STORE_ABILITY_BOUGHT, ability.label))
                                 }
                             }
                         )
@@ -166,9 +176,8 @@ fun StoreScreen(state: AppState) {
                             onLocked = { locked(line.price) },
                             onBuy = {
                                 pending = PendingBuy(line.name, line.price) {
-                                    if (profile.buyFleet(line.id, line.price)) {
+                                    purchase("fleet", line.id, line.price, t(K.STORE_COMMISSIONED, line.name)) {
                                         profile.equipFleet(line.id)
-                                        notice = t(K.STORE_COMMISSIONED, line.name)
                                     }
                                 }
                             },
@@ -196,9 +205,8 @@ fun StoreScreen(state: AppState) {
                             onLocked = { locked(price) },
                             onBuy = {
                                 pending = PendingBuy(paint.name, price) {
-                                    if (profile.buy(paint.id, price)) {
+                                    purchase("paint", paint.id, price, t(K.STORE_PAINTED, paint.name)) {
                                         profile.equip(paint.id)
-                                        notice = t(K.STORE_PAINTED, paint.name)
                                     }
                                 }
                             },
@@ -218,9 +226,8 @@ fun StoreScreen(state: AppState) {
                             onLocked = { locked(paint.price) },
                             onBuy = {
                                 pending = PendingBuy(paint.name, paint.price) {
-                                    if (profile.buy(paint.id, paint.price)) {
+                                    purchase("paint", paint.id, paint.price, t(K.STORE_PAINTED, paint.name)) {
                                         profile.equip(paint.id)
-                                        notice = t(K.STORE_PAINTED, paint.name)
                                     }
                                 }
                             },

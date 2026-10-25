@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 class AdRulesTest {
 
     private fun win(
-        opponent: Opponent = Opponent.AI,
+        opponent: Opponent = Opponent.ONLINE,
         victory: Boolean = true,
         credits: Int = 130,
         noCombat: Boolean = false,
@@ -24,7 +24,14 @@ class AdRulesTest {
     ) = AdRules.winEligible(opponent, victory, credits, noCombat, absence, forfeit)
 
     @Test
-    fun vitoriaContraIaComDobroesVale() = assertTrue(win())
+    fun vitoriaOnlineComDobroesVale() = assertTrue(win())
+
+    @Test
+    fun contraIaNuncaDobraPoisNaoHaDobroes() {
+        // #34: contra a IA são zero dobrões em qualquer resultado, então não há o que dobrar
+        assertFalse(win(opponent = Opponent.AI))
+        assertFalse(win(opponent = Opponent.AI, credits = 130))
+    }
 
     @Test
     fun vitoriaOnlineDentroDoLimiteVale() = assertTrue(win(opponent = Opponent.ONLINE))

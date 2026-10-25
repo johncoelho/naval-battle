@@ -87,20 +87,24 @@ grant execute on function public.submit_feedback(text, text, text, text, text) t
 
 -- Reivindica UMA vez e devolve a recompensa: o app só aplica o que voltou daqui,
 -- então outro aparelho (ou o mesmo, depois de travar) nunca recebe de novo.
-drop function if exists public.claim_feedback(uuid);
-create function public.claim_feedback(p_feedback_id uuid)
+create or replace function public.claim_feedback(p_feedback_id uuid)
 returns table (
   id uuid, kind text, status text, reward_credits integer,
   reward_ability text, reward_charges integer, review_note text
 )
 language plpgsql security definer set search_path = public as $$
 begin
-  return query
   update public.feedback f
      set claimed = true
    where f.id = p_feedback_id and f.user_id = auth.uid()
      and f.status in ('approved', 'rejected') and f.claimed = false
-  returning f.id, f.kind, f.status, f.reward_credits, f.reward_ability, f.reward_charges, f.review_note;
+  returning f.id, f.kind, f.status, f.reward_credits, f.reward_ability, f.reward_charges, f.review_note
+       into id, kind, status, reward_credits, reward_ability, reward_charges, review_note;
+  if found then
+    -- carteira no servidor (#34); sem carteira o aparelho soma reward_credits
+    perform public.dobroes_credit_if_wallet(auth.uid(), coalesce(reward_credits, 0), 'feedback', p_feedback_id::text);
+    return next;
+  end if;
 end $$;
 
 revoke all on function public.claim_feedback(uuid) from public;

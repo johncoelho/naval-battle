@@ -552,12 +552,25 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   Padrão de log das Edges de compra (#27): falha vira uma linha JSON `console.error` com evento e
   etapa, sem segredo, token, corpo de resposta nem `err.message`; o motivo é fixo ou o status HTTP.
   A Edge chama `apply_dobroes_purchase` (só `service_role`), que credita uma vez por token e
-  consome a compra quando deve. O aparelho soma o que `dobroes_pending()` devolve e confirma
-  com `dobroes_ack`; o guarda contra soma dupla fica no aparelho (`game/PendingCredits`).
+  consome a compra quando deve. Conta com carteira (#34): o servidor já creditou, e o aparelho só
+  avisa "+N" pelo que `dobroes_pending()` devolve e confirma com `dobroes_ack` (`game/PendingCredits`
+  evita aviso repetido). Conta sem carteira (apps até 0.34.8): o aparelho soma, como antes.
   Desde 0.33.3 (#28): o Prêmio Beta é a RPC `claim_premio_beta()` (token `premio:<uid>:<dia>`,
   unique por conta e dia); a compra da vitrine manda `origem = "vitrine"` à Edge; sem origem é o
   caminho legado do Prêmio pela Play (apps 0.33.0 a 0.33.2). `dobroes_gate_licenca()` lista os
   testadores sem o 0.33.3, antes de tirar alguém da lista de teste de licença.
+- Saldo de dobrões (`supabase/dobroes_saldo.sql`, #34): a **carteira abre por conta** (`dobroes_open`,
+  uma vez; `dobroes_open_all()` só administrador, antes da venda aberta). Conta sem carteira = legado,
+  igual ao app antigo. Com carteira, `profiles.credits` só muda por RPC `security definer` via
+  `dobroes_apply` (sob o advisory lock `dobroes:<uid>`, razão `dobroes_ledger` com
+  `unique (user_id, reason, ref)`, saldo negativo desfaz tudo com `dobroes_insufficient`), e o gatilho
+  `profiles_guard_credits` **ignora** (não falha) `credits`, `owned` e `fleets` gravados pelo cliente. Entradas
+  usam `dobroes_credit_if_wallet` (check-in, desafio, fim de temporada, feedback, passe) ou o gatilho de
+  `dobroes_purchases` (compra, Prêmio, anúncio); `award_online_match` paga partida online (a IA paga 0).
+  Saídas: `join_season`, `buy_miles`, `dobroes_buy` (preços em `store_items`). Ordem de locks:
+  `season_pass:`/`daily:` antes de `dobroes:`. App: o saldo só muda por `Profile.setServerBalance`
+  (valor devolvido pelo servidor); compra pede rede, sem débito otimista; convidado mantém carteira local
+  só para cosméticos. Ensaio: `supabase/tests/dobroes_saldo_ensaio.sql`.
 - Anúncio premiado (`supabase/ads.sql`, #29): `ads_status`, `ad_reward_start` (vale de 15 min com o
   valor decidido no servidor), `ad_reward_status` e `apply_ad_reward` (só `service_role`, chamada pela
   Edge `ads-reward`). A Edge tem `verify_jwt` desligado de propósito: quem chama é o Google, e a

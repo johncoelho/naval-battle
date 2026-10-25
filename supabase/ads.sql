@@ -227,8 +227,8 @@ grant execute on function public.ads_status(text) to authenticated;
 
 -- Pede um vale. p_ref: 'ai:<id gerado no aparelho>' ou 'online:<id da sala>' no lugar win
 -- (ignorado nos outros: vale o dia). p_amount: só no lugar win (dobrões da vitória; o servidor
--- corta no teto). Retorna status ok | off | limit | not_eligible | already, o vale e o valor.
-drop function if exists public.ad_reward_start(text, text, integer);
+-- corta no teto). Conta com carteira (#34): 'ai:' é not_eligible (a IA não paga) e o valor sai do
+-- crédito da sala no razão. Retorna status ok | off | limit | not_eligible | already, o vale e o valor.
 create or replace function public.ad_reward_start(p_place text, p_ref text default null, p_amount integer default null)
 returns table (status text, vale uuid, amount integer)
 language plpgsql security definer set search_path = public as $$
@@ -239,6 +239,7 @@ declare
   cur integer;
   room_id uuid;
   v uuid;
+  wallet boolean;
 begin
   if uid is null or not public.ads_on_for(uid) then
     return query select 'off'::text, null::uuid, 0; return;
@@ -258,7 +259,11 @@ begin
 
   if p_place = 'win' then
     ref_ := left(trim(coalesce(p_ref, '')), 80);
-    if coalesce(p_amount, 0) <= 0 or ref_ !~ '^(ai|online):[A-Za-z0-9-]{8,64}$' then
+    wallet := public.dobroes_has_wallet(uid);
+    -- carteira no servidor (#34): contra a IA não há dobrões, então não há o que dobrar; o valor da
+    -- vitória online sai do crédito da sala no razão, nunca de p_amount
+    if (not wallet and coalesce(p_amount, 0) <= 0) or ref_ !~ '^(ai|online):[A-Za-z0-9-]{8,64}$'
+       or (wallet and ref_ like 'ai:%') then
       return query select 'not_eligible'::text, null::uuid, 0; return;
     end if;
     if ref_ like 'online:%' then
@@ -276,7 +281,13 @@ begin
         return query select 'not_eligible'::text, null::uuid, 0; return;
       end if;
     end if;
-    amt := least(p_amount, public.config_int('ads_win_double_cap', 150), public.ads_doubloons_left(uid));
+    if wallet then
+      select l.delta into amt from public.dobroes_ledger l
+       where l.user_id = uid and l.reason = 'online' and l.ref = room_id::text;
+      amt := least(coalesce(amt, 0), public.config_int('ads_win_double_cap', 150), public.ads_doubloons_left(uid));
+    else
+      amt := least(p_amount, public.config_int('ads_win_double_cap', 150), public.ads_doubloons_left(uid));
+    end if;
   elsif p_place in ('checkin', 'challenge') then
     ref_ := public.brt_today()::text;
     amt := least(public.ads_daily_paid(uid, p_place), public.ads_doubloons_left(uid));

@@ -1,7 +1,8 @@
 -- Diário de bordo: check-in diário com trilha de 7 dias e desafio do dia, pagos em
 -- dobrões. Rodar depois de economy.sql (usa brt_today, brt_seconds_to_midnight e
 -- config_int). Mesmo padrão das outras recompensas: o servidor decide e registra
--- (uma vez por dia, travado aqui), o app credita os dobrões que ele devolver.
+-- (uma vez por dia, travado aqui). Conta com carteira (dobroes_saldo.sql, #34): o servidor credita;
+-- conta sem carteira (legado): o app credita os dobrões que ele devolver.
 --
 -- Trilha: 7 dias SEGUIDOS a partir do primeiro check-in. Pulou um dia, volta ao dia 1;
 -- fechou o dia 7, ganha o bônus da semana e a trilha recomeça no dia seguinte.
@@ -135,6 +136,9 @@ begin
   on conflict (user_id) do update
     set streak = excluded.streak, last_checkin = excluded.last_checkin, updated_at = now();
 
+  -- carteira no servidor (#34): com carteira o servidor credita (uma vez por dia); sem ela o aparelho soma
+  perform public.dobroes_credit_if_wallet(auth.uid(), pay + bonus, 'checkin', d::text);
+
   streak := next_streak;
   doubloons := pay + bonus;
   week_completed := next_streak = 7;
@@ -142,8 +146,7 @@ begin
 end $$;
 
 -- resgate do desafio: precisa do check-in de hoje, da missão de hoje e do alvo batido
-drop function if exists public.claim_daily_challenge(text, integer);
-create function public.claim_daily_challenge(p_mission text, p_progress integer)
+create or replace function public.claim_daily_challenge(p_mission text, p_progress integer)
 returns table (doubloons integer)
 language plpgsql security definer set search_path = public as $$
 #variable_conflict use_column
@@ -173,6 +176,7 @@ begin
   pay := public.config_int('daily_challenge_doubloons', 50);
   insert into public.daily_claims (user_id, day, kind, doubloons) values (auth.uid(), d, 'challenge', pay);
   update public.daily_progress dp set challenge_claimed = d, updated_at = now() where dp.user_id = auth.uid();
+  perform public.dobroes_credit_if_wallet(auth.uid(), pay, 'challenge', d::text);
   doubloons := pay;
   return next;
 end $$;

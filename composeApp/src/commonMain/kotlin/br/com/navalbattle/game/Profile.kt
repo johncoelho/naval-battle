@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.Prefs
-import br.com.navalbattle.data.PrefsBatch
 import br.com.navalbattle.data.Session
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -104,8 +103,21 @@ class Profile(private val prefs: Prefs) {
 
     var xp by mutableStateOf(prefs.getInt(K_XP, 0))
         private set
+
+    /**
+     * Dobrões. Com a carteira aberta ([walletOpen]) é só o que o servidor devolveu (cache para mostrar
+     * offline; muda apenas por [setServerBalance]). Sem conta (convidado) é a carteira local, usada
+     * só para cosméticos: a IA não paga dobrões, então ela só encolhe, e é levada uma vez para a
+     * conta no primeiro login (#34).
+     */
     var credits by mutableStateOf(prefs.getInt(K_CREDITS, 500))
         private set
+
+    /** Conta cuja carteira de dobrões já foi aberta no servidor neste aparelho (vazio = nenhuma). */
+    private var walletFor by mutableStateOf(prefs.getString(K_WALLET, ""))
+
+    /** A carteira da conta atual está aberta no servidor: o saldo é dele e o aparelho não grava. */
+    val walletOpen: Boolean get() = walletFor.isNotBlank() && walletFor == accountId
 
     var matches by mutableStateOf(prefs.getInt(K_MATCHES, 0))
         private set
@@ -143,33 +155,61 @@ class Profile(private val prefs: Prefs) {
 
     fun chargesOf(ability: Ability): Int = abilityCharges[ability.code] ?: 0
 
-    fun buyAbilityCharge(ability: Ability, price: Int): Boolean {
-        if (credits < price) return false
+    /**
+     * Único jeito de mudar o saldo de quem tem carteira: grava o que o servidor devolveu (#34). O
+     * aparelho nunca soma nem subtrai por conta própria.
+     */
+    fun setServerBalance(balance: Int) {
+        credits = balance
+        prefs.putInt(K_CREDITS, balance)
+    }
+
+    /** Carteira aberta no servidor para a conta [uid]: daqui em diante o saldo é dele. */
+    fun markWalletOpen(uid: String) {
+        walletFor = uid
+        prefs.putString(K_WALLET, uid)
+    }
+
+    /**
+     * Itens que o servidor guarda (pintura e casco comprados, pintura da temporada): ele é a verdade
+     * para conta com carteira. O que estiver equipado e não for mais da conta volta ao padrão.
+     */
+    fun adoptServerItems(ownedCsv: String, fleetsCsv: String) {
+        owned = ownedCsv.split(",").filter { it.isNotBlank() }.toSet().ifEmpty { setOf("std", "br") }
+        ownedFleets = fleetsCsv.split(",").filter { it.isNotBlank() }.toSet().ifEmpty { setOf("std") }
+        if (equipped !in owned) equipped = "br"
+        if (equippedFleet !in ownedFleets) equippedFleet = "std"
+        prefs.putString(K_OWNED, owned.joinToString(","))
+        prefs.putString(K_FLEETS, ownedFleets.joinToString(","))
+        prefs.putString(K_EQUIPPED, equipped)
+        prefs.putString(K_FLEET, equippedFleet)
+    }
+
+    /** O servidor cobrou e entregou uma pintura/casco: marca como da conta (sem mexer no saldo). */
+    fun markOwned(liveryId: String) {
+        owned = owned + liveryId
+        prefs.putString(K_OWNED, owned.joinToString(","))
+    }
+
+    fun markFleetOwned(fleetId: String) {
+        ownedFleets = ownedFleets + fleetId
+        prefs.putString(K_FLEETS, ownedFleets.joinToString(","))
+    }
+
+    /** Cartucho avulso que o servidor cobrou. Só neste aparelho. */
+    fun addCharge(ability: Ability) = grantAbilityCharge(ability)
+
+    /**
+     * Compras do convidado (sem conta): só cosméticos, pagos da carteira local. Com conta o saldo é do
+     * servidor ([walletOpen]) e estas funções não se aplicam.
+     */
+    fun guestBuyAbilityCharge(ability: Ability, price: Int): Boolean {
+        if (walletOpen || credits < price) return false
         credits -= price
         abilityCharges = abilityCharges + (ability.code to (chargesOf(ability) + 1))
         prefs.putInt(K_CREDITS, credits)
         persistCharges()
         return true
-    }
-
-    /** Desconta dobrões gastos fora da loja de itens (ex.: pacote de milhas). */
-    fun spendCredits(amount: Int): Boolean {
-        if (credits < amount) return false
-        credits -= amount
-        prefs.putInt(K_CREDITS, credits)
-        return true
-    }
-
-    /**
-     * Soma dobrões: recompensa de feedback, compra na loja de dobrões, estorno. [alsoWrite] grava
-     * no mesmo lote o que tem que andar com o saldo (compras entregues), numa só escrita.
-     */
-    fun grantCredits(amount: Int, alsoWrite: PrefsBatch.() -> Unit = {}) {
-        credits += amount
-        val batch = PrefsBatch()
-        batch.putInt(K_CREDITS, credits)
-        batch.alsoWrite()
-        prefs.putBatch(batch)
     }
 
     /** Recompensa por feedback aprovado (melhoria aceita) — presenteia uma carga da habilidade. */
@@ -449,19 +489,29 @@ class Profile(private val prefs: Prefs) {
     }
 
     fun signOut() {
+        // o saldo da conta fica com a conta: o convidado seguinte não herda dobrões (nem os leva para outra conta)
+        if (walletOpen) {
+            credits = 0
+            prefs.putInt(K_CREDITS, 0)
+        }
+        walletFor = ""
+        prefs.putString(K_WALLET, "")
         accountId = ""; accountEmail = ""; accessToken = ""; refreshToken = ""
         prefs.putString(K_UID, ""); prefs.putString(K_EMAIL, "")
         prefs.putString(K_TOKEN, ""); prefs.putString(K_REFRESH, "")
     }
 
-    /** A carreira como ela vai para a nuvem. */
+    /**
+     * A carreira como ela vai para a nuvem. Os dobrões NÃO vão: com carteira o servidor ignora a
+     * gravação e o campo só serve para ler (por isso fica em zero aqui e o upsert não o envia).
+     */
     fun snapshot(): CloudProfile = CloudProfile(
         username = displayName,
         insignia = insignia.id,
         avatar = avatar.id,
         langCode = langCode,
         xp = xp,
-        credits = credits,
+        credits = 0,
         matches = matches,
         wins = wins,
         shots = shots,
@@ -482,7 +532,7 @@ class Profile(private val prefs: Prefs) {
         avatar = Avatar.of(remote.avatar)
         if (remote.langCode.isNotBlank()) langCode = remote.langCode
         xp = remote.xp
-        credits = remote.credits
+        credits = remote.credits  // com carteira é o saldo do servidor; sem ela, o último que ele guardou
         matches = remote.matches
         wins = remote.wins
         shots = remote.shots
@@ -565,10 +615,10 @@ class Profile(private val prefs: Prefs) {
 
     fun ownsFleet(fleetId: String): Boolean = fleetId in ownedFleets
 
-    /** Compra uma camuflagem com créditos de jogo. Falso quando não há saldo. */
-    fun buy(liveryId: String, price: Int): Boolean {
+    /** Compra de convidado: camuflagem paga da carteira local. Falso quando não há saldo (ou há conta). */
+    fun guestBuy(liveryId: String, price: Int): Boolean {
         if (owns(liveryId)) return true
-        if (credits < price) return false
+        if (walletOpen || credits < price) return false
         credits -= price
         owned = owned + liveryId
         prefs.putInt(K_CREDITS, credits)
@@ -576,10 +626,10 @@ class Profile(private val prefs: Prefs) {
         return true
     }
 
-    /** Compra uma linha de casco com créditos de jogo. */
-    fun buyFleet(fleetId: String, price: Int): Boolean {
+    /** Compra de convidado: linha de casco paga da carteira local. */
+    fun guestBuyFleet(fleetId: String, price: Int): Boolean {
         if (ownsFleet(fleetId)) return true
-        if (credits < price) return false
+        if (walletOpen || credits < price) return false
         credits -= price
         ownedFleets = ownedFleets + fleetId
         prefs.putInt(K_CREDITS, credits)
@@ -600,9 +650,11 @@ class Profile(private val prefs: Prefs) {
     }
 
     /**
-     * Fecha uma partida contra a IA ou online: soma XP, créditos e estatísticas.
-     * Online passa antes pelo limite diário de [claimOnlineReward]. Partidas locais
-     * não valem carreira — os dois jogam no mesmo perfil do aparelho.
+     * Fecha uma partida contra a IA ou online: soma XP e estatísticas. Dobrões NÃO: contra a IA são
+     * zero em qualquer resultado ([Wallet.aiCredits]) e online quem paga é o servidor
+     * (`award_online_match`), então [Award.credits] volta sempre em zero. Online passa antes pelo
+     * limite diário de [claimOnlineReward] (XP e medalhas). Partidas locais não valem carreira —
+     * os dois jogam no mesmo perfil do aparelho.
      */
     fun registerMatch(victory: Boolean, shotsFired: Int, hitsLanded: Int, shipsSunk: Int, turns: Int): Award {
         val before = rank
@@ -614,10 +666,9 @@ class Profile(private val prefs: Prefs) {
         val blitzBonus = if (victory && turns <= BLITZ_TURNS) 120 else 0
         val bonus = precisionBonus + sunkBonus + blitzBonus
         val gainedXp = base + bonus
-        val gainedCredits = (base + bonus) / 3
+        val gainedCredits = Wallet.aiCredits(victory)
 
         xp += gainedXp
-        credits += gainedCredits
         matches += 1
         if (victory) wins += 1
         shots += shotsFired
@@ -627,7 +678,6 @@ class Profile(private val prefs: Prefs) {
         if (streak > bestStreak) bestStreak = streak
 
         prefs.putInt(K_XP, xp)
-        prefs.putInt(K_CREDITS, credits)
         prefs.putInt(K_MATCHES, matches)
         prefs.putInt(K_WINS, wins)
         prefs.putInt(K_SHOTS, shots)
@@ -651,21 +701,53 @@ class Profile(private val prefs: Prefs) {
         )
     }
 
-    /** Zera a carreira inteira — pedido explícito do comandante no perfil. */
-    fun reset() {
+    /**
+     * Zera a carreira — pedido explícito do comandante no perfil. Dobrões e itens (pinturas, cascos,
+     * cartuchos) são da conta, não da carreira: ficam ([keepWallet]); só a exclusão da conta
+     * ([deleteAccount]) zera tudo (#34).
+     */
+    fun reset(keepWallet: Boolean = true) {
+        val keepCredits = credits
+        val keepOwned = owned
+        val keepFleets = ownedFleets
+        val keepCharges = abilityCharges
+        val keepWalletFor = walletFor
+        val keepUid = prefs.getString(K_UID, "")
+        val keepEmail = prefs.getString(K_EMAIL, "")
+        val keepToken = prefs.getString(K_TOKEN, "")
+        val keepRefresh = prefs.getString(K_REFRESH, "")
         prefs.clear()
         name = ""
         insignia = Insignia.ANCHOR
         xp = 0
-        credits = 500
         matches = 0; wins = 0; shots = 0; hits = 0; sunk = 0
         streak = 0; bestStreak = 0
-        owned = setOf("std", "br")
         equipped = "br"
-        ownedFleets = setOf("std")
         equippedFleet = "std"
-        abilityCharges = emptyMap()
         avatar = Avatar.COMMANDER_M
+        if (keepWallet) {
+            credits = keepCredits
+            owned = keepOwned
+            ownedFleets = keepFleets
+            abilityCharges = keepCharges
+            walletFor = keepWalletFor
+            prefs.putInt(K_CREDITS, credits)
+            prefs.putString(K_OWNED, owned.joinToString(","))
+            prefs.putString(K_FLEETS, ownedFleets.joinToString(","))
+            prefs.putString(K_WALLET, walletFor)
+            persistCharges()
+            // a sessão não é carreira: o reset do perfil não pode deslogar nem soltar a carteira da conta
+            if (keepUid.isNotBlank()) {
+                prefs.putString(K_UID, keepUid); prefs.putString(K_EMAIL, keepEmail)
+                prefs.putString(K_TOKEN, keepToken); prefs.putString(K_REFRESH, keepRefresh)
+            }
+        } else {
+            credits = 500
+            owned = setOf("std", "br")
+            ownedFleets = setOf("std")
+            abilityCharges = emptyMap()
+            walletFor = ""
+        }
     }
 
     companion object {
@@ -679,6 +761,7 @@ class Profile(private val prefs: Prefs) {
         private const val K_INSIGNIA = "insignia"
         private const val K_XP = "xp"
         private const val K_CREDITS = "credits"
+        private const val K_WALLET = "wallet_for"
         private const val K_MATCHES = "matches"
         private const val K_WINS = "wins"
         private const val K_SHOTS = "shots"

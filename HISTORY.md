@@ -365,6 +365,21 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   lista da Play não dá mais brinde (só QA e o John). Fica para o gate da licença e a conferência de
   instalação de quem já estava no teste fechado.
 - **25/10 · Beta fecha na aprovação da produção** (#35) — porquê: o John decidiu; `beta_ends_at` fica nulo até lá.
+- **25/10 · Saldo de dobrões no servidor, carteira por conta** (#34, 0.34.9) — porquê: com venda aberta o
+  saldo gravado pelo aparelho seria adulterável. A virada é por conta (a carteira abre quando o 0.34.9 entra,
+  ou por `dobroes_open_all()`), porque ligar para todos de uma vez quebraria quem ainda está no app antigo.
+  O gatilho ignora a gravação do cliente em vez de falhar, para o upsert do app antigo seguir dando 200.
+- **25/10 · Contra a IA são zero dobrões, em qualquer resultado** (#34, decisão 4 do John) — porquê: o servidor
+  não vê a partida contra a IA, então ela não pode ser autoritativa; vira treino (XP sim, dobrões não).
+- **25/10 · Convidado guarda carteira local só para cosméticos** (#34, decisão 5) — leva para a conta uma vez,
+  no primeiro login; sair da conta zera o saldo local de quem tinha carteira, para não duplicar dobrões.
+- **25/10 · Abertura pelo MAIOR valor entre servidor e aparelho, até 200.000** (#34, decisão 6) — porquê: nunca
+  perde saldo que não sincronizou; admite ganho único de quem editou o aparelho, a mesma brecha que já existia.
+- **25/10 · Ganho online no app antigo, em conta com carteira, só conta depois de atualizar** (#34, decisão 7)
+  — porquê: caso raro de dois aparelhos; o servidor ignora o saldo que o app antigo grava.
+- **25/10 · "Pode ligar sozinho" a venda aberta** (#34, decisão 8 do John) — com a 0.34.9 na **produção** e o QA
+  aprovado, a esteira roda `dobroes_open_all()` e liga `real_billing_enabled = 'true'` sem perguntar; antes,
+  confere no Play Console que os 4 produtos estão ativos em todos os países.
 - **25/10 · Venda aberta só depois do saldo no servidor** (#34) — `real_billing_enabled` segue
   desligado na produção até o saldo autoritativo; nada cobra sem creditar enquanto isso.
 

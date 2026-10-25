@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
+import br.com.navalbattle.OnlineAwardUi
 import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.i18n.K
@@ -75,6 +76,9 @@ fun ResultScreen(state: AppState, match: Match) {
     val adRef = remember(match) { state.adWinRef(match) }
     LaunchedEffect(match) {
         state.clearAdNotice(AdPlace.WIN)
+        state.resetOnlineAward()
+        // números que o servidor confere para pagar a partida online (contra a IA não há dobrões)
+        var onlineArgs: IntArray? = null
         if (match.opponent == Opponent.AI) {
             award = state.profile.registerMatch(
                 victory = victory,
@@ -95,6 +99,7 @@ fun ResultScreen(state: AppState, match: Match) {
                         shipsSunk = match.sunkBy(me),
                         turns = match.turnCount
                     )
+                    onlineArgs = intArrayOf(match.shotsOf(me), match.hitsOf(me), match.sunkBy(me), match.turnCount)
                 } else {
                     rewardCapped = true
                 }
@@ -109,6 +114,9 @@ fun ResultScreen(state: AppState, match: Match) {
             } else {
                 state.reportRankedResult(victory, match.accuracyOf(me), match.board(me).remainingShips().size)
             }
+            // dobrões da partida: o servidor confere e paga (na ranqueada, só depois do relato acima,
+            // porque ele usa o vencedor que ele mesmo registrou)
+            onlineArgs?.let { state.awardOnlineDobroes(it[0], it[1], it[2], it[3], victory) }
             // milhas da vitória: depois do relato, porque na ranqueada o servidor só
             // paga a quem ele mesmo registrou como vencedor
             // (o servidor também barra a milha sem tiro, para o app antigo)
@@ -117,7 +125,7 @@ fun ResultScreen(state: AppState, match: Match) {
         // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
         if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
         // anúncio premiado (#29): só lê o servidor; o botão aparece se ele liberar
-        if (victory && (award?.credits ?: 0) > 0) state.loadAds()
+        if (victory && online && state.onlineAwardAmount > 0) state.loadAds()
     }
 
     Column(
@@ -248,7 +256,7 @@ fun ResultScreen(state: AppState, match: Match) {
             PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
         }
         // anúncio premiado opcional (#29): secundário, abaixo da ação principal, nunca prende o resto
-        val credits = award?.credits ?: 0
+        val credits = if (online) state.onlineAwardAmount else 0  // contra a IA são zero: não há o que dobrar
         if (state.adWinShows(match, credits, adRef)) {
             Gap(8)
             AdButton(state, AdPlace.WIN, t(K.AD_DOUBLE_WIN), t(K.AD_WATCH_PLUS, state.adWinAmount(credits))) {
@@ -274,7 +282,21 @@ private fun CareerReport(state: AppState, match: Match, a: Award) {
     val afloat = match.board(match.mySide).remainingShips().size
 
     Gap(26)
-    ScoreTally(a)
+    // dobrões: contra a IA não há (treino); online vem do servidor, que confere a partida
+    val creditsText: String? = when (state.onlineAward) {
+        OnlineAwardUi.CHECKING -> t(K.RESULT_CREDITS_CHECKING)
+        OnlineAwardUi.PAID, OnlineAwardUi.LIMIT -> "+${state.onlineAwardAmount}"
+        OnlineAwardUi.RETRY -> "—"
+        OnlineAwardUi.NONE -> null
+    }
+    ScoreTally(a, creditsText, coin = state.onlineAward == OnlineAwardUi.PAID || state.onlineAward == OnlineAwardUi.LIMIT)
+    if (match.opponent == Opponent.AI) {
+        Gap(8)
+        HudLabel(t(K.RESULT_AI_TRAINING), Naval.muted)
+    } else if (state.onlineAward == OnlineAwardUi.RETRY) {
+        Gap(8)
+        HudLabel(t(K.RESULT_CREDITS_RETRY), Naval.muted)
+    }
 
     Gap(26)
     MedalCase(
@@ -530,7 +552,7 @@ private fun StatRow(label: String, value: String) {
  * ter ganho mais.
  */
 @Composable
-private fun ScoreTally(a: Award) {
+private fun ScoreTally(a: Award, creditsText: String?, coin: Boolean) {
     SectionHead(t(K.RESULT_TALLY))
     TallyRow(
         label = t(K.RESULT_TALLY_BASE),
@@ -561,10 +583,16 @@ private fun ScoreTally(a: Award) {
             Gap(2)
             Text("+${a.xp} XP", style = NavalType.display, color = Naval.greenBright)
         }
-        Column(horizontalAlignment = Alignment.End) {
-            HudLabel(t(K.RESULT_TALLY_CREDITS), Naval.muted)
-            Gap(2)
-            CoinLabel("+${a.credits}", style = NavalType.title, iconSize = 20.dp)
+        if (creditsText != null) {
+            Column(horizontalAlignment = Alignment.End) {
+                HudLabel(t(K.RESULT_TALLY_CREDITS), Naval.muted)
+                Gap(2)
+                if (coin) {
+                    CoinLabel(creditsText, style = NavalType.title, iconSize = 20.dp)
+                } else {
+                    Text(creditsText, style = NavalType.monoSmall, color = Naval.muted)
+                }
+            }
         }
     }
 }

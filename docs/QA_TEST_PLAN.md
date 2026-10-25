@@ -202,6 +202,28 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | LOJA-02 | P1 | Comprar uma camuflagem | Cartão de confirmação com saldo antes/depois; item vai para o Estaleiro |
 | LOJA-03 | P1 | Comprar cartucho de habilidade | Contador aumenta; usado em IA-06 |
 | LOJA-04 | P1 | Aba Dobrões, conta de testador de licença, `beta_store_enabled = 'false'` (ver DOB-07) | Aparece só o Prêmio Beta; a vitrine paga não aparece |
+| DOB-30 | P0 | Servidor (bloco que desfaz, `supabase/tests/dobroes_saldo_ensaio.sql`, 0.34.9, #34): abertura da carteira com servidor maior, aparelho maior, aparelho acima de 200.000, chamada repetida, compra pendente e compra que o aparelho já somou | Servidor maior vale; aparelho maior vale; acima do teto limita em 200.000; repetir não soma nem reabre; pendente entra uma vez; a que o aparelho já somou só ganha a entrega (sem soma dupla); `seeds=15/4/4` |
+| DOB-31 | P0 | Servidor: conta com carteira e o cliente grava `credits`, `owned`, `fleets` (update e upsert, role `authenticated`) | `credits` e itens ficam como estavam (200, sem erro); `xp` e o resto da carreira são aceitos |
+| DOB-32 | P0 | Servidor: conta SEM carteira (app antigo) | Cliente grava `credits` e é aceito; `award_online_match` devolve `no_wallet`; anúncio de vitória contra a IA segue igual |
+| DOB-33 | P0 | Loja pelo servidor (`dobroes_buy`): pintura da oferta do dia, pintura repetida, cartucho 2× e item inexistente | Oferta custa 70% do preço; repetida devolve `owned` sem cobrar; cartucho cobra a cada compra; pintura de temporada/item incluso/inexistente = `not_found` |
+| DOB-34 | P0 | Sem saldo: casco de 1.800, passe da temporada e pacote de milhas | Casco devolve `insufficient` sem mudar nada; passe e milhas falham com `dobroes_insufficient`, sem passe criado, sem milha somada e saldo igual |
+| DOB-35 | P0 | Passe de Temporada com saldo (carteira aberta) | Debita 1.200, credita 500 de bônus, põe a pintura da estação nos itens e soma as 20 milhas |
+| DOB-36 | P1 | Pacote de milhas com carteira | Debita `miles_pack_price` (100) uma vez |
+| DOB-37 | P0 | Check-in e desafio do dia, duas chamadas cada | Um crédito por dia (+25 e +50), uma linha no razão |
+| DOB-38 | P0 | Compra real (`apply_dobroes_purchase`) com carteira, duas vezes o mesmo token | Credita uma vez; a 2ª devolve `already` sem mexer; `dobroes_pending` mostra para o aviso "+N" |
+| DOB-39 | P0 | Anúncio premiado (`apply_ad_reward`) com carteira, mesmo `transaction_id` duas vezes | Credita uma vez; a 2ª devolve `already` |
+| DOB-40 | P0 | `award_online_match`: sem combate do adversário, vitória casual, repetida, ranqueada sem resultado e com derrota registrada, teto diário zerado e parcial, 4ª contra o mesmo adversário | `not_eligible`; `ok/172`; `already/172`; `no_result`; `ok/53` (o `winner_id` do servidor manda, não o relato); `capped/0`; `ok/100` parcial; `limit` |
+| DOB-41 | P0 | Anúncio de dobrar vitória com carteira: referência `ai:` e `online:` | `ai:` = `not_eligible` (a IA não paga); `online:` = valor do razão da sala (172, cortado em 150 pelo teto), `p_amount` ignorado |
+| DOB-42 | P0 | `dobroes_open_all()` no bloco que desfaz (todas as contas) | Zero contas sem carteira depois; soma antes = soma depois (créditos + pendentes); só `service_role` executa |
+| DOB-43 | P0 | Invariante e privilégios | Em toda carteira soma do razão = `credits`; `authenticated` não executa `dobroes_apply`, `dobroes_open_all` nem `dobroes_open_core` |
+| DOB-44 | P0 | App 0.34.9, QA01 com saldo conhecido (anotar), primeira abertura com internet | O saldo mostrado é o mesmo (ou o maior entre servidor e aparelho); a loja funciona; conferir no banco `dobroes_wallets` (source `app`) e a linha `opening` do razão |
+| DOB-45 | P0 | App 0.34.9: comprar uma pintura, um casco, um cartucho, aderir ao passe e comprar milhas, cada um uma vez | Saldo cai pelo preço (oferta do dia com 30% off); item vai para o Estaleiro; reabrir o app mostra o mesmo saldo; no banco, uma linha por compra no razão |
+| DOB-46 | P0 | App 0.34.9 em modo avião: tocar em comprar na loja, passe e milhas | Aviso "Sem conexão: esta compra precisa da internet."; nada muda (nem saldo, nem item) |
+| DOB-47 | P0 | Dois aparelhos (QA01 no 0.34.9 e outro no app antigo, se houver): ganho de IA e de partida online no antigo | Nada disso vale (o servidor ignora o saldo gravado); diário, desafio, compra e anúncio valem; o aparelho antigo volta ao saldo do servidor ao reabrir |
+| DOB-48 | P0 | Partida contra a IA (vitória e derrota) no 0.34.9 | Resultado com XP e a nota de treino, sem linha de dobrões e sem o botão de dobrar; saldo igual |
+| DOB-49 | P0 | Partida online QA01 × QA02 (casual e ranqueada, com tiros dos dois lados) | A linha de dobrões mostra "conferindo dobrões…" e depois "+N" igual ao do servidor; botão de dobrar aparece só na vitória com dobrões; saldo sobe N; sem combate: sem dobrões |
+| DOB-50 | P1 | Partida online sem internet no fim (matar o sinal antes do resultado) e reabrir o app com internet | Aviso de que os dobrões serão conferidos depois; na próxima abertura o servidor paga uma vez (e não duplica se abrir de novo) |
+| DOB-51 | P1 | Convidado com 500 dobrões que comprou uma pintura, depois cria conta ou entra pela 1ª vez | A pintura e o saldo (o maior com o do servidor) vão para a conta uma vez; sair da conta zera o saldo local; entrar em outra conta não leva dobrões |
 | LOJA-06 | P1 | Aba Dobrões, testador, `beta_store_enabled = 'true'` (ver DOB-16) | Prêmio e, abaixo, "Pacotes pagos" com aviso de cobrança |
 | LOJA-05 | P2 | Oferta do dia | Selo "-30%" no atalho; camuflagem no topo com desconto |
 | EST-01 | P1 | Estaleiro: equipar casco e camuflagem | Frota do menu e da batalha mudam; prévia desliza pelas 5 classes |

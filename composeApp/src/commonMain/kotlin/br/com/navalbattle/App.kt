@@ -103,7 +103,10 @@ import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.PendingCredit
+import br.com.navalbattle.game.OnlineAwardQueue
+import br.com.navalbattle.game.PendingAward
 import br.com.navalbattle.game.PendingCredits
+import br.com.navalbattle.game.Wallet
 import br.com.navalbattle.game.PremioState
 import br.com.navalbattle.game.avisoCompra
 import br.com.navalbattle.game.avisoPremio
@@ -169,6 +172,10 @@ internal fun screenForPushKind(kind: String): Screen? = when (kind) {
 
 /** Chave (no Prefs do aparelho) dos tokens de dobrões já somados (#15). */
 private const val DELIVERED_KEY = "dobroes_delivered"
+private const val AWARDS_KEY = "online_awards_pending"
+
+/** Situação da recompensa de dobrões da partida online na tela de resultado (#34). */
+enum class OnlineAwardUi { NONE, CHECKING, PAID, LIMIT, RETRY }
 
 /** Faixa etária guardada (ADULT, TEEN, CHILD, UNKNOWN) e a hora da leitura (#49). Nunca a idade. */
 private const val AGE_BAND_KEY = "age_band"
@@ -721,7 +728,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         pushRegisteredFor = null
         friendships = emptyList()
         profile.signOut()
-        profile.reset()
+        profile.reset(keepWallet = false)
         return true
     }
 
@@ -926,9 +933,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /**
      * Adere à temporada (Passe Gratuito ou de Temporada) ou faz upgrade para o de Temporada.
-     * O preço sai dos dobrões do aparelho antes de pedir ao servidor e volta se ele
-     * recusar; o passe pago entrega os dobrões extras e a camuflagem da estação aqui,
-     * e as milhas bônus no servidor.
+     * O passe pago é cobrado no servidor (carteira, #34): ele debita o preço, credita os dobrões
+     * extras, põe a camuflagem da estação nos itens e soma as milhas bônus. Sem saldo ou sem rede
+     * nada muda; o aparelho só mostra o que o servidor devolve.
      */
     suspend fun joinSeason(premium: Boolean) {
         val pass = seasonPass ?: return
@@ -944,21 +951,22 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
         seasonBusy = true
         seasonNotice = null
-        if (price > 0) profile.spendCredits(price)
+        // o passe pago mexe em dobrões: a carteira precisa estar aberta (senão o servidor não cobraria)
+        if (premium && !ensureWallet()) {
+            seasonBusy = false
+            seasonNotice = t(K.WALLET_OFFLINE)
+            return
+        }
         val r = authed { session -> cloud.joinSeason(session, if (premium) "premium" else "free") }
         seasonBusy = false
         val joined = (r as? CloudResult.Ok)?.value
         if (joined == null) {
-            if (price > 0) profile.grantCredits(price)
+            refreshBalance()
             seasonNotice = t(K.SEASON_JOIN_FAILED)
             return
         }
-        // o servidor não cobrou nada (já tinha esse passe): devolve
-        if (price > 0 && joined.price == 0) profile.grantCredits(price)
-        if (premium && joined.price > 0) {
-            profile.grantCredits(pass.passDoubloons)
-            Paint.ofSeason(pass.seasonKey)?.let { profile.buy(it.id, 0) }
-        }
+        // saldo e a pintura da estação vêm do servidor (ele cobrou, creditou e entregou)
+        if (premium) refreshBalance()
         miles = miles?.copy(miles = joined.miles)
         seasonPass = pass.copy(tier = joined.tier)
         seasonNotice = if (joined.tier == "premium") t(K.SEASON_JOINED_PREMIUM) else t(K.SEASON_JOINED_FREE)
@@ -984,8 +992,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Resgata (uma vez) o resultado da temporada que acabou e credita os dobrões do prêmio. */
     suspend fun checkSeasonEnd() {
         if (!profile.signedIn || seasonEnd != null) return
+        if (!ensureWallet()) return  // sem carteira o servidor não credita: tenta de novo na próxima vez
         val end = (authed { session -> cloud.claimSeasonEnd(session) } as? CloudResult.Ok)?.value ?: return
-        profile.grantCredits(end.doubloons)
+        refreshBalance()
         seasonEnd = end
         loadMiles()
     }
@@ -1148,6 +1157,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (dailyBusy || daily?.checkedIn != false) return
         dailyBusy = true
         dailyNotice = null
+        if (!ensureWallet()) {
+            dailyBusy = false
+            dailyNotice = t(K.DAILY_FAILED)
+            return
+        }
         val r = authed { session -> cloud.dailyCheckin(session) }
         dailyBusy = false
         val done = (r as? CloudResult.Ok)?.value
@@ -1155,7 +1169,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             dailyNotice = t(K.DAILY_FAILED)
             return
         }
-        profile.grantCredits(done.doubloons)
+        refreshBalance()  // o servidor creditou
         daily = daily?.copy(checkedIn = true, streak = done.streak)
         dailyNotice = when {
             done.weekCompleted -> t(K.DAILY_WEEK_DONE, done.doubloons)
@@ -1174,6 +1188,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (dailyBusy || !d.checkedIn || d.challengeClaimed || !dailyChallengeDone) return
         dailyBusy = true
         dailyNotice = null
+        if (!ensureWallet()) {
+            dailyBusy = false
+            dailyNotice = t(K.DAILY_FAILED)
+            return
+        }
         val r = authed { session -> cloud.claimDailyChallenge(session, d.mission, dailyProgress) }
         dailyBusy = false
         val pay = (r as? CloudResult.Ok)?.value
@@ -1181,7 +1200,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             dailyNotice = t(K.DAILY_FAILED)
             return
         }
-        profile.grantCredits(pay)
+        refreshBalance()  // o servidor creditou
         daily = d.copy(challengeClaimed = true)
         if (pay > 0) dailyNotice = t(K.DAILY_GOT, pay)
         loadAds()
@@ -1265,7 +1284,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         milesGained = before?.let { (after - it).coerceAtLeast(0) }
     }
 
-    /** Compra um pacote de milhas com dobrões; devolve os dobrões se o servidor recusar. */
+    /** Compra um pacote de milhas com dobrões: o servidor debita (sem saldo ou rede, nada muda). */
     suspend fun buyMilesPack() {
         val m = miles ?: return
         if (profile.credits < m.packPrice) {
@@ -1276,11 +1295,14 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             milesNotice = t(K.MILES_CAP_REACHED, m.cap)
             return
         }
-        profile.spendCredits(m.packPrice)
+        if (!ensureWallet()) {
+            milesNotice = t(K.WALLET_OFFLINE)
+            return
+        }
         val r = authed { session -> cloud.buyMiles(session, 1) }
         val after = (r as? CloudResult.Ok)?.value
+        refreshBalance()
         if (after == null) {
-            profile.grantCredits(m.packPrice)
             milesNotice = t(K.MILES_BUY_FAILED)
         } else {
             miles = m.copy(miles = after)
@@ -1466,6 +1488,128 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     private val dobroesPrefs = Prefs()
     private var recovering = false
 
+    // ---------------- carteira de dobrões no servidor (#34) ----------------
+
+    private var walletOpening = false
+
+    /** Compra da loja em andamento (o botão fica ocupado até o servidor responder). */
+    var storeBusy by mutableStateOf(false)
+        private set
+
+    /**
+     * Garante a carteira aberta no servidor para a conta atual (uma vez por conta). Leva o saldo do
+     * aparelho em [local] e os tokens que ele já somou: o servidor fica com o MAIOR saldo (até 200.000)
+     * e não soma de novo o que já foi somado. Falso sem conta ou sem rede: nada que mexa em dobrões
+     * roda até abrir (o app novo nunca grava saldo local de conta).
+     */
+    suspend fun ensureWallet(local: Int? = null): Boolean {
+        if (profile.walletOpen) return true
+        if (!profile.signedIn || walletOpening) return false
+        walletOpening = true
+        try {
+            val plan = Wallet.openPlan(local ?: profile.credits, deliveredTokens())
+            val state = (authed { s -> cloud.dobroesOpen(s, plan.local, plan.delivered) } as? CloudResult.Ok)?.value
+                ?: return false
+            profile.markWalletOpen(profile.accountId)
+            profile.setServerBalance(state.balance)
+            profile.adoptServerItems(state.owned, state.fleets)
+            return true
+        } finally {
+            walletOpening = false
+        }
+    }
+
+    /** Pede ao servidor o saldo e os itens e grava no aparelho (único jeito de o saldo mudar). */
+    suspend fun refreshBalance() {
+        if (!profile.walletOpen) return
+        val state = (authed { s -> cloud.dobroesBalance(s) } as? CloudResult.Ok)?.value ?: return
+        if (!state.wallet) return
+        profile.setServerBalance(state.balance)
+        profile.adoptServerItems(state.owned, state.fleets)
+    }
+
+    /**
+     * Compra na loja (pintura, casco ou cartucho) pelo servidor: ele debita e entrega o item. Sem
+     * débito otimista. Devolve ok | owned | insufficient | not_found | offline. Convidado (sem conta)
+     * paga da carteira local, só cosméticos.
+     */
+    suspend fun buyStoreItem(kind: String, id: String, price: Int): String {
+        if (storeBusy) return "busy"
+        storeBusy = true
+        try {
+            if (!profile.signedIn) {
+                val ok = when (kind) {
+                    "paint" -> profile.guestBuy(id, price)
+                    "fleet" -> profile.guestBuyFleet(id, price)
+                    else -> Ability.entries.firstOrNull { it.code == id }?.let { profile.guestBuyAbilityCharge(it, price) } ?: false
+                }
+                return if (ok) "ok" else "insufficient"
+            }
+            if (!ensureWallet()) return "offline"
+            val r = (authed { s -> cloud.dobroesBuy(s, kind, id) } as? CloudResult.Ok)?.value ?: return "offline"
+            if (r.status == "no_wallet") return "offline"
+            profile.setServerBalance(r.balance)
+            profile.adoptServerItems(r.owned, r.fleets)
+            if (r.status == "ok" && kind == "charge") {
+                Ability.entries.firstOrNull { it.code == id }?.let { profile.addCharge(it) }
+            }
+            return r.status
+        } finally {
+            storeBusy = false
+        }
+    }
+
+    /** Nova tela de resultado: zera o estado da recompensa de dobrões da partida anterior. */
+    fun resetOnlineAward() {
+        onlineAward = OnlineAwardUi.NONE
+        onlineAwardAmount = 0
+    }
+
+    /** Estado da recompensa de dobrões da partida online no resultado. */
+    var onlineAward by mutableStateOf(OnlineAwardUi.NONE)
+        private set
+    var onlineAwardAmount by mutableStateOf(0)
+        private set
+
+    private var awardQueue: List<PendingAward>
+        get() = OnlineAwardQueue.decode(dobroesPrefs.getString(AWARDS_KEY, ""))
+        set(value) = dobroesPrefs.putString(AWARDS_KEY, OnlineAwardQueue.encode(value))
+
+    /**
+     * Pede ao servidor a recompensa de dobrões da partida online atual. Guarda na fila antes de
+     * enviar: se o app fechar ou a rede cair, a próxima abertura reenvia (o servidor paga uma vez
+     * por sala). Contra a IA não existe isso: são zero dobrões.
+     */
+    suspend fun awardOnlineDobroes(shots: Int, hits: Int, sunk: Int, turns: Int, victory: Boolean) {
+        val id = onlineMatchId ?: return
+        if (!profile.signedIn) return
+        onlineAward = OnlineAwardUi.CHECKING
+        onlineAwardAmount = 0
+        awardQueue = OnlineAwardQueue.add(awardQueue, PendingAward(id, shots, hits, sunk, turns, victory))
+        flushOnlineAwards(current = id)
+        if (onlineAward == OnlineAwardUi.CHECKING) onlineAward = OnlineAwardUi.RETRY
+    }
+
+    /** Reenvia as recompensas online que o servidor ainda não confirmou (abertura do app). */
+    suspend fun flushOnlineAwards(current: String? = null) {
+        if (awardQueue.isEmpty() || !ensureWallet()) return
+        for (a in awardQueue) {
+            val r = (authed { s ->
+                cloud.awardOnlineMatch(s, a.matchId, a.shots, a.hits, a.sunk, a.turns, a.victory)
+            } as? CloudResult.Ok)?.value ?: continue
+            if (!OnlineAwardQueue.settled(r.status) || r.status == "no_wallet") continue
+            awardQueue = OnlineAwardQueue.remove(awardQueue, a.matchId)
+            if (a.matchId == current) {
+                onlineAwardAmount = r.amount
+                onlineAward = when (r.status) {
+                    "limit", "capped" -> OnlineAwardUi.LIMIT
+                    else -> OnlineAwardUi.PAID
+                }
+            }
+            if (r.amount > 0) refreshBalance()
+        }
+    }
+
     var dobroesStatus by mutableStateOf<DobroesStoreStatus?>(null)
         private set
 
@@ -1558,9 +1702,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /**
-     * Soma no saldo o que o servidor conferiu e este aparelho ainda não somou. Antes repete
-     * a conferência das compras que a Play já confirmou (queda de rede, app fechado no meio).
-     * Roda ao abrir a aba, ao voltar para o app e ao abrir o jogo com conta.
+     * Atualiza o saldo com o que o servidor creditou (compra, Prêmio, anúncio) e avisa "+N" uma vez
+     * por token (#34: o aparelho não soma mais nada, só mostra). Antes repete a conferência das
+     * compras que a Play já confirmou (queda de rede, app fechado no meio). Roda ao abrir a aba, ao
+     * voltar para o app e ao abrir o jogo com conta.
      */
     suspend fun recoverPending() {
         if (recovering || profile.currentSession() == null) return
@@ -1570,18 +1715,17 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             if (billing.available) billing.purchasedTokens().forEach { p ->
                 authed { s -> cloud.dobroesVerify(s, p.productId, p.token, "vitrine") }
             }
+            // sem carteira aberta o servidor não creditou: a abertura soma o que está pendente (sem duplicar)
+            if (!ensureWallet()) return
             val pending = (authed { s -> cloud.dobroesPending(s) } as? CloudResult.Ok)?.value ?: return
             val plan = PendingCredits.plan(
                 pending.map { PendingCredit(it.purchaseToken, it.doubloons) },
                 deliveredTokens()
             )
-            // saldo e conjunto de entregues na mesma escrita: se a confirmação se perder, a repetição não soma de novo
-            val delivered = plan.delivered.joinToString(",")
-            profile.grantCredits(plan.total) { putString(DELIVERED_KEY, delivered) }
-            if (plan.total > 0) {
-                dobroesNotice = t(K.DOUBLOON_BOUGHT, plan.total)
-                authed { s -> cloud.saveProfile(s, profile.snapshot()) }
-            }
+            // o conjunto de avisados fica guardado: se a confirmação se perder, o aviso não repete
+            dobroesPrefs.putString(DELIVERED_KEY, plan.delivered.joinToString(","))
+            refreshBalance()
+            if (plan.total > 0) dobroesNotice = t(K.DOUBLOON_BOUGHT, plan.total)
             plan.toAck.forEach { token -> authed { s -> cloud.dobroesAck(s, token) } }
         } finally {
             recovering = false
@@ -1698,6 +1842,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     suspend fun checkFeedbackRewards() {
         if (feedbackReward != null || feedbackQueue.isNotEmpty()) return
         val session = profile.currentSession() ?: return
+        // com carteira o servidor credita a recompensa no resgate; sem ela não resgata (tenta depois)
+        if (!ensureWallet()) return
         val updates = (cloud.pendingFeedbackUpdates(session) as? CloudResult.Ok)?.value.orEmpty()
         feedbackQueue.addAll(updates)
         showNextFeedbackReward()
@@ -1712,7 +1858,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             val next = feedbackQueue.removeFirst()
             val claimed = (authed { s -> cloud.claimFeedback(s, next.id) } as? CloudResult.Ok)?.value ?: continue
             if (claimed.status == "approved") {
-                if (claimed.rewardCredits > 0) profile.grantCredits(claimed.rewardCredits)
+                if (claimed.rewardCredits > 0) refreshBalance()
                 Ability.entries.firstOrNull { it.code == claimed.rewardAbilityCode }?.let { ability ->
                     repeat(claimed.rewardCharges.coerceAtLeast(1)) { profile.grantAbilityCharge(ability) }
                 }
@@ -2058,9 +2204,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     suspend fun createAccount(email: String, password: String, username: String): Pair<Boolean, String> =
         when (val r = cloud.signUp(email, password, username)) {
             is CloudResult.Ok -> {
+                val local = profile.credits
                 profile.rememberSession(r.value)
                 profile.rename(username)
                 cloud.saveProfile(r.value, profile.snapshot())
+                ensureWallet(local)
                 true to t(K.AUTH_CREATED)
             }
 
@@ -2074,8 +2222,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     suspend fun signIn(email: String, password: String): Pair<Boolean, String> =
         when (val r = cloud.signIn(email, password)) {
             is CloudResult.Ok -> {
+                val local = profile.credits  // carteira do convidado: vai para a conta uma vez
                 profile.rememberSession(r.value)
                 val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
+                ensureWallet(local)
                 true to merged
             }
 
@@ -2095,8 +2245,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         is GoogleAuthResult.Fail -> false to g.message
         is GoogleAuthResult.Ok -> when (val r = cloud.signInWithGoogle(g.idToken)) {
             is CloudResult.Ok -> {
+                val local = profile.credits  // carteira do convidado: vai para a conta uma vez
                 profile.rememberSession(r.value)
                 val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
+                ensureWallet(local)
                 true to merged
             }
 
@@ -2133,7 +2285,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     suspend fun resumeSession() {
         if (!profile.signedIn) return
         renew()
+        // o saldo do aparelho antes da fusão (adotar a nuvem o sobrescreve): é o que a abertura leva
+        val local = profile.credits
         mergeWithCloud()
+        ensureWallet(local)
+        flushOnlineAwards()
         recoverPending()
     }
 
@@ -2225,7 +2381,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 val cloudProfile = remote.value
                 if (cloudProfile != null && cloudProfile.xp > profile.xp) {
                     profile.adopt(cloudProfile)
-                    lastPushed = cloudProfile
+                    lastPushed = cloudProfile.copy(credits = 0)  // o snapshot não leva dobrões
                     t(K.AUTH_RESTORED)
                 } else {
                     val snap = profile.snapshot()

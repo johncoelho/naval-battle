@@ -4,7 +4,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** Entrega de dobrões do servidor ao aparelho (#15): cada token soma uma vez. */
+/**
+ * Entrega de dobrões do servidor ao aparelho (#15): cada token conta uma vez. Desde o saldo no
+ * servidor (#34) o aparelho não soma mais nada: o plano só decide o aviso "+N" (e a confirmação).
+ */
 class PendingCreditsTest {
 
     @Test

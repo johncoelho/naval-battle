@@ -96,7 +96,6 @@ actual class CloudApi actual constructor() {
                 .put("avatar", profile.avatar)
                 .put("lang_code", profile.langCode)
                 .put("xp", profile.xp)
-                .put("credits", profile.credits)
                 .put("matches", profile.matches)
                 .put("wins", profile.wins)
                 .put("shots", profile.shots)
@@ -664,6 +663,42 @@ actual class CloudApi actual constructor() {
     actual suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit> = call {
         post("/rest/v1/rpc/dobroes_ack", JSONObject().put("p_token", purchaseToken), token = session.accessToken)
         CloudResult.Ok(Unit)
+    }
+
+    // carteira de dobrões no servidor (#34)
+    private fun walletOf(o: JSONObject) = WalletState(
+        balance = o.optInt("balance", 0),
+        wallet = o.optBoolean("wallet", true),
+        owned = o.optString("owned", "std,br"),
+        fleets = o.optString("fleets", "std")
+    )
+
+    actual suspend fun dobroesOpen(session: Session, local: Int, delivered: List<String>): CloudResult<WalletState> = call {
+        val body = JSONObject().put("p_local", local).put("p_delivered", JSONArray(delivered))
+        val o = JSONArray(post("/rest/v1/rpc/dobroes_open", body, token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(walletOf(o))
+    }
+
+    actual suspend fun dobroesBalance(session: Session): CloudResult<WalletState> = call {
+        val o = JSONArray(post("/rest/v1/rpc/dobroes_balance", JSONObject(), token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(walletOf(o))
+    }
+
+    actual suspend fun dobroesBuy(session: Session, kind: String, item: String): CloudResult<WalletBuy> = call {
+        val body = JSONObject().put("p_kind", kind).put("p_item", item)
+        val o = JSONArray(post("/rest/v1/rpc/dobroes_buy", body, token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(
+            WalletBuy(o.optString("status", "unknown"), o.optInt("balance", 0), o.optString("owned", "std,br"), o.optString("fleets", "std"))
+        )
+    }
+
+    actual suspend fun awardOnlineMatch(
+        session: Session, matchId: String, shots: Int, hits: Int, sunk: Int, turns: Int, victory: Boolean
+    ): CloudResult<OnlineAwardResult> = call {
+        val body = JSONObject().put("p_match_id", matchId).put("p_shots", shots).put("p_hits", hits)
+            .put("p_sunk", sunk).put("p_turns", turns).put("p_victory", victory)
+        val o = JSONArray(post("/rest/v1/rpc/award_online_match", body, token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(OnlineAwardResult(o.optString("status", "unknown"), o.optInt("amount", 0), o.optInt("balance", 0)))
     }
 
     actual suspend fun recentReleases(platform: String): CloudResult<List<AppRelease>> = call {

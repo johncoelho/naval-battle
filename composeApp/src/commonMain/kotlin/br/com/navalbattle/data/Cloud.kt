@@ -202,6 +202,21 @@ data class AdStart(val status: String, val vale: String?, val amount: Int)
 /** Situação do vale (applied | pending | expired | unknown) e o valor creditado de fato. */
 data class AdValeStatus(val status: String, val amount: Int)
 
+/**
+ * Carteira de dobrões no servidor (#34, `supabase/dobroes_saldo.sql`). [wallet] falso = conta ainda no
+ * legado (o app abre a carteira); [owned] e [fleets] são os itens que o servidor guarda.
+ */
+data class WalletState(val balance: Int, val wallet: Boolean, val owned: String, val fleets: String)
+
+/** Resposta de `dobroes_buy`: ok | owned | insufficient | not_found | no_wallet, com o saldo e os itens. */
+data class WalletBuy(val status: String, val balance: Int, val owned: String, val fleets: String)
+
+/**
+ * Resposta de `award_online_match`: ok | already | no_wallet | not_eligible | no_result | limit | capped,
+ * os dobrões pagos e o saldo.
+ */
+data class OnlineAwardResult(val status: String, val amount: Int, val balance: Int)
+
 /** Compra conferida pelo servidor que ainda não foi somada no saldo deste aparelho. */
 data class DobroesPending(val purchaseToken: String, val doubloons: Int, val premio: Boolean)
 
@@ -571,6 +586,24 @@ expect class CloudApi() {
     /** Marca um token como somado no aparelho: o servidor para de devolvê-lo. */
     suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit>
 
+    /**
+     * Abre a carteira de dobrões da conta (RPC `dobroes_open`, uma vez; repetir só devolve o saldo).
+     * [local] é o saldo do aparelho e [delivered] os tokens de compra que ele já somou: o servidor
+     * fica com o maior saldo e não soma de novo o que já foi somado.
+     */
+    suspend fun dobroesOpen(session: Session, local: Int, delivered: List<String>): CloudResult<WalletState>
+
+    /** Saldo e itens do servidor (RPC `dobroes_balance`). */
+    suspend fun dobroesBalance(session: Session): CloudResult<WalletState>
+
+    /** Compra no servidor (RPC `dobroes_buy`): [kind] paint | fleet | charge, [item] o id ou o código da habilidade. */
+    suspend fun dobroesBuy(session: Session, kind: String, item: String): CloudResult<WalletBuy>
+
+    /** Recompensa de dobrões de uma partida online (RPC `award_online_match`); o servidor confere e paga uma vez por sala. */
+    suspend fun awardOnlineMatch(
+        session: Session, matchId: String, shots: Int, hits: Int, sunk: Int, turns: Int, victory: Boolean
+    ): CloudResult<OnlineAwardResult>
+
     /** Anúncio premiado (#29): o que cada lugar ainda pode hoje, para [platform] ("android"/"ios"). */
     suspend fun adsStatus(session: Session, platform: String): CloudResult<AdsStatus>
 
@@ -604,7 +637,7 @@ expect class CloudApi() {
     /** Milhas da vitória na partida [matchId] (ranqueada só se o servidor registrou a vitória). */
     suspend fun awardWinMiles(session: Session, matchId: String): CloudResult<Int>
 
-    /** Soma [packs] pacotes de milhas — os dobrões já foram descontados no aparelho. */
+    /** Soma [packs] pacotes de milhas; conta com carteira é debitada no servidor (sem saldo: falha), no legado o aparelho já descontou. */
     suspend fun buyMiles(session: Session, packs: Int): CloudResult<Int>
 
     /** Passe da temporada corrente e os preços vigentes. */

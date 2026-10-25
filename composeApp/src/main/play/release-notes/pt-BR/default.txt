@@ -1,1 +1,1 @@
-Correcao interna na versao para iPhone (compilacao do app no iOS). Sem mudancas para quem joga no Android.
+Seus dobroes agora ficam guardados com seguranca na sua conta e valem em qualquer aparelho. Partidas contra a IA viram treino: rendem XP, mas nao dobroes. Dobroes vem das partidas online, do Diario, dos desafios, do passe e da aba Dobroes. Compras na loja, no passe e de milhas pedem internet. Quem ja tinha dobroes mantem o saldo.

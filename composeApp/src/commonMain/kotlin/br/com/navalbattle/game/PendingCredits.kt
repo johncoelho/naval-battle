@@ -10,9 +10,11 @@ data class PendingCredit(val token: String, val doubloons: Int)
 data class CreditPlan(val total: Int, val delivered: Set<String>, val toAck: List<String>)
 
 /**
- * Guarda contra soma dupla (#15): cada token é somado uma vez no aparelho, mesmo que o
- * servidor devolva de novo (ack perdido na queda de rede). Todo token pendente é
- * confirmado, porque o servidor é idempotente no ack.
+ * Guarda contra aviso repetido (#15, #34): cada token conta uma vez no aparelho, mesmo que o
+ * servidor devolva de novo (ack perdido na queda de rede). Todo token pendente é confirmado,
+ * porque o servidor é idempotente no ack. Com a carteira no servidor o saldo já foi creditado lá:
+ * [CreditPlan.total] só alimenta o aviso "+N dobrões" e o conjunto [CreditPlan.delivered] é o que a
+ * abertura da carteira (`dobroes_open`) manda para não somar de novo o que o aparelho já somou.
  */
 object PendingCredits {
     fun plan(pending: List<PendingCredit>, delivered: Set<String>): CreditPlan {

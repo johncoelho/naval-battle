@@ -269,8 +269,8 @@ end $$;
 revoke all on function public.award_win_miles(uuid) from public;
 grant execute on function public.award_win_miles(uuid) to authenticated;
 
--- Compra de milhas com dobrões: o app desconta os dobrões (o saldo de dobrões ainda
--- vive no aparelho) e pede ao servidor os pacotes; aqui só se respeita o teto.
+-- Compra de milhas com dobrões: conta com carteira (#34) é debitada aqui; conta sem carteira (legado)
+-- o app desconta os dobrões no aparelho e pede ao servidor os pacotes. Sempre se respeita o teto.
 drop function if exists public.buy_miles(integer);
 create or replace function public.buy_miles(p_packs integer default 1)
 returns table (miles integer) language plpgsql security definer set search_path = public as $$
@@ -290,6 +290,12 @@ begin
   extra := p_packs * public.config_int('miles_pack_size', 5);
   if cur + extra > cap then
     raise exception 'miles_cap';
+  end if;
+  -- carteira no servidor (#34): debita os dobrões (sem saldo: dobroes_insufficient e nada muda).
+  -- Conta sem carteira (legado): quem cobra ainda é o aparelho.
+  if public.dobroes_has_wallet(auth.uid()) then
+    perform public.dobroes_apply(auth.uid(), -(p_packs * public.config_int('miles_pack_price', 100)),
+                                 'miles', gen_random_uuid()::text);
   end if;
   update public.profiles set nautical_miles = cur + extra where id = auth.uid()
     returning nautical_miles into cur;
