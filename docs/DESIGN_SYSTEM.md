@@ -85,7 +85,7 @@ esquerda. A próxima variação nova vira componente compartilhado em `ui/Compon
 
 **Aviso de lançamento (#36)** é o popup padrão acima, sem componente novo: `LaunchNoticePopup` usa
 sobreposição `Naval.bg` a 0,86, cartão `surface2`, borda âmbar, `HudLabel` de contexto, título
-`NavalType.title` centralizado, texto em `HudLabel` e um `PrimaryButton` "Entendi" (ação única; o
+`NavalType.title` centralizado, texto em `NavalType.body` e um `PrimaryButton` "Entendi" (ação única; o
 voltar do sistema faz o mesmo). Sem arte. Só Android. Entra por cima do `SeasonPopup`.
 
 **Cantos retos em tudo.** Círculo só em selo numérico, avatar e indicador de status. Sem

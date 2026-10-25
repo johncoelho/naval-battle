@@ -61,9 +61,12 @@ fun LaunchNoticePopup(state: AppState) {
                 modifier = Modifier.fillMaxWidth()
             )
             Gap(10)
-            HudLabel(
+            Text(
                 t(if (variant == LaunchVariant.TESTER) K.LAUNCH_BODY_TESTER else K.LAUNCH_BODY_NEW),
-                Naval.inkSoft
+                style = NavalType.body,
+                color = Naval.inkSoft,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
             Gap(20)
             PrimaryButton(t(K.LAUNCH_OK)) { state.ackLaunchNotice() }

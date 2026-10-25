@@ -342,8 +342,17 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   (`allowed_players.source = 'qa'`) ou e-mail de `app_config.beta_gift_emails` (valor só no banco,
   como `ads_test_emails`). Vale para o Prêmio Beta, a vitrine beta e o Prêmio legado pela Play.
   Saldo, itens e medalha Beta Tester já ganhos não mudam. Ensaio em `supabase/tests/brindes_ensaio.sql`.
-- **25/10 · Aviso de lançamento na entrada** (#36) — popup uma vez por conta, ligado por interruptor
-  quando a Play aprovar: agradece os beta testers e avisa que os brindes ficam e o resto passa a ser pago.
+- **25/10 · Aviso de lançamento na entrada do jogo, só no Android (#36, 0.34.6)** — o John quer agradecer
+  aos testadores do beta e avisar que, daqui para frente, tudo é pago (exceto QA01, QA02 e a conta dele).
+  Popup uma vez por conta, ligado por `app_config.launch_notice_enabled` (nasce `'false'`; liga quando a
+  Play aprovar a produção, sem versão nova). Duas variações: testador (lista play/manual/qa, aparelho
+  iPhone, ou medalha Beta Tester com corte) e jogador novo. Não usa `beta_eligible()`, que desde a 0.34.5
+  vale só para QA e John. Com `beta_ends_at` vazio a medalha não conta, porque a medalha é dada a toda
+  conta nova enquanto não há corte.
+- **25/10 · O aviso de lançamento não aparece no iPhone, com nenhum texto (#36)** — decisão do John, que
+  substituiu a ideia de um título neutro no iOS: o texto é sobre a Google Play e o iPhone segue por
+  .ipa. Feito nos dois lados: o app no iOS nem consulta o servidor, e `launch_notice_status` devolve
+  `enabled = false` para a plataforma `ios` (vale também para qualquer versão que pergunte).
 - **25/10 · `is_test` só por robô da Google; todo jogador da loja vale** (#35, 0.34.5) — porquê: a lista
   deixou de decidir quem é jogador. Robô = e-mail de login `nome.00000@gmail.com` (ou `firebase.test.lab`);
   conta QA fica fora da rotina. Ensaio em `supabase/tests/allowlist_ensaio.sql`. Passada
@@ -360,17 +369,6 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   desligado na produção até o saldo autoritativo; nada cobra sem creditar enquanto isso.
 
 ---
-- **25/10 · Aviso de lançamento na entrada do jogo, só no Android (#36, 0.34.6)** — o John quer agradecer
-  aos testadores do beta e avisar que, daqui para frente, tudo é pago (exceto QA01, QA02 e a conta dele).
-  Popup uma vez por conta, ligado por `app_config.launch_notice_enabled` (nasce `'false'`; liga quando a
-  Play aprovar a produção, sem versão nova). Duas variações: testador (lista play/manual/qa, aparelho
-  iPhone, ou medalha Beta Tester com corte) e jogador novo. Não usa `beta_eligible()`, que desde a 0.34.5
-  vale só para QA e John. Com `beta_ends_at` vazio a medalha não conta, porque a medalha é dada a toda
-  conta nova enquanto não há corte.
-- **25/10 · O aviso de lançamento não aparece no iPhone, com nenhum texto (#36)** — decisão do John, que
-  substituiu a ideia de um título neutro no iOS: o texto é sobre a Google Play e o iPhone segue por
-  .ipa. Feito nos dois lados: o app no iOS nem consulta o servidor, e `launch_notice_status` devolve
-  `enabled = false` para a plataforma `ios` (vale também para qualquer versão que pergunte).
 
 
 ## Artefatos de referência (SPECs e designs aprovados)
