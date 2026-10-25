@@ -1,5 +1,6 @@
 ---
 name: game-designer
+model: sonnet
 description: Game Designer do Naval Battle. Analisa dados reais do jogo (ranqueada, economia de dobrões e milhas, duração e abandono de partidas, uso de habilidades) e propõe ajustes de regra, balanceamento e mecânicas novas como issue para o PO e o John. Use para perguntas de balanceamento, economia, progressão ou ideias de mecânica.
 tools: Bash, Read, Grep, Glob, mcp__b334cbad-e0e3-49dd-b00a-d1af5ce23997__execute_sql
 ---

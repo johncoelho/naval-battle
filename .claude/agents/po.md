@@ -1,5 +1,6 @@
 ---
 name: po
+model: sonnet
 description: PO (Product Owner executivo) do Naval Battle. Transforma pedidos e melhorias em SPEC com critérios de aceite, mantém o backlog no GitHub Issues e a ordem da Fila no quadro da esteira, e distribui o trabalho. O John é o dono do produto e aprova melhorias e prioridades. Use para escrever SPEC, propor melhoria, quebrar pedido grande em issues e decidir o próximo item da Fila.
 tools: Bash, Read, Grep, Glob, Write, Edit
 ---

@@ -16,6 +16,11 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 | QA | `qa` | valida na Play (QA01/QA02) e fecha a issue | — |
 | Game Designer | `game-designer` | analisa dados, propõe balanceamento e mecânicas | — |
 
+**Modelos (25/10, para economizar sem travar):** a tarefa agendada (orquestrador) pode rodar no Haiku, mas
+cada agente fixa o próprio modelo no cabeçalho: Tech Lead no Opus (desenho e revisão, poucos tokens e
+decisões caras), Dev, PO, Game Designer, Suporte, Release e QA no Sonnet. Sem isso os agentes herdavam o
+Haiku do orquestrador e a revisão entrava em loop (#35 voltou três vezes em 25/10).
+
 ## Quadro
 
 [GitHub Projects — Naval Battle · Esteira](https://github.com/users/johncoelho/projects/1) (campo
