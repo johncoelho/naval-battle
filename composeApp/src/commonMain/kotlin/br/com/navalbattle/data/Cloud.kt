@@ -1,5 +1,7 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.LaunchNoticeStatus
+
 /**
  * Endereço do projeto Supabase. A chave anônima é pública por natureza — quem
  * protege os dados são as políticas de RLS da tabela, não o segredo da chave.
@@ -546,6 +548,15 @@ expect class CloudApi() {
      * Devolve o status (premio | already | off | not_beta). O saldo entra pelo [dobroesPending].
      */
     suspend fun dobroesClaimPremio(session: Session): CloudResult<String>
+
+    /**
+     * Aviso de lançamento (#36): RPC `launch_notice_status`. [session] nulo = sem login (convidado,
+     * chamada anônima). No iPhone nunca pergunta: o aviso é só do Android e devolve falha (= esconde).
+     */
+    suspend fun launchNoticeStatus(session: Session?, platform: String): CloudResult<LaunchNoticeStatus>
+
+    /** "Entendi": RPC `launch_notice_ack`, a variante é calculada no servidor. */
+    suspend fun launchNoticeAck(session: Session): CloudResult<Unit>
 
     /**
      * Confere uma compra com a Play (Edge `dobroes-verify`): o servidor credita uma

@@ -81,6 +81,10 @@ import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
 import br.com.navalbattle.game.Ability
+import br.com.navalbattle.game.LaunchNoticeDecision
+import br.com.navalbattle.game.LaunchVariant
+import br.com.navalbattle.game.launchNoticeDecision
+import br.com.navalbattle.game.launchNoticeKey
 import br.com.navalbattle.game.AdPhase
 import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.game.AdRules
@@ -121,6 +125,7 @@ import br.com.navalbattle.ui.ModePickerSheet
 import br.com.navalbattle.ui.FeedbackRewardPopup
 import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
+import br.com.navalbattle.ui.LaunchNoticePopup
 import br.com.navalbattle.ui.MilesPopup
 import br.com.navalbattle.ui.RankedLockedPrompt
 import br.com.navalbattle.ui.SeasonEndPopup
@@ -760,6 +765,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             if (updateAvailable && !updatePopupDismissed) return true
             if (seasonPopupShowing || seasonEnd != null || rankedLockedPrompt) return true
             if (feedbackReward != null) return true
+            if (launchNoticeShowing) return true
             return feedbackPopupNeeded && !updateAvailable && !seasonPopupShowing
         }
 
@@ -1693,6 +1699,48 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
     }
 
+    // ---------------- aviso de lançamento (#36) ----------------
+
+    private val launchPrefs = Prefs()
+
+    /** Variação do aviso de lançamento pendente de "Entendi"; nulo = nada a mostrar. */
+    var launchNotice by mutableStateOf<LaunchVariant?>(null)
+        private set
+
+    /** Só no deque, nunca em partida, por cima de convite ou do popup de atualização. */
+    val launchNoticeShowing: Boolean
+        get() = launchNotice != null && screen == Screen.MENU && match == null &&
+            pendingInvite == null && !(updateAvailable && !updatePopupDismissed)
+
+    /**
+     * Pergunta ao servidor se o aviso vale para esta conta (interruptor, plataforma, já visto).
+     * O aviso é só do Android: no iPhone nem pergunta. Falha de rede = nada aparece.
+     */
+    suspend fun checkLaunchNotice() {
+        if (platformName == "ios" || launchNotice != null) return
+        val session = profile.currentSession()
+        val signedIn = session != null
+        val status = (
+            if (signedIn) authed { s -> cloud.launchNoticeStatus(s, platformName) }
+            else cloud.launchNoticeStatus(null, platformName)
+            ) as? CloudResult.Ok
+        val localSeen = launchPrefs.getInt(launchNoticeKey(session?.userId), 0) == 1
+        when (val decision = launchNoticeDecision(status?.value, signedIn, localSeen)) {
+            LaunchNoticeDecision.Hide -> Unit
+            LaunchNoticeDecision.AckOnly -> authed { s -> cloud.launchNoticeAck(s) }
+            is LaunchNoticeDecision.Show -> launchNotice = decision.variant
+        }
+    }
+
+    /** "Entendi": some na hora, grava a marca local e avisa o servidor (se falhar, o AckOnly reenvia). */
+    fun ackLaunchNotice() {
+        if (launchNotice == null) return
+        launchNotice = null
+        val session = profile.currentSession()
+        launchPrefs.putInt(launchNoticeKey(session?.userId), 1)
+        if (session != null) uiScope?.launch { authed { s -> cloud.launchNoticeAck(s) } }
+    }
+
     var badges by mutableStateOf<List<EarnedBadge>>(emptyList())
         private set
 
@@ -2236,6 +2284,7 @@ fun App() {
         if (AppForeground.active) {
             state.loadBadges()
             state.checkFeedbackRewards()
+            state.checkLaunchNotice()
             // a temporada pode virar com o app aberto: relê o passe e o fechamento
             state.loadSeason()
             state.checkSeasonEnd()
@@ -2378,6 +2427,8 @@ fun App() {
             DailyPopup(state)
             FeedbackPopup(state)
             if (state.match == null) FeedbackRewardPopup(state)
+            // aviso de lançamento: por cima da temporada; o convite dela aparece embaixo ao tocar "Entendi"
+            LaunchNoticePopup(state)
             // por último: abre por cima do convite quando falta milha para aceitar
             MilesPopup(state)
         }

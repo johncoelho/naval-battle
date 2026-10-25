@@ -1,5 +1,7 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.LaunchNoticeStatus
+
 import java.io.BufferedReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -606,6 +608,25 @@ actual class CloudApi actual constructor() {
                 vitrineBeta = o.optBoolean("vitrine_beta", false)
             )
         )
+    }
+
+    // aviso de lançamento (#36): o servidor decide se aparece e qual texto
+    actual suspend fun launchNoticeStatus(session: Session?, platform: String): CloudResult<LaunchNoticeStatus> = call {
+        val body = JSONObject().put("p_platform", platform)
+        val json = post("/rest/v1/rpc/launch_notice_status", body, token = session?.accessToken)
+        val o = JSONArray(json).getJSONObject(0)
+        CloudResult.Ok(
+            LaunchNoticeStatus(
+                enabled = o.optBoolean("enabled", false),
+                variant = o.optString("variant", "new"),
+                seen = o.optBoolean("seen", false)
+            )
+        )
+    }
+
+    actual suspend fun launchNoticeAck(session: Session): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/launch_notice_ack", JSONObject(), token = session.accessToken)
+        CloudResult.Ok(Unit)
     }
 
     // Prêmio Beta (#28): RPC do servidor, sem a Play; devolve o texto do status

@@ -1,5 +1,7 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.LaunchNoticeStatus
+
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
@@ -585,6 +587,12 @@ actual class CloudApi actual constructor() {
 
     actual suspend fun dobroesClaimPremio(session: Session): CloudResult<String> =
         CloudResult.Fail("loja indisponível no iPhone")
+
+    // aviso de lançamento (#36): só Android (decisão do John); no iPhone nem pergunta ao servidor
+    actual suspend fun launchNoticeStatus(session: Session?, platform: String): CloudResult<LaunchNoticeStatus> =
+        CloudResult.Fail("aviso de lançamento indisponível no iPhone")
+
+    actual suspend fun launchNoticeAck(session: Session): CloudResult<Unit> = CloudResult.Ok(Unit)
 
     actual suspend fun dobroesVerify(
         session: Session,

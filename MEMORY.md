@@ -127,6 +127,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 5. Pendências com o John
 
+- **Aviso de lançamento (#36, 0.34.6):** pronto e **desligado** (`launch_notice_enabled = 'false'`); só Android
+  (iPhone nunca mostra). Ligar só quando a Play aprovar a produção **e** a 0.34.6 estiver nela:
+  `update public.app_config set value = 'true' where key = 'launch_notice_enabled';`. Medalha Beta Tester só
+  conta como testador com `beta_ends_at` preenchido.
 - Avisar quando a conta Apple ativar.
 - **Loja beta (#28), antes de ligar a vitrine para testador:** (1) feito em 18/10: Edge `dobroes-verify` versão 6, igual ao repositório;
   (2) secret `PLAY_BILLING_SERVICE_ACCOUNT`; (3) os 4 produtos no Play Console; (4) gate

@@ -555,6 +555,31 @@ enum class K(val pt: String, val en: String, val es: String) {
     FEEDBACK_REWARD_NOTE("Nota do revisor: %s", "Reviewer's note: %s", "Nota del revisor: %s"),
     FEEDBACK_REWARD_CLOSE("Show", "Nice", "Genial"),
 
+    // ---------------------------------------------------------------- aviso de lançamento (#36)
+    LAUNCH_EYEBROW("Lançamento", "Launch", "Lanzamiento"),
+    LAUNCH_TITLE(
+        "Naval Battle Classic chegou à Google Play!",
+        "Naval Battle Classic is now on Google Play!",
+        "¡Naval Battle Classic llegó a Google Play!"
+    ),
+    LAUNCH_BODY_TESTER(
+        "Obrigado a você que testou o jogo no beta: cada partida, bug relatado e ideia ajudou a chegar aqui. " +
+            "Todos os dobrões e brindes que você ganhou continuam na sua conta. " +
+            "A partir de agora, pacotes, passe e itens da loja passam a ser pagos para todos.",
+        "Thank you for testing the game in the beta: every match, reported bug and idea helped get here. " +
+            "All the doubloons and gifts you earned stay in your account. " +
+            "From now on, packs, pass and store items are paid for everyone.",
+        "Gracias por probar el juego en la beta: cada partida, error reportado e idea ayudó a llegar hasta aquí. " +
+            "Todos los doblones y regalos que ganaste siguen en tu cuenta. " +
+            "A partir de ahora, paquetes, pase y artículos de la tienda son de pago para todos."
+    ),
+    LAUNCH_BODY_NEW(
+        "Bem-vindo a bordo! Jogue contra a IA, com amigos no mesmo aparelho, na rede local ou online. Bons combates, comandante.",
+        "Welcome aboard! Play against the AI, with friends on the same device, on the local network or online. Good hunting, commander.",
+        "¡Bienvenido a bordo! Juega contra la IA, con amigos en el mismo dispositivo, en la red local u online. Buenos combates, comandante."
+    ),
+    LAUNCH_OK("Entendi", "Got it", "Entendido"),
+
     // ---------------------------------------------------------------- badges
     PROFILE_BADGES("Condecorações", "Badges", "Condecoraciones"),
     BADGE_BETA_TESTER("Beta Tester", "Beta Tester", "Beta Tester"),

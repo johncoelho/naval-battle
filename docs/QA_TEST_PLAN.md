@@ -303,6 +303,14 @@ Rodar `select public.push_check_run();` (SQL) e depois `select * from public.tes
 | ABL-01 | P1 | Tático: ativar Barragem dupla e acertar o 1º tiro | A barragem continua valendo: um erro depois ainda dá o tiro extra |
 | FB-01 | P1 | Feedback (logado) → tocar no **meio** da caixa de texto e digitar | Teclado abre em qualquer ponto da caixa; envio confirma; aparece em `public.feedback` |
 | FB-02 | P2 | Feedback deslogado | Botão "Entrar ou criar conta" leva ao Perfil |
+| LAUNCH-01 | P1 | Com `launch_notice_enabled = 'false'`, abrir o app (Android) em conta de testador e em conta nova | Nenhum aviso de lançamento (#36) |
+| LAUNCH-02 | P1 | Ligar o interruptor (`'true'`), reabrir em conta da lista de testadores | Popup "Naval Battle Classic chegou à Google Play!" com o agradecimento (dobrões e brindes continuam; tudo pago a partir de agora), no deque, depois do popup de atualização e antes de temporada/feedback/Diário |
+| LAUNCH-03 | P1 | Tocar em "Entendi" (ou no voltar do sistema), fechar e reabrir; depois abrir em outro aparelho com a mesma conta | Não volta (marca no servidor, `launch_notice_seen` com 1 linha) |
+| LAUNCH-04 | P1 | Conta nova (fora da lista, sem aparelho iPhone, sem medalha com corte) | Popup com a boas-vindas, não o agradecimento |
+| LAUNCH-05 | P1 | Convidado (sem login) | Boas-vindas; depois de "Entendi" não volta naquele aparelho |
+| LAUNCH-06 | P1 | Durante partida e com convite de amigo na tela | O aviso não abre por cima; abre no deque depois |
+| LAUNCH-07 | P1 | No iPhone (qualquer conta), interruptor ligado | Nenhum aviso, com nenhum texto; no banco `launch_notice_status('ios')` devolve `enabled = false` |
+| LAUNCH-08 | P2 | Aviso e popup de nova temporada juntos | Aviso por cima; ao tocar "Entendi" o convite da temporada aparece embaixo, sem piscar |
 
 ## 14. Limpeza (sempre ao fim)
 

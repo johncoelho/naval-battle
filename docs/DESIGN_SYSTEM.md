@@ -79,9 +79,14 @@ Ações destrutivas (encerrar partida, zerar carreira) usam `danger` e **pedem c
 numa sobreposição que cobre a tela.
 
 **Popups e confirmações** seguem um padrão só (convite, adversário encontrado, diário,
-encerrar, excluir conta): sobreposição escura, cartão `surface2` com borda âmbar, rótulo
+encerrar, excluir conta, aviso de lançamento): sobreposição escura, cartão `surface2` com borda âmbar, rótulo
 `HudLabel` de contexto, título `title` centralizado, ações em linha com a saída segura à
 esquerda. A próxima variação nova vira componente compartilhado em `ui/Components.kt`.
+
+**Aviso de lançamento (#36)** é o popup padrão acima, sem componente novo: `LaunchNoticePopup` usa
+sobreposição `Naval.bg` a 0,86, cartão `surface2`, borda âmbar, `HudLabel` de contexto, título
+`NavalType.title` centralizado, texto em `HudLabel` e um `PrimaryButton` "Entendi" (ação única; o
+voltar do sistema faz o mesmo). Sem arte. Só Android. Entra por cima do `SeasonPopup`.
 
 **Cantos retos em tudo.** Círculo só em selo numérico, avatar e indicador de status. Sem
 sombra: profundidade vem de superfície mais clara + borda.

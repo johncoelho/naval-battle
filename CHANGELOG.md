@@ -9,6 +9,30 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.6] — 2026-10-25 · Aviso de lançamento na entrada do jogo (#36)
+
+App 0.34.6 (versionCode 93). Refs #36. Banco: `supabase/launch_notice.sql` (migração `launch_notice`).
+
+### Adicionado
+- **Aviso de lançamento** ("Naval Battle Classic chegou à Google Play!"): popup no deque, uma vez por
+  conta (a marca fica no servidor, vale em outro aparelho; convidado usa marca local). Duas variações:
+  agradecimento ao testador do beta (dobrões e brindes continuam; a partir de agora tudo é pago) e
+  boas-vindas ao jogador novo. Textos em pt/en/es; "Entendi" fecha, o voltar do sistema faz o mesmo.
+  Aparece depois do popup de atualização, antes de temporada, recompensa de feedback e Diário; nunca
+  em partida nem por cima de convite de amigo.
+- **Só Android** (decisão do John, 25/10): no iPhone o aviso não aparece, com nenhum texto. O app no iOS
+  nem consulta o servidor, e a RPC devolve `enabled = false` para a plataforma `ios`.
+- **Interruptor** `app_config.launch_notice_enabled`, nasce `'false'` (não ligado): liga quando a Play
+  aprovar a produção e a 0.34.6 estiver nela, sem versão nova.
+- **Banco:** tabela `launch_notice_seen` (RLS sem política), `launch_was_beta_tester` (lista
+  play/manual/qa por e-mail de login ou `user_id`, aparelho iPhone, ou medalha Beta Tester com conta
+  criada antes de `beta_ends_at`; com `beta_ends_at` vazio a medalha não conta), `launch_notice_status`
+  e `launch_notice_ack`. Não usa `beta_eligible()`. Ensaio: `supabase/tests/launch_notice_ensaio.sql`.
+- Testes: `LaunchNoticeTest` (regra de decisão e textos nas três línguas).
+
+### Compatibilidade
+- App antigo não chama as RPCs: não vê o aviso e nada quebra. Funções novas, nenhuma assinatura mudou.
+
 ## [0.34.5] — 2026-10-25 · Produção: todo jogador da loja vale; brinde só para QA e o John (#35)
 
 App 0.34.5 (versionCode 92). Refs #35. Só banco (regra de `is_test` e de brinde); sem mudança de Kotlin.

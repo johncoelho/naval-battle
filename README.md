@@ -523,6 +523,12 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   play/manual) não decide `is_test` nem dá brinde: `beta_eligible()` (Prêmio Beta, vitrine beta,
   Prêmio legado) = conta `'qa'` ou e-mail de `app_config.beta_gift_emails` (só no banco). A lista é carregada direto no banco, fora do repositório (skill
   `beta-testers`).
+- Aviso de lançamento (`supabase/launch_notice.sql`, #36): interruptor `app_config.launch_notice_enabled`
+  (nasce `'false'`), tabela `launch_notice_seen` (RLS sem política), `launch_was_beta_tester(uuid)`
+  (privada; não usa `beta_eligible()`), RPCs `launch_notice_status(p_platform)` (anon e authenticated;
+  `enabled = false` para `ios`) e `launch_notice_ack()` (authenticated). Só Android: o app no iOS nem
+  consulta. Lógica pura em `game/LaunchNotice.kt`, marca local em `Prefs` (`launch_notice_seen_<id>` ou
+  `_guest`), popup em `ui/LaunchNoticePopup.kt`. Ensaio: `supabase/tests/launch_notice_ensaio.sql`.
 - Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
   FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).
 - Conferência de instalação (`supabase/push_check.sql`, #26): `push_check_run()` chama a Edge
