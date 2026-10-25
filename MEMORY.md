@@ -66,7 +66,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   pacotes ocultos (sem Play). Pendente: John confirma no QA do DOB-11 que milhas com dobrões aparecem
   no iPhone (decisão: manter) e que não-testador segue com "chega em breve".
 - **Loja beta de dobrões (#28, 0.33.3):** Prêmio Beta por RPC `claim_premio_beta` (sem Play, 6.500 1×/dia);
-  vitrine paga para testador com `beta_store_enabled` **desligada** (sem secret, pacote cobraria e não
+  vitrine paga para testador com `beta_store_enabled` (nasceu **desligada**; em produção está `'true'`, conferido em 25/10; desde 0.34.5 a vitrine só aparece para QA e o John; sem secret, pacote cobraria e não
   creditaria). Migração aplicada no banco; Edge `dobroes-verify` redeployada em 18/10 (versão 6, igual ao repositório). Gate:
   `dobroes_gate_licenca()` antes de tirar qualquer testador da licença (17 ainda sem 0.33.3 em 18/10).
 - **Compras de dobrões pela Google Play (#15, 0.33.0):** servidor e app prontos (migração
@@ -132,7 +132,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   (2) secret `PLAY_BILLING_SERVICE_ACCOUNT`; (3) os 4 produtos no Play Console; (4) gate
   `select * from public.dobroes_gate_licenca();` vazio antes de mudar a lista de licença para só QA01/QA02;
   (5) `premio_beta_enabled` já está `'true'` em produção (ligada antes do lote; o John confirma na issue #28);
-  `beta_store_enabled` segue `'false'` e só liga depois de 2 e 3. Textos novos (aviso de cobrança para testador, "Pacotes pagos") aguardam o OK do John.
+  `beta_store_enabled` está `'true'` em produção (25/10; com a regra de 0.34.5 só QA e o John veem a vitrine); pacote real só depois de 2 e 3. Textos novos (aviso de cobrança para testador, "Pacotes pagos") aguardam o OK do John.
 - **Dobrões (#15), antes de ligar o Prêmio ou a venda:** (1) criar no Play Console os 4 produtos
   `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro` (ativos, IDs exatos); (2) contas QA como
   **testadores de licença**, se faltarem; (3) permissões financeiras: o John concedeu
