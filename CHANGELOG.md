@@ -9,16 +9,22 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
-## [0.34.5] — 2026-10-25 · Produção: todo jogador da loja vale (#35)
+## [0.34.5] — 2026-10-25 · Produção: todo jogador da loja vale; brinde só para QA e o John (#35)
 
-App 0.34.5 (versionCode 92). Refs #35. Só banco (regra de `is_test`); sem mudança de Kotlin.
+App 0.34.5 (versionCode 92). Refs #35. Só banco (regra de `is_test` e de brinde); sem mudança de Kotlin.
 
 ### Alterado
 - **Quem vale como jogador** (#35): com `allowlist_enforced = 'true'`, `profiles.is_test` passa a ser
   só robô: conta com e-mail de login no padrão `nome.00000@gmail.com` (robôs da revisão do Google) ou
   com o aparelho dizendo `firebase.test.lab`. Todo o resto vale (ranking, partida rápida, recompensas).
-- **Lista de testadores não decide mais `is_test`**: `allowed_players` (play/manual) segue para
-  benefícios (Prêmio Beta, medalha, vitrine) e para o gate da licença. O Prêmio Beta fica como estava.
+- **Lista de testadores não decide mais `is_test`**: `allowed_players` (play/manual) segue só para o
+  gate da licença e a conferência de instalação.
+- **Brinde só para QA01, QA02 e o John** (decisão do John, 25/10): `beta_eligible()` passa a ser conta
+  `allowed_players.source = 'qa'` ou e-mail da chave nova `app_config.beta_gift_emails` (valor só no
+  banco, como `ads_test_emails`). Vale para o Prêmio Beta (`claim_premio_beta`), a vitrine beta
+  (`dobroes_store_status`, `apply_dobroes_purchase`) e o Prêmio legado pela Play. Testador antigo e
+  conta nova recebem `not_beta` e a aba sem Prêmio nem vitrine. Ninguém perde saldo, itens nem a
+  medalha Beta Tester já ganhos. Migração `brindes_so_qa_e_john`.
 - **Contas QA** (`allowed_players.source = 'qa'`) ficam fora da regra automática: `is_test` delas segue
   o processo manual do QA.
 - **`allowlist_on()`** só lê o interruptor `allowlist_enforced`; não exige mais linha `play`.
@@ -28,6 +34,11 @@ App 0.34.5 (versionCode 92). Refs #35. Só banco (regra de `is_test`); sem mudan
 ### Testes
 - Ensaio que desfaz tudo: `supabase/tests/allowlist_ensaio.sql` (robô nasce teste, conta comum nasce
   jogador, lista da Play não muda `is_test`, QA intacta, nenhuma divergência depois).
+- Ensaio que desfaz tudo: `supabase/tests/brindes_ensaio.sql` (QA 2/2 e John 1/1 com brinde; 14
+  testadores antigos e conta nova sem; `claim_premio_beta` = `not_beta` para testador antigo e
+  `premio` para QA; medalhas e Prêmios já pagos iguais).
+- Passada de produção `refresh_all_is_test(true)` rodada em 25/10: 0 viraram teste, 0 voltaram a
+  jogador (15 jogadores, 122 teste); contas QA intactas.
 
 ## [0.34.4] — 2026-10-20 · Milhas: texto do popup corrigido (#33)
 

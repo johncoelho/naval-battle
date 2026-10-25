@@ -97,10 +97,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 
-- 25/10 · Brindes (#35, 7afa37e): grátis e Prêmio Beta só para QA01, QA02 e o John; testadores ficam com
-  o que ganharam. **Implementação pendente** (não entrou na 0.34.5).
+- 25/10 · Brindes (#35, 0.34.5): grátis e Prêmio Beta só para QA01, QA02 e o John (`beta_eligible` =
+  `'qa'` ou `app_config.beta_gift_emails`, e-mail só no banco); testadores ficam com o que ganharam.
 - 25/10 · `is_test` só por robô da Google; todo jogador da loja vale (#35, 0.34.5): a lista deixa de
-  decidir is_test e QA fica fora da passada.
+  decidir is_test e QA fica fora da passada. Depois do lançamento ninguém novo entra como `play`.
 - 19/10 · Conta de teste ganha bloco real só em emulador (#32, 0.34.3): o exemplo não dispara o SSV.
 - 18/10 · iPhone mostra só o Prêmio Beta (#30, 0.33.4): pacotes ocultos no iPhone, a aba não fecha mais.
   Aprovado pelo John na issue.
@@ -112,9 +112,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - 17/10 · Conferência de instalação (#26, 0.33.2): a `push` marca desinstalado e não apaga token;
   reinstalar zera a marca. Conferência diária pelo passo 0 da `esteira` (sem pg_cron), **pendente** do
   John incluir o passo na skill. Só indicador.
-- 12/10 · Só testador registrado vale como jogador (#23, 0.32.1): lista da Play, iPhone ou exceção
-  manual; o resto é `is_test`. Lista em `allowed_players`, **nunca no repositório** (público). QA01/QA02
-  são conta de teste (ranqueada deles não vale pontos).
+- 12/10 · QA01/QA02 são conta de teste (ranqueada deles não vale pontos). Lista `allowed_players`
+  **nunca no repositório** (público). (A regra "só testador registrado vale", de 12/10, saiu em 25/10.)
 - 10/10 · Backlog inteiro no GitHub Issues; aqui só assuntos em andamento e decisões.
 - 10/10 · Testes de unidade obrigatórios para regra de jogo; bug de lógica corrigido ganha teste.
 - 10/10 · CI barra release incompleto (versão, iOS, notas, CHANGELOG).
@@ -144,10 +143,6 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   de serviço só para billing. (iPhone sem pacotes: feito em 0.33.4, #30.)
 - Novidades (#31, 0.34.1): tela com uma linha por minor (0.26.0 a 0.34.0). **Pendente do John:** a tela
   ler `app_releases` (melhoria; decidir se a linha passa a ser por patch). Sem OK, fica como está.
-- Passada de produção (#35): `refresh_all_is_test(true)` **espera o OK do John**. Hoje a conta (`false`)
-  dá 0 a mudar (120 robôs já são teste, 15 jogadores, 2 QA). Ensaio em `supabase/tests/allowlist_ensaio.sql`.
-  Testador novo na Play: passo da skill `beta-testers`. Depois do lançamento da produção, ninguém novo
-  entra como `play` (decisão de 25/10 no HISTORY).
 
 ## 6. Ambiente e armadilhas conhecidas
 

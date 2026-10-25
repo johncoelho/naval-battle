@@ -333,24 +333,28 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   fechado (respostas do questionário no histórico da conversa).
 - **25/10 · Jogador válido na produção** (#35, aprovado pelo John) — porquê: com a allowlist ligada,
   todo jogador da loja viraria `is_test`. Regra nova: todo mundo vale; só robôs da Google e contas QA
-  ficam de fora. Testadores registrados mantêm os benefícios do beta; jogador novo usa e paga tudo.
+  ficam de fora. Testadores registrados ficam com o que já ganharam; o brinde novo passou a ser só de
+  QA e do John (item abaixo).
 - **25/10 · Fim dos brindes, exceto QA01, QA02 e o John** (#35, decisão do John, substitui a de manter o
   Prêmio para testadores, tomada no mesmo dia) — testadores ficam com tudo o que ganharam; daqui para
   frente todo mundo paga por tudo. Prêmio Beta e grátis só para as 2 contas QA e a conta do John
-  (e-mail só no banco). **Decisão tomada em 7afa37e; a implementação (`beta_eligible`, vitrine e Prêmio)
-  segue pendente** e não foi mexida na 0.34.5.
+  (e-mail só no banco). **Implementado na 0.34.5:** `beta_eligible()` = conta QA
+  (`allowed_players.source = 'qa'`) ou e-mail de `app_config.beta_gift_emails` (valor só no banco,
+  como `ads_test_emails`). Vale para o Prêmio Beta, a vitrine beta e o Prêmio legado pela Play.
+  Saldo, itens e medalha Beta Tester já ganhos não mudam. Ensaio em `supabase/tests/brindes_ensaio.sql`.
 - **25/10 · Aviso de lançamento na entrada** (#36) — popup uma vez por conta, ligado por interruptor
   quando a Play aprovar: agradece os beta testers e avisa que os brindes ficam e o resto passa a ser pago.
 - **25/10 · `is_test` só por robô da Google; todo jogador da loja vale** (#35, 0.34.5) — porquê: a lista
   deixou de decidir quem é jogador. Robô = e-mail de login `nome.00000@gmail.com` (ou `firebase.test.lab`);
-  conta QA fica fora da rotina. A lista segue só para benefícios. Ensaio em `supabase/tests/allowlist_ensaio.sql`.
+  conta QA fica fora da rotina. Ensaio em `supabase/tests/allowlist_ensaio.sql`. Passada
+  `refresh_all_is_test(true)` rodada em 25/10: 0 contas mudaram (15 jogadores, 122 teste).
 - ~~**25/10 · Prêmio Beta continua só para testadores** (decisão do John, de 3fe3750) — 6.500/dia, 1×/dia,
   para quem está em `allowed_players` (play/manual/qa); conta nova da loja não recebe.~~ Substituída pela
   decisão de 7afa37e (fim dos brindes, exceto QA e John).
 - **25/10 · Depois do lançamento, ninguém novo entra como `play` na lista** (#35, aceite da decisão do
   John) — porquê: a lista deixa de ser a porta de entrada da conta de jogador (todo mundo vale) e a
-  lista da Play só mantém os benefícios de quem já estava no teste fechado. A regra vale **só depois do
-  lançamento da produção**; até lá, o passo da skill `beta-testers` segue como está.
+  lista da Play não dá mais brinde (só QA e o John). Fica para o gate da licença e a conferência de
+  instalação de quem já estava no teste fechado.
 - **25/10 · Venda aberta só depois do saldo no servidor** (#34) — `real_billing_enabled` segue
   desligado na produção até o saldo autoritativo; nada cobra sem creditar enquanto isso.
 

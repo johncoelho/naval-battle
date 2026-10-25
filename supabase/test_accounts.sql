@@ -1,7 +1,9 @@
 -- Contas de teste automático (#23; regra de produção #35, 0.34.5).
 --
 -- Regra de 0.34.5: todo jogador da loja vale. Só deixam de valer (profiles.is_test = true)
--- os robôs da revisão do Google e de pré-lançamento, reconhecidos pelo e-mail de login.
+-- os robôs da revisão do Google e de pré-lançamento, reconhecidos pelo e-mail de login
+-- (padrão nome.00000@gmail.com) ou pelo aparelho que disse firebase.test.lab
+-- (device_checks.test_lab); a marca só soma, nunca substitui o padrão do e-mail.
 -- As contas QA ficam fora desta regra e seguem a rotina manual do QA (is_test = false só
 -- durante o teste, true no fim): o código não as toca.
 --
@@ -12,10 +14,11 @@
 --   'true' (produção): is_test = is_robot_account(conta), exceto contas QA.
 --   'false': nada é classificado; vale o comportamento da 0.32.0 (a marca
 --   firebase.test.lab só marca, falso nunca desmarca). Para reverter, basta 'false'.
--- * allowed_players (lista da Play, exceções e QA) NÃO decide mais is_test. Continua
---   decidindo benefícios (beta_eligible, Prêmio Beta, vitrine) em dobroes.sql, e o gate
---   da licença (dobroes_gate_licenca) também fica em dobroes.sql. ads.sql só usa 'qa'
---   para a unidade de teste do anúncio, não para benefício.
+-- * allowed_players (lista da Play, exceções e QA) NÃO decide mais is_test. Brinde
+--   (beta_eligible, em dobroes.sql) só usa a linha 'qa', junto com app_config.beta_gift_emails
+--   (a conta do John); 'play' e 'manual' não dão mais brinde (#35, 25/10). A lista segue para
+--   o gate da licença (dobroes_gate_licenca) e a conferência de instalação (push_check.sql).
+--   ads.sql só usa 'qa' para a unidade de teste do anúncio.
 -- * O cliente não lê nem grava device_checks nem allowed_players direto (RLS ligado,
 --   sem política).
 
@@ -35,8 +38,9 @@ alter table public.device_checks enable row level security;
 -- Lista da Play, exceções manuais e contas QA (fonte: skill beta-testers). O repositório é
 -- público: aqui vai só a estrutura, e as linhas são carregadas direto no banco.
 -- source: 'play' (lista da Play), 'manual' (exceção, em geral pelo user_id) e 'qa'
--- (contas QA, fora da rotina automática de is_test). Quem decide benefícios é o beta_eligible
--- de dobroes.sql (e o gate da licença); quem decide is_test é a regra de robôs abaixo.
+-- (contas QA, fora da rotina automática de is_test). Quem decide brinde é o beta_eligible
+-- de dobroes.sql (só 'qa' e beta_gift_emails); quem decide is_test é a regra de robôs abaixo.
+-- Depois do lançamento da produção ninguém novo entra como 'play'.
 
 create table if not exists public.allowed_players (
   id         bigint      generated always as identity primary key,

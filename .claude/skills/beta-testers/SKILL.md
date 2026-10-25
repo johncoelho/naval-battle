@@ -45,32 +45,31 @@ delete from public.allowed_players where email = lower(trim('<email>'));
 select * from public.refresh_all_is_test(true);
 ```
 
-- **Depois do lançamento da produção (0.34.5, #35), ninguém novo entra como `'play'`.** A lista da
-  Play, no teste fechado, segue só para os benefícios antigos (Prêmio Beta, medalha) até o John
-  decidir o que muda para testador (ver HISTORY, 25/10). Testador novo na Play não vira jogador
-  diferente: quem vale é todo mundo que não é robô.
+- **Depois do lançamento da produção (0.34.5, #35), ninguém novo entra como `'play'`.** Decisão do
+  John (HISTORY, 25/10): a lista não dá mais brinde. Prêmio Beta, vitrine beta e qualquer grátis valem
+  só para QA01, QA02 (`'qa'`) e a conta do John (`app_config.beta_gift_emails`, e-mail só no banco).
+  Testador antigo fica com o que já ganhou (saldo, itens, medalha Beta Tester) e paga como todo mundo.
+  Quem vale como jogador é todo mundo que não é robô; a lista não muda isso.
 - A passada `refresh_all_is_test(true)` só muda robô e conta QA fica de fora; testador novo não exige
-  passada. Não rodar sem o OK do John.
+  passada. Rodada em 25/10 (0 mudanças); rodar de novo só com ensaio antes.
 - Conta QA (`aigamesfactory.qa01/qa02`) entra com `source = 'qa'`: espelha a lista da Play, mas a
   conta segue como conta de teste.
 - **Jogador de iPhone** fora da lista não precisa de nada: vira jogador sozinho ao abrir o app
   (`report_device_check` com `ios`).
-- **Exceção por perfil** (decisão do John; ex.: e-mail da Play diferente do de login, iPhone com
-  versão antiga): `insert into public.allowed_players (user_id, source, note) select id, 'manual',
-  '<motivo>' from public.profiles where username = '<nome>';` (conferir que achou exatamente 1
-  perfil) e o `refresh_all_is_test(true)`.
+- **Exceção por perfil (`'manual'`)**: era da regra antiga (0.32.1). Desde 0.34.5 uma linha
+  `'manual'` não muda `is_test` nem dá brinde; não criar nova. Brinde para mais alguém só com o OK do
+  John, pondo o e-mail em `app_config.beta_gift_emails` direto no banco (nunca no repositório).
 - Conferir: `select source, count(*) from public.allowed_players group by 1;` e o ensaio
   `select * from public.refresh_all_is_test(false);` (só conta, não muda nada).
 - A regra de `is_test` só vale com `app_config.allowlist_enforced = 'true'` (interruptor, sem exigir
   linha `play`); desligado, `refresh_all_is_test` recusa rodar.
 
-## Testadores de licença (Prêmio Beta, #15)
+## Prêmio Beta pela Play (legado, apps 0.33.0 a 0.33.2)
 
-A mesma lista da Play precisa estar em **Play Console → Configurações → Teste de licença**
-(resposta "Responder normalmente"). Quem está lá, ao tocar no Prêmio Beta, passa pelo fluxo da Play
-**sem cobrança** (a compra vem marcada como teste). Quem NÃO está nessa lista e toca no Prêmio é
-**cobrado de verdade** (R$ 49,90). Por isso `premio_beta_enabled` só liga com as duas listas iguais.
-Ao adicionar ou remover testador na Play, atualizar também a lista de licença no mesmo dia.
+Só o app antigo passava o Prêmio pela Play; quem não estava no Teste de licença era cobrado de
+verdade. Desde 0.33.3 o Prêmio é resgatado no servidor, e desde 0.34.5 (#35) só QA e a conta do John
+o recebem. Antes de mexer na lista de licença, conferir `select * from public.dobroes_gate_licenca();`
+(testadores ainda sem o 0.33.3).
 
 ## Conferir instalação (#26)
 

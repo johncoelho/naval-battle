@@ -8,8 +8,9 @@
 --    (venda para todos) OU, para conta de testador, com app_config.beta_store_enabled = 'true'.
 --  * Vitrine beta: pacote comprado por testador de licença. Com licença de teste (a Play não
 --    cobra) credita o pacote; com compra real, cobra e credita. Nasce desligada (#28).
---  * Prêmio Beta (#28): claim_premio_beta(), sem Play. Só conta de testador, 1× por dia
---    (Brasília), 6.500 dobrões, só com app_config.premio_beta_enabled = 'true'.
+--  * Prêmio Beta (#28): claim_premio_beta(), sem Play. 1× por dia (Brasília), 6.500 dobrões, só
+--    com app_config.premio_beta_enabled = 'true'. Desde 25/10 (#35) "testador" (beta_eligible) é
+--    só conta QA e os e-mails de app_config.beta_gift_emails (a conta do John).
 --  * Prêmio legado (app 0.33.0 a 0.33.2, sem origem): compra de teste do Tesouro pela Play,
 --    1× por dia. Sai junto com o app antigo.
 --  * Entrega: o aparelho lê dobroes_pending(), soma o que ainda não somou e confirma com
@@ -24,7 +25,10 @@
 insert into public.app_config (key, value) values
   ('real_billing_enabled', 'false'),   -- venda real para jogador comum (só depois da produção na Play)
   ('premio_beta_enabled', 'false'),    -- Prêmio Beta (RPC): ligar com a lista de testadores pronta
-  ('beta_store_enabled', 'false')      -- vitrine paga para testador: ligar só com o secret e os 4 produtos
+  ('beta_store_enabled', 'false'),     -- vitrine paga para testador: ligar só com o secret e os 4 produtos
+  -- e-mails (minúsculos, separados por vírgula) que recebem brinde além das contas QA (#35: a
+  -- conta do John). O valor real fica só no banco: o repositório é público.
+  ('beta_gift_emails', '')
 on conflict (key) do nothing;
 
 -- ------------------------------------------------------------------ produtos e compras
@@ -71,16 +75,23 @@ create policy "compras de dobrões: ler as proprias" on public.dobroes_purchases
 
 -- ------------------------------------------------------------------ regras
 
--- conta de testador: lista da Play, exceção manual ou conta QA (não depende do interruptor allowlist)
+-- conta que recebe brinde (Prêmio Beta, vitrine beta, Prêmio legado): só as contas QA
+-- (allowed_players 'qa') e os e-mails de app_config.beta_gift_emails (a conta do John). Decisão
+-- de 25/10 (#35, 0.34.5): testador da lista da Play ou manual fica com o que já ganhou (saldo,
+-- itens, medalha Beta Tester) e daqui para frente paga como todo mundo. Não depende do
+-- interruptor allowlist.
 create or replace function public.beta_eligible(p_user uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (
            select 1 from public.allowed_players a
-             join auth.users u on u.id = p_user
-            where a.source in ('play', 'manual', 'qa') and a.email = lower(trim(u.email)))
+             left join auth.users u on u.id = p_user
+            where a.source = 'qa' and (a.user_id = p_user or a.email = lower(trim(u.email))))
       or exists (
-           select 1 from public.allowed_players a
-            where a.source in ('play', 'manual', 'qa') and a.user_id = p_user);
+           select 1 from auth.users u
+            where u.id = p_user
+              and lower(trim(u.email)) = any (
+                    string_to_array(replace(lower(coalesce(
+                      (select value from public.app_config where key = 'beta_gift_emails'), '')), ' ', ''), ',')));
 $$;
 revoke all on function public.beta_eligible(uuid) from public, anon, authenticated;
 

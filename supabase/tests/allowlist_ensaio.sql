@@ -12,7 +12,7 @@
 --   robo_novo_teste=true            e-mail nome.00000@gmail.com nasce is_test true
 --   comum_novo_teste=false          conta comum nasce is_test false (aparece no ranking)
 --   play_nao_decide_teste=false     linha 'play' na lista não muda is_test
---   play_beta_eligible=true         beta_eligible segue igual (lista da Play)
+--   play_beta_eligible=false        lista da Play não dá brinde (só QA e beta_gift_emails, #35)
 --   qa_fica_intacta=true            conta QA não muda com refresh_is_test
 --   mismatch_depois=0               nenhuma conta (fora QA) fora da regra depois
 
@@ -48,7 +48,7 @@ begin
   select is_test into cm from public.profiles where id = cid;
   out := out || format('robo_novo_teste=%s comum_novo_teste=%s | ', rb, cm);
 
-  -- lista da Play: inserir não muda is_test, mas benefício segue
+  -- lista da Play: inserir não muda is_test nem dá brinde
   insert into public.allowed_players (email, source, note) values ('ensaio.comum@gmail.com', 'play', 'ensaio');
   select is_test into cm2 from public.profiles where id = cid;
   out := out || format('play_nao_decide_teste=%s play_beta_eligible=%s | ', cm2, public.beta_eligible(cid));

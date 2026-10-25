@@ -225,9 +225,10 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
   completa: partidas, vitórias, aproveitamento, precisão, navios afundados e sequências.
   **Excluir conta** fica no próprio Perfil, com confirmação: apaga tudo no servidor
   (`supabase/account.sql`) e a carreira do aparelho volta ao começo.
-- **Dobrões** (a moeda do jogo) compram na loja, pela Google Play (aba Dobrões). Quem testa o jogo
-  (lista de testadores de licença) ganha o **Prêmio Beta**: 6.500 dobrões uma vez por dia, pegos
-  direto no servidor (`claim_premio_beta`, sem a Play e sem cobrança). Testador também vê os
+- **Dobrões** (a moeda do jogo) compram na loja, pela Google Play (aba Dobrões). O **Prêmio Beta**
+  (6.500 dobrões uma vez por dia, pegos direto no servidor, `claim_premio_beta`, sem a Play e sem
+  cobrança) e os brindes valem só para as contas QA e a do John desde 0.34.5 (#35); quem testou o
+  beta fica com o que já ganhou e paga como todo mundo. Essas contas também veem os
   **pacotes pagos** quando a vitrine beta estiver ligada (`beta_store_enabled`, desligada por padrão
   até o secret e os 4 produtos estarem prontos; #28). A venda para jogador comum fica fechada até o
   servidor ser a única fonte do saldo e o app estar em produção na Play (interruptor
@@ -519,7 +520,8 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   `app_config.allowlist_enforced = 'true'` (produção desde 0.34.5, #35), `is_test` = conta com e-mail
   de robô da Google (`nome.00000@gmail.com`, `is_robot_account`) ou com `firebase.test.lab`; conta QA
   (`allowed_players.source = 'qa'`) fica fora da rotina. A lista de testadores (`allowed_players`
-  play/manual) só decide benefícios, não `is_test`. A lista é carregada direto no banco, fora do repositório (skill
+  play/manual) não decide `is_test` nem dá brinde: `beta_eligible()` (Prêmio Beta, vitrine beta,
+  Prêmio legado) = conta `'qa'` ou e-mail de `app_config.beta_gift_emails` (só no banco). A lista é carregada direto no banco, fora do repositório (skill
   `beta-testers`).
 - Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
   FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).
