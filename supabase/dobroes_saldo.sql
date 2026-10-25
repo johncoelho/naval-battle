@@ -25,7 +25,7 @@
 
 insert into public.app_config (key, value) values
   ('dobroes_open_max', '200000'),            -- teto do saldo do aparelho na abertura
-  ('dobroes_online_daily_cap', '1500'),      -- dobrões de partida online por conta e dia (Brasília)
+  ('dobroes_online_daily_cap', '500'),       -- dobrões de partida online por conta e dia (Brasília)
   ('dobroes_online_per_opponent', '3'),      -- recompensas por dia contra o mesmo adversário
   ('dobroes_online_base_win', '220'),        -- mesma conta de Profile.registerMatch (XP), um terço vira dobrão
   ('dobroes_online_base_loss', '80'),
@@ -397,7 +397,7 @@ begin
   select coalesce(sum(l.delta), 0)::integer into used_day from public.dobroes_ledger l
    where l.user_id = uid and l.reason = 'online'
      and (l.created_at at time zone 'America/Sao_Paulo')::date = day_;
-  pay := least(pay, greatest(public.config_int('dobroes_online_daily_cap', 1500) - used_day, 0));
+  pay := least(pay, greatest(public.config_int('dobroes_online_daily_cap', 500) - used_day, 0));
   if pay <= 0 then
     return query select 'capped'::text, 0, bal; return;
   end if;

@@ -37,7 +37,7 @@ desligada (`real_billing_enabled = 'false'`).
   `dobroes_open_all()` (só administrador) abre as que sobrarem: **não foi rodada**.
 - **Entradas no servidor**: check-in, desafio, fim de temporada, feedback, passe (dobrões extras e pintura da
   estação), compra real/vitrine/Prêmio/anúncio (gatilho em `dobroes_purchases`) e `award_online_match`
-  (mesma fórmula do XP, 3 por adversário/dia, teto diário `dobroes_online_daily_cap` = 1500, os dois lados
+  (mesma fórmula do XP, 3 por adversário/dia, teto diário `dobroes_online_daily_cap` = 500, os dois lados
   precisam ter jogado, ranqueada usa o `winner_id` do servidor). **Saídas**: `join_season`, `buy_miles`
   e `dobroes_buy` (preços em `store_items`, oferta do dia recalculada no servidor).
 - Anúncio "dobrar vitória": com carteira, `ai:` é recusado e o valor sai do crédito da sala no razão.

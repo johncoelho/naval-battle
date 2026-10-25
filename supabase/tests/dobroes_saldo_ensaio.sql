@@ -73,7 +73,7 @@ begin
   update public.profiles set credits = 300, owned = 'std,br', fleets = 'std', xp = 0, nautical_miles = 10,
          miles_day = public.brt_today() where id = b;
   insert into public.app_config (key, value) values
-    ('real_billing_enabled', 'false'), ('ads_enabled', 'false'), ('dobroes_online_daily_cap', '1500')
+    ('real_billing_enabled', 'false'), ('ads_enabled', 'false'), ('dobroes_online_daily_cap', '500')
     on conflict (key) do update set value = excluded.value;
 
   out := out || 'seeds=' || (select count(*) from public.store_items where kind = 'paint')
@@ -271,7 +271,7 @@ begin
   insert into public.online_messages (match_id, sender_id, body) values (m5, a, 'ACT|1,1'), (m5, b, 'ACT|2,2');
   select q.status, q.amount into r from public.award_online_match(m5, 30, 20, 3, 25, true) q;
   out := out || r.status || '/' || r.amount || ' | ';
-  update public.app_config set value = '1500' where key = 'dobroes_online_daily_cap';
+  update public.app_config set value = '500' where key = 'dobroes_online_daily_cap';
   -- a ja tem 3 recompensas hoje contra o b (m1, m3, m4): a proxima e o limite por adversario
   select q.status into t from public.award_online_match(m5, 30, 20, 3, 25, true) q;
   out := out || 'online_limite=' || t || ' | ';
