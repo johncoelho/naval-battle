@@ -347,6 +347,10 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - ~~**25/10 · Prêmio Beta continua só para testadores** (decisão do John, de 3fe3750) — 6.500/dia, 1×/dia,
   para quem está em `allowed_players` (play/manual/qa); conta nova da loja não recebe.~~ Substituída pela
   decisão de 7afa37e (fim dos brindes, exceto QA e John).
+- **25/10 · Depois do lançamento, ninguém novo entra como `play` na lista** (#35, aceite da decisão do
+  John) — porquê: a lista deixa de ser a porta de entrada da conta de jogador (todo mundo vale) e a
+  lista da Play só mantém os benefícios de quem já estava no teste fechado. A regra vale **só depois do
+  lançamento da produção**; até lá, o passo da skill `beta-testers` segue como está.
 - **25/10 · Venda aberta só depois do saldo no servidor** (#34) — `real_billing_enabled` segue
   desligado na produção até o saldo autoritativo; nada cobra sem creditar enquanto isso.
 

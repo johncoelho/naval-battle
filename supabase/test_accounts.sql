@@ -1,8 +1,9 @@
 -- Contas de teste automático (#23; regra de produção #35, 0.34.5).
 --
 -- Regra de 0.34.5: todo jogador da loja vale. Só deixam de valer (profiles.is_test = true)
--- os robôs da revisão do Google e de pré-lançamento, reconhecidos pelo e-mail de login, e as
--- contas QA, que seguem a rotina manual (is_test = false só durante o teste, true no fim).
+-- os robôs da revisão do Google e de pré-lançamento, reconhecidos pelo e-mail de login.
+-- As contas QA ficam fora desta regra e seguem a rotina manual do QA (is_test = false só
+-- durante o teste, true no fim): o código não as toca.
 --
 -- * device_checks é o log de diagnóstico: uma linha por conta e versão, com o que o
 --   aparelho disse (versão, plataforma e a marca firebase.test.lab). Nada do aparelho
