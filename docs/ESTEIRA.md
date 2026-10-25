@@ -12,8 +12,8 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 | PO | `po` | SPEC com critérios de aceite, ordem da Fila, quebra pedidos grandes | — |
 | Tech Lead | `tech-lead` | desenho técnico antes, revisão antes de todo push | — |
 | Dev | `dev` | implementa o lote da Fila num worktree, com testes e documentação | — |
-| Release | `release` | `app_releases`, CI, `ios_live`, versão na issue | — |
-| QA | `qa` | valida na Play (QA01/QA02) e fecha a issue | — |
+| Release | `release` | `app_releases`, CI, `ios_live`, versão na issue; promove e libera a produção | — |
+| QA | `qa` | valida na Play (QA01/QA02) e manda o cartão para Em produção | — |
 | Game Designer | `game-designer` | analisa dados, propõe balanceamento e mecânicas | — |
 
 **Modelos (25/10, para economizar sem travar):** a tarefa agendada (orquestrador) pode rodar no Haiku, mas
@@ -34,7 +34,8 @@ Haiku do orquestrador e a revisão entrava em loop (#35 voltou três vezes em 25
 | **Em andamento** | Dev + Tech Lead trabalhando | Dev (push) |
 | **Publicado** | CI verde e enviado; em revisão do Google | tarefa do QA, quando o Play Console mostra Published |
 | **Liberado para testes** | Play liberou para os testadores; QA testando | QA |
-| **Concluído** | validado na Play, issue fechada | — |
+| **Em produção** | QA aprovou todos os cartões da versão; promovida na produção com liberação gradual (20%, 50%); issue aberta | Release, quando a versão chega a 100% |
+| **Concluído** | versão em 100% na produção, issue fechada | — |
 
 ## Regras
 
@@ -57,7 +58,9 @@ Haiku do orquestrador e a revisão entrava em loop (#35 voltou três vezes em 25
 - Nada em `.github/workflows`, stack nova ou dinheiro sem o OK dele.
 - **iPhone não bloqueia** (decisão do John, 19/10): o iOS só é compilado para adiantar; o teste no
   iPhone fica para depois. Item que passou no QA do **Android** sai da fila (Concluído), mesmo sem
-  teste em iPhone.
+  teste em iPhone (vai para **Em produção**).
+- **Só se promove para a produção com todos os cartões da versão aprovados no QA** (#39). O Release usa o
+  versionCode que o QA testou no aparelho, nunca "a última da Alpha".
 - Item em **Em andamento** há mais de 3 horas sem commit: a rodada seguinte retoma ou devolve à Fila.
 
 ## Rodada (skill `esteira`, agendada)
@@ -85,10 +88,50 @@ lista cada envio com o status (*In review* / *Published*); o detalhe do envio mo
    revisão → termina sem ligar emulador.
 3. Cartão em **Liberado para testes**: ativa as contas QA (`is_test = false`), liga os emuladores (QA01 = `emulator-5554`,
    QA02 = `emulator-5556`; pacote do app `aigamesfactory.navalbattleclassic`), atualiza pela Play, testa os
-   critérios de aceite e os casos do `QA_TEST_PLAN.md`, fecha o que passou (**Concluído**) e devolve
-   à **Fila** o que falhou. **Todo fechamento leva print de evidência** no comentário, passou ou
+   critérios de aceite e os casos do `QA_TEST_PLAN.md`, anota o versionCode testado
+   (`adb shell dumpsys package aigamesfactory.navalbattleclassic | grep versionCode`), comenta o que passou e
+   move para **Em produção** (a issue **não** fecha mais aqui) e devolve à **Fila** o que falhou. **Todo fechamento leva print de evidência** no comentário, passou ou
    falhou (`tools/qa-evidencia.sh` → branch `qa-evidencias`). Desliga os emuladores e **desativa as
    contas QA** (`is_test = true`), sempre, mesmo se o teste falhar.
+4. **Release, no fim da tarefa do QA** (produção, #39): ver a seção abaixo.
+
+## Produção e liberação gradual (#39)
+
+Workflow manual `promote-production.yml` (`workflow_dispatch`, sem cron) chama `tools/play-rollout.sh`
+(openssl, curl e jq; Play Developer API v3, edits) com a conta `play-publisher-ci`. O `android.yml` segue
+só com a Alpha. O Release dispara com o versionCode **sempre explícito**:
+`gh workflow run promote-production.yml -f action=<promote|advance|halt|resume|status> -f version_code=N -f fraction=<0.2|0.5|1> [-f dry_run=true]`.
+O histórico de runs (`gh run list -w promote-production.yml`) é o registro das etapas.
+
+| Etapa | Fração | Quando | Quem |
+|---|---|---|---|
+| `promote` | 20% | QA aprovou **todos** os cartões da versão | Release |
+| `advance` | 50% | ≥ 24 h em 20% (contadas do *Published* da produção), vitals OK, nenhuma P0 aberta contra a versão | Release |
+| `advance` | 100% (concluída) | ≥ 24 h em 50%, mesmas condições | Release |
+
+- **Travas do `promote`** (erro em pt-BR, sem commit): (1) variável de repositório `PLAY_PRODUCTION_LIVE`
+  = `true` (nasce `false`; vira `true` depois do *Published* da produção 91); (2) o versionCode está num
+  release concluído da faixa alpha; (3) é maior que todo versionCode da produção; (4) notas e nome copiados
+  do release da Alpha. O Release também não promove se o Submission activity mostrar envio de produção *In review*.
+- `dry_run=true` valida na Play (`edits.validate`) e descarta a edição; ignora a trava 1 com aviso.
+  `status` é só leitura e sempre funciona.
+- **Release novo durante uma liberação** (a Play não aceita dois `inProgress`): antigo em 50% ou mais e sem
+  alarme: conclui o antigo (`advance` 1) e depois promove o novo; em 20%: o novo substitui o antigo e
+  recomeça em 20%. O script recusa substituir um release em 50% ou mais.
+- **Halt:** `halt` grava `halted` (ninguém mais recebe; quem já recebeu fica), `resume` volta na mesma fração.
+  O Release interrompe **sem esperar o John** e avisa depois, na issue e no relatório, quando: falha percebida
+  > 1,09% ou ANR percebido > 0,47% no Android vitals (Play Developer Reporting API, `crashRateMetricSet` e
+  `anrRateMetricSet` por versionCode, só com ≥ 100 usuários no dia; chegam com 1 a 2 dias de atraso), ou P0 aberta
+  pelo Suporte contra a versão, ou falha em lote no log de diagnóstico. A correção da P0 sai em versão nova
+  pelo caminho normal e substitui o release `halted`. Problema numa função com chave em `app_config`: desliga a chave antes.
+- **Comentário:** a cada etapa, o Release comenta em cada issue da versão `Produção: 20% (versionCode N)`
+  (e 50%, 100%). Ao chegar a 100%: cartão para **Concluído** e fecha a issue.
+- **O John pausa pelo celular:** GitHub → Actions → *Promote production* → Run workflow → `halt`.
+- **Pendente do John** (a #39 deixa o workflow pronto; até lá só `status` e `dry_run`): no Play Console,
+  `play-publisher-ci` ganha *Lançar no ambiente de produção…* e *Ver informações do app e baixar relatórios em
+  massa*; no Google Cloud (`aigamesfactory`) ativar a Play Developer Reporting API. Depois do *Published* da
+  91: `gh variable set PLAY_PRODUCTION_LIVE --body true`.
+- iOS fica fora: o `.ipa` do Sideloadly segue na release `latest`.
 
 ## Comandos do quadro
 
@@ -102,6 +145,7 @@ Projeto nº **1** (`PVT_kwHOACzJk84Bme7c`), campo **Status** (`PVTSSF_lAHOACzJk8
 | Em andamento | `aa0e138e` |
 | Publicado | `3d5c2e0f` |
 | Liberado para testes | `a274885f` |
+| Em produção | `b8c48711` |
 | Concluído | `5785fa7f` |
 
 ```bash

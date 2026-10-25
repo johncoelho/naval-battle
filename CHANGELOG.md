@@ -20,6 +20,29 @@ App 0.34.8 (versionCode 95). Refs #49.
 
 ---
 
+## [Sem versão do app] — 2026-10-25 · Promoção para a produção com liberação gradual (#39)
+
+Commit `[skip ci]`, sem subir versão: só `.github/`, `tools/` e documentação (o `android.yml` não muda).
+Refs #39. Sem mudança de banco nem de código Kotlin.
+
+### Adicionado
+- **Workflow `promote-production.yml`** (só manual) e **`tools/play-rollout.sh`** (openssl, curl e jq; Play
+  Developer API v3, edições): ações `promote` (20%), `advance` (50% e 100%), `halt`, `resume` e `status`,
+  com `dry_run` (`edits.validate` sem commit). O versionCode é sempre explícito; `concurrency` impede duas
+  edições de produção ao mesmo tempo; conflito de edição tenta de novo até 3 vezes.
+- **Travas do `promote`:** variável `PLAY_PRODUCTION_LIVE` = `true` (criada `false`), versionCode num release
+  concluído da Alpha, maior que todo versionCode da produção, notas e nome copiados da Alpha.
+- **Etapa "Em produção" no quadro** (entre Liberado para testes e Concluído; id `b8c48711`): o QA aprovado vai
+  para ela e a issue continua aberta; a 100% o Release move para Concluído e fecha.
+- Agentes `qa` e `release`, skills `esteira` e `play-store-release` e `docs/ESTEIRA.md` com o fluxo
+  Alpha → QA → 20% → 50% → 100%, o halt automático e os gatilhos (falha > 1,09%, ANR > 0,47%, P0).
+
+### Pendente do John
+- Permissões de produção e de relatórios da `play-publisher-ci` no Play Console, Reporting API no Google Cloud e
+  `PLAY_PRODUCTION_LIVE = true` depois do *Published* da produção 91. Até lá, só `status` e `dry_run`.
+
+---
+
 ## [0.34.7] — 2026-10-25 · ECA Digital: faixa etária da Play e anúncio não personalizado para menor (#49)
 
 App 0.34.7 (versionCode 94). Refs #49. Banco: `supabase/ads.sql` (chave `ads_min_app_version`, nasce vazia; migração `ads_min_version`, a aplicar na publicação).

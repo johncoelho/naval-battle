@@ -1,6 +1,6 @@
 ---
 name: play-store-release
-description: Full checklist and known pitfalls for cutting a new Android release of Naval Battle Classic (aigamesfactory.navalbattleclassic) and getting it live on Google Play Console closed testing. Use this whenever pushing a code/config change that needs to reach a real device via Play Console, or when debugging why a published build behaves differently than a local/debug build.
+description: Full checklist and known pitfalls for cutting a new Android release of Naval Battle Classic (aigamesfactory.navalbattleclassic) and getting it live on the Google Play Console Alpha closed-testing track, and promoting it to production with a gradual rollout (20%, 50%, 100%, halt/resume via the promote-production workflow). Use this whenever pushing a code/config change that needs to reach a real device via Play Console, when promoting or halting a production rollout, or when debugging why a published build behaves differently than a local/debug build.
 ---
 
 # Naval Battle Classic — Android release pipeline
@@ -123,6 +123,29 @@ values ('<versionName>', <versionCode>, '<pt>', '<en>', '<es>', true);
   `ReleaseNote("0.X.0", K.RN_V0X00)` at the top of `releaseNotes` in
   `ui/ReleaseNotesScreen.kt`. Patch releases get no line. `ReleaseNotesTest` fails until
   this is done (issue #31: the screen stayed on 0.25.0 for nine minors).
+
+## 4c. Produção e liberação gradual (#39)
+
+O push na `main` publica só na Alpha (`android.yml`, que não muda). A produção é um passo à parte,
+depois do QA aprovar a versão no emulador:
+
+- Workflow `.github/workflows/promote-production.yml` (só `workflow_dispatch`, `concurrency` `play-production`)
+  chama `tools/play-rollout.sh` (openssl + curl + jq; Play Developer API v3: `edits.insert` →
+  `tracks.get` → `tracks.update` → `edits.commit`; em `dry_run`, `edits.validate` + `edits.delete`). Ações:
+  `promote` (20%), `advance` (50%, depois 1 = 100%), `halt`, `resume`, `status`. O versionCode é sempre
+  explícito (o `promoteReleaseArtifact` do Gradle Play Publisher não serve: promove o último da faixa).
+  `gh workflow run promote-production.yml -f action=promote -f version_code=N -f fraction=0.2`.
+- Travas do `promote`: `PLAY_PRODUCTION_LIVE` = `true` (variável de repositório; `false` até o *Published* da
+  produção 91); versionCode em release concluído da alpha; maior que todo da produção; notas e nome copiados
+  da alpha. A Play não aceita dois `inProgress`: o script recusa substituir um em 50% ou mais (conclua-o antes).
+- As 24 h por etapa contam do *Published* do envio de produção no Submission activity, não do run. Subir a
+  fração de release já aprovado não passa por nova revisão.
+- Halt: `halted` não devolve versionCode a quem já recebeu. Gatilhos e limites (falha > 1,09%, ANR > 0,47%,
+  ≥ 100 usuários, P0) estão em `docs/ESTEIRA.md`. `resume` volta na mesma fração.
+- Mesma conta de serviço e mesmo secret (`PLAY_SERVICE_ACCOUNT_JSON`); **o John** concede no Play Console as
+  permissões de produção e de relatórios e ativa a Play Developer Reporting API no Google Cloud. Até lá, só
+  `status` e `dry_run` funcionam. Notas só em pt-BR por enquanto (en-US e es-ES: issue à parte).
+- Conflito de edição com o upload da Alpha: o script tenta de novo até 3 vezes, 60 s entre elas.
 
 ## 5. Manual upload path (fallback only — normally not needed anymore)
 

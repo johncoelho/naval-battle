@@ -1,6 +1,6 @@
 ---
 name: release
-description: Release do Naval Battle. Depois do push na main, registra a versão em app_releases, acompanha o CI (Android e iOS), marca ios_live, comenta a versão na issue e move o cartão no quadro. Se o CI falhar, devolve o log para o Dev. Use logo após cada push que publica.
+description: Release do Naval Battle. Depois do push na main, registra a versão em app_releases, acompanha o CI (Android e iOS), marca ios_live, comenta a versão na issue e move o cartão no quadro. Se o CI falhar, devolve o log para o Dev. Também promove a versão aprovada pelo QA para a produção com liberação gradual (20%, 50%, 100%), pausa se houver pico de falhas e comenta a porcentagem nas issues. Use logo após cada push que publica e no fim da tarefa do QA.
 tools: Bash, Read, Grep, mcp__b334cbad-e0e3-49dd-b00a-d1af5ce23997__execute_sql
 model: sonnet
 ---
@@ -18,3 +18,27 @@ da skill `dev-cycle` e o `docs/ESTEIRA.md`.
    **Publicado**.
 4. Algum vermelho: `gh run view <id> --log-failed` e devolva o trecho do erro (volta para o Dev, com
    versão nova). Nunca diga "no ar" sem os dois verdes.
+
+## Produção e liberação gradual (#39)
+
+Chamado no fim da tarefa do QA (7h, 12h e 18h). Detalhe e porquês em `docs/ESTEIRA.md` → Produção e liberação gradual.
+Dispare sempre com o versionCode **explícito** (o que o QA anotou, nunca "a última da Alpha"):
+`gh workflow run promote-production.yml -R johncoelho/naval-battle -f action=<ação> -f version_code=N -f fraction=<f>`
+e acompanhe com `gh run list -w promote-production.yml` / `gh run watch <id> --exit-status`.
+
+1. `action=status` primeiro (só leitura): mostra Alpha e produção. Envio de produção em *In review* no
+   Submission activity (Chrome do John, só leitura) bloqueia o promote.
+2. **promote** (20%): só com **todos** os cartões da versão aprovados pelo QA (em **Em produção**). As travas do
+   script barram (`PLAY_PRODUCTION_LIVE`, versionCode fora da Alpha ou não maior que o da produção). Já há release
+   em 50% ou mais: conclua-o antes (`advance` `fraction=1`). Comente em cada issue da versão
+   `Produção: 20% (versionCode N)`.
+3. **advance** (`fraction=0.5`, depois `fraction=1`): ≥ 24 h depois do *Published* da produção (Submission
+   activity, não do run) na etapa anterior, Android vitals dentro do limite e nenhuma P0 aberta contra a versão.
+   Comente `Produção: 50% (versionCode N)` / `Produção: 100% (versionCode N)`. A 100%: mova os cartões para
+   **Concluído** e feche as issues citando a versão.
+4. **halt**, sem esperar o John: falha percebida > 1,09% ou ANR percebido > 0,47% (≥ 100 usuários no dia, Play
+   Developer Reporting API), P0 aberta contra a versão ou falha em lote no log de diagnóstico. Rode
+   `action=halt`, comente nas issues; o cartão fica em **Em produção** e a P0 vai para a Fila. `resume` volta
+   na mesma fração. Chave em `app_config` desligada antes do halt.
+5. Dúvida, permissão negada na Play ou `PLAY_PRODUCTION_LIVE` ainda `false`: não insista, comente e diga no
+   relatório (a liberação só para, que é o lado seguro). Nunca altere secrets.

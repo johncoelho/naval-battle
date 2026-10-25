@@ -574,6 +574,11 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   (`composeApp/src/main/play/release-notes/pt-BR/default.txt`, ≤ 500 caracteres, sem acento).
 - Cada versão ganha uma linha em `app_releases` (notas em pt/en/es) para a janela "Versão nova";
   `ios_live` só depois do build do iOS passar.
+- **Produção:** o CI não promove. Depois do QA, o Release dispara o workflow manual `promote-production.yml`
+  (`tools/play-rollout.sh`: openssl, curl e jq sobre a Play Developer API v3) com o versionCode explícito:
+  20% → 50% → 100%, `halt`/`resume`, travas e gatilhos em `docs/ESTEIRA.md`. Variável de repositório
+  `PLAY_PRODUCTION_LIVE` (`false` até a produção 91 ser publicada); mesmo secret `PLAY_SERVICE_ACCOUNT_JSON`.
+  Commit que só mexe em `.github/`, `tools/` e docs usa `[skip ci]` e não sobe versão.
 - O passo a passo é a skill `dev-cycle` (pedido → publicação) e, para o Android, `play-store-release`.
 
 ### Qualidade

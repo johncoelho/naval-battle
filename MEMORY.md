@@ -101,7 +101,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   `.ipa` do Sideloadly (que segue ativo até a versão da Apple ter tudo).
 - **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. **0.34.5 (#35)** em
   revisão (regra em §4). Aviso de lançamento (#36, ligar `launch_notice_enabled` quando a Play aprovar).
-  Venda aberta só depois do saldo no servidor (#34). CI ainda publica só na Alpha (falta decidir a promoção).
+  Venda aberta só depois do saldo no servidor (#34). CI publica só na Alpha; a promoção para a produção (#39) está pronta: `promote-production.yml` + `tools/play-rollout.sh`, 20% → 50% → 100% (docs/ESTEIRA.md). **Pendente do John:** permissões de produção e de relatórios da `play-publisher-ci` no Play Console, Reporting API no Google Cloud e `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do *Published* da 91 (hoje `false`; até lá só `status` e `dry_run`).
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 

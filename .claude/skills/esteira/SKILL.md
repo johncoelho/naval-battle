@@ -28,8 +28,11 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
    - APROVADO: Dev publica; **Release** acompanha o CI e move **todos os cartões do lote** para **Publicado**.
    - Item **Em andamento** há mais de 3 h sem commit: retome do worktree se existir, senão devolva
      à Fila com comentário.
-5. **QA**: não é chamado aqui. Tem tarefa agendada própria (`esteira-qa-naval-battle`, de hora em
-   hora) e é o único que liga os emuladores.
+5. **QA**: não é chamado aqui. Tem tarefa agendada própria (`esteira-qa-naval-battle`, às 7h, 12h e 18h) e é o
+   único que liga os emuladores. **A rodada do QA termina chamando o Release** (`release`): promote em 20% quando
+   todos os cartões da versão estão em **Em produção**, advance para 50% e 100% (≥ 24 h do *Published*, vitals
+   OK), halt automático se houver pico de falhas; comentário "Produção: N%" em cada issue. Ver
+   `docs/ESTEIRA.md` → Produção e liberação gradual.
 6. **Relatório** (resposta final, curta): triagem feita, item publicado (versão), o que está
    aguardando o John (melhorias para aprovar, decisões). Rodada sem nada novo: uma linha.
 
@@ -37,6 +40,7 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
 
 - Um lote por rodada (uma versão). Nunca dois ao mesmo tempo.
 - Nunca: aprovar feedback, mover melhoria para a Fila sem aprovação do John, mexer em
-  `.github/workflows`, adicionar dependência, digitar senha.
+  `.github/workflows`, adicionar dependência, digitar senha ou mudar secrets. O Release pode disparar
+  `promote-production.yml` e mudar a variável `PLAY_PRODUCTION_LIVE`.
 - Algo que precisa do John (decisão, permissão negada, CI quebrado 3 vezes): pare o item, comente na
   issue e diga no relatório.

@@ -1,0 +1,55 @@
+name: Promote production
+
+# Promoção Alpha -> produção com liberação gradual (issue #39). Só manual: o agente Release
+# dispara com `gh workflow run`, sempre com o versionCode explícito; o John pausa pelo celular
+# (Actions -> Promote production -> Run workflow -> halt). O android.yml não muda.
+# O histórico de runs é o registro das etapas (run-name abaixo).
+run-name: "${{ inputs.action }} ${{ inputs.version_code }} ${{ inputs.fraction }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "promote = Alpha -> 20%; advance = sobe a fração; halt = pausa; resume = retoma; status = só leitura"
+        type: choice
+        required: true
+        default: status
+        options: [status, promote, advance, halt, resume]
+      version_code:
+        description: "versionCode (obrigatório, menos em status)"
+        type: string
+        required: false
+      fraction:
+        description: "0.2 no promote; 0.5 ou 1 no advance"
+        type: choice
+        default: "0.2"
+        options: ["0.2", "0.5", "1"]
+      dry_run:
+        description: "Valida na Play (edits.validate) e descarta, sem commit"
+        type: boolean
+        default: false
+
+# nunca duas edições de produção ao mesmo tempo
+concurrency:
+  group: play-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  rollout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Play rollout
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          PLAY_PRODUCTION_LIVE: ${{ vars.PLAY_PRODUCTION_LIVE }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          ACTION: ${{ inputs.action }}
+          VERSION_CODE: ${{ inputs.version_code }}
+          FRACTION: ${{ inputs.fraction }}
+        run: bash tools/play-rollout.sh "$ACTION" "$VERSION_CODE" "$FRACTION"

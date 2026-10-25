@@ -381,6 +381,15 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   iPhone fora até a App Store (Declared Age Range da Apple, issue própria).
 - **25/10 · Sem item aleatório pago, nunca (ECA Digital)** (#49) — pacotes, Prêmio, anúncio, diário e oferta
   do dia são determinísticos; recompensa ou compra de conteúdo aleatório fica proibida.
+- **25/10 · Produção com liberação gradual e promoção pelo Release** (#39, aprovado pelo John) — porquê: com
+  a produção no ar, o push na `main` continua indo só para a Alpha; a versão que o QA aprovou vai para a
+  produção em 20% → 50% → 100% (≥ 24 h cada, contadas do *Published*) sem passo manual dele. Workflow manual
+  `promote-production.yml` + `tools/play-rollout.sh` pela API de edições, com o versionCode explícito (o
+  `promoteReleaseArtifact` do Gradle Play Publisher promove o último da faixa e pegaria a versão errada se outro
+  lote subisse durante o QA). Sem cron: toda decisão passa pela esteira, que comenta na issue. Halt automático
+  (falha > 1,09% ou ANR > 0,47% com ≥ 100 usuários, ou P0) sem esperar o John. Variável `PLAY_PRODUCTION_LIVE`
+  fica `false` até o *Published* da produção 91, para não substituir um envio em revisão. Etapa "Em produção"
+  no quadro: o QA deixa de fechar a issue. iOS fora (segue o `.ipa`).
 
 ## Artefatos de referência (SPECs e designs aprovados)
 
