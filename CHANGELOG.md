@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.10] — 2026-10-25 · Correção do build do iPhone: `toSortedSet` (#34)
+
+App 0.34.10 (versionCode 97). Refs #34. Só código/ferramenta, sem banco.
+
+### Corrigido
+- O CI do iOS da 0.34.9 falhou no `Wallet.kt` (`Unresolved reference 'toSortedSet'`): `toSortedSet` é API só da JVM
+  e não existe no `commonMain` (Kotlin/Native). Trocado por `sorted()` (mesma ordem; o conjunto já não repete). O
+  `WalletTest` cobre. Busca no `commonMain`/`commonTest` por outras APIs só da JVM: nenhuma.
+
+### Processo
+- **`compileCommonMainKotlinMetadata` pega esse erro sem Mac** (confirmado: com `toSortedSet` falha, sem ele passa;
+  `compileKotlinIosSimulatorArm64` é pulado no Windows). Entrou na skill `dev-cycle` (§3) e no
+  `tools/release-check.sh`, que o roda quando o push mexe no `commonMain`/build (no CI Linux e no Windows com
+  `TMP=D:\tmp`; `RELEASE_CHECK_SKIP_METADATA=1` pula). Lição no MEMORY §6.
+
+---
+
 ## [0.34.9] — 2026-10-25 · Saldo de dobrões no servidor (#34)
 
 App 0.34.9 (versionCode 96). Refs #34. Banco: `supabase/dobroes_saldo.sql` (migração `dobroes_saldo`,

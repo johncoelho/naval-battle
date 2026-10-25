@@ -168,6 +168,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **iOS: constante pública em `commonMain` vira propriedade no `ComposeApp.h`** e colide com macros C (`CHILD_MAX`, `PATH_MAX`, `NAME_MAX`…
   de `<limits.h>`). Só o `ios.yml` pega (o alvo iOS é pulado no Windows). Constante interna: `private`; nome de
   `const val` público: evitar `*_MAX`/`*_MIN` genéricos (0.34.8).
+- **API só da JVM no `commonMain` (`toSortedSet`, `String.format`, `java.*`, `synchronized`) só aparecia no CI do iOS**
+  (0.34.9, `Wallet.kt`): o alvo iOS é pulado no Windows (`compileKotlinIosSimulatorArm64` = SKIPPED). Pega local:
+  `./gradlew :composeApp:compileCommonMainKotlinMetadata` (TMP=D:\tmp). Conferido: com `toSortedSet` falha
+  (`Unresolved reference`), sem ele passa. Está na skill `dev-cycle` (§3) e no `tools/release-check.sh` (0.34.10).
 - Backlog: [GitHub Issues](https://github.com/johncoelho/naval-battle/issues) — pendência nova vira issue, não linha aqui.
 - `gh` logado como `johncoelho` (login feito pelo John): issues e acompanhamento do CI
   (`gh run watch`). Mudança em `.github/workflows` só com o OK do John, caso a caso.

@@ -58,6 +58,24 @@ elif ! git show "$HEAD_REF:CHANGELOG.md" | grep "App $new_name" >/dev/null; then
   err "CHANGELOG.md não cita \"App $new_name\" na entrada nova."
 fi
 
+# API só da JVM no commonMain (toSortedSet, String.format, java.*...) só quebrava no CI do iOS, depois
+# do push (0.34.9). A compilação de metadados do commonMain não precisa de Mac e pega esse erro.
+# Roda só quando o push mexe em código comum ou na configuração do build. Compila a árvore de trabalho
+# (no CI ela é o próprio commit). RELEASE_CHECK_SKIP_METADATA=1 pula.
+if [ "${RELEASE_CHECK_SKIP_METADATA:-0}" != "1" ]    && echo "$changed" | grep -E '^(composeApp/src/commonMain/|gradle/|build\.gradle\.kts|settings\.gradle\.kts|gradle\.properties|composeApp/build\.gradle\.kts)' >/dev/null; then
+  if [ "${OS:-}" = "Windows_NT" ]; then
+    mkdir -p /d/tmp 2>/dev/null || true
+    export TMP='D:\tmp' TEMP='D:\tmp'   # contorno do erro de loopback do Gradle (docs/BUILD.md)
+  fi
+  echo "release-check: compilando os metadados do commonMain (pega API só da JVM que quebraria o iOS)..."
+  meta_log=$(mktemp)
+  if ! bash ./gradlew :composeApp:compileCommonMainKotlinMetadata --console=plain > "$meta_log" 2>&1; then
+    grep -E '^e: ' "$meta_log" | head -20 || true
+    err "commonMain não compila como código comum (API só da JVM?). Veja os 'e:' acima; o iOS quebraria no CI."
+  fi
+  rm -f "$meta_log"
+fi
+
 if [ "$fail" -ne 0 ]; then
   echo "release-check: release incompleto — veja a skill dev-cycle (passos 4 e 5)."
   exit 1

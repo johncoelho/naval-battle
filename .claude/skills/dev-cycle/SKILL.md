@@ -57,6 +57,14 @@ mesmo ciclo da implementação.
 ./gradlew :composeApp:testDebugUnitTest
 ```
 
+- **Antes de todo push que mexe no app: metadados do `commonMain`.** O alvo iOS é pulado no Windows
+  (`compileKotlinIosSimulatorArm64` devolve SKIPPED), então API só da JVM no `commonMain`
+  (`toSortedSet`, `String.format`, `java.*`, `synchronized`...) só aparecia no CI do iOS, depois do push
+  (0.34.9). Este comando pega o erro sem Mac (`TMP=D:\tmp` no Windows) e o `tools/release-check.sh` já o roda:
+```bash
+./gradlew :composeApp:compileCommonMainKotlinMetadata
+```
+
 ```bash
 bash "<scratchpad>/preview.sh" :composeApp:compileKotlinIosSimulatorArm64
 ```

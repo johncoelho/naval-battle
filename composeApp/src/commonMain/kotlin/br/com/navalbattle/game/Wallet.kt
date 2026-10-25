@@ -13,7 +13,7 @@ object Wallet {
     data class OpenPlan(val local: Int, val delivered: List<String>)
 
     fun openPlan(localCredits: Int, deliveredTokens: Set<String>): OpenPlan =
-        OpenPlan(localCredits.coerceIn(0, OPEN_MAX), deliveredTokens.toSortedSet().toList())
+        OpenPlan(localCredits.coerceIn(0, OPEN_MAX), deliveredTokens.sorted())
 
     /** Saldo da carteira ao abrir: o MAIOR entre servidor e aparelho (nunca perde), até [OPEN_MAX]. */
     fun openingBalance(server: Int, local: Int): Int = maxOf(server, local.coerceIn(0, OPEN_MAX))
