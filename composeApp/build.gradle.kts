@@ -61,6 +61,9 @@ kotlin {
             // depois do primeiro toque num botão de anúncio (RewardedAds.android.kt)
             implementation(libs.play.services.ads)
             implementation(libs.ump)
+            // faixa etária da loja (#49; stack aprovada pelo John em 25/10): Play Age Signals,
+            // beta, só para escolher o tipo de anúncio (ECA Digital). A idade não sai do aparelho
+            implementation(libs.play.age.signals)
             // push de verdade (convites, amizade) pelo Firebase Cloud Messaging; a
             // configuração vem do google-services.json (ver PushMessaging.android.kt)
             implementation(project.dependencies.platform(libs.firebase.bom))
@@ -101,8 +104,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 93
-        versionName = "0.34.6"
+        versionCode = 94
+        versionName = "0.34.7"
     }
 
     /**
@@ -140,8 +143,13 @@ android {
     buildTypes {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
+            // Faixa etária falsa para o QA ver o caminho de menor sem conta supervisionada (#49):
+            // ./gradlew assembleDebug -PageFake=teen (child, teen, adult, unknown). Só no debug e
+            // na prévia .preview; o release abaixo fixa vazio.
+            buildConfigField("String", "AGE_FAKE", "\"${(findProperty("ageFake") as String?).orEmpty()}\"")
         }
         getByName("release") {
+            buildConfigField("String", "AGE_FAKE", "\"\"")
             isMinifyEnabled = false
             if (signingConfigs.findByName("release") != null) {
                 signingConfig = signingConfigs.getByName("release")

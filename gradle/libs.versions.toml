@@ -15,6 +15,7 @@ firebaseBom = "33.7.0"
 googleServices = "4.4.2"
 playServicesAds = "25.2.0"
 ump = "4.0.0"
+ageSignals = "0.0.4"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -28,6 +29,7 @@ play-app-update-ktx = { module = "com.google.android.play:app-update-ktx", versi
 play-billing = { module = "com.android.billingclient:billing", version.ref = "playBilling" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 ump = { module = "com.google.android.ump:user-messaging-platform", version.ref = "ump" }
+play-age-signals = { module = "com.google.android.play:age-signals", version.ref = "ageSignals" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

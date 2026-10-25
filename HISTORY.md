@@ -371,6 +371,17 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 ---
 
 
+- **25/10 · Play Age Signals 0.0.4 entra na stack: ECA Digital exige ler a faixa etária vinda da loja; a
+  idade não sai do aparelho** (#49, aprovado pelo John; 0.34.7) — porquê: os termos da API proíbem usar o
+  dado em publicidade, perfilamento ou analytics; desligar a personalização para menor é cumprimento da lei.
+  No Prefs fica só a faixa convertida e a hora. API beta que já mudou na 0.0.4 (`requestAgeSignalsAccess` +
+  `checkAgeSignals`): versão fixa; trocar só com novo teste. Decisões aplicadas (recomendação do Tech Lead,
+  o John pode mudar): idade desconhecida conta como menor (anúncio não personalizado; custa eCPM); o aviso da
+  Play só aparece no primeiro toque em anúncio; `ads_min_app_version` no servidor, pronta e **não ligada**.
+  iPhone fora até a App Store (Declared Age Range da Apple, issue própria).
+- **25/10 · Sem item aleatório pago, nunca (ECA Digital)** (#49) — pacotes, Prêmio, anúncio, diário e oferta
+  do dia são determinísticos; recompensa ou compra de conteúdo aleatório fica proibida.
+
 ## Artefatos de referência (SPECs e designs aprovados)
 
 | Data | Artefato |

@@ -1,1 +1,1 @@
-Preparativos para o lancamento do jogo na Google Play: ajustes internos de estabilidade e textos. Obrigado a todos que testaram o beta e ajudaram com partidas, bugs e ideias.
+Anuncios premiados agora respeitam a faixa etaria informada pela Google Play: para menores de idade, ou quando a idade nao e informada, so aparecem anuncios nao personalizados e adequados ao publico. Atendemos assim ao ECA Digital. O jogo nao envia nem guarda a sua idade.

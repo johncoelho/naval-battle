@@ -1,5 +1,6 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.AdAudience
 import br.com.navalbattle.game.AdShowOutcome
 
 /**
@@ -22,10 +23,12 @@ expect class RewardedAds() {
 
     /**
      * Consentimento (UMP) quando a região exige, carrega e mostra o anúncio [adUnitId]. [userId]
-     * e [customData] (o vale do servidor) vão na verificação no servidor (SSV).
+     * e [customData] (o vale do servidor) vão na verificação no servidor (SSV). [audience] (#49,
+     * ECA Digital) vale para o UMP e para cada carregamento: menor ou idade desconhecida = não
+     * personalizado, com as marcas de menor e a classificação máxima do conteúdo.
      */
-    suspend fun show(adUnitId: String, userId: String, customData: String): AdShowOutcome
+    suspend fun show(adUnitId: String, userId: String, customData: String, audience: AdAudience): AdShowOutcome
 
     /** Ajustes → "Privacidade dos anúncios": reabre o formulário do UMP. Falso = a região não pede. */
-    suspend fun openPrivacyOptions(): Boolean
+    suspend fun openPrivacyOptions(audience: AdAudience): Boolean
 }

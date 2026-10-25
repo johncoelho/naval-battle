@@ -9,6 +9,35 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.7] — 2026-10-25 · ECA Digital: faixa etária da Play e anúncio não personalizado para menor (#49)
+
+App 0.34.7 (versionCode 94). Refs #49. Banco: `supabase/ads.sql` (chave `ads_min_app_version`, nasce vazia; migração `ads_min_version`, a aplicar na publicação).
+
+### Adicionado
+- **Faixa etária da loja (Android):** Play Age Signals API (`age-signals` 0.0.4, beta, dependência aprovada
+  pelo John em 25/10). Lida só no primeiro toque num botão de anúncio (o aviso da Play, se aparecer, vem
+  nesse momento; nada na abertura do app) e guardada por 24 h no aparelho como faixa (ADULT, TEEN, CHILD
+  ou UNKNOWN) com a hora, nunca a idade nem o `installId`.
+- **Anúncio por faixa:** adulto segue personalizado. Adolescente, criança e **idade desconhecida** (não
+  compartilhou, fora do Brasil, sem resposta em 5 s, app fora da Play) recebem anúncio **não
+  personalizado**: `tag_for_under_age_of_consent`, `npa=1` e classificação máxima PG; criança também com
+  `tag_for_child_directed_treatment` e classificação G. As marcas valem antes do `MobileAds.initialize`,
+  de cada carregamento e do UMP (que não mostra formulário para menor, inclusive em "Privacidade dos anúncios").
+- **A idade não sai do aparelho** (os termos da API proíbem uso em publicidade, perfilamento e analytics):
+  não vai para a rede de anúncios, o servidor nem o log.
+- **Build de prévia/debug com faixa falsa:** `-PageFake=child|teen|adult|unknown` troca o manager pelo
+  `FakeAgeSignalsManager` da lib; no release `AGE_FAKE` é sempre vazio.
+- **Servidor:** `app_config.ads_min_app_version` (vazia = sem exigência) e `ads_version_ok(uid)` dentro de
+  `ads_on_for`: com a chave preenchida, o app Android abaixo da versão deixa de receber anúncio. **Não
+  ligado** (decisão pendente do John: ligar com `0.34.7` quando a versão estiver no ar).
+- Testes: `AgeRulesTest` (faixas, anúncio de cada faixa, validade de 24 h) e casos `gate_*` em
+  `supabase/tests/ads_ensaio.sql`.
+
+### Inalterado
+- iPhone (sem anúncio nem leitura de idade). Nenhuma recompensa ou compra de item aleatório (regra registrada).
+
+---
+
 ## [0.34.6] — 2026-10-25 · Aviso de lançamento na entrada do jogo (#36)
 
 App 0.34.6 (versionCode 93). Refs #36. Banco: `supabase/launch_notice.sql` (migração `launch_notice`).

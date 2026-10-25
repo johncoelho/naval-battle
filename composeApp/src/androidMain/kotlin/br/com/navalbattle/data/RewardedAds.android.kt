@@ -2,15 +2,20 @@ package br.com.navalbattle.data
 
 import android.app.Activity
 import android.os.Build
+import android.os.Bundle
 import br.com.navalbattle.ActivityHolder
 import br.com.navalbattle.BuildConfig
+import br.com.navalbattle.game.AdAudience
+import br.com.navalbattle.game.AdRating
 import br.com.navalbattle.game.AdRules
 import br.com.navalbattle.game.AdShowOutcome
+import com.google.ads.mediation.admob.AdMobAdapter
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.gms.ads.rewarded.ServerSideVerificationOptions
@@ -45,12 +50,15 @@ actual class RewardedAds actual constructor() {
             manufacturer = Build.MANUFACTURER
         )
 
-    actual suspend fun show(adUnitId: String, userId: String, customData: String): AdShowOutcome =
+    actual suspend fun show(adUnitId: String, userId: String, customData: String, audience: AdAudience): AdShowOutcome =
         withContext(Dispatchers.Main) {
             val activity = ActivityHolder.current ?: return@withContext AdShowOutcome.UNAVAILABLE
-            if (!consent(activity)) return@withContext AdShowOutcome.UNAVAILABLE
+            // a marca de idade vale antes de tudo: UMP, inicialização do SDK e cada carregamento
+            applyAudience(audience)
+            if (!consent(activity, audience)) return@withContext AdShowOutcome.UNAVAILABLE
+            applyAudience(audience)
             startSdk(activity)
-            val ad = withTimeoutOrNull(LOAD_TIMEOUT_MS) { load(activity, adUnitId) }
+            val ad = withTimeoutOrNull(LOAD_TIMEOUT_MS) { load(activity, adUnitId, audience) }
                 ?: return@withContext AdShowOutcome.UNAVAILABLE
             ad.setServerSideVerificationOptions(
                 ServerSideVerificationOptions.Builder().setUserId(userId).setCustomData(customData).build()
@@ -58,10 +66,10 @@ actual class RewardedAds actual constructor() {
             present(activity, ad)
         }
 
-    actual suspend fun openPrivacyOptions(): Boolean = withContext(Dispatchers.Main) {
+    actual suspend fun openPrivacyOptions(audience: AdAudience): Boolean = withContext(Dispatchers.Main) {
         val activity = ActivityHolder.current ?: return@withContext false
         val info = UserMessagingPlatform.getConsentInformation(activity)
-        if (!updateConsentInfo(activity, info)) return@withContext false
+        if (!updateConsentInfo(activity, info, audience)) return@withContext false
         if (info.privacyOptionsRequirementStatus != ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED) {
             return@withContext false
         }
@@ -71,20 +79,21 @@ actual class RewardedAds actual constructor() {
     }
 
     /** Atualiza o consentimento e mostra o formulário se a região pedir. Verdadeiro = pode pedir anúncio. */
-    private suspend fun consent(activity: Activity): Boolean {
+    private suspend fun consent(activity: Activity, audience: AdAudience): Boolean {
         val info = UserMessagingPlatform.getConsentInformation(activity)
-        if (!updateConsentInfo(activity, info)) return info.canRequestAds()
+        if (!updateConsentInfo(activity, info, audience)) return info.canRequestAds()
         suspendCancellableCoroutine { cont ->
             UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { if (cont.isActive) cont.resume(Unit) }
         }
         return info.canRequestAds()
     }
 
-    private suspend fun updateConsentInfo(activity: Activity, info: ConsentInformation): Boolean =
+    private suspend fun updateConsentInfo(activity: Activity, info: ConsentInformation, audience: AdAudience): Boolean =
         suspendCancellableCoroutine { cont ->
             info.requestConsentInfoUpdate(
                 activity,
-                ConsentRequestParameters.Builder().build(),
+                // menor: o UMP não mostra formulário (mesma marca do pedido de anúncio, #49)
+                ConsentRequestParameters.Builder().setTagForUnderAgeOfConsent(audience.underAgeOfConsent).build(),
                 { if (cont.isActive) cont.resume(true) },
                 { if (cont.isActive) cont.resume(false) }
             )
@@ -96,9 +105,45 @@ actual class RewardedAds actual constructor() {
         MobileAds.initialize(activity.applicationContext) {}
     }
 
-    private suspend fun load(activity: Activity, adUnitId: String): RewardedAd? =
+    /**
+     * TFUA, TFCD e classificação máxima (#49). A configuração do SDK é global e fica de um
+     * anúncio para o outro, então adulto volta explicitamente aos valores sem marca.
+     */
+    private fun applyAudience(audience: AdAudience) {
+        MobileAds.setRequestConfiguration(
+            RequestConfiguration.Builder()
+                .setTagForUnderAgeOfConsent(
+                    if (audience.underAgeOfConsent) RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE
+                    else RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_UNSPECIFIED
+                )
+                .setTagForChildDirectedTreatment(
+                    if (audience.childDirected) RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE
+                    else RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_UNSPECIFIED
+                )
+                .setMaxAdContentRating(
+                    when (audience.maxRating) {
+                        AdRating.G -> RequestConfiguration.MAX_AD_CONTENT_RATING_G
+                        AdRating.PG -> RequestConfiguration.MAX_AD_CONTENT_RATING_PG
+                        AdRating.NONE -> RequestConfiguration.MAX_AD_CONTENT_RATING_UNSPECIFIED
+                    }
+                )
+                .build()
+        )
+    }
+
+    /** Não personalizado: `npa=1` (no Brasil o UMP não tem formulário que desligue a personalização). */
+    private fun buildRequest(audience: AdAudience): AdRequest {
+        val builder = AdRequest.Builder()
+        if (!audience.personalized) {
+            builder.addNetworkExtrasBundle(AdMobAdapter::class.java, Bundle().apply { putString("npa", "1") })
+        }
+        return builder.build()
+    }
+
+    private suspend fun load(activity: Activity, adUnitId: String, audience: AdAudience): RewardedAd? =
         suspendCancellableCoroutine { cont ->
-            RewardedAd.load(activity, adUnitId, AdRequest.Builder().build(), object : RewardedAdLoadCallback() {
+            applyAudience(audience)
+            RewardedAd.load(activity, adUnitId, buildRequest(audience), object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
                     if (cont.isActive) cont.resume(ad)
                 }

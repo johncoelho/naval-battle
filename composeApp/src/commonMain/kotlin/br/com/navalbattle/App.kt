@@ -62,7 +62,9 @@ import br.com.navalbattle.data.OnlineMatch
 import br.com.navalbattle.data.OpponentProfile
 import br.com.navalbattle.data.SeasonInfo
 import br.com.navalbattle.data.SeasonTrophy
+import br.com.navalbattle.data.AgeSignals
 import br.com.navalbattle.data.Prefs
+import br.com.navalbattle.data.PrefsBatch
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.FriendPresence
 import br.com.navalbattle.data.PushMessaging
@@ -88,6 +90,8 @@ import br.com.navalbattle.game.launchNoticeKey
 import br.com.navalbattle.game.AdPhase
 import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.game.AdRules
+import br.com.navalbattle.game.AgeBand
+import br.com.navalbattle.game.AgeRules
 import br.com.navalbattle.game.AdShowOutcome
 import br.com.navalbattle.game.DoubloonPack
 import br.com.navalbattle.game.Badge
@@ -165,6 +169,10 @@ internal fun screenForPushKind(kind: String): Screen? = when (kind) {
 
 /** Chave (no Prefs do aparelho) dos tokens de dobrões já somados (#15). */
 private const val DELIVERED_KEY = "dobroes_delivered"
+
+/** Faixa etária guardada (ADULT, TEEN, CHILD, UNKNOWN) e a hora da leitura (#49). Nunca a idade. */
+private const val AGE_BAND_KEY = "age_band"
+private const val AGE_CHECKED_KEY = "age_checked_at"
 
 /** Espera da confirmação do Google depois do anúncio (#29): 10 consultas a cada 2 s, cerca de 20 s. */
 private const val AD_CONFIRM_TRIES = 10
@@ -1283,6 +1291,28 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     // ---------------- anúncio premiado opcional (#29) ----------------
 
     private val rewardedAds = RewardedAds()
+    private val ageSignals = AgeSignals()
+    private val agePrefs = Prefs()
+
+    /**
+     * Faixa etária para o anúncio (#49, ECA Digital). Vale 24 h no Prefs (só a faixa e a hora,
+     * nunca idade nem installId); vencida, pergunta à Play. Roda no primeiro toque num anúncio,
+     * porque o pedido de acesso pode abrir o aviso da Play. A idade não sai do aparelho.
+     */
+    private suspend fun ensureAgeBand(): AgeBand {
+        val checkedAt = agePrefs.getString(AGE_CHECKED_KEY, "").toLongOrNull() ?: 0L
+        val now = nowMillis()
+        if (!AgeRules.checkDue(checkedAt, now)) return AgeRules.parse(agePrefs.getString(AGE_BAND_KEY, ""))
+        val band = ageSignals.read()
+        agePrefs.putBatch(PrefsBatch().apply {
+            putString(AGE_BAND_KEY, band.name)
+            putString(AGE_CHECKED_KEY, now.toString())
+        })
+        return band
+    }
+
+    /** Só a leitura guardada, sem abrir o aviso da Play (Ajustes → Privacidade dos anúncios). */
+    private fun cachedAgeBand(): AgeBand = AgeRules.parse(agePrefs.getString(AGE_BAND_KEY, ""))
 
     /** O que cada lugar ainda pode hoje (servidor). Nulo: sem conta, iPhone ou servidor fora. */
     var adsStatus by mutableStateOf<AdsStatus?>(null)
@@ -1377,7 +1407,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             return
         }
         val unit = AdRules.unitFor(place, rewardedAds.buildUsesTestAds, adsStatus?.testAds ?: true, rewardedAds.runsOnEmulator)
-        val outcome = rewardedAds.show(unit, session.userId, vale)
+        val audience = AgeRules.audience(ensureAgeBand())
+        val outcome = rewardedAds.show(unit, session.userId, vale, audience)
         var confirmed: AdValeStatus? = null
         if (outcome == AdShowOutcome.EARNED) {
             // assistiu até o fim: a vitória não volta a oferecer, mesmo se a confirmação atrasar
@@ -1422,7 +1453,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val scope = uiScope ?: return
         adPrivacyNotice = null
         scope.launch {
-            if (!rewardedAds.openPrivacyOptions()) adPrivacyNotice = t(K.AD_PRIVACY_NONE)
+            if (!rewardedAds.openPrivacyOptions(AgeRules.audience(cachedAgeBand()))) adPrivacyNotice = t(K.AD_PRIVACY_NONE)
         }
     }
 

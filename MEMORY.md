@@ -23,7 +23,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
    (`FCM_SERVICE_ACCOUNT` e conta de serviço da Play só em secrets). A chave anônima do Supabase é pública.
 7. **Feedback de jogador só é aprovado/recusado com o OK do John** ("temos bugs?" = listar e propor).
 8. **Nenhuma mecânica pode disfarçar o estado real de uma célula** do tabuleiro (lição da Imersão).
-9. **Banco: o arquivo em `supabase/` é a fonte da verdade**; mudança vai no arquivo e é aplicada como
+9. **Nenhuma recompensa ou compra de conteúdo aleatório** (ECA Digital, #49): prêmio é sempre valor e item
+   conhecidos antes. A idade vinda da Play nunca sai do aparelho (só escolhe o tipo de anúncio).
+10. **Banco: o arquivo em `supabase/` é a fonte da verdade**; mudança vai no arquivo e é aplicada como
    migração com o mesmo conteúdo, testada com bloco `do $$ … raise exception` que desfaz tudo.
 
 ## 2. Como o John quer trabalhar
@@ -47,6 +49,12 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - Antes de fechar uma SPEC de melhoria, avisar se há bugs de jogador pendentes para incluir.
 
 ## 3. Assuntos em andamento
+
+- **ECA Digital (#49, 0.34.7):** Play Age Signals 0.0.4 lê a faixa no primeiro toque em anúncio; menor e idade
+  desconhecida = anúncio não personalizado (TFUA, `npa`, PG/G). Gate `ads_min_app_version` pronto e **vazio**
+  (migração `ads_min_version` a aplicar na publicação; ligar `0.34.7` só com o OK do John e a 0.34.7 na Play).
+  Falta o John conferir no Play Console: Classificação (IARC/ClassInd) e Público-alvo. QA: ADS-19 a ADS-21
+  (`-PageFake=teen`).
 
 - **Anúncio de teste no emulador (#32, 0.34.3):** conta de teste (`'test'`) recebe o bloco real só em emulador,
   para o SSV creditar no QA. Pré-requisito: colar o SSV nos 4 blocos (ver #29).

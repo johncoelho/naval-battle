@@ -1,5 +1,6 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.AdAudience
 import br.com.navalbattle.game.AdShowOutcome
 
 /**
@@ -13,8 +14,8 @@ actual class RewardedAds actual constructor() {
 
     actual val runsOnEmulator: Boolean get() = false
 
-    actual suspend fun show(adUnitId: String, userId: String, customData: String): AdShowOutcome =
+    actual suspend fun show(adUnitId: String, userId: String, customData: String, audience: AdAudience): AdShowOutcome =
         AdShowOutcome.UNAVAILABLE
 
-    actual suspend fun openPrivacyOptions(): Boolean = false
+    actual suspend fun openPrivacyOptions(audience: AdAudience): Boolean = false
 }

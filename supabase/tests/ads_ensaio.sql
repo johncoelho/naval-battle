@@ -29,6 +29,11 @@
 --   ios=f                          iPhone não recebe anúncio                             (ADS-18)
 --   online_sem_sala=not_eligible   sala que não existe ou sem tiro                      (ADS-05)
 --   fechou_nao_gasta=0             vale pedido e não aplicado não conta no limite       (ADS-10)
+--   gate_vazio=t                   ads_min_app_version vazia: sem exigência de versão   (ADS-19, #49)
+--   gate_0346=off/f                min 0.34.7 e último aparelho 0.34.6: sem anúncio     (ADS-19)
+--   gate_0347=t                    min 0.34.7 e aparelho 0.34.7: libera                 (ADS-19)
+--   gate_sem_registro=f            min preenchida e conta sem device_checks: fora       (ADS-19)
+--   gate_ios=f                     registro só de iPhone não vale para o gate           (ADS-19)
 
 do $$
 declare
@@ -139,7 +144,31 @@ begin
   out := out || 'ios=' || s.enabled || ' | ';
   perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
   select * into r from public.ad_reward_start('win', 'online:' || gen_random_uuid()::text, 100);
-  out := out || 'online_sem_sala=' || r.status;
+  out := out || 'online_sem_sala=' || r.status || ' | ';
+
+  -- ADS-19 (#49): gate de versão. Cenário de aparelhos próprio da QA01 (volta no rollback)
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  delete from public.device_checks where user_id = a;
+  select * into s from public.ads_status('android');
+  out := out || 'gate_vazio=' || s.enabled || ' | ';
+  insert into public.app_config (key, value) values ('ads_min_app_version', '0.34.7')
+    on conflict (key) do update set value = excluded.value;
+  select * into s from public.ads_status('android');
+  out := out || 'gate_sem_registro=' || s.enabled || ' | ';
+  insert into public.device_checks (user_id, app_version, platform, test_lab, created_at)
+    values (a, '0.34.6', 'android', false, now() - interval '2 hours');
+  select * into r from public.ad_reward_start('mile');
+  select * into s from public.ads_status('android');
+  out := out || 'gate_0346=' || r.status || '/' || s.enabled || ' | ';
+  insert into public.device_checks (user_id, app_version, platform, test_lab, created_at)
+    values (a, '0.34.7', 'android', false, now());
+  select * into s from public.ads_status('android');
+  out := out || 'gate_0347=' || s.enabled || ' | ';
+  delete from public.device_checks where user_id = a;
+  insert into public.device_checks (user_id, app_version, platform, test_lab)
+    values (a, '0.34.7', 'ios', false);
+  select * into s from public.ads_status('android');
+  out := out || 'gate_ios=' || s.enabled;
 
   raise exception 'RESULTADO (rollback): %', out;
 end $$;

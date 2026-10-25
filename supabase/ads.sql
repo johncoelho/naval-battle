@@ -36,7 +36,11 @@ insert into public.app_config (key, value) values
   ('ads_mile_amount', '1'),
   -- e-mails (minúsculos, separados por vírgula) que usam a unidade de teste do Google além das
   -- contas QA. O valor real fica só no banco: o repositório é público.
-  ('ads_test_emails', '')
+  ('ads_test_emails', ''),
+  -- versão mínima do app Android para receber anúncio (#49, ECA Digital): o app que não lê a
+  -- faixa etária pede anúncio personalizado para todos. Vazio = sem exigência. Só o John liga,
+  -- depois que a versão com a leitura estiver no ar (ex.: '0.34.7').
+  ('ads_min_app_version', '')
 on conflict (key) do nothing;
 
 -- ------------------------------------------------------------------ vales
@@ -89,12 +93,31 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 revoke all on function public.ads_test_account(uuid) from public, anon, authenticated;
 
+-- Gate de versão (#49, ECA Digital): com ads_min_app_version preenchida, só recebe anúncio a conta
+-- cujo último device_checks Android tem essa versão ou mais nova (o app antigo não marca a faixa
+-- etária). Vazia ou inválida = sem gate. Conta sem registro de aparelho fica de fora.
+create or replace function public.ads_version_ok(p_user uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  with cfg as (
+    select trim(coalesce((select value from public.app_config where key = 'ads_min_app_version'), '')) as minv
+  )
+  select case
+           when (select minv from cfg) !~ '^[0-9]+(\.[0-9]+)*$' then true
+           else coalesce((select public.app_version_at_least(d.app_version, (select minv from cfg))
+                            from public.device_checks d
+                           where d.user_id = p_user and d.platform = 'android'
+                           order by d.created_at desc limit 1), false)
+         end;
+$$;
+revoke all on function public.ads_version_ok(uuid) from public, anon, authenticated;
+
 -- Anúncio ligado para esta conta. ads_enabled = 'true' liga para todos; 'test' liga só para as
 -- contas de anúncio de teste (QA e ads_test_emails), para o QA testar sem nenhum jogador real ver
 -- botão (decisão do John, 19/10); qualquer outro valor desliga.
 create or replace function public.ads_on_for(p_user uuid)
 returns boolean language sql stable security definer set search_path = public as $$
-  select case coalesce((select value from public.app_config where key = 'ads_enabled'), 'false')
+  select public.ads_version_ok(p_user)
+         and case coalesce((select value from public.app_config where key = 'ads_enabled'), 'false')
            when 'true' then true
            when 'test' then p_user is not null and public.ads_test_account(p_user)
            else false

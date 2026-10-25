@@ -421,6 +421,7 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
 | Push (Android) | Firebase Cloud Messaging (`firebase-bom` 33.7.0, plugin `google-services` 4.4.2 só se houver `google-services.json`) | aprovado em 0.60 |
 | Anúncio premiado (Android) | Google Mobile Ads (`play-services-ads` 25.2.0) e consentimento UMP (`user-messaging-platform` 4.0.0), só anúncio premiado opcional; SDK e UMP só depois do primeiro toque. 25.2.0 é a maior que compila com o Kotlin 2.1.0 (25.3+ trazem metadata Kotlin 2.3) | aprovado pelo John em 18/10 (#29) |
+| Faixa etária (Android) | Play Age Signals API (`com.google.android.play:age-signals` 0.0.4, beta; `requestAgeSignalsAccess` + `checkAgeSignals`), só para escolher o tipo de anúncio; a idade não sai do aparelho | aprovado pelo John em 25/10 (#49) |
 | Compras (Android) | Google Play Billing (`com.android.billingclient:billing` 9.1.0): lista produtos, abre a folha de compra e lê o que já foi comprado. O crédito é decidido no servidor | aprovado pelo John em 17/10 (#15) |
 | Publicação | Gradle Play Publisher 3.13.0 (faixa Alpha do teste fechado) | aprovado em 0.16 |
 | Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check`, `dobroes-verify` e `ads-reward` (Deno) | `supabase/` |
@@ -469,7 +470,8 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
 | `PushMessaging` | token de push | Firebase Messaging | sem push (APNs pendente) |
 | `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes, a aba mostra só o Prêmio Beta (#30) |
-| `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque (`supported = true`) | vazio (`supported = false`) |
+| `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque; recebe o `AdAudience` da faixa (TFUA, TFCD, `npa`, classificação) (`supported = true`) | vazio (`supported = false`) |
+| `AgeSignals` | faixa etária da loja (#49): `read()` devolve `AgeBand`, nunca lança | Play Age Signals; `-PageFake` troca pelo `FakeAgeSignalsManager` no debug | sem leitura (`supported = false`, `UNKNOWN`) |
 | `isTestLabDevice` | aparelho dos testes automáticos do Google | `Settings.System` `firebase.test.lab` | sempre falso |
 | `DailyReminder` | lembrete diário local | `AlarmManager` | `UNUserNotificationCenter` |
 | `openStoreListing`, `shareStoreListing` | loja e compartilhar | Play Store | página `#ios` do site |
