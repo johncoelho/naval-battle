@@ -104,8 +104,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 98
-        versionName = "0.34.11"
+        versionCode = 99
+        versionName = "0.34.12"
     }
 
     /**
@@ -150,9 +150,20 @@ android {
         }
         getByName("release") {
             buildConfigField("String", "AGE_FAKE", "\"\"")
-            isMinifyEnabled = false
+            // R8 (#37): encolhe e ofusca o código e remove recurso sem uso. As regras de keep
+            // estão em proguard-rules.pro; o mapa de desofuscação vai dentro do .aab e a Play
+            // o extrai sozinha no envio. R8 quebra só no release: testar sempre o APK minificado
+            // (docs/BUILD.md, -PqaSign) antes de publicar
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             if (signingConfigs.findByName("release") != null) {
                 signingConfig = signingConfigs.getByName("release")
+            } else if (findProperty("qaSign") != null) {
+                // Só para o QA instalar o release minificado no emulador: assina com a chave de
+                // depuração quando não há keystore de release (-PqaSign). O CI tem o keystore e
+                // nunca passa por aqui; sem a opção o release continua sem assinatura
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }

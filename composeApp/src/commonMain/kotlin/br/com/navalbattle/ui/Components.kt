@@ -14,6 +14,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -45,6 +51,23 @@ import br.com.navalbattle.i18n.t
 import br.com.navalbattle.game.Callout
 import br.com.navalbattle.game.Tone
 import kotlinx.coroutines.delay
+
+/**
+ * Área segura de toda tela e popup (edge-to-edge, Android 15+): recua o conteúdo das barras do
+ * sistema e do recorte da câmera. O fundo (`Naval.bg`) continua indo até a borda; só o conteúdo
+ * recua. Nunca usar `WindowInsets.systemBars` sozinho: ele não inclui o recorte, que em paisagem cai
+ * por cima do conteúdo. O teclado fica de fora de propósito (não usar `safeDrawing`): o Android (pan)
+ * e o iOS (`FocusableAboveKeyboard`) já sobem a tela, e somar o padding subiria duas vezes.
+ */
+@Composable
+fun Modifier.navalSafeArea(): Modifier =
+    windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout))
+
+/**
+ * Painel de popup: largura toda no celular, no máximo [Naval.contentMaxWidth] em tela grande
+ * (o véu continua cobrindo a tela inteira; o painel fica centralizado).
+ */
+fun Modifier.navalPanelWidth(): Modifier = widthIn(max = Naval.contentMaxWidth).fillMaxWidth()
 
 @Composable
 fun HudLabel(text: String, color: Color = Naval.muted, modifier: Modifier = Modifier) {

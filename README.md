@@ -415,7 +415,7 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Linguagem | Kotlin Multiplatform | 2.1.0 (`gradle/libs.versions.toml`) |
 | UI | Compose Multiplatform (runtime, foundation, material3, resources) | 1.7.3 |
 | Build | Gradle + Android Gradle Plugin | 8.11.1 / AGP 8.7.3 |
-| Android | compileSdk / targetSdk 36, minSdk 26, JVM target 17 | catálogo + `composeApp/build.gradle.kts` |
+| Android | compileSdk / targetSdk 36, minSdk 26, JVM target 17, activity-compose 1.10.1 | catálogo + `composeApp/build.gradle.kts` |
 | iOS | framework KMP + projeto Xcode (`iosApp/`), `.ipa` sem assinatura no CI | Xcode do runner `macos` |
 | Login Google (Android) | Credential Manager (`androidx.credentials` 1.3.0 + `googleid` 1.1.1) | aprovado em 0.11 |
 | Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
@@ -593,6 +593,21 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   `PLAY_PRODUCTION_LIVE` (`false` até a produção 91 ser publicada); mesmo secret `PLAY_SERVICE_ACCOUNT_JSON`.
   Commit que só mexe em `.github/`, `tools/` e docs usa `[skip ci]` e não sobe versão.
 - O passo a passo é a skill `dev-cycle` (pedido → publicação) e, para o Android, `play-store-release`.
+
+### Android: R8, área segura e telas grandes
+
+- **R8 ligado no release** (`isMinifyEnabled` + `isShrinkResources`, regras em `composeApp/proguard-rules.pro`).
+  Não usamos Supabase-kt, Ktor nem kotlinx.serialization e não temos reflexão, então as regras são poucas
+  (Age Signals, Credential Manager e o atributo de pilha). Biblioteca nova que use reflexão ganha regra de
+  keep no mesmo commit. R8 quebra só no release: testar o APK minificado (`-PqaSign`, docs/BUILD.md) e, antes
+  da produção, a bateria no app da Play. O `mapping.txt` vai dentro do `.aab`.
+- **Área segura:** toda tela e popup usa `Modifier.navalSafeArea()` (`ui/Components.kt`,
+  barras do sistema + recorte da câmera, sem o teclado, que o Android e o iOS já tratam). Nunca `WindowInsets.systemBars` sozinho (sem o recorte) nem `safeDrawing` (soma o teclado e sobe a tela duas vezes).
+- **Telas grandes:** sem `screenOrientation` no manifesto (o Android 16 ignora a trava a partir de 600 dp);
+  a `MainActivity` trava retrato só abaixo de 600 dp. `ScreenFrame` (roteador) limita o conteúdo a
+  `Naval.contentMaxWidth` (600 dp) e popups usam `navalPanelWidth()`; a batalha escolhe o arranjo dos
+  tabuleiros por `boardLayout(larguraDp, alturaDp)` e o do posicionamento por `placementBoardSideDp` (funções puras, `BoardLayoutTest`); empilhado, o alvo reserva o anúncio e uma altura mínima para a frota. Layout novo calcula
+  pelo tamanho da janela (`BoxWithConstraints`), nunca pelo modelo do aparelho. iPhone fica só em retrato.
 
 ### Qualidade
 

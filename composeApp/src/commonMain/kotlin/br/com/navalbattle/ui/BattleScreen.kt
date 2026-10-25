@@ -13,14 +13,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -201,11 +198,14 @@ fun BattleScreen(state: AppState, match: Match) {
         return
     }
 
-    Box(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        // tablet / dobrável em paisagem: os dois tabuleiros lado a lado (BoardLayout.kt)
+        val layout = boardLayout(maxWidth.value, maxHeight.value)
+        val sideBySide = layout.sideBySide
         Column(
             Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars)
+                .navalSafeArea()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -299,68 +299,98 @@ fun BattleScreen(state: AppState, match: Match) {
             )
 
             Gap(10)
-            if (local) {
-                // cada comandante vê só os próprios tiros: a carta da frota que ele ataca
-                BoardView(
-                    board = match.board(viewSide.other()),
-                    skin = state.skin,
-                    showShips = false,
-                    interactive = myTurn,
-                    impact = myImpact,
-                    scan = outgoingScan,
-                    markTint = commanderColor(viewSide.other()),
-                    modifier = Modifier.fillMaxWidth()
-                ) { coord -> match.act(coord) }
-            } else {
-                // IA e rede: sempre o mesmo alvo, do início ao fim da partida
-                BoardView(
-                    board = match.board(viewSide.other()),
-                    skin = state.skin,
-                    showShips = false,
-                    interactive = myTurn,
-                    impact = myImpact,
-                    scan = outgoingScan,
-                    modifier = Modifier.fillMaxWidth()
-                ) { coord -> if (lan) state.fireShared(coord) else match.act(coord) }
-            }
-
-            // mensagens ficam abaixo do tabuleiro para não cobrir a ação
-            Box(
-                Modifier.fillMaxWidth().height(56.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CalloutBanner(match.callout)
-            }
-
-            // no modo local as habilidades ficam sozinhas, acima do placar — não há
-            // painel de frota própria ali para dividir a faixa com elas
-            if (match.mode == GameMode.TACTICAL && local) {
-                AbilityColumn(state, match, Modifier.fillMaxWidth()) { ability, ignoreCooldown ->
-                    match.selectAbility(ability, ignoreCooldown)
+            // o mar inimigo que este aparelho ataca (cada comandante só vê os próprios tiros no local)
+            val targetBoard: @Composable (Modifier) -> Unit = { m ->
+                if (local) {
+                    BoardView(
+                        board = match.board(viewSide.other()),
+                        skin = state.skin,
+                        showShips = false,
+                        interactive = myTurn,
+                        impact = myImpact,
+                        scan = outgoingScan,
+                        markTint = commanderColor(viewSide.other()),
+                        modifier = m
+                    ) { coord -> match.act(coord) }
+                } else {
+                    // IA e rede: sempre o mesmo alvo, do início ao fim da partida
+                    BoardView(
+                        board = match.board(viewSide.other()),
+                        skin = state.skin,
+                        showShips = false,
+                        interactive = myTurn,
+                        impact = myImpact,
+                        scan = outgoingScan,
+                        modifier = m
+                    ) { coord -> if (lan) state.fireShared(coord) else match.act(coord) }
                 }
             }
+            val abilityUse: (Ability, Boolean) -> Unit = { ability, ignoreCooldown ->
+                if (lan) state.useAbilityShared(ability, ignoreCooldown)
+                else match.selectAbility(ability, ignoreCooldown)
+            }
 
-            when {
-                local -> {
-                    Spacer(Modifier.weight(1f))
-                    Scoreboard(match)
-                }
-                // tático contra a IA ou em rede: frota própria à esquerda, habilidades
-                // à direita, lado a lado — as duas coisas cabem na mesma faixa
-                match.mode == GameMode.TACTICAL -> {
-                    Row(
-                        Modifier.fillMaxWidth().weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1.1f))
-                        AbilityColumn(state, match, Modifier.weight(1f)) { ability, ignoreCooldown ->
-                            if (lan) state.useAbilityShared(ability, ignoreCooldown)
-                            else match.selectAbility(ability, ignoreCooldown)
+            if (sideBySide && !local) {
+                // tela larga: alvo, frota própria e (no tático) habilidades na mesma faixa
+                Row(
+                    Modifier.fillMaxWidth().weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        // o anúncio do tiro fica acima do alvo: o tabuleiro é quadrado e deixa
+                        // sobra de altura embaixo, longe do olhar
+                        Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) {
+                            CalloutBanner(match.callout)
+                        }
+                        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.TopCenter) {
+                            val side = if (maxWidth < maxHeight) maxWidth else maxHeight
+                            targetBoard(Modifier.size(side))
                         }
                     }
+                    OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1f))
+                    if (match.mode == GameMode.TACTICAL) {
+                        AbilityColumn(state, match, Modifier.weight(0.6f), abilityUse)
+                    }
                 }
-                // clássico contra a IA ou em rede: só a frota própria, tela cheia
-                else -> OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1f))
+            } else {
+                // empilhado: o alvo respeita a altura, e a frota própria mantém o mínimo (boardLayout)
+                targetBoard(Modifier.size(layout.boardSideDp.dp).align(Alignment.CenterHorizontally))
+
+                // mensagens ficam abaixo do tabuleiro para não cobrir a ação
+                Box(
+                    Modifier.fillMaxWidth().height(56.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CalloutBanner(match.callout)
+                }
+
+                // no modo local as habilidades ficam sozinhas, acima do placar — não há
+                // painel de frota própria ali para dividir a faixa com elas
+                if (match.mode == GameMode.TACTICAL && local) {
+                    AbilityColumn(state, match, Modifier.fillMaxWidth()) { ability, ignoreCooldown ->
+                        match.selectAbility(ability, ignoreCooldown)
+                    }
+                }
+
+                when {
+                    local -> {
+                        Spacer(Modifier.weight(1f))
+                        Scoreboard(match)
+                    }
+                    // tático contra a IA ou em rede: frota própria à esquerda, habilidades
+                    // à direita, lado a lado — as duas coisas cabem na mesma faixa
+                    match.mode == GameMode.TACTICAL -> {
+                        Row(
+                            Modifier.fillMaxWidth().weight(1f),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1.1f))
+                            AbilityColumn(state, match, Modifier.weight(1f), abilityUse)
+                        }
+                    }
+                    // clássico contra a IA ou em rede: só a frota própria, tela cheia
+                    else -> OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1f))
+                }
             }
         }
 
@@ -370,7 +400,7 @@ fun BattleScreen(state: AppState, match: Match) {
                 senderLabel = { side -> if (side == match.mySide) t(K.YOU) else match.sideName(side) },
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .navalSafeArea()
                     .padding(top = 64.dp)
             )
         }
@@ -505,11 +535,11 @@ private fun QuitOverlay(onKeep: () -> Unit, onQuit: () -> Unit) {
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.94f))
             .clickable(enabled = false) {}
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(Modifier.fillMaxWidth()) {
+        Column(Modifier.navalPanelWidth()) {
             HudLabel(t(K.BATTLE_QUIT_EYEBROW), Naval.muted)
             Gap(8)
             Text(t(K.BATTLE_QUIT_TITLE).uppercase(), style = NavalType.display, color = Naval.ink)
@@ -632,13 +662,13 @@ private fun TauntOverlay(onPick: (String) -> Unit, onClose: () -> Unit) {
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.94f))
             .clickable(onClick = onClose)
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(24.dp)
     ) {
         Column(
             Modifier
                 .align(Alignment.Center)
-                .fillMaxWidth()
+                .navalPanelWidth()
                 .verticalScroll(rememberScrollState())
                 .clickable(enabled = false) {}
         ) {

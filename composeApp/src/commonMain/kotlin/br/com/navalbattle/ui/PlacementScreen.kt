@@ -15,13 +15,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,12 +80,15 @@ fun PlacementScreen(state: AppState, match: Match) {
     val rotateAnim = remember { Animatable(0f) }
     val scope = rememberCoroutineScope()
 
-    Column(
+    BoxWithConstraints(
         Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
+    // o tabuleiro respeita a altura que sobra: em tablet deitado o Confirmar não sai da tela
+    val boardSide = placementBoardSideDp(maxWidth.value, maxHeight.value).dp
+    Column(Modifier.fillMaxSize()) {
         ScreenTopBar(
             if (match.opponent == Opponent.LOCAL) {
                 "${t(K.PLACEMENT)} · ${match.sideName(match.placingSide).uppercase()}"
@@ -100,8 +101,8 @@ fun PlacementScreen(state: AppState, match: Match) {
 
         Canvas(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
+                .size(boardSide)
+                .align(Alignment.CenterHorizontally)
                 .background(Naval.abyss)
                 .border(1.dp, Naval.line)
                 .padding(3.dp)
@@ -265,6 +266,7 @@ fun PlacementScreen(state: AppState, match: Match) {
                 .clickable { state.quitToMenu() }
                 .padding(vertical = 6.dp)
         )
+    }
     }
 }
 

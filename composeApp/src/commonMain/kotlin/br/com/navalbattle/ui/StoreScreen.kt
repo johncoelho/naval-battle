@@ -10,15 +10,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -107,7 +104,7 @@ fun StoreScreen(state: AppState) {
         Column(
             Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars)
+                .navalSafeArea()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             ScreenTopBar(t(K.STORE_TITLE), profile.credits)
@@ -279,7 +276,7 @@ private fun PurchaseConfirm(buy: PendingBuy, credits: Int, busy: Boolean, onConf
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.86f))
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onCancel)
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {

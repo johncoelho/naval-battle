@@ -12,15 +12,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
@@ -123,7 +120,7 @@ fun FriendsScreen(state: AppState) {
     Column(
         Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(horizontal = 20.dp, vertical = 14.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
@@ -553,7 +550,7 @@ private fun FriendProfileDialog(
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.88f))
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClose() }
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -635,7 +632,7 @@ private fun ConfirmRemoveDialog(name: String, onKeep: () -> Unit, onRemove: () -
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.9f))
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onKeep() }
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {

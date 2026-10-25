@@ -9,6 +9,34 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.12] — 2026-10-25 · R8, edge-to-edge e telas grandes (#37)
+
+App 0.34.12 (versionCode 99). Refs #37. Sem mudança de banco, de RPC nem de contrato de rede.
+
+### Adicionado
+- **Telas grandes (tablet, dobrável, Chromebook):** o manifesto não trava mais a orientação
+  (`resizeableActivity="true"`); a `MainActivity` pede retrato só quando o menor lado é menor que 600 dp,
+  então o celular fica igual. O conteúdo fica centralizado com no máximo `Naval.contentMaxWidth` (600 dp),
+  popups incluídos; a batalha em paisagem põe alvo, frota própria e habilidades lado a lado
+  (`boardLayout`, `BoardLayoutTest`). O modo 2 jogadores não gira quando a tela já é horizontal.
+- `configChanges` ampliado (`smallestScreenSize|density|keyboard|navigation`): dobrar, desdobrar ou dividir a
+  janela não recria a Activity, e a partida em andamento não se perde.
+- O posicionamento limita o tabuleiro pela altura (`placementBoardSideDp`), e a batalha empilhada (dobrável
+  aberto, tablet em retrato ou janela dividida) reserva o anúncio e 200 dp para a frota. Os painéis de sair e de
+  falas também respeitam a largura máxima; a batalha lado a lado para em 1100 dp.
+- Opção `-PqaSign`: assina o `assembleRelease` com a chave de depuração, só para o QA instalar o release
+  minificado no emulador (docs/BUILD.md). O CI tem o keystore e nunca passa por ela.
+
+### Alterado
+- **R8 ligado no release** (`isMinifyEnabled` e `isShrinkResources`) com `composeApp/proguard-rules.pro`
+  (keep do Age Signals 0.0.4 e do Credential Manager). O `mapping.txt` vai dentro do `.aab` e a Play o extrai
+  no envio; `.github/workflows` não mudou. `res/raw/sfx_miss.wav` (sem uso) sai do pacote.
+- **Edge-to-edge:** todas as telas e popups usam `Modifier.navalSafeArea()` (barras do sistema +
+  recorte da câmera, sem o teclado, que o Android e o iOS já tratam) no lugar de `WindowInsets.systemBars`.
+- `androidx.activity:activity-compose` 1.9.3 → 1.10.1 (minor).
+
+---
+
 ## [0.34.11] — 2026-10-25 · Correção do build do iPhone: `OPEN_MAX` é macro do Darwin (#34)
 
 App 0.34.11 (versionCode 98). Refs #34. Só código/ferramenta, sem banco.

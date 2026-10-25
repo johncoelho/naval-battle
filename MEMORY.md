@@ -50,6 +50,11 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **R8, edge-to-edge e telas grandes (#37, 0.34.12):** release minificado, `navalSafeArea`, conteúdo em até 600 dp
+  e batalha lado a lado em tablet. R8 quebra só no release: antes de promover, bateria no app da Play (R8-01 a
+  R8-06, BIG-01 a BIG-09, EDGE-01 no `QA_TEST_PLAN`) e conferir o mapping no App bundle explorer. Aviso do SDK
+  de anúncios é a #38.
+
 - **ECA Digital (#49, 0.34.7):** Play Age Signals 0.0.4 lê a faixa no primeiro toque em anúncio; menor e idade
   desconhecida = anúncio não personalizado (TFUA, `npa`, PG/G). Gate `ads_min_app_version` pronto e **vazio**
   (migração `ads_min_version` a aplicar na publicação; ligar `0.34.7` só com o OK do John e a 0.34.7 na Play).

@@ -105,6 +105,22 @@ sombra: profundidade vem de superfície mais clara + borda.
 - Padrão novo, por isso entra aqui. O artefato do Claude Design ainda precisa receber este cartão
   (pendente, ver HISTORY 17/10).
 
+## Largura máxima e área segura (#37)
+
+- **`Naval.contentMaxWidth` = 600 dp**: em tela grande (tablet, dobrável, Chromebook) o conteúdo das telas
+  e os popups ficam centralizados nessa largura, com o fundo `Naval.bg` até a borda. Abaixo de 600 dp (celular)
+  nada muda. Roteador: `ScreenFrame`; popups: `Modifier.navalPanelWidth()`.
+- **Batalha em paisagem larga** (janela ≥ 840 dp e 1,2× mais larga que alta, `boardLayout` em
+  `ui/BoardLayout.kt`): alvo, frota própria e (tático) habilidades lado a lado, até 1100 dp. O modo local
+  (mesmo aparelho) ocupa a tela toda e não gira se já estiver na horizontal.
+- **Batalha empilhada** (celular, tablet em retrato, dobrável aberto): o alvo tem `boardLayout(...).boardSideDp`,
+  que reserva 56 dp do anúncio e 200 dp mínimos para a frota própria. O posicionamento usa
+  `placementBoardSideDp` (o Confirmar nunca sai da tela). Painéis de popup e de confirmação (sair, falas)
+  usam `navalPanelWidth()`.
+- **Área segura**: `Modifier.navalSafeArea()` em todo contêiner de tela ou de véu de popup (barras do
+  sistema + recorte da câmera, **sem o teclado**: o Android e o iOS já sobem a tela). O véu e o fundo vão até
+  a borda; só o conteúdo recua.
+
 ## Arte das embarcações
 
 Cada classe é desenhada num viewBox de `(tamanho × 50) × 50`, vista de topo, **proa à

@@ -6,15 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -59,13 +56,13 @@ fun UpdatePopup(state: AppState) {
         Modifier
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.86f))
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             Modifier
-                .fillMaxWidth()
+                .navalPanelWidth()
                 .background(Naval.surface2)
                 .border(1.dp, Naval.amber)
                 .padding(20.dp)

@@ -7,12 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,13 +40,13 @@ fun QuickOfferBanner(state: AppState, offer: OnlineMatch) {
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.86f))
             .clickable(enabled = false) {}
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             Modifier
-                .fillMaxWidth()
+                .navalPanelWidth()
                 .background(Naval.surface2)
                 .border(1.dp, if (offer.ranked) Naval.amber else Naval.line)
                 .padding(20.dp),
@@ -89,13 +86,13 @@ fun QuickOfferNotice(state: AppState, notice: String) {
     Box(
         Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.systemBars)
+            .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         Box(
             Modifier
-                .fillMaxWidth()
+                .navalPanelWidth()
                 .background(Naval.surface3)
                 .border(1.dp, Naval.line)
                 .padding(horizontal = 16.dp, vertical = 12.dp),

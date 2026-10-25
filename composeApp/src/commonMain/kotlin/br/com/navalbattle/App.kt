@@ -122,6 +122,7 @@ import br.com.navalbattle.i18n.Lang
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.game.Side
 import br.com.navalbattle.ui.LanScreen
+import br.com.navalbattle.ui.ScreenFrame
 import br.com.navalbattle.ui.SystemBackHandler
 import br.com.navalbattle.ui.BattleScreen
 import br.com.navalbattle.ui.HandoffScreen
@@ -2592,25 +2593,27 @@ fun App() {
                     backTarget != null -> state.screen = backTarget
                 }
             }
-            when (state.screen) {
-                Screen.SPLASH -> SplashScreen(state)
-                Screen.WELCOME -> WelcomeScreen(state)
-                Screen.MENU -> MenuScreen(state)
-                Screen.SHIPYARD -> ShipyardScreen(state)
-                Screen.STORE -> StoreScreen(state)
-                Screen.PROFILE -> ProfileScreen(state)
-                Screen.SETTINGS -> SettingsScreen(state)
-                Screen.RELEASE_NOTES -> ReleaseNotesScreen(state)
-                Screen.LAN -> LanScreen(state)
-                Screen.ONLINE -> OnlineScreen(state)
-                Screen.NAMES -> state.match?.let { NamesScreen(state, it) }
-                Screen.PLACEMENT -> state.match?.let { PlacementScreen(state, it) }
-                Screen.HANDOFF -> state.match?.let { HandoffScreen(state, it) }
-                Screen.BATTLE -> state.match?.let { BattleScreen(state, it) }
-                Screen.RESULT -> state.match?.let { ResultScreen(state, it) }
-                Screen.FRIENDS -> FriendsScreen(state)
-                Screen.LEADERBOARD -> LeaderboardScreen(state)
-                Screen.FEEDBACK -> FeedbackFormScreen(state)
+            ScreenFrame(state) {
+                when (state.screen) {
+                    Screen.SPLASH -> SplashScreen(state)
+                    Screen.WELCOME -> WelcomeScreen(state)
+                    Screen.MENU -> MenuScreen(state)
+                    Screen.SHIPYARD -> ShipyardScreen(state)
+                    Screen.STORE -> StoreScreen(state)
+                    Screen.PROFILE -> ProfileScreen(state)
+                    Screen.SETTINGS -> SettingsScreen(state)
+                    Screen.RELEASE_NOTES -> ReleaseNotesScreen(state)
+                    Screen.LAN -> LanScreen(state)
+                    Screen.ONLINE -> OnlineScreen(state)
+                    Screen.NAMES -> state.match?.let { NamesScreen(state, it) }
+                    Screen.PLACEMENT -> state.match?.let { PlacementScreen(state, it) }
+                    Screen.HANDOFF -> state.match?.let { HandoffScreen(state, it) }
+                    Screen.BATTLE -> state.match?.let { BattleScreen(state, it) }
+                    Screen.RESULT -> state.match?.let { ResultScreen(state, it) }
+                    Screen.FRIENDS -> FriendsScreen(state)
+                    Screen.LEADERBOARD -> LeaderboardScreen(state)
+                    Screen.FEEDBACK -> FeedbackFormScreen(state)
+                }
             }
             OnlineWaitingDialog(state)
             state.pendingInvite?.let { invite -> InviteBanner(state, invite) }

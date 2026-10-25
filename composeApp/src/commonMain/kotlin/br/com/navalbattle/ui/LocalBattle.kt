@@ -13,15 +13,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,22 +54,28 @@ import kotlinx.coroutines.delay
  * Mostra [content] deitado (90°), para jogar com o celular na horizontal — sem mexer
  * na orientação do sistema, então funciona igual no Android e no iPhone. O conteúdo é
  * medido com largura e altura trocadas e girado em volta do centro; o toque segue a
- * rotação. As barras do sistema ficam de fora antes de girar.
+ * rotação. As barras do sistema e o recorte ficam de fora antes de girar. Com a janela já mais
+ * larga que alta (tablet, dobrável) não gira: o conteúdo ocupa a própria tela.
  */
 @Composable
 fun Landscape(content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars)) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .graphicsLayer { rotationZ = 90f }
-                .layout { measurable, constraints ->
-                    val w = constraints.maxWidth
-                    val h = constraints.maxHeight
-                    val placeable = measurable.measure(Constraints.fixed(h, w))
-                    layout(w, h) { placeable.place((w - h) / 2, (h - w) / 2) }
-                }
-        ) { content() }
+    BoxWithConstraints(Modifier.fillMaxSize().navalSafeArea()) {
+        // tablet / dobrável já deitado: a tela é a própria horizontal, não gira
+        if (maxWidth > maxHeight) {
+            content()
+        } else {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { rotationZ = 90f }
+                    .layout { measurable, constraints ->
+                        val w = constraints.maxWidth
+                        val h = constraints.maxHeight
+                        val placeable = measurable.measure(Constraints.fixed(h, w))
+                        layout(w, h) { placeable.place((w - h) / 2, (h - w) / 2) }
+                    }
+            ) { content() }
+        }
     }
 }
 

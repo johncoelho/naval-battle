@@ -1,1 +1,1 @@
-Segunda correcao interna na versao para iPhone (um nome do codigo colidia com o sistema do iOS na compilacao). Sem mudancas para quem joga no Android. Inclui o saldo de dobroes guardado na conta (0.34.9).
+Telas grandes: tablet, dobravel e Chromebook giram e nao esticam o jogo; os dois tabuleiros ficam lado a lado em paisagem. App encolhido e otimizado (R8). A barra do sistema e o recorte da camera nao cobrem mais o conteudo. Celular segue em retrato, igual. Inclui o saldo de dobroes guardado na conta (0.34.9).

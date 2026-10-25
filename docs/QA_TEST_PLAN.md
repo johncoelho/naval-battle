@@ -100,6 +100,33 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | NAV-03 | P1 | Voltar no meio de uma partida | Ignorado (não derruba a batalha) |
 | NAV-04 | P2 | Dica de milhas/dobrões | Aparece só na primeira vez |
 
+## 5b. Release minificado (R8) e telas grandes (#37)
+
+R8 só quebra no release: rodar no app da Play (já minificado) nos QA01/QA02, antes de promover para a produção.
+Telas grandes: AVD Pixel Tablet e Pixel 9 Pro Fold (API 36), mais o QA01 em retrato; no emulador de celular,
+`wm size` (ver docs/BUILD.md).
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| R8-01 | P0 | App da Play (alpha com R8): abrir, entrar com Google, jogar contra a IA, abrir Loja e Ajustes | Sem crash; logcat sem `FATAL EXCEPTION`, `ClassNotFoundException` nem `NoSuchMethodError` |
+| R8-02 | P0 | Loja → Dobrões: lista de pacotes e uma compra de teste (DOB-07) | Produtos carregam e a compra credita (Billing sobrevive ao R8) |
+| R8-03 | P1 | Anúncio premiado de teste e consentimento (ADS-01) | Anúncio abre e credita; UMP aparece quando aplicável |
+| R8-04 | P1 | Primeiro toque em botão de anúncio no app da Play | A leitura da faixa etária (Age Signals) não derruba o app; o anúncio abre |
+| R8-05 | P1 | Push de convite com o app fechado e lembrete diário | Notificação chega e abre a tela certa |
+| R8-06 | P2 | Play Console → App bundle explorer → versão → Downloads | Arquivo de desofuscação (mapping) presente |
+| BIG-01 | P0 | Pixel Tablet em paisagem: percorrer Menu, Loja, Perfil, Ajustes, Estaleiro, Amigos, Placar, Feedback | Conteúdo centralizado em até 600 dp, fundo até a borda, rolagem onde faltar altura, nada cortado |
+| BIG-10 | P0 | Pixel Tablet em paisagem (1280x800 dp): Posicionamento | Tabuleiro menor que a largura, legenda, Aleatório/Voltar e **Confirmar visíveis sem rolar**; dá para confirmar e começar |
+| BIG-11 | P1 | Dobrável aberto (~820 dp) e tablet em janela dividida: batalha contra a IA | Alvo com altura limitada; a frota própria (e as habilidades no tático) aparece com pelo menos ~200 dp |
+| BIG-02 | P0 | Pixel Tablet em paisagem: partida contra a IA (clássico e tático) | Alvo e frota própria lado a lado (no tático, habilidades à direita); tiro, vez da IA e fim de partida normais |
+| BIG-03 | P0 | Dobrável: desdobrar e dobrar no meio de uma partida | A Activity não recria; turno, tiros e relógio continuam; o layout troca entre lado a lado e coluna |
+| BIG-04 | P1 | Tablet em retrato e janela dividida | Uma coluna centralizada, sem tabuleiro maior que a tela |
+| BIG-05 | P1 | Popups (diário, loja, convite, atualização) em tablet | Painel de até 600 dp centralizado, véu cobrindo a tela inteira |
+| BIG-06 | P1 | 2 jogadores no mesmo aparelho em tablet horizontal e em retrato | Horizontal: usa a tela sem girar; retrato: gira como no celular; os dois quadros tocáveis |
+| BIG-07 | P1 | Teclado em Nomes e Feedback, no celular (QA01) e no tablet | Igual a antes: o campo fica visível acima do teclado, subindo uma vez só (sem deslocamento dobrado) |
+| BIG-08 | P0 | QA01 (celular) em retrato: todas as telas | Igual a antes: conteúdo fora da barra de status, do recorte e dos gestos |
+| BIG-09 | P1 | Celular com girar automático ligado | Fica em retrato |
+| EDGE-01 | P1 | Android 15+ com barra de gestos e com 3 botões, retrato e paisagem (tablet) | Nenhuma tela com conteúdo sob as barras do sistema ou o recorte |
+
 ## 6. Partida contra a IA
 
 | ID | P | Passos | Esperado |

@@ -405,6 +405,15 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   (falha > 1,09% ou ANR > 0,47% com ≥ 100 usuários, ou P0) sem esperar o John. Variável `PLAY_PRODUCTION_LIVE`
   fica `false` até o *Published* da produção 91, para não substituir um envio em revisão. Etapa "Em produção"
   no quadro: o QA deixa de fechar a issue. iOS fora (segue o `.ipa`).
+- **25/10 · R8 ligado, área segura única e telas grandes** (#37, aprovado pelo John com as 9 recomendações do
+  Tech Lead) — porquê: o painel da Play recomendou as três coisas. R8: regras mínimas porque não usamos
+  Supabase-kt, Ktor nem serialização e não há reflexão; Age Signals e Credential Manager têm keep manual; o
+  mapping vai dentro do `.aab` (sem mexer no `android.yml`). Edge-to-edge: `systemBars` + `displayCutout` num
+  modificador só (`navalSafeArea`), porque `systemBars` sozinho não inclui o recorte, que em paisagem cai sobre o
+  conteúdo; `safeDrawing` ficou de fora porque soma o teclado e o Android/iOS já sobem a tela (deslocamento dobrado). Telas grandes: sem `screenOrientation` no manifesto (o Android 16 ignora a trava ≥ 600 dp); celular
+  segue em retrato por código; conteúdo limitado a 600 dp (`Naval.contentMaxWidth`); batalha lado a lado em
+  paisagem larga, decidida por função pura testada. `-PqaSign` assina o release com a chave de depuração só
+  para o QA rodar o minificado no emulador. Fora: o aviso do SDK de anúncios (#38) e iPad.
 
 ## Artefatos de referência (SPECs e designs aprovados)
 

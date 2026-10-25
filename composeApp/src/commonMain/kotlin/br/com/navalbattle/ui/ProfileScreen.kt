@@ -18,15 +18,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
@@ -116,7 +113,7 @@ fun ProfileScreen(state: AppState) {
         Column(
             Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBars)
+                .navalSafeArea()
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             ScreenTopBar(t(K.PROFILE_TITLE), profile.credits)
@@ -347,7 +344,7 @@ fun ProfileScreen(state: AppState) {
                     .fillMaxSize()
                     .background(Naval.bg.copy(alpha = 0.94f))
                     .clickable(enabled = false) {}
-                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .navalSafeArea()
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -376,7 +373,7 @@ fun ProfileScreen(state: AppState) {
                     .fillMaxSize()
                     .background(Naval.bg.copy(alpha = 0.86f))
                     .clickable { openBadge = null }
-                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .navalSafeArea()
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {

@@ -32,6 +32,26 @@ O APK sai em `composeApp/build/outputs/apk/debug/`.
 >
 > O CI continua sendo a fonte de verdade do APK entregue.
 
+## Release minificado (R8) no emulador
+
+O R8 está ligado no release e quebra só lá (#37). Para conferir antes de publicar, com `TMP=D:\tmp`:
+
+```bash
+# troca temporária do applicationId para .preview, como no APK de prévia (nunca git checkout --)
+sed -i 's/applicationId = "aigamesfactory.navalbattleclassic"/&.preview/' composeApp/build.gradle.kts
+./gradlew :composeApp:assembleRelease -PqaSign
+# desfaz a troca e instala o APK:
+sed -i 's/applicationId = "aigamesfactory.navalbattleclassic.preview"/applicationId = "aigamesfactory.navalbattleclassic"/' composeApp/build.gradle.kts
+adb install -r composeApp/build/outputs/apk/release/composeApp-release.apk
+```
+
+`-PqaSign` assina com a chave de depuração só quando não há keystore de release (o CI tem e ignora a
+opção). O app `.preview` não faz login com Google; esse passo fica para a bateria no app da Play. O
+`composeApp/build/outputs/mapping/release/mapping.txt` mostra o que o R8 renomeou. Tela grande no emulador:
+AVD Pixel Tablet ou Pixel 9 Pro Fold (API 36), ou no Pixel_6 `adb shell wm size 1600x2560` +
+`wm density 320` (800x1280 dp, a densidade real de um tablet: com 240 a altura sobra e esconde problema) +
+`settings put system user_rotation 1` para paisagem, reiniciando o app (`wm size reset` e `wm density reset` ao fim).
+
 ## Integração contínua
 
 `.github/workflows/android.yml`, disparado a cada push na `main`:

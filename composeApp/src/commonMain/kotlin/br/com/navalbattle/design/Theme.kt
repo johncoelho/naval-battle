@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** Tokens de cor do Command HUD. O jogo é dark-first por identidade. */
@@ -37,6 +38,12 @@ object Naval {
     /** Identidade de cada comandante no modo local — legível sobre o verde do radar. */
     val commanderOne = Color(0xFF48C9F0)
     val commanderTwo = Color(0xFF3ED598)
+
+    /**
+     * Largura máxima do conteúdo e dos popups em tela grande (tablet, dobrável, Chromebook): o
+     * celular (< 600 dp) não muda. Só a batalha em paisagem passa disso (ver BoardLayout.kt).
+     */
+    val contentMaxWidth = 600.dp
 }
 
 /**
