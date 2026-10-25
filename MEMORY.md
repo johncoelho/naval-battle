@@ -91,8 +91,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **iPhone na App Store:** aguardando a ativação da conta Apple Developer (paga em 08/10). Depois:
   chave da API do App Store Connect como secret, app no App Store Connect, TestFlight **ao lado** do
   `.ipa` do Sideloadly (que segue ativo até a versão da Apple ter tudo).
-- **Teste fechado → produção:** 12 testadores inscritos; 14 dias seguidos (≈ 23/10), depois pedir
-  produção no Play Console. Contas QA não contam.
+- **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. Antes da aprovação:
+  regra de jogador válido (#35: todos valem, menos robôs da Google e QA; testadores mantêm Prêmio Beta).
+  Venda aberta só depois do saldo no servidor (#34). CI ainda publica só na Alpha (falta decidir a promoção).
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 

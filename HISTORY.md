@@ -326,6 +326,19 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   para quebrar se faltar linha. **Ler `app_releases` pela tela continua pendente** (é melhoria; o John
   decide se a fonte passa a ser o banco e se a linha vira por patch).
 
+## Fase 5 · Produção na Play (25/10)
+
+- **25/10 · Produção enviada para revisão** — versão 91 (0.34.4), liberação total, todos os países
+  (177 + resto do mundo, o jogo tem pt/en/es). Acesso à produção liberado depois dos 14 dias do teste
+  fechado (respostas do questionário no histórico da conversa).
+- **25/10 · Jogador válido na produção** (#35, aprovado pelo John) — porquê: com a allowlist ligada,
+  todo jogador da loja viraria `is_test`. Regra nova: todo mundo vale; só robôs da Google e contas QA
+  ficam de fora. Testadores registrados mantêm os benefícios do beta; jogador novo usa e paga tudo.
+- **25/10 · Prêmio Beta continua só para testadores** (decisão do John) — 6.500/dia, 1×/dia, para quem
+  está em `allowed_players` (play/manual/qa); conta nova da loja não recebe.
+- **25/10 · Venda aberta só depois do saldo no servidor** (#34) — `real_billing_enabled` segue
+  desligado na produção até o saldo autoritativo; nada cobra sem creditar enquanto isso.
+
 ---
 
 ## Artefatos de referência (SPECs e designs aprovados)
