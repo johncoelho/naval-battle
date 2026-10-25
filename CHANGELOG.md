@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.8] — 2026-10-25 · Correção do build do iPhone (#49)
+
+App 0.34.8 (versionCode 95). Refs #49.
+
+### Corrigido
+- O CI do iOS da 0.34.7 falhou no `xcodebuild`: a constante `CHILD_MAX` do `AgeRules` vira propriedade no
+  `ComposeApp.h` e colide com a macro `CHILD_MAX` do `<limits.h>`. `CHILD_MAX`, `TEEN_MAX`, `ADULT_MIN` e
+  `CHECK_VALID_MS` agora são `private`, fora da API exportada para o iOS. Nenhuma mudança de comportamento.
+
+---
+
 ## [0.34.7] — 2026-10-25 · ECA Digital: faixa etária da Play e anúncio não personalizado para menor (#49)
 
 App 0.34.7 (versionCode 94). Refs #49. Banco: `supabase/ads.sql` (chave `ads_min_app_version`, nasce vazia; migração `ads_min_version`, a aplicar na publicação).

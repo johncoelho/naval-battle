@@ -34,11 +34,11 @@ object AgeRules {
     const val STATUS_SHARED = 1
 
     /** Vale 24 h; depois disso o próximo toque em anúncio consulta a Play de novo. */
-    const val CHECK_VALID_MS = 24L * 60 * 60 * 1000
+    private const val CHECK_VALID_MS = 24L * 60 * 60 * 1000
 
-    const val CHILD_MAX = 12
-    const val TEEN_MAX = 17
-    const val ADULT_MIN = 18
+    private const val CHILD_MAX = 12
+    private const val TEEN_MAX = 17
+    private const val ADULT_MIN = 18
 
     /**
      * Converte os inteiros crus da API. Só vira adulto, adolescente ou criança com o status

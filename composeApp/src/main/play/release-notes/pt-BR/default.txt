@@ -1,1 +1,1 @@
-Anuncios premiados agora respeitam a faixa etaria informada pela Google Play: para menores de idade, ou quando a idade nao e informada, so aparecem anuncios nao personalizados e adequados ao publico. Atendemos assim ao ECA Digital. O jogo nao envia nem guarda a sua idade.
+Correcao interna na versao para iPhone (compilacao do app no iOS). Sem mudancas para quem joga no Android.

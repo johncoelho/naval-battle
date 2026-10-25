@@ -161,6 +161,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 6. Ambiente e armadilhas conhecidas
 
+- **iOS: constante pública em `commonMain` vira propriedade no `ComposeApp.h`** e colide com macros C (`CHILD_MAX`, `PATH_MAX`, `NAME_MAX`…
+  de `<limits.h>`). Só o `ios.yml` pega (o alvo iOS é pulado no Windows). Constante interna: `private`; nome de
+  `const val` público: evitar `*_MAX`/`*_MIN` genéricos (0.34.8).
 - Backlog: [GitHub Issues](https://github.com/johncoelho/naval-battle/issues) — pendência nova vira issue, não linha aqui.
 - `gh` logado como `johncoelho` (login feito pelo John): issues e acompanhamento do CI
   (`gh run watch`). Mudança em `.github/workflows` só com o OK do John, caso a caso.
