@@ -91,13 +91,17 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **iPhone na App Store:** aguardando a ativação da conta Apple Developer (paga em 08/10). Depois:
   chave da API do App Store Connect como secret, app no App Store Connect, TestFlight **ao lado** do
   `.ipa` do Sideloadly (que segue ativo até a versão da Apple ter tudo).
-- **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. Antes da aprovação:
-  regra de jogador válido (#35: todos valem, menos robôs da Google e QA; grátis só QA01, QA02 e John) e
-  aviso de lançamento (#36, ligar `launch_notice_enabled` quando a Play aprovar).
-  Venda aberta só depois do saldo no servidor (#34). CI ainda publica só na Alpha (falta decidir a promoção).
+- **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. **0.34.5 (#35)** traz a
+  regra de jogador válido (só robô da Google e QA ficam fora de `is_test`). Funções aplicadas no banco;
+  a passada de produção (`refresh_all_is_test(true)`) **espera o OK do John**. Brindes: decidido em
+  7afa37e (grátis só QA01, QA02 e John), implementação pendente (ver HISTORY, 25/10). Aviso de lançamento
+  (#36, ligar `launch_notice_enabled` quando a Play aprovar). Venda aberta só depois do saldo no servidor
+  (#34). CI ainda publica só na Alpha (falta decidir a promoção).
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 
+- 25/10 · `is_test` só por robô da Google; todo jogador da loja vale (#35, 0.34.5): a lista deixa de
+  decidir is_test e QA fica fora da passada. Brindes só QA e John: decidido em 7afa37e, implementação pendente.
 - 19/10 · Conta de teste ganha bloco real só em emulador (#32, 0.34.3): o exemplo não dispara o SSV.
 - 18/10 · iPhone mostra só o Prêmio Beta (#30, 0.33.4): pacotes ocultos no iPhone, a aba não fecha mais.
   Aprovado pelo John na issue.
@@ -141,11 +145,11 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   de serviço só para billing. (iPhone sem pacotes: feito em 0.33.4, #30.)
 - Novidades (#31, 0.34.1): tela com uma linha por minor (0.26.0 a 0.34.0). **Pendente do John:** a tela
   ler `app_releases` (melhoria; decidir se a linha passa a ser por patch). Sem OK, fica como está.
-- #23 (12/10): estrutura `allowed_players` no banco, **inerte** (`allowlist_enforced = 'false'`, tabela
-  vazia). Falta a rodada carregar a lista da Play (esperado `play 12`, `qa 2`, `manual 2`), fazer o
-  ensaio (`refresh_all_is_test(false)`, ~95 viram teste e 12 seguem jogador) e só então ligar o
-  interruptor e rodar a passada. Se o ensaio não bater, parar e chamar o John. Testador novo na Play
-  = passo da skill `beta-testers`.
+- #23 (12/10) e #35 (25/10): a regra de `is_test` agora é só robô da Google (`is_robot_account`); a
+  lista (`allowed_players`) só decide benefícios. Ensaio em `supabase/tests/allowlist_ensaio.sql`. Em
+  produção, a passada `refresh_all_is_test(false)` deu 0 a virar teste e 0 a voltar (120 robôs já são
+  teste, 15 jogadores, 2 QA): a passada de produção não muda nada hoje e espera o OK do John.
+  Testador novo na Play = passo da skill `beta-testers`.
 
 ## 6. Ambiente e armadilhas conhecidas
 

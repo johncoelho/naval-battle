@@ -140,7 +140,8 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | ON-15 | P1 | Casual e ranqueada: B sai no posicionamento (ou antes do primeiro tiro de A) | A vê "Vitória sem combate"; XP, dobrões e milhas de A não mudam; desafio do dia não avança; na ranqueada os pontos seguem a regra de abandono; nada muda para B (#6) |
 | ON-16 | P1 | A dá pelo menos 1 tiro (ou usa 1 habilidade) e B desiste depois | XP, dobrões, milha e desafio do dia pagos como antes (#6) |
 | ON-17 | P1 | Depois de abrir o app logado na versão nova, conferir no banco `device_checks` de A e B (e `profiles.is_test`) | Uma linha por conta e versão; com `allowlist_enforced = 'true'`, QA01/QA02 têm `is_test = true` (conta de teste, `source = 'qa'`), ficam fora do Placar e continuam se encontrando na partida rápida (teste com teste) (#23) |
-| ON-18 | P2 | Depois da revisão do Google de cada versão, conferir (só leitura) as contas criadas na janela do upload | Todas com `is_test = true` (fora de `allowed_players` e sem iPhone), fora do Placar; testadores da lista e contas de iPhone com `is_test = false`. Conta de testador marcada por engano: conferir se o e-mail da Play bate com o de login e, se não bater, exceção `manual` (#23) |
+| ON-18 | P2 | Depois da revisão do Google de cada versão, conferir (só leitura) as contas criadas na janela do upload | Robôs (e-mail `nome.00000@gmail.com` ou `firebase.test.lab`) com `is_test = true`, fora do Placar. Contas comuns, testadores da lista e contas de iPhone com `is_test = false` (0.34.5, #35: quem não é robô vale). Conta comum marcada como teste por engano: conferir o e-mail de login em `auth.users` e a regra `is_robot_account` (#35) |
+| ON-19 | P1 | Com `allowlist_enforced = 'true'`, conta nova da loja (e-mail comum, sem robô) | Nasce com `is_test = false`, aparece no Placar e na partida rápida, e ganha pontos normalmente (#35) |
 
 ## 8b. Rede local (A × B)
 
@@ -308,7 +309,7 @@ Rodar `select public.push_check_run();` (SQL) e depois `select * from public.tes
 | CLEAN-02 | Apagar o feedback de teste (FB-01) no Supabase, sem aprovar recompensa | Fila de feedback só com reais |
 | CLEAN-03 | Desligar "Disponível para partida rápida" em B | Contas QA não recebem salas de jogadores reais |
 | CLEAN-04 | Conferir que nenhuma sala online ficou aberta pelas contas QA | `online_matches` sem sala `waiting` delas |
-| CLEAN-05 | Desativar as contas QA: `update public.profiles set is_test = true where id in (select id from auth.users where email in ('aigamesfactory.qa01@gmail.com','aigamesfactory.qa02@gmail.com'));` (ver Regras do ambiente) | QA01/QA02 `is_test = true`, fora do Placar público |
+| CLEAN-05 | Desativar as contas QA: `update public.profiles set is_test = true where id in (select id from auth.users where email in ('aigamesfactory.qa01@gmail.com','aigamesfactory.qa02@gmail.com'));` (ver Regras do ambiente). A passada `refresh_all_is_test` não mexe em conta QA (0.34.5, #35), então este passo é a única forma de desativar | QA01/QA02 `is_test = true`, fora do Placar público |
 
 **Excluir conta (AUTH-06)** é destrutivo e só roda quando pedido de propósito: Perfil →
 Excluir conta → confirmar → o jogo volta como convidado e o usuário some do servidor

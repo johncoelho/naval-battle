@@ -516,8 +516,10 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 - Contas `is_test` (testes automáticos da revisão do Google, `supabase/test_accounts.sql`) ficam fora
   de ranking, recompensa de temporada e partida rápida com jogador real; a marca só vem do servidor
   (`report_device_check`), e o cliente não consegue mudá-la (gatilho em `profiles`). Com
-  `app_config.allowlist_enforced = 'true'`, `is_test` = conta fora de `allowed_players` e sem
-  iPhone em `device_checks`; a lista é carregada direto no banco, fora do repositório (skill
+  `app_config.allowlist_enforced = 'true'` (produção desde 0.34.5, #35), `is_test` = conta com e-mail
+  de robô da Google (`nome.00000@gmail.com`, `is_robot_account`) ou com `firebase.test.lab`; conta QA
+  (`allowed_players.source = 'qa'`) fica fora da rotina. A lista de testadores (`allowed_players`
+  play/manual) só decide benefícios, não `is_test`. A lista é carregada direto no banco, fora do repositório (skill
   `beta-testers`).
 - Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
   FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).

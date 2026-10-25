@@ -45,6 +45,12 @@ delete from public.allowed_players where email = lower(trim('<email>'));
 select * from public.refresh_all_is_test(true);
 ```
 
+- **Depois do lançamento da produção (0.34.5, #35), ninguém novo entra como `'play'`.** A lista da
+  Play, no teste fechado, segue só para os benefícios antigos (Prêmio Beta, medalha) até o John
+  decidir o que muda para testador (ver HISTORY, 25/10). Testador novo na Play não vira jogador
+  diferente: quem vale é todo mundo que não é robô.
+- A passada `refresh_all_is_test(true)` só muda robô e conta QA fica de fora; testador novo não exige
+  passada. Não rodar sem o OK do John.
 - Conta QA (`aigamesfactory.qa01/qa02`) entra com `source = 'qa'`: espelha a lista da Play, mas a
   conta segue como conta de teste.
 - **Jogador de iPhone** fora da lista não precisa de nada: vira jogador sozinho ao abrir o app
@@ -55,8 +61,8 @@ select * from public.refresh_all_is_test(true);
   perfil) e o `refresh_all_is_test(true)`.
 - Conferir: `select source, count(*) from public.allowed_players group by 1;` e o ensaio
   `select * from public.refresh_all_is_test(false);` (só conta, não muda nada).
-- A regra só vale com `app_config.allowlist_enforced = 'true'` e ao menos uma linha `play`;
-  desligado, `refresh_all_is_test` recusa rodar.
+- A regra de `is_test` só vale com `app_config.allowlist_enforced = 'true'` (interruptor, sem exigir
+  linha `play`); desligado, `refresh_all_is_test` recusa rodar.
 
 ## Testadores de licença (Prêmio Beta, #15)
 

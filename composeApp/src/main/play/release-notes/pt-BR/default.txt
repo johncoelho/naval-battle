@@ -1,1 +1,1 @@
-Milhas: o botao de compra agora mostra a quantidade do pacote (ex.: COMPRAR 5 MILHAS) e o saldo de 1 mostra no singular. Nada muda no jogo.
+Melhorias na conta de jogador: as contas de teste da revisao do Google seguem fora do placar, e todo jogador novo da loja entra no ranking e na partida rapida. Sem mudanca visual nem de moeda.

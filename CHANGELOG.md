@@ -9,6 +9,26 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.5] — 2026-10-25 · Produção: todo jogador da loja vale (#35)
+
+App 0.34.5 (versionCode 92). Refs #35. Só banco (regra de `is_test`); sem mudança de Kotlin.
+
+### Alterado
+- **Quem vale como jogador** (#35): com `allowlist_enforced = 'true'`, `profiles.is_test` passa a ser
+  só robô: conta com e-mail de login no padrão `nome.00000@gmail.com` (robôs da revisão do Google) ou
+  com o aparelho dizendo `firebase.test.lab`. Todo o resto vale (ranking, partida rápida, recompensas).
+- **Lista de testadores não decide mais `is_test`**: `allowed_players` (play/manual) segue para
+  benefícios (Prêmio Beta, medalha, vitrine) e para o gate da licença. O Prêmio Beta fica como estava.
+- **Contas QA** (`allowed_players.source = 'qa'`) ficam fora da regra automática: `is_test` delas segue
+  o processo manual do QA.
+- **`allowlist_on()`** só lê o interruptor `allowlist_enforced`; não exige mais linha `play`.
+- `refresh_all_is_test(p_apply)` mantém o formato de retorno e usa o novo critério.
+- Função `is_allowed_player` removida (era a regra antiga de `is_test`).
+
+### Testes
+- Ensaio que desfaz tudo: `supabase/tests/allowlist_ensaio.sql` (robô nasce teste, conta comum nasce
+  jogador, lista da Play não muda `is_test`, QA intacta, nenhuma divergência depois).
+
 ## [0.34.4] — 2026-10-20 · Milhas: texto do popup corrigido (#33)
 
 App 0.34.4 (versionCode 91). Refs #33. Só app: sem banco, sem Edge, sem mudança de regra nem de

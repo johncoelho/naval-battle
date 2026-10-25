@@ -337,9 +337,16 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **25/10 · Fim dos brindes, exceto QA01, QA02 e o John** (#35, decisão do John, substitui a de manter o
   Prêmio para testadores, tomada no mesmo dia) — testadores ficam com tudo o que ganharam; daqui para
   frente todo mundo paga por tudo. Prêmio Beta e grátis só para as 2 contas QA e a conta do John
-  (e-mail só no banco).
+  (e-mail só no banco). **Decisão tomada em 7afa37e; a implementação (`beta_eligible`, vitrine e Prêmio)
+  segue pendente** e não foi mexida na 0.34.5.
 - **25/10 · Aviso de lançamento na entrada** (#36) — popup uma vez por conta, ligado por interruptor
   quando a Play aprovar: agradece os beta testers e avisa que os brindes ficam e o resto passa a ser pago.
+- **25/10 · `is_test` só por robô da Google; todo jogador da loja vale** (#35, 0.34.5) — porquê: a lista
+  deixou de decidir quem é jogador. Robô = e-mail de login `nome.00000@gmail.com` (ou `firebase.test.lab`);
+  conta QA fica fora da rotina. A lista segue só para benefícios. Ensaio em `supabase/tests/allowlist_ensaio.sql`.
+- ~~**25/10 · Prêmio Beta continua só para testadores** (decisão do John, de 3fe3750) — 6.500/dia, 1×/dia,
+  para quem está em `allowed_players` (play/manual/qa); conta nova da loja não recebe.~~ Substituída pela
+  decisão de 7afa37e (fim dos brindes, exceto QA e John).
 - **25/10 · Venda aberta só depois do saldo no servidor** (#34) — `real_billing_enabled` segue
   desligado na produção até o saldo autoritativo; nada cobra sem creditar enquanto isso.
 
