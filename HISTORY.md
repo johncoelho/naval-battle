@@ -334,8 +334,12 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **25/10 · Jogador válido na produção** (#35, aprovado pelo John) — porquê: com a allowlist ligada,
   todo jogador da loja viraria `is_test`. Regra nova: todo mundo vale; só robôs da Google e contas QA
   ficam de fora. Testadores registrados mantêm os benefícios do beta; jogador novo usa e paga tudo.
-- **25/10 · Prêmio Beta continua só para testadores** (decisão do John) — 6.500/dia, 1×/dia, para quem
-  está em `allowed_players` (play/manual/qa); conta nova da loja não recebe.
+- **25/10 · Fim dos brindes, exceto QA01, QA02 e o John** (#35, decisão do John, substitui a de manter o
+  Prêmio para testadores, tomada no mesmo dia) — testadores ficam com tudo o que ganharam; daqui para
+  frente todo mundo paga por tudo. Prêmio Beta e grátis só para as 2 contas QA e a conta do John
+  (e-mail só no banco).
+- **25/10 · Aviso de lançamento na entrada** (#36) — popup uma vez por conta, ligado por interruptor
+  quando a Play aprovar: agradece os beta testers e avisa que os brindes ficam e o resto passa a ser pago.
 - **25/10 · Venda aberta só depois do saldo no servidor** (#34) — `real_billing_enabled` segue
   desligado na produção até o saldo autoritativo; nada cobra sem creditar enquanto isso.
 
