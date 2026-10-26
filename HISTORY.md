@@ -474,6 +474,16 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   proíbe filtrar quem avalia) e sem pedir em Firebase Test Lab. iPhone: sem pedido (o .ipa não vem da App Store). O botão
   que abre a ficha (`openStoreListing`) segue em Ajustes → Sobre. Desvio do desenho: `is_test` não é conferido, só
   `isTestLabDevice()` (o app não conhece a marca da conta).
+- **26/10 · Política de privacidade e regras da comunidade reescritas (#57)** — a página antiga dizia "nada de anúncio, nada
+  de rastreamento" e só citava e-mail/Google, e ela é a política usada na Apple e na Play. `site/privacy.html` agora é um
+  arquivo só com `#pt` (referência), `#en` e `#es` (o app abre a âncora da língua; a #40 rebaseia um arquivo só), com tabela
+  por plataforma, inventário de dados (finalidade, base legal LGPD art. 7º, quem recebe, retenção), transferência
+  internacional (art. 33), direitos (art. 18), menores, denúncias e a seção de anúncios inteira (a #40 não mexe mais na
+  política). Supabase confirmado em `ca-central-1` (Canadá) pelo painel, e a página diz isso. O texto das denúncias (#58) já
+  está nela, marcado como vindo na 0.42.0, porque a Apple (1.2) exige a página antes do botão. `site/terms.html` nova:
+  regras da comunidade com tolerância zero e bloqueio na hora, filtro e troca automática de nome; as demais denúncias são analisadas assim que possível (prazo fixo de 24 h descartado: quem lê é o John pela triagem, e a proteção imediata é o bloqueio, o filtro e a troca automática). Sem e-mail novo: o contato é o que o site já usa.
+  **Exceção de processo:** mudança só em `site/` não sobe versão e vai com `[skip ci]` (o `android.yml` falharia com o mesmo
+  `versionCode`); em seguida `gh workflow run pages.yml --ref main` publica, e se confere a página no ar pela URL.
 - **26/10 · Conquistas e placar do Google Play Games, entrando desligados (#48, 0.41.0)** — dependência nova
   aprovada pelo John em 25/10: `play-services-games-v2` 21.0.0 (o desenho citava `play-games-services-v2`, que não
   existe no Maven do Google; o artefato certo é `play-services-games-v2`), só em `androidMain`; o iPhone fica com o

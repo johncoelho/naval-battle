@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Naval Battle — política de privacidade</title>
-<meta name="description" content="O que o Naval Battle guarda, onde guarda, e o que nunca sai do aparelho.">
+<meta name="description" content="O que o Naval Battle coleta em cada plataforma, para quê, quem recebe, por quanto tempo e como excluir a conta. Privacy policy · Política de privacidad.">
 <meta name="theme-color" content="#080B07">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,59 +37,538 @@
   .card{background:var(--surface2);border:1px solid var(--line);padding:16px 18px;margin:18px 0}
   .back{display:inline-block;margin-top:40px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   code{font-family:var(--mono);background:var(--surface3);padding:1px 5px;font-size:13px;color:var(--ink)}
+
+  /* seletor de idioma: a página única guarda os três textos em #pt, #en e #es */
+  .langnav{display:flex;gap:8px;margin:0 0 22px}
+  .langnav a{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-decoration:none;color:var(--inkSoft);
+    border:1px solid var(--line);padding:6px 12px;background:var(--surface)}
+  .langnav a.on{color:var(--bg);background:var(--amberStrong);border-color:var(--amberStrong)}
+  .lang{display:none}
+  .lang:target{display:block}
+  body:not(:has(.lang:target)) #pt{display:block}
+
+  .tablewrap{overflow-x:auto;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+  table{border-collapse:collapse;width:100%;min-width:560px}
+  th,td{text-align:left;vertical-align:top;padding:9px 11px;border-bottom:1px solid var(--lineSoft);font-size:13.5px;line-height:1.5;color:var(--inkSoft)}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2)}
+  td:first-child{color:var(--ink)}
+  tr:last-child td{border-bottom:0}
+  .updated{font-family:var(--mono);font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <p class="eyebrow">Naval Battle · privacidade</p>
+  <p class="eyebrow">Naval Battle · privacidade · privacy · privacidad</p>
+  <nav class="langnav" aria-label="Idioma / Language / Idioma">
+    <a href="#pt" data-l="pt">PT</a>
+    <a href="#en" data-l="en">EN</a>
+    <a href="#es" data-l="es">ES</a>
+  </nav>
+
+<!-- ================================================================== PT -->
+<section id="pt" class="lang" lang="pt-BR">
   <h1>O que este jogo guarda de você</h1>
+  <p class="updated">Última atualização: 26/10/2026</p>
 
   <div class="card">
-    <p style="margin:0"><strong>Resumo:</strong> sem conta, o jogo não manda nada para
-    fora do aparelho. Com conta (e-mail ou Google), guardamos só o necessário para a
-    carreira acompanhar você em outro celular — nome de guerra, patente, créditos e
-    estatísticas de partida. Nada de anúncio, nada de rastreamento de terceiros, nada de
-    venda de dados.</p>
+    <p style="margin:0"><strong>Resumo:</strong> sem conta, a sua carreira fica só no aparelho. Com
+    conta (e-mail ou Google), guardamos o necessário para a carreira, o jogo online, o ranking e
+    os amigos funcionarem em qualquer aparelho. Anúncio só premiado e opcional, no Android, quando
+    disponível. Nenhuma venda de dados, e nenhum rastreamento no sentido da Apple (cruzar dados
+    seus com os de outros apps ou sites). Você pode excluir a conta dentro do app.</p>
   </div>
 
-  <h2>Sem conta</h2>
-  <p>A carreira (patente, créditos, navios afundados, camuflagens) fica só no aparelho,
-  em preferências locais do Android. Nada disso viaja para nenhum servidor.</p>
+  <h2>Quem somos</h2>
+  <p>O controlador dos dados é John Coelho, desenvolvedor do Naval Battle. Todo pedido sobre
+  dados pessoais vai para <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>. Este e-mail é também o canal do encarregado (agente de pequeno porte, Res. CD/ANPD 2/2022).</p>
 
-  <h2>Com conta</h2>
-  <p>Criar conta por e-mail ou entrar com o Google guarda, no banco do projeto
-  (Supabase, hospedado na União Europeia/EUA conforme a região do provedor):</p>
-  <ul>
-    <li>E-mail e, quando aplicável, o identificador da conta Google usado para autenticar;</li>
-    <li>Nome de guerra escolhido e insígnia;</li>
-    <li>Patente, XP, créditos e estatísticas de partidas (vitórias, tiros, acertos,
-      navios afundados, sequências);</li>
-    <li>Camuflagens e linhas de casco já conquistadas.</li>
-  </ul>
-  <p>Isso serve só para a carreira acompanhar o comandante em qualquer aparelho onde
-  ele entrar. Nenhuma dessas informações é vendida, compartilhada com anunciantes ou
-  usada para qualquer coisa fora do próprio jogo.</p>
+  <h2>O que muda em cada plataforma</h2>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Android (Google Play)</th><th>iPhone (App Store)</th></tr>
+    <tr><td>Anúncios</td><td>premiados e opcionais, quando disponíveis</td><td>não há</td></tr>
+    <tr><td>Notificações push</td><td>sim (convites, partida encontrada, amigos, prêmio de convite e nova versão); dá para desligar no sistema</td><td>não há; o lembrete diário é local, agendado no próprio aparelho</td></tr>
+    <tr><td>Compras</td><td>Google Play (dobrões), quando disponíveis</td><td>não há</td></tr>
+    <tr><td>Faixa etária da loja</td><td>sim, lida no aparelho</td><td>não</td></tr>
+    <tr><td>Google Play Games</td><td>quando disponível</td><td>não</td></tr>
+    <tr><td>Conta, carreira, jogo online, ranking, amigos e denúncias</td><td>sim</td><td>sim</td></tr>
+  </table></div>
+
+  <h2>Sem conta</h2>
+  <p>A carreira (patente, créditos, navios afundados, camuflagens) fica só no aparelho, nas
+  preferências locais do sistema. Nada disso viaja para nenhum servidor, e desinstalar o app apaga
+  tudo. Mesmo sem conta, o app consulta a lista pública de versões (novidades e aviso de
+  atualização), sem mandar identificação; como em qualquer conexão, o servidor enxerga o endereço
+  IP. No Android, o aviso de atualização e o pedido de avaliação passam pelos serviços do Google
+  Play.</p>
+
+  <h2>Com conta: o que guardamos</h2>
+  <p>Criar conta por e-mail ou entrar com o Google grava, no banco do projeto, os dados abaixo.
+  A base legal segue a LGPD (art. 7º): <strong>contrato</strong> = executar o jogo que você pediu
+  (inc. V); <strong>legítimo interesse</strong> = segurança, antifraude e moderação (inc. IX);
+  <strong>consentimento</strong> = coisas que você liga ou escolhe enviar (inc. I).</p>
+  <div class="tablewrap"><table>
+    <tr><th>Dado</th><th>Para quê</th><th>Base legal</th><th>Quem recebe</th><th>Por quanto tempo</th></tr>
+    <tr><td>E-mail, nome e foto do perfil Google (se entrou com ele), identificador da conta, nome de guerra e insígnia</td><td>abrir a conta e identificar você no jogo</td><td>contrato</td><td>Supabase; Google, no login</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Carreira: patente, XP, estatísticas, camuflagens e cascos, saldo e histórico de dobrões e milhas, passe de temporada, diário e desafio da semana</td><td>a carreira acompanhar você em outro aparelho</td><td>contrato</td><td>Supabase</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Partidas online: sala, jogadas, provocações e resultado</td><td>jogar contra outra pessoa</td><td>contrato</td><td>Supabase; o adversário vê as jogadas e o seu nome de guerra</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Ranking e temporadas: pontos e nome de guerra</td><td>placar geral</td><td>contrato</td><td>Supabase; <strong>o nome de guerra é público</strong> no ranking e na busca por comandantes</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Amizades e presença: pedidos, amigos, “online agora” e “visto há”</td><td>jogar com amigos</td><td>contrato</td><td>Supabase; a presença é visível só para os seus amigos. O aviso de amigo online pode ser desligado</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Denúncias e bloqueios (ver abaixo)</td><td>moderação e segurança</td><td>legítimo interesse</td><td>Supabase; só o desenvolvedor lê</td><td>denúncias: até 12 meses; bloqueio: até ser desfeito</td></tr>
+    <tr><td>Token de push (Android)</td><td>entregar convites e avisos</td><td>consentimento</td><td>Supabase; Google (Firebase Cloud Messaging)</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Compras na Google Play: token da compra, número do pedido, produto, data e dobrões creditados. <strong>Nunca o cartão</strong></td><td>creditar a compra e evitar crédito duplicado</td><td>contrato</td><td>Google Play (cobrança); Supabase confere a compra junto ao Google</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Vales de anúncio premiado (Android): lugar, valor, código da transação e data</td><td>creditar o prêmio e aplicar o limite diário</td><td>contrato</td><td>Supabase; Google confirma o anúncio</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Convites de amigo: códigos</td><td>programa de convite</td><td>contrato</td><td>Supabase</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Conferência do aparelho: versão do app, plataforma e se é um aparelho de teste automático do Google</td><td>antifraude (tirar robôs do ranking e dos prêmios)</td><td>legítimo interesse</td><td>Supabase</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Feedback enviado pelo app: texto, tipo, nome de guerra, versão, plataforma e idioma</td><td>corrigir problemas e melhorar o jogo</td><td>consentimento (você escolhe enviar)</td><td>Supabase; só o desenvolvedor lê</td><td>enquanto a conta existir</td></tr>
+    <tr><td>Formulário do site (lista de espera): e-mail e plataforma</td><td>avisar quando houver vaga no teste</td><td>consentimento</td><td>Supabase</td><td>enquanto durar o programa de teste, ou até você pedir a remoção</td></tr>
+    <tr><td>Registros técnicos de conexão (endereço IP)</td><td>funcionamento e segurança</td><td>legítimo interesse</td><td>Supabase, GitHub Pages, Google Fonts</td><td>conforme cada provedor</td></tr>
+  </table></div>
+  <p>Nenhum desses dados é vendido. Depois da exclusão da conta, nada disso fica conosco, com a
+  exceção das denúncias (ver abaixo).</p>
 
   <h2>Login com Google</h2>
-  <p>Ao entrar com o Google, o app recebe do Google apenas nome, e-mail e foto de perfil
-  básicos (os escopos padrão de identidade) — o suficiente para abrir a conta do jogo.
-  O Naval Battle não pede acesso a nenhum outro dado da sua conta Google (contatos,
-  arquivos, agenda etc.).</p>
+  <p>Ao entrar com o Google, o app recebe do Google apenas nome, e-mail e foto de perfil básicos
+  (os escopos padrão de identidade), o suficiente para abrir a conta do jogo. O Naval Battle não
+  pede acesso a nenhum outro dado da sua conta Google (contatos, arquivos, agenda etc.). O nome do Google (ou, sem ele, o começo do e-mail) vira o nome de guerra inicial, que é <strong>público</strong> no ranking e na busca; você pode trocá-lo no Perfil.</p>
+
+  <h2>Anúncios premiados</h2>
+  <p>Quando disponíveis, no Android, com conta, o jogo oferece anúncios premiados opcionais (dobrar
+  os dobrões de uma vitória, do check-in ou do desafio, ou ganhar uma milha com o saldo zerado).
+  O anúncio só começa quando você toca no botão: não há banner nem anúncio no meio da partida.
+  Eles são servidos pelo Google AdMob. No iPhone não há anúncio.</p>
+  <ul>
+    <li>O Google recebe o ID de publicidade do aparelho, o endereço IP (localização
+      aproximada) e dados do aparelho e do uso do anúncio, para exibir e medir o anúncio e
+      prevenir fraude. Nenhum anúncio é pedido ao Google, e nenhum formulário de consentimento
+      aparece, antes do seu toque no botão.</li>
+    <li>No Espaço Econômico Europeu, no Reino Unido e na Suíça, o consentimento é pedido pelo
+      formulário do Google. Em Ajustes, “Privacidade dos anúncios” reabre o formulário a qualquer
+      momento.</li>
+    <li>Conforme a faixa etária informada pela Google Play, que é lida só no aparelho e não
+      é enviada ao nosso servidor: adolescente e idade desconhecida recebem o tratamento de
+      menor (anúncio não personalizado); criança recebe o tratamento infantil (não
+      personalizado e de conteúdo adequado). Para adulto, o Google pode personalizar o anúncio
+      com o ID de publicidade. Você pode recusar a personalização no formulário (Europa) ou
+      desligá-la nas configurações de anúncios do Android e em
+      <a href="https://myadcenter.google.com/">Minha central de anúncios</a>.</li>
+    <li>O prêmio é creditado pelo nosso servidor. Para confirmar o anúncio, o Google envia ao
+      nosso servidor uma notificação assinada, e o app informa ao Google um identificador interno
+      da conta (código aleatório, sem nome nem e-mail) e o código do vale, só para confirmar o
+      prêmio. O Google não recebe o seu perfil do jogo.</li>
+    <li>Veja <a href="https://policies.google.com/technologies/partner-sites">como o Google usa
+      informações de apps parceiros</a>.</li>
+  </ul>
+
+  <h2>Quem recebe os dados</h2>
+  <ul>
+    <li><strong>Supabase</strong> (banco de dados e login): o projeto roda na região Canadá
+      (Central, AWS <code>ca-central-1</code>).</li>
+    <li><strong>Google</strong>: login com o Google, Firebase Cloud Messaging (push), Google Play
+      Billing (compras), AdMob e formulário de consentimento UMP (anúncios), Play Age Signals
+      (faixa etária), Google Play Games, e as avaliações e atualizações dentro do app.</li>
+    <li><strong>GitHub Pages</strong>: hospeda este site. <strong>Google Fonts</strong>: as páginas
+      do site carregam as fontes do Google, o que envia o seu IP ao Google.</li>
+    <li>Não vendemos dados e não os damos a anunciantes. A Apple recebe os dados de instalação e
+      compra da própria App Store, o que fica sob a política dela.</li>
+  </ul>
+
+  <h2>Transferência internacional</h2>
+  <p>Os dados podem ser tratados fora do Brasil (Canadá, onde fica o banco, e Estados Unidos, onde
+  o Google opera), com as cláusulas contratuais e as garantias dos provedores (acordos de
+  tratamento de dados do Google e do Supabase), como prevê o art. 33 da LGPD.</p>
+
+  <h2>Seus direitos e exclusão da conta</h2>
+  <p>Pela LGPD (art. 18) você pode pedir confirmação de que tratamos seus dados, acesso, correção
+  (o nome de guerra se troca no próprio app), anonimização ou eliminação, portabilidade,
+  informação sobre com quem compartilhamos, e revogar o consentimento. Também pode reclamar à
+  Autoridade Nacional de Proteção de Dados (ANPD).</p>
+  <ul>
+    <li><strong>Dentro do app:</strong> Perfil → Excluir conta. Apaga a conta e tudo o que
+      está ligado a ela no servidor, na hora, depois de uma confirmação.</li>
+    <li><strong>Por e-mail:</strong> escreva para <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>;
+      respondemos em até 15 dias.</li>
+    <li><strong>Sem conta:</strong> nada que identifique você vai ao nosso servidor, e desinstalar o app apaga tudo.</li>
+  </ul>
+
+  <h2>Menores de idade</h2>
+  <p>O jogo tem classificação 12+ no Brasil e 13+ na App Store. No Android, a faixa etária vem da
+  Google Play (Age Signals), é lida só no aparelho e nunca é enviada ao nosso servidor: serve apenas
+  para escolher o tipo de anúncio. Adolescente e idade desconhecida recebem anúncio não
+  personalizado. O jogo não vende nem sorteia conteúdo aleatório (nenhuma caixa-surpresa).
+  Pais ou responsáveis podem pedir a exclusão da conta de um menor pelo e-mail acima.</p>
+
+  <h2>Denúncias e bloqueio</h2>
+  <p>Este recurso chega com a versão do app que traz o botão Denunciar (prevista para a 0.42.0);
+  esta seção vale a partir dela. Ao denunciar um jogador, gravamos quem denunciou, quem foi
+  denunciado, o motivo escolhido na lista, onde aconteceu (ranking, busca, amigos ou partida online, com a partida quando houver) e a data, com o nome de guerra do denunciado como estava na hora. Só o desenvolvedor lê
+  as denúncias. Podem resultar em troca do nome de guerra e em suspensão da conta. Um filtro
+  automático também barra nomes de guerra ofensivos. A denúncia fica por até 12 meses e continua
+  existindo se quem denunciou excluir a conta, sem o identificador dessa pessoa; o nome trocado
+  por moderação também fica por até 12 meses. O bloqueio fica guardado até você desfazê-lo. As
+  <a href="terms.html#pt">regras da comunidade</a> dizem o que é proibido.</p>
 
   <h2>Rede local e provocações</h2>
   <p>Partidas em rede local (Wi-Fi) conversam direto entre os dois aparelhos, sem passar
   por servidor nenhum — nome da partida, jogadas e as provocações (emoji/grito de
   guerra) trafegam só entre os dois celulares na mesma rede.</p>
 
-  <h2>Excluir seus dados</h2>
-  <p>Peça a remoção da conta e da carreira associada escrevendo para
-  <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>. Apagamos a linha da carreira e
-  a conta de autenticação.</p>
+  <h2>Mudanças nesta política</h2>
+  <ul>
+    <li>26/10/2026 — reescrita: dados por plataforma, base legal, quem recebe, anúncios,
+      menores, denúncias e exclusão de conta pelo app.</li>
+    <li>13/09/2026 — primeira versão.</li>
+  </ul>
 
   <h2>Contato</h2>
-  <p>Dúvidas sobre esta política: <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>.</p>
+  <p>Dúvidas e pedidos sobre esta política: <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>.</p>
 
   <a class="back" href="./">← Voltar para o Naval Battle</a>
+</section>
+
+<!-- ================================================================== EN -->
+<section id="en" class="lang" lang="en">
+  <h1>What this game keeps about you</h1>
+  <p class="updated">Last updated: 2026-10-26 · The Portuguese text is the reference version.</p>
+
+  <div class="card">
+    <p style="margin:0"><strong>Summary:</strong> without an account, your career stays on your
+    device only. With an account (email or Google), we keep what is needed for your career, online
+    play, the ranking and friends to work on any device. Ads are rewarded and optional only, on
+    Android, when available. We never sell data, and there is no tracking in Apple's sense
+    (combining your data with other apps' or websites'). You can delete your account inside the
+    app.</p>
+  </div>
+
+  <h2>Who we are</h2>
+  <p>The data controller is John Coelho, developer of Naval Battle. Any request about personal data
+  goes to <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>. This email is also the data protection officer channel (small-scale processing agent, Resolution CD/ANPD 2/2022).</p>
+
+  <h2>What changes on each platform</h2>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Android (Google Play)</th><th>iPhone (App Store)</th></tr>
+    <tr><td>Ads</td><td>rewarded and optional, when available</td><td>none</td></tr>
+    <tr><td>Push notifications</td><td>yes (invites, match found, friends, invite reward and new version); can be turned off in system settings</td><td>none; the daily reminder is local, scheduled on the device itself</td></tr>
+    <tr><td>Purchases</td><td>Google Play (doubloons), when available</td><td>none</td></tr>
+    <tr><td>Store age band</td><td>yes, read on the device</td><td>no</td></tr>
+    <tr><td>Google Play Games</td><td>when available</td><td>no</td></tr>
+    <tr><td>Account, career, online play, ranking, friends and reports</td><td>yes</td><td>yes</td></tr>
+  </table></div>
+
+  <h2>Without an account</h2>
+  <p>Your career (rank, credits, ships sunk, camouflages) stays on the device, in the system's local
+  preferences. None of it travels to any server, and uninstalling the app erases everything. Even
+  without an account, the app reads the public list of versions (release notes and update notice)
+  without sending any identification; as with any connection, the server sees the IP address. On
+  Android, the update notice and the review prompt go through Google Play services.</p>
+
+  <h2>With an account: what we keep</h2>
+  <p>Creating an account by email or signing in with Google stores the data below in the project's
+  database. The legal basis follows Brazil's LGPD (art. 7): <strong>contract</strong> = running the
+  game you asked for; <strong>legitimate interest</strong> = security, anti-fraud and moderation;
+  <strong>consent</strong> = things you turn on or choose to send.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Data</th><th>Purpose</th><th>Legal basis</th><th>Who receives it</th><th>Retention</th></tr>
+    <tr><td>Email, Google profile name and photo (if you signed in with it), account identifier, war name and badge</td><td>open the account and identify you in the game</td><td>contract</td><td>Supabase; Google, at sign-in</td><td>while the account exists</td></tr>
+    <tr><td>Career: rank, XP, statistics, camouflages and hulls, doubloon and mile balance and history, season pass, daily log and weekly challenge</td><td>keep your career on any device</td><td>contract</td><td>Supabase</td><td>while the account exists</td></tr>
+    <tr><td>Online matches: room, moves, taunts and result</td><td>play against another person</td><td>contract</td><td>Supabase; your opponent sees the moves and your war name</td><td>while the account exists</td></tr>
+    <tr><td>Ranking and seasons: points and war name</td><td>global scoreboard</td><td>contract</td><td>Supabase; <strong>your war name is public</strong> in the ranking and in commander search</td><td>while the account exists</td></tr>
+    <tr><td>Friendships and presence: requests, friends, “online now” and “last seen”</td><td>play with friends</td><td>contract</td><td>Supabase; presence is visible to your friends only. The friend-online alert can be turned off</td><td>while the account exists</td></tr>
+    <tr><td>Reports and blocks (see below)</td><td>moderation and safety</td><td>legitimate interest</td><td>Supabase; only the developer reads them</td><td>reports: up to 12 months; blocks: until undone</td></tr>
+    <tr><td>Push token (Android)</td><td>deliver invites and alerts</td><td>consent</td><td>Supabase; Google (Firebase Cloud Messaging)</td><td>while the account exists</td></tr>
+    <tr><td>Google Play purchases: purchase token, order number, product, date and doubloons credited. <strong>Never your card</strong></td><td>credit the purchase and prevent double credit</td><td>contract</td><td>Google Play (billing); Supabase checks the purchase with Google</td><td>while the account exists</td></tr>
+    <tr><td>Rewarded-ad vouchers (Android): place, amount, transaction code and date</td><td>credit the reward and apply the daily limit</td><td>contract</td><td>Supabase; Google confirms the ad</td><td>while the account exists</td></tr>
+    <tr><td>Friend invites: codes</td><td>invite program</td><td>contract</td><td>Supabase</td><td>while the account exists</td></tr>
+    <tr><td>Device check: app version, platform and whether it is a Google automated test device</td><td>anti-fraud (keep bots out of the ranking and rewards)</td><td>legitimate interest</td><td>Supabase</td><td>while the account exists</td></tr>
+    <tr><td>Feedback sent from the app: text, type, war name, version, platform and language</td><td>fix problems and improve the game</td><td>consent (you choose to send)</td><td>Supabase; only the developer reads it</td><td>while the account exists</td></tr>
+    <tr><td>Website form (waiting list): email and platform</td><td>tell you when a test slot opens</td><td>consent</td><td>Supabase</td><td>while the test program lasts, or until you ask for removal</td></tr>
+    <tr><td>Technical connection logs (IP address)</td><td>operation and security</td><td>legitimate interest</td><td>Supabase, GitHub Pages, Google Fonts</td><td>per each provider</td></tr>
+  </table></div>
+  <p>None of this data is sold. After the account is deleted, none of it stays with us, except
+  reports (see below).</p>
+
+  <h2>Sign in with Google</h2>
+  <p>When you sign in with Google, the app receives only your basic name, email and profile photo
+  from Google (the standard identity scopes), enough to open the game account. Naval Battle asks
+  for no other data from your Google account (contacts, files, calendar, etc.). Your Google name (or, without it, the start of your email) becomes your initial war name, which is <strong>public</strong> in the ranking and in search; you can change it in Profile.</p>
+
+  <h2>Rewarded ads</h2>
+  <p>When available, on Android, with an account, the game offers optional rewarded ads (double the
+  doubloons from a win, the check-in or the challenge, or earn a mile when your balance is zero).
+  An ad starts only when you tap the button: there are no banners and no ads in the middle of a
+  match. They are served by Google AdMob. There are no ads on iPhone.</p>
+  <ul>
+    <li>Google receives the device advertising ID, the IP address (approximate location) and data
+      about the device and the ad use, to show and measure the ad and prevent fraud. No ad is
+      requested from Google, and no consent form appears, before you tap the button.</li>
+    <li>In the European Economic Area, the United Kingdom and Switzerland, consent is requested
+      through Google's form. In Settings, “Ad privacy” reopens the form at any time.</li>
+    <li>According to the age band reported by Google Play, which is read on the device only and is
+      not sent to our server: teens and unknown age get minor treatment (non-personalized ads);
+      children get child-directed treatment (non-personalized, with suitable content). For adults,
+      Google may personalize the ad using the advertising ID. You can decline personalization in the
+      form (Europe) or turn it off in Android's ad settings and in
+      <a href="https://myadcenter.google.com/">My Ad Center</a>.</li>
+    <li>The reward is credited by our server. To confirm the ad, Google sends our server a signed
+      notification, and the app gives Google an internal account identifier (a random code, no name
+      or email) and the voucher code, only to confirm the reward. Google does not receive your game
+      profile.</li>
+    <li>See <a href="https://policies.google.com/technologies/partner-sites">how Google uses
+      information from partner apps</a>.</li>
+  </ul>
+
+  <h2>Who receives the data</h2>
+  <ul>
+    <li><strong>Supabase</strong> (database and sign-in): the project runs in the Canada (Central)
+      region (AWS <code>ca-central-1</code>).</li>
+    <li><strong>Google</strong>: Google sign-in, Firebase Cloud Messaging (push), Google Play
+      Billing (purchases), AdMob and the UMP consent form (ads), Play Age Signals (age band),
+      Google Play Games, and in-app reviews and updates.</li>
+    <li><strong>GitHub Pages</strong> hosts this website. <strong>Google Fonts</strong>: the site
+      pages load Google's fonts, which sends your IP to Google.</li>
+    <li>We do not sell data and do not give it to advertisers. Apple receives install and purchase
+      data through the App Store itself, which falls under Apple's policy.</li>
+  </ul>
+
+  <h2>International transfer</h2>
+  <p>Data may be processed outside Brazil (Canada, where the database is, and the United States,
+  where Google operates), under the contractual clauses and safeguards of the providers (Google's
+  and Supabase's data processing agreements), as article 33 of the LGPD provides.</p>
+
+  <h2>Your rights and account deletion</h2>
+  <p>Under the LGPD (art. 18) you may ask for confirmation that we process your data, access,
+  correction (you can change your war name in the app), anonymization or deletion, portability,
+  information about who we share it with, and withdraw consent. You may also complain to Brazil's
+  data protection authority (ANPD).</p>
+  <ul>
+    <li><strong>Inside the app:</strong> Profile → Delete account. It deletes the account and
+      everything tied to it on the server, immediately, after a confirmation.</li>
+    <li><strong>By email:</strong> write to <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>;
+      we reply within 15 days.</li>
+    <li><strong>Without an account:</strong> nothing that identifies you goes to our server, and uninstalling the app
+      erases everything.</li>
+  </ul>
+
+  <h2>Minors</h2>
+  <p>The game is rated 12+ in Brazil and 13+ on the App Store. On Android, the age band comes from
+  Google Play (Age Signals), is read on the device only and is never sent to our server: it only
+  selects the type of ad. Teens and unknown age get non-personalized ads. The game does not sell or
+  draw random content (no loot boxes). Parents or guardians can ask for a minor's account to be
+  deleted at the email above.</p>
+
+  <h2>Reports and blocking</h2>
+  <p>This feature arrives with the app version that adds the Report button (planned for 0.42.0);
+  this section applies from that version on. When you report a player, we store who reported, who
+  was reported, the reason chosen from a list, where it happened (ranking, search, friends or online match, with the match when there is one) and the date, with the reported player's war name as it was at the time. Only the developer
+  reads reports. They can lead to a war-name change and an account suspension. An automatic filter
+  also blocks offensive war names. A report is kept for up to 12 months and still exists if the
+  reporter deletes their account, without that person's identifier; a name changed by moderation is
+  also kept for up to 12 months. A block is kept until you undo it. The
+  <a href="terms.html#en">community rules</a> say what is prohibited.</p>
+
+  <h2>Local network and taunts</h2>
+  <p>Local-network (Wi-Fi) matches talk directly between the two devices, through no server at all:
+  the match name, the moves and the taunts (emoji/war cry) travel only between the two phones on the
+  same network.</p>
+
+  <h2>Changes to this policy</h2>
+  <ul>
+    <li>2026-10-26 — rewritten: data by platform, legal basis, recipients, ads, minors, reports and
+      account deletion from the app.</li>
+    <li>2026-09-13 — first version.</li>
+  </ul>
+
+  <h2>Contact</h2>
+  <p>Questions and requests about this policy: <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>.</p>
+
+  <a class="back" href="./">← Back to Naval Battle</a>
+</section>
+
+<!-- ================================================================== ES -->
+<section id="es" class="lang" lang="es">
+  <h1>Qué guarda este juego sobre ti</h1>
+  <p class="updated">Última actualización: 26/10/2026 · El texto en portugués es la versión de referencia.</p>
+
+  <div class="card">
+    <p style="margin:0"><strong>Resumen:</strong> sin cuenta, tu carrera queda solo en el
+    dispositivo. Con cuenta (correo o Google), guardamos lo necesario para que la carrera, el juego
+    en línea, el ranking y los amigos funcionen en cualquier dispositivo. Los anuncios son solo
+    premiados y opcionales, en Android, cuando están disponibles. No vendemos datos, y no hay
+    rastreo en el sentido de Apple (cruzar tus datos con los de otras apps o sitios). Puedes
+    eliminar la cuenta dentro de la app.</p>
+  </div>
+
+  <h2>Quiénes somos</h2>
+  <p>El responsable de los datos es John Coelho, desarrollador de Naval Battle. Toda solicitud
+  sobre datos personales va a <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>. Este correo es también el canal del encargado (agente de tratamiento de pequeño porte, Res. CD/ANPD 2/2022).</p>
+
+  <h2>Qué cambia en cada plataforma</h2>
+  <div class="tablewrap"><table>
+    <tr><th></th><th>Android (Google Play)</th><th>iPhone (App Store)</th></tr>
+    <tr><td>Anuncios</td><td>premiados y opcionales, cuando están disponibles</td><td>no hay</td></tr>
+    <tr><td>Notificaciones push</td><td>sí (invitaciones, partida encontrada, amigos, premio de invitación y nueva versión); se pueden desactivar en el sistema</td><td>no hay; el recordatorio diario es local, programado en el propio dispositivo</td></tr>
+    <tr><td>Compras</td><td>Google Play (doblones), cuando están disponibles</td><td>no hay</td></tr>
+    <tr><td>Franja de edad de la tienda</td><td>sí, leída en el dispositivo</td><td>no</td></tr>
+    <tr><td>Google Play Games</td><td>cuando está disponible</td><td>no</td></tr>
+    <tr><td>Cuenta, carrera, juego en línea, ranking, amigos y denuncias</td><td>sí</td><td>sí</td></tr>
+  </table></div>
+
+  <h2>Sin cuenta</h2>
+  <p>La carrera (rango, créditos, barcos hundidos, camuflajes) queda solo en el dispositivo, en las
+  preferencias locales del sistema. Nada de eso viaja a ningún servidor, y desinstalar la app borra
+  todo. Incluso sin cuenta, la app consulta la lista pública de versiones (novedades y aviso de
+  actualización) sin enviar identificación; como en cualquier conexión, el servidor ve la
+  dirección IP. En Android, el aviso de actualización y la solicitud de valoración pasan por los
+  servicios de Google Play.</p>
+
+  <h2>Con cuenta: qué guardamos</h2>
+  <p>Crear una cuenta por correo o entrar con Google guarda en la base de datos del proyecto los
+  datos de abajo. La base legal sigue la LGPD de Brasil (art. 7): <strong>contrato</strong> =
+  ejecutar el juego que pediste; <strong>interés legítimo</strong> = seguridad, antifraude y
+  moderación; <strong>consentimiento</strong> = lo que activas o decides enviar.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Dato</th><th>Para qué</th><th>Base legal</th><th>Quién lo recibe</th><th>Por cuánto tiempo</th></tr>
+    <tr><td>Correo, nombre y foto del perfil de Google (si entraste con ella), identificador de la cuenta, nombre de guerra e insignia</td><td>abrir la cuenta e identificarte en el juego</td><td>contrato</td><td>Supabase; Google, al iniciar sesión</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Carrera: rango, XP, estadísticas, camuflajes y cascos, saldo e historial de doblones y millas, pase de temporada, diario y desafío semanal</td><td>que la carrera te acompañe en otro dispositivo</td><td>contrato</td><td>Supabase</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Partidas en línea: sala, jugadas, provocaciones y resultado</td><td>jugar contra otra persona</td><td>contrato</td><td>Supabase; tu rival ve las jugadas y tu nombre de guerra</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Ranking y temporadas: puntos y nombre de guerra</td><td>marcador general</td><td>contrato</td><td>Supabase; <strong>el nombre de guerra es público</strong> en el ranking y en la búsqueda de comandantes</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Amistades y presencia: solicitudes, amigos, “en línea ahora” y “visto hace”</td><td>jugar con amigos</td><td>contrato</td><td>Supabase; la presencia es visible solo para tus amigos. El aviso de amigo en línea se puede desactivar</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Denuncias y bloqueos (ver abajo)</td><td>moderación y seguridad</td><td>interés legítimo</td><td>Supabase; solo el desarrollador las lee</td><td>denuncias: hasta 12 meses; bloqueo: hasta deshacerlo</td></tr>
+    <tr><td>Token de push (Android)</td><td>entregar invitaciones y avisos</td><td>consentimiento</td><td>Supabase; Google (Firebase Cloud Messaging)</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Compras en Google Play: token de la compra, número de pedido, producto, fecha y doblones acreditados. <strong>Nunca la tarjeta</strong></td><td>acreditar la compra y evitar crédito duplicado</td><td>contrato</td><td>Google Play (cobro); Supabase verifica la compra con Google</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Vales de anuncio premiado (Android): lugar, valor, código de la transacción y fecha</td><td>acreditar el premio y aplicar el límite diario</td><td>contrato</td><td>Supabase; Google confirma el anuncio</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Invitaciones de amigo: códigos</td><td>programa de invitación</td><td>contrato</td><td>Supabase</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Verificación del dispositivo: versión de la app, plataforma y si es un dispositivo de pruebas automáticas de Google</td><td>antifraude (sacar robots del ranking y de los premios)</td><td>interés legítimo</td><td>Supabase</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Comentarios enviados desde la app: texto, tipo, nombre de guerra, versión, plataforma e idioma</td><td>corregir problemas y mejorar el juego</td><td>consentimiento (tú decides enviar)</td><td>Supabase; solo el desarrollador los lee</td><td>mientras exista la cuenta</td></tr>
+    <tr><td>Formulario del sitio (lista de espera): correo y plataforma</td><td>avisarte cuando haya cupo en la prueba</td><td>consentimiento</td><td>Supabase</td><td>mientras dure el programa de prueba, o hasta que pidas la eliminación</td></tr>
+    <tr><td>Registros técnicos de conexión (dirección IP)</td><td>funcionamiento y seguridad</td><td>interés legítimo</td><td>Supabase, GitHub Pages, Google Fonts</td><td>según cada proveedor</td></tr>
+  </table></div>
+  <p>Ninguno de estos datos se vende. Tras eliminar la cuenta, nada de esto queda con nosotros,
+  salvo las denuncias (ver abajo).</p>
+
+  <h2>Inicio de sesión con Google</h2>
+  <p>Al entrar con Google, la app recibe de Google solo tu nombre, correo y foto de perfil básicos
+  (los alcances estándar de identidad), lo suficiente para abrir la cuenta del juego. Naval Battle
+  no pide acceso a ningún otro dato de tu cuenta de Google (contactos, archivos, agenda, etc.). Tu nombre de Google (o, sin él, el comienzo del correo) pasa a ser tu nombre de guerra inicial, que es <strong>público</strong> en el ranking y en la búsqueda; puedes cambiarlo en Perfil.</p>
+
+  <h2>Anuncios premiados</h2>
+  <p>Cuando están disponibles, en Android, con cuenta, el juego ofrece anuncios premiados opcionales
+  (duplicar los doblones de una victoria, del check-in o del desafío, o ganar una milla con el saldo
+  en cero). El anuncio solo empieza cuando tocas el botón: no hay banners ni anuncios en medio de la
+  partida. Los sirve Google AdMob. En iPhone no hay anuncios.</p>
+  <ul>
+    <li>Google recibe el ID de publicidad del dispositivo, la dirección IP (ubicación aproximada) y
+      datos del dispositivo y del uso del anuncio, para mostrarlo, medirlo y prevenir fraude. No se
+      pide ningún anuncio a Google, ni aparece formulario de consentimiento, antes de que toques el
+      botón.</li>
+    <li>En el Espacio Económico Europeo, el Reino Unido y Suiza, el consentimiento se pide con el
+      formulario de Google. En Ajustes, “Privacidad de los anuncios” reabre el formulario en
+      cualquier momento.</li>
+    <li>Según la franja de edad informada por Google Play, que se lee solo en el dispositivo y no se
+      envía a nuestro servidor: adolescentes y edad desconocida reciben el trato de menor (anuncio no
+      personalizado); niños reciben el trato infantil (no personalizado y de contenido adecuado).
+      Para adultos, Google puede personalizar el anuncio con el ID de publicidad. Puedes rechazar la
+      personalización en el formulario (Europa) o desactivarla en los ajustes de anuncios de Android
+      y en <a href="https://myadcenter.google.com/">Mi Centro de anuncios</a>.</li>
+    <li>El premio lo acredita nuestro servidor. Para confirmar el anuncio, Google envía a nuestro
+      servidor una notificación firmada, y la app informa a Google un identificador interno de la
+      cuenta (código aleatorio, sin nombre ni correo) y el código del vale, solo para confirmar el
+      premio. Google no recibe tu perfil del juego.</li>
+    <li>Consulta <a href="https://policies.google.com/technologies/partner-sites">cómo usa Google la
+      información de apps asociadas</a>.</li>
+  </ul>
+
+  <h2>Quién recibe los datos</h2>
+  <ul>
+    <li><strong>Supabase</strong> (base de datos e inicio de sesión): el proyecto funciona en la
+      región Canadá (Central, AWS <code>ca-central-1</code>).</li>
+    <li><strong>Google</strong>: inicio de sesión con Google, Firebase Cloud Messaging (push), Google
+      Play Billing (compras), AdMob y el formulario de consentimiento UMP (anuncios), Play Age
+      Signals (franja de edad), Google Play Games, y las valoraciones y actualizaciones dentro de la
+      app.</li>
+    <li><strong>GitHub Pages</strong> aloja este sitio. <strong>Google Fonts</strong>: las páginas
+      del sitio cargan las fuentes de Google, lo que envía tu IP a Google.</li>
+    <li>No vendemos datos ni los damos a anunciantes. Apple recibe los datos de instalación y compra
+      de la propia App Store, que quedan bajo su política.</li>
+  </ul>
+
+  <h2>Transferencia internacional</h2>
+  <p>Los datos pueden tratarse fuera de Brasil (Canadá, donde está la base de datos, y Estados
+  Unidos, donde opera Google), con las cláusulas contractuales y garantías de los proveedores
+  (acuerdos de tratamiento de datos de Google y de Supabase), como prevé el art. 33 de la LGPD.</p>
+
+  <h2>Tus derechos y eliminación de la cuenta</h2>
+  <p>Según la LGPD (art. 18) puedes pedir confirmación de que tratamos tus datos, acceso, corrección
+  (el nombre de guerra se cambia en la propia app), anonimización o eliminación, portabilidad,
+  información sobre con quién los compartimos, y revocar el consentimiento. También puedes
+  reclamar ante la autoridad de protección de datos de Brasil (ANPD).</p>
+  <ul>
+    <li><strong>Dentro de la app:</strong> Perfil → Eliminar cuenta. Borra la cuenta y todo lo
+      vinculado a ella en el servidor, al instante, tras una confirmación.</li>
+    <li><strong>Por correo:</strong> escribe a <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>;
+      respondemos en un máximo de 15 días.</li>
+    <li><strong>Sin cuenta:</strong> nada que te identifique va a nuestro servidor, y desinstalar la app borra todo.</li>
+  </ul>
+
+  <h2>Menores de edad</h2>
+  <p>El juego tiene clasificación 12+ en Brasil y 13+ en la App Store. En Android, la franja de edad
+  viene de Google Play (Age Signals), se lee solo en el dispositivo y nunca se envía a nuestro
+  servidor: solo sirve para elegir el tipo de anuncio. Adolescentes y edad desconocida reciben
+  anuncios no personalizados. El juego no vende ni sortea contenido aleatorio (nada de cajas
+  sorpresa). Padres o tutores pueden pedir la eliminación de la cuenta de un menor por el correo de
+  arriba.</p>
+
+  <h2>Denuncias y bloqueo</h2>
+  <p>Esta función llega con la versión de la app que trae el botón Denunciar (prevista para la
+  0.42.0); esta sección rige desde ella. Al denunciar a un jugador, guardamos quién denunció, a
+  quién se denunció, el motivo elegido de la lista, dónde ocurrió (ranking, búsqueda, amigos o partida en línea, con la partida cuando exista) y la fecha, con el nombre de guerra del denunciado tal como estaba en ese momento. Solo
+  el desarrollador lee las denuncias. Pueden resultar en cambio del nombre de guerra y suspensión
+  de la cuenta. Un filtro automático también bloquea nombres de guerra ofensivos. La denuncia se
+  guarda hasta 12 meses y sigue existiendo si quien denunció elimina su cuenta, sin el
+  identificador de esa persona; el nombre cambiado por moderación también se guarda hasta 12 meses.
+  El bloqueo se guarda hasta que lo deshagas. Las
+  <a href="terms.html#es">reglas de la comunidad</a> dicen qué está prohibido.</p>
+
+  <h2>Red local y provocaciones</h2>
+  <p>Las partidas en red local (Wi-Fi) hablan directo entre los dos dispositivos, sin pasar por
+  ningún servidor: el nombre de la partida, las jugadas y las provocaciones (emoji/grito de guerra)
+  viajan solo entre los dos móviles en la misma red.</p>
+
+  <h2>Cambios en esta política</h2>
+  <ul>
+    <li>26/10/2026 — reescrita: datos por plataforma, base legal, destinatarios, anuncios, menores,
+      denuncias y eliminación de cuenta desde la app.</li>
+    <li>13/09/2026 — primera versión.</li>
+  </ul>
+
+  <h2>Contacto</h2>
+  <p>Dudas y solicitudes sobre esta política: <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>.</p>
+
+  <a class="back" href="./">← Volver a Naval Battle</a>
+</section>
 </div>
+
+<script>
+  // Sem âncora, abre na língua do navegador (o app abre #pt, #en ou #es direto).
+  (function () {
+    var L = { pt: 'pt-BR', en: 'en', es: 'es' };
+    function cur() {
+      var h = (location.hash || '').replace('#', '');
+      return L[h] ? h : 'pt';
+    }
+    function mark() {
+      var c = cur();
+      document.documentElement.lang = L[c];
+      document.querySelectorAll('.langnav a').forEach(function (a) {
+        a.classList.toggle('on', a.getAttribute('data-l') === c);
+      });
+    }
+    if (!location.hash) {
+      var n = (navigator.language || 'pt').slice(0, 2).toLowerCase();
+      location.replace('#' + ((n === 'en' || n === 'es') ? n : 'pt'));
+    }
+    window.addEventListener('hashchange', mark);
+    mark();
+  })();
+</script>
 </body>
 </html>

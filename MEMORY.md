@@ -10,7 +10,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 2. **Todo push na `main` publica** (Play faixa Alpha + `.ipa` + site): subir `versionCode`/
    `versionName` e o `CFBundleShortVersionString` do iOS, e escrever as notas da Play
    (`composeApp/src/main/play/release-notes/pt-BR/default.txt`, ≤ 500, sem acento) **no mesmo commit**.
-   Exceção: commit só de documentação/skills leva `[skip ci]` na mensagem e não sobe versão.
+   Exceção: commit só de documentação/skills/`site/` leva `[skip ci]` na mensagem e não sobe versão (`site/`: depois `gh workflow run pages.yml --ref main`).
 3. **Documentação anda com o código**: CHANGELOG sempre; README, HISTORY, MEMORY, docs/ e design
    system quando o assunto mudar. Nunca "depois".
 4. **Camada nova na stack só com aprovação do John** (biblioteca, serviço, plugin, provedor, versão
@@ -56,6 +56,13 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - Antes de fechar uma SPEC de melhoria, avisar se há bugs de jogador pendentes para incluir.
 
 ## 3. Assuntos em andamento
+
+- **Política de privacidade e regras da comunidade (#57):** `site/privacy.html` (pt/en/es em âncoras) e `site/terms.html`
+  prontas; a página só vale depois de publicada (`gh workflow run pages.yml --ref main`, conferir pela URL). Mudança só em
+  `site/` leva `[skip ci]` e não sobe versão. O texto de denúncias já está lá, marcado "0.42.0": a #58 precisa cumpri-lo
+  (nome, motivo, onde, data; só o desenvolvedor lê; 12 meses; filtro de nome; filtro e troca automática; demais denúncias assim que possível). **Pendente do John:**
+  Apple (Privacidade do app: e-mail, conteúdo do usuário, jogo, ID do usuário, diagnóstico; Tracking não) e Segurança dos
+  dados da Play (push, compras, ID do app e, com a #40, o ID de publicidade). A #40 só liga os anúncios com a página no ar.
 
 - **Desafio da semana (#47, 0.40.0):** migração `weekly_challenge` (`supabase/weekly.sql`) a aplicar só depois do APROVADO
   do Tech Lead e antes de ligar o app novo na Play. QA: WEK-01 a WEK-06; `weekly_enabled` é o interruptor.

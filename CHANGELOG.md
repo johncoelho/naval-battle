@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Site] — 2026-10-26 · Política de privacidade e regras da comunidade (#57)
+
+Sem versão do app (só `site/`, commit com `[skip ci]` e publicação com `gh workflow run pages.yml --ref main`). Refs #57.
+
+### Site
+- `site/privacy.html` reescrita em pt, en e es (âncoras `#pt`, `#en`, `#es`): resumo por plataforma, inventário de dados com
+  finalidade, base legal (LGPD art. 7º), quem recebe e retenção, anúncios premiados (Android, opcionais, quando disponíveis),
+  Supabase na região Canadá, transferência internacional, direitos do titular e exclusão de conta pelo app, menores (ECA
+  Digital), denúncias e bloqueio (a partir da 0.42.0), compras e push; revisão do Tech Lead aplicada (sem prazo fixo de 24 h, nome do Google vira nome de guerra público, tipos de push).
+- `site/terms.html` nova: regras da comunidade e termos de uso nas três línguas; rodapé do `site/index.html` linka as duas páginas.
+
 ## [0.41.0] — 2026-10-26 · Conquistas e placar do Google Play Games, desligados (#48)
 
 App 0.41.0 (versionCode 108). Refs #48. Sem banco.

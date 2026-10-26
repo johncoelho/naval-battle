@@ -243,7 +243,7 @@ mesma leitura e anota em `%LOCALAPPDATA%\naval-battle-keepalive.log`.
 > Cloud, app "Naval Battle" com tela de consentimento externa **em produção**
 > (`Publishing status: In production` — não fica mais restrito a testadores). Página de
 > privacidade em [site/privacy.html](../site/privacy.html), publicada em
-> `johncoelho.github.io/naval-battle/privacy.html`, foi o que faltava para liberar o
+> `johncoelho.github.io/naval-battle/privacy.html` (reescrita na #57; regras da comunidade em `site/terms.html`; mudança só em `site/` vai com `[skip ci]` e `gh workflow run pages.yml --ref main`), foi o que faltava para liberar o
 > "Publish app". Dois clientes OAuth criados — **Naval Battle - Web (Supabase)** e
 > **Naval Battle - Android** (pacote `br.com.navalbattle`, SHA-1 da chave de depuração
 > do repositório). O provedor Google está **ativado** no Supabase com os dois Client IDs

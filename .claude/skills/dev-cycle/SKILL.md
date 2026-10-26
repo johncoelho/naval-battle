@@ -109,9 +109,13 @@ bash "<scratchpad>/preview.sh" :composeApp:compileKotlinIosSimulatorArm64
 - Mensagem em português, sem acento no título, com o número da versão: `Titulo curto (0.X.Y)`,
   corpo com os pontos, e a linha de coautoria pedida pelo ambiente.
 - `git push origin main` (conta `johncoelho`).
-- **Commit só de documentação/skills** (nada em `composeApp/`, `iosApp/`, `supabase/`, `site/`):
+- **Commit só de documentação/skills** (nada em `composeApp/`, `iosApp/`, `supabase/`, `site/`; o caso de `site/` está abaixo):
   ponha `[skip ci]` na mensagem. O GitHub não roda os workflows, nada é publicado, e então **não**
   sobe versão nem registra `app_releases` (os passos 4, 7 e 8 não se aplicam).
+- **Commit só de `site/`** (sem `composeApp/`, `iosApp/`, `supabase/`): também leva `[skip ci]` e não sobe versão,
+  porque o `android.yml` tentaria publicar na Play o mesmo `versionCode` e falharia. Como o `[skip ci]` também
+  pula o `pages.yml`, depois do push rode `gh workflow run pages.yml --ref main` e confira a página no ar pela URL
+  (não pelo nome do arquivo). CHANGELOG ganha entrada "Site", sem `App x.y.z`.
 
 - O CI barra o release incompleto antes de compilar (`tools/release-check.sh`: versionCode
   maior, iOS alinhado, notas da Play novas/≤ 500/sem acento, CHANGELOG com `App <versão>`) e roda os
