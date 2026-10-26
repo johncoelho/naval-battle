@@ -55,6 +55,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Convide um amigo (#44, 0.38.0):** migração `referral` (`supabase/referral.sql`) a aplicar só depois do APROVADO do
+  Tech Lead e antes de ligar o app novo na Play. QA: REF-01 a REF-07, com `referral_allow_qa = 'true'` só durante o
+  teste e `'false'` no fim (como o `is_test` das QA).
+
 - **Aviso de retorno e prêmio de retorno (#42, 0.37.0):** migração `daily_return_bonus` (`supabase/daily.sql`) a
   aplicar só depois do APROVADO do Tech Lead e antes de ligar o app novo na Play. QA: RET-01 a RET-06 (relógio do
   emulador adiantado; `last_checkin` recuado 5 dias por SQL na conta QA).

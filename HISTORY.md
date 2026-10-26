@@ -449,6 +449,14 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   e pago no servidor (`dobroes_apply`, `reason = 'return'`), fora do teto online de 500/dia (trava própria), valor
   fixo mostrado antes do resgate, `is_test` não recebe. Sem carteira (legado) o servidor só registra e paga as milhas.
   `doubloons` do check-in segue só check-in + semana (o app antigo mostra isso); o retorno vai em colunas novas.
+- **26/10 · Convide um amigo** (#44, aprovado pelo John, 0.38.0) — porquê: indicação de amigo é o canal de entrada mais
+  barato e o jogo é social. **Código digitado, sem link mágico:** ler o código da instalação exigiria a Install Referrer
+  API (dependência nova). ◆100 para cada lado na 1ª partida online com combate dos dois lados (mesma regra do
+  `award_online_match`), pago no servidor com `reason` próprio, fora do teto de 500/dia. Antifraude no servidor: um
+  resgate por convidado, conta de até 7 dias, nunca o próprio código, `is_test` e QA fora (QA só com
+  `referral_allow_qa`), e quem convida ganha no máximo 1 por dia e 10 no total (no máximo ◆1.000 por pessoa na vida;
+  passou do limite a amizade fica e o convidado recebe). Tentativas de código inválido têm contador por dia (10), por isso
+  `referral_redeem` devolve `too_many` em vez de lançar erro (um erro desfaria o contador). Alfabeto de 32 símbolos.
 
 ## Artefatos de referência (SPECs e designs aprovados)
 

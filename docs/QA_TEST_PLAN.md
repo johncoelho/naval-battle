@@ -165,6 +165,20 @@ Antes de cada rodada, `welcome_gift_reset` da conta QA (administrador) e carreir
 | WEL-05 | P1 | Convidado faz a guiada e depois entra na conta | Popup pede para entrar; no primeiro login chega o presente |
 | WEL-06 | P0 | Conta antiga que não é QA (ensaio `welcome_ensaio.sql`) | `not_eligible`; nada creditado |
 
+### 6c. Convide um amigo (#44)
+
+Ligar `referral_allow_qa = 'true'` só durante o teste e desligar no fim (REF-07). QA02 precisa de conta sem resgate prévio.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| REF-01 | P0 | QA01: Amigos → Convidar amigo → Compartilhar | Código de 6 caracteres; o seletor abre com texto, link da Play e código |
+| REF-02 | P0 | QA02: Tenho um código de convite → digitar o código do QA01 | Popup "Convite aceito"; os dois aparecem como amigos na hora |
+| REF-03 | P0 | QA02 tenta de novo; QA01 digita o próprio código | "Você já usou um código" e "Este é o seu próprio código" |
+| REF-04 | P0 | Partida online QA01 x QA02 sem tiro, abandonada | Ninguém recebe |
+| REF-05 | P0 | Partida online com combate dos dois lados | QA02 recebe ◆100 no fim; QA01 recebe push "Seu convite rendeu" e o popup ao abrir o menu; saldos do servidor batem |
+| REF-06 | P1 | Ensaio `referral_ensaio.sql` | Limites diário (1) e total (10), conta antiga, `is_test`, QA, sem carteira e teto online conferem |
+| REF-07 | P0 | Fim do teste | `referral_allow_qa = 'false'` |
+
 ## 7. Dois jogadores no mesmo aparelho (só A)
 
 | ID | P | Passos | Esperado |

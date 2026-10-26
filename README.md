@@ -71,6 +71,15 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   partida guiada** não paga de novo. Servidor: `supabase/welcome.sql`, `claim_welcome_gift()` (não conta no teto de
   500/dia online).
 
+### Convide um amigo
+
+- Amigos → **Convidar amigo** mostra o código da conta (6 caracteres, sem 0/O/1/I) e **Compartilhar**, que abre o seletor
+  do aparelho com texto, link da Play e código. Quem tem conta de até 7 dias digita o código em **Tenho um código de
+  convite** (e a amizade nasce aceita na hora).
+- Quando o convidado termina a **1ª partida online com combate dos dois lados**, cada um ganha ◆100, uma vez. Quem convida
+  recebe no máximo 1 prêmio por dia e 10 no total (passou disso, a amizade fica e só o convidado recebe). O valor é fixo e
+  aparece antes do resgate; contra a IA continua sem dobrões. Conta `is_test` e conta QA não contam.
+
 ### Formas de jogar
 
 - **Partida rápida** — contra a IA, que caça em padrão de paridade e persegue contatos.
@@ -497,6 +506,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `isTestLabDevice` | aparelho dos testes automáticos do Google | `Settings.System` `firebase.test.lab` | sempre falso |
 | `DailyReminder` | lembrete diário local | `AlarmManager` | `UNUserNotificationCenter` |
 | `openStoreListing`, `shareStoreListing` | loja e compartilhar | Play Store | página `#ios` do site |
+| `shareText` | seletor de compartilhamento com texto (convite, #44) | `ACTION_SEND` | `UIActivityViewController` |
 | `SystemBackHandler` | voltar do sistema | `BackHandler` | nada |
 | `nowMillis` | relógio | `System.currentTimeMillis` | `NSDate` |
 
@@ -609,6 +619,12 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   só administrador e só conta QA. Ordem de locks: `welcome:<uid>`, `dobroes:<uid>`, linha do perfil. Ensaio:
   `supabase/tests/welcome_ensaio.sql`. App: `game/GuidedMatch.kt` (passos puros), `AppState.claimWelcomeGift` via
   `runWelcomeClaim` (o aparelho nunca credita), `Cloud.claimWelcomeGift`.
+- Convite de amigo (`supabase/referral.sql`, #44): `referral_my_code()`, `referral_redeem(code)`, `referral_settle(match)`,
+  `referral_status()` e `referral_ack()`; paga por `dobroes_apply(uid, valor, 'referral', ref)` (`ref` = `'invitee'` para o
+  convidado e o id do convidado para quem convidou), fora do teto `dobroes_online_daily_cap`. Locks: `referral:<uid>` (dois
+  uuids em ordem crescente) antes de `dobroes:<uid>`. Tabelas `referral_codes`, `referrals`, `referral_tries` (RLS, só
+  leitura do que é seu). Números em `app_config` (`referral_*`). Ensaio: `supabase/tests/referral_ensaio.sql`. App:
+  `game/Referral.kt`, `AppState.redeemReferral/loadReferralStatus` e o `referral_settle` em `flushOnlineAwards`.
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.
 
 ### Versão, release e entrega

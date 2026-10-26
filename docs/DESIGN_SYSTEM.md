@@ -116,6 +116,14 @@ sombra: profundidade vem de superfície mais clara + borda.
 - Componente em `docs/design-system/project/components/GuidedTip/`; o artefato Claude Design ainda precisa ser
   republicado (ver `docs/design-system/PENDENCIAS.md`).
 
+### Cartão Convidar amigo e popups do convite (#44)
+
+- `ReferralCard` (`ui/ReferralCard.kt`): painel `surface2` com borda `line`, título em `HudLabel`/`amberStrong`, código em
+  `title`, **Compartilhar** primário e **Tenho um código de convite** secundário; o campo reaproveita o padrão da busca
+  (`surface`, borda `line`/`amber`, `mono`) com erro em `HudLabel`/`danger`. Popups (`ui/ReferralPopup.kt`) no mesmo molde
+  do presente de boas-vindas (véu `bg` a 86%, `navalSafeArea()`, `navalPanelWidth()`).
+- O artefato Claude Design ainda precisa receber o cartão (ver `docs/design-system/PENDENCIAS.md`).
+
 ## Largura máxima e área segura (#37)
 
 - **`Naval.contentMaxWidth` = 600 dp**: em tela grande (tablet, dobrável, Chromebook) o conteúdo das telas

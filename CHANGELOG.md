@@ -9,6 +9,31 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.38.0] — 2026-10-26 · Convide um amigo (#44)
+
+App 0.38.0 (versionCode 105). Refs #44. Banco: migração `referral` (`supabase/referral.sql`).
+
+### App
+- Amigos → cartão **Convidar amigo**: código de 6 caracteres (sem 0/O/1/I), **Compartilhar** (seletor do aparelho com texto,
+  link da Play e código) e **Tenho um código de convite**. Sem link mágico: a Install Referrer API seria dependência nova.
+- Popups "Convite aceito" (amizade criada na hora), "◆100 pela 1ª partida online com convite" e "Seu convite rendeu"
+  (lido em `referral_status` ao abrir o menu, marcado com `referral_ack`). O app pede `referral_settle` depois de cada
+  recompensa online; o aparelho nunca credita.
+- Contrato novo `shareText(text)` (`data/UpdateChecker.kt`; Android `ACTION_SEND`, iOS `UIActivityViewController`).
+  `game/Referral.kt` (código, texto do compartilhamento, status), `ui/ReferralCard.kt`, `ui/ReferralPopup.kt`, textos
+  nas três línguas, Novidades da 0.38.0. Teste `ReferralTest`.
+
+### Banco
+- `referral_codes`, `referrals` (RLS: só leitura do que é seu) e `referral_tries`. RPCs `referral_my_code`,
+  `referral_redeem` (`ok | invalid | self | already | too_old | not_eligible | disabled | too_many`), `referral_settle`
+  (`paid | pending | none | already | not_eligible | no_wallet`), `referral_status` e `referral_ack`.
+- Pago por `dobroes_apply(..., 'referral', ...)`, fora do teto online. Quem convida: 1 prêmio por dia (Brasília) e 10 no
+  total; acima disso a amizade fica e só o convidado recebe. Convidado com conta de até 7 dias; `is_test` e QA não contam
+  (QA com `referral_allow_qa`). Locks `referral:<uid>` (do menor para o maior uuid) antes de `dobroes:<uid>`.
+- `app_config`: `referral_enabled`, `referral_doubloons_inviter`, `referral_doubloons_invitee`, `referral_daily_limit`,
+  `referral_total_limit`, `referral_new_account_days`, `referral_bad_tries_per_day`, `referral_allow_qa`.
+- Ensaio `supabase/tests/referral_ensaio.sql` (desfaz tudo).
+
 ## [0.37.0] — 2026-10-26 · Aviso de retorno (2 e 5 dias) e prêmio de retorno (#42)
 
 App 0.37.0 (versionCode 104). Refs #42. Banco: migração `daily_return_bonus` (`supabase/daily.sql`).
