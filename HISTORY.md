@@ -457,6 +457,10 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   `referral_allow_qa`), e quem convida ganha no máximo 1 por dia e 10 no total (no máximo ◆1.000 por pessoa na vida;
   passou do limite a amizade fica e o convidado recebe). Tentativas de código inválido têm contador por dia (10), por isso
   `referral_redeem` devolve `too_many` em vez de lançar erro (um erro desfaria o contador). Alfabeto de 32 símbolos.
+  Desvios do desenho aceitos pelo Tech Lead: alfabeto de 32 símbolos; status `too_many` e tabela `referral_tries`; QA ignora a idade
+  da conta com `referral_allow_qa`; colunas `settled_at` e `inviter_paid_at`; só vale sala criada depois do resgate; quem convida
+  sem carteira fica `pending` e é pago em `referral_status`; `referral_settle` após toda recompensa online; link da Play nas duas
+  plataformas; `referral_enabled` e `referral_bad_tries_per_day` em `app_config`.
 
 ## Artefatos de referência (SPECs e designs aprovados)
 

@@ -312,6 +312,9 @@ begin
     return query select 'already'::text, 0, coalesce(bal, 0); return;
   end if;
 
+  -- Sem deadlock: todo caminho que pega dobroes:<inviter> (aqui via referral_pay_inviter, ou referral_status)
+  -- já segura referral:<inviter>, e referral: vem sempre antes de dobroes:. Os dois referral: de duas pessoas
+  -- que se convidaram são tomados em ordem crescente de uuid.
   bal := public.dobroes_apply(uid, pay, 'referral', 'invitee');
   update public.referrals
      set settled_match = p_match_id, settled_at = now(), invitee_paid = pay
@@ -371,3 +374,5 @@ begin
 end $$;
 revoke all on function public.referral_ack() from public, anon;
 grant execute on function public.referral_ack() to authenticated;
+
+notify pgrst, 'reload schema';
