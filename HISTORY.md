@@ -516,6 +516,18 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   `IOS_APPSTORE_LIVE` como a `PLAY_PRODUCTION_LIVE`. `APPLE_TEAM_ID` (`G25AHMZJ7Y`) é variável de repositório, não segredo. O `.ipa` do
   Sideloadly (`ios.yml`) segue.
 
+- **26/10 · Denunciar, bloquear e filtro de nome** (#58, 0.42.0) — porquê: a App Store (1.2) e a política de conteúdo da Play exigem filtro, denúncia, bloqueio e
+  contato num app com nome visível a outros. **O ranking não esconde bloqueado**: o placar é público e a colocação precisa ser a mesma para todos (esconder a linha
+  deixaria o `my_rank` incoerente); bloquear trata de contato, não de placar. Só o suspenso sai. **O filtro nunca dá erro no servidor** (mantém o nome anterior):
+  o app antigo grava a carreira num upsert só e um erro perderia o XP. **Troca automática do nome com 3 denunciantes distintos em 7 dias** (fora `is_test`): é a
+  resposta rápida que a Apple cobra, sem prometer prazo de 24 h; o resto das denúncias o John vê pelo `feedback-triage`, e nada além da troca de nome é aplicado
+  sem o OK dele. O nome trocado à força não volta por 30 dias (senão o app antigo o reenviaria). **Lista de termos no repositório e no app**: o repositório é
+  público, mas a lista vai no app de qualquer jeito; fica em dois lugares (servidor decide, app responde na hora) e o teste de paridade falha no CI se divergirem.
+  Denúncia sem texto livre (motivo fixo) e sem contexto de chat (o app não tem). Retenção de 12 meses (`purge_moderation`, rodada diária) e `name_resets` em
+  cascata, como a política publicada na #57 promete. "Fale conosco" abre a política (seção Contato) em vez de `mailto:`: o e-mail do John não vai para o código
+  público. Push de denúncia ao John: 1 por hora, texto fixo, e-mail só no banco. Conferência antes de apagar a view `leaderboard`: nenhuma versão do app a leu
+  (busca no histórico do git) e ela ignorava o RLS.
+
 ## Artefatos de referência (SPECs e designs aprovados)
 
 | Data | Artefato |

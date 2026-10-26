@@ -481,7 +481,7 @@ de fonte, de rede, de serialização ou de injeção. Rede é `HttpURLConnection
 composeApp/src/
   commonMain/kotlin/br/com/navalbattle/
     App.kt          AppState: estado global, roteador de telas, conta, online, presença, push
-    game/           motor: Board, Match, AI, Profile/carreira, habilidades, modos
+    game/           motor: Board, Match, AI, Profile/carreira, habilidades, modos; NameFilter e PlayerSafety (#58)
     design/         Theme.kt (tokens Naval/NavalType), Paint, FleetLine, *Art.kt (arte vetorial)
     i18n/           Strings.kt: cada chave com pt-BR, en e es na mesma linha
     ui/             telas (*Screen.kt), popups e Components.kt (componentes compartilhados)
@@ -637,6 +637,13 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   uuids em ordem crescente) antes de `dobroes:<uid>`. Tabelas `referral_codes`, `referrals`, `referral_tries` (RLS, só
   leitura do que é seu). Números em `app_config` (`referral_*`). Ensaio: `supabase/tests/referral_ensaio.sql`. App:
   `game/Referral.kt`, `AppState.redeemReferral/loadReferralStatus` e o `referral_settle` em `flushOnlineAwards`.
+- Segurança entre jogadores (`supabase/safety.sql`, #58): `player_blocks`, `player_reports`, `name_terms`/`name_allow`, `name_resets`, `moderation_push_log` e
+  `profiles.suspended_until`. Filtro de nome no servidor (`name_is_offensive`, que nunca dá erro: mantém o nome anterior, para o app antigo não perder a carreira);
+  bloqueio nos dois sentidos dentro da política de leitura das salas, de `join_online_match`, `find_quick_offer`, `search_commander` e das políticas de convite e
+  amizade; ranking só tira o suspenso. RPCs `set_username`, `block_player`, `unblock_player`, `my_blocks`, `report_player` (`ok|already|limit|self|invalid`),
+  `my_name_reset`, `name_reset_ack`; moderação pelo SQL: `reports_pending()`, `review_report()` e `purge_moderation()` (12 meses, rodada diária). Troca automática do
+  nome com 3 denunciantes distintos em 7 dias. A lista de termos existe em dois lugares de propósito (`safety.sql` e `game/NameFilter.kt`);
+  `NameTermsParityTest` compara. Ensaio: `supabase/tests/safety_ensaio.sql`. App: `ui/PlayerSafetyPopup.kt`, `AppState.openPlayerActions/renameAccount`.
 - Desafio da semana (`supabase/weekly.sql`, #47): `weekly_status()` e `claim_weekly()` (`ok | already | not_done | no_wallet |
   not_eligible`); a missão é `weekly_mission(segunda)` (rodízio fixo `ONLINE_PLAY_5`, `CHECKIN_5`, `RANKED_WIN_3`) e o progresso é
   contado só no servidor (`weekly_progress_of`, interna). Paga por `dobroes_apply(uid, valor, 'weekly', <segunda>)`, fora do teto

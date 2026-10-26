@@ -59,6 +59,8 @@ import br.com.navalbattle.design.drawAvatar
 import br.com.navalbattle.design.drawInsignia
 import br.com.navalbattle.game.Avatar
 import br.com.navalbattle.game.Insignia
+import br.com.navalbattle.game.ReportContext
+import br.com.navalbattle.game.displayOther
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import kotlinx.coroutines.delay
@@ -160,7 +162,14 @@ fun FriendsScreen(state: AppState) {
                             // estado vem das amizades do servidor (relidas a cada 20s): aceito o
                             // pedido, o resultado vira "Amigo" sem precisar buscar de novo
                             val relation = friendRelation(myId, hit.id, state.friendships, sentTo)
-                            PersonCard(hit.username, subtitle = null, avatarId = hit.avatar) {
+                            PersonCard(
+                                hit.username,
+                                subtitle = null,
+                                avatarId = hit.avatar,
+                                onClick = if (state.canActOn(hit.id)) {
+                                    { state.openPlayerActions(hit.id, hit.username, ReportContext.SEARCH) }
+                                } else null
+                            ) {
                                 when (relation) {
                                     FriendRelation.FRIEND -> HudLabel(t(K.FRIENDS_ALREADY), Naval.greenBright)
                                     FriendRelation.REQUEST_SENT -> HudLabel(t(K.FRIENDS_REQUEST_SENT), Naval.muted)
@@ -200,7 +209,13 @@ fun FriendsScreen(state: AppState) {
                 SectionHeader(t(K.FRIENDS_REQUESTS), incoming.size, Naval.amberStrong)
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     incoming.forEach { e ->
-                        PersonCard(e.name, subtitle = t(K.FRIENDS_WANTS_TO_ADD), avatarId = state.friendAvatars[e.id], highlight = true) {
+                        PersonCard(
+                            e.name,
+                            subtitle = t(K.FRIENDS_WANTS_TO_ADD),
+                            avatarId = state.friendAvatars[e.id],
+                            highlight = true,
+                            onClick = { state.openPlayerActions(e.id, e.name, ReportContext.FRIENDS) }
+                        ) {
                             PillButton(t(K.FRIENDS_DECLINE), Naval.surface, Naval.inkSoft, border = Naval.line) {
                                 scope.launch { state.respondFriendRequest(e.friendship, false) }
                             }
@@ -283,6 +298,7 @@ fun FriendsScreen(state: AppState) {
                 }
             } else null,
             onRemove = { confirmRemove = e },
+            onSafety = { state.openPlayerActions(e.id, e.name, ReportContext.FRIENDS) },
             onClose = { viewed = null; state.closeFriendProfile() }
         )
     }
@@ -410,7 +426,7 @@ private fun PersonCard(
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                name,
+                displayOther(name, t(K.COMMANDER)),
                 style = NavalType.mono,
                 color = if (dim) Naval.inkSoft else Naval.ink,
                 maxLines = 1,
@@ -545,6 +561,7 @@ private fun FriendProfileDialog(
     profile: FriendProfile?,
     onInvite: (() -> Unit)?,
     onRemove: () -> Unit,
+    onSafety: () -> Unit,
     onClose: () -> Unit
 ) {
     Box(
@@ -609,6 +626,8 @@ private fun FriendProfileDialog(
             } else {
                 HudLabel(t(K.FRIENDS_INVITE_OFFLINE), Naval.muted)
             }
+            Gap(8)
+            SecondaryButton(t(K.SAFETY_ACTIONS), modifier = Modifier.fillMaxWidth()) { onSafety() }
             Gap(8)
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SecondaryButton(t(K.FRIENDS_CLOSE), modifier = Modifier.weight(1f).fillMaxHeight()) { onClose() }

@@ -336,6 +336,9 @@ data class UserBadge(val code: String, val earnedAt: String)
 /** Resultado de uma busca por nome de comandante, para mandar pedido de amizade. */
 data class CommanderHit(val id: String, val username: String, val avatar: String = "")
 
+/** Jogador que a conta bloqueou (RPC `my_blocks`, #58). */
+data class BlockedPlayer(val userId: String, val username: String, val avatar: String = "")
+
 /** Pedido de amizade — pendente, aceito ou recusado. */
 data class Friendship(
     val id: String,
@@ -694,6 +697,27 @@ expect class CloudApi() {
 
     /** Resgata o resultado da última temporada encerrada ainda não vista — nulo se não houver. */
     suspend fun claimSeasonEnd(session: Session): CloudResult<SeasonEnd?>
+
+    /** Troca o nome de guerra pelo servidor, que aplica o filtro (#58): ok, invalid, offensive ou taken. */
+    suspend fun setUsername(session: Session, name: String): CloudResult<String>
+
+    /** Bloqueia o jogador (RPC `block_player`): ok, self ou invalid. Desfaz a amizade e vale nos dois sentidos. */
+    suspend fun blockPlayer(session: Session, userId: String): CloudResult<String>
+
+    /** Desbloqueia o jogador (RPC `unblock_player`). */
+    suspend fun unblockPlayer(session: Session, userId: String): CloudResult<String>
+
+    /** Jogadores que a conta bloqueou, do mais recente ao mais antigo. */
+    suspend fun myBlocks(session: Session): CloudResult<List<BlockedPlayer>>
+
+    /** Denuncia o jogador (RPC `report_player`): ok, already, limit, self ou invalid. [reason] e [context] são os códigos de `PlayerSafety.kt`. */
+    suspend fun reportPlayer(session: Session, userId: String, reason: String, context: String, matchId: String?): CloudResult<String>
+
+    /** O nome foi trocado à força e a conta ainda não viu o aviso? (RPC `my_name_reset`) */
+    suspend fun myNameReset(session: Session): CloudResult<Boolean>
+
+    /** Marca o aviso de nome trocado como visto (RPC `name_reset_ack`). */
+    suspend fun nameResetAck(session: Session): CloudResult<Unit>
 }
 
 /** Segundos desde a última batida de ponto (-1 = nunca) e se estava em partida. */

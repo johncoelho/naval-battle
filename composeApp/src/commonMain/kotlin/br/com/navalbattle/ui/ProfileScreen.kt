@@ -79,6 +79,8 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(state: AppState) {
     val profile = state.profile
     var name by remember { mutableStateOf(profile.name) }
+    var nameError by remember { mutableStateOf<String?>(null) }
+    val nameScope = rememberCoroutineScope()
     var confirmReset by remember { mutableStateOf(false) }
     var openBadge by remember { mutableStateOf<EarnedBadge?>(null) }
     // a abertura do app já carrega, mas um badge pode ter chegado depois (feedback aprovado)
@@ -212,7 +214,7 @@ fun ProfileScreen(state: AppState) {
                     ) {
                         BasicTextField(
                             value = name,
-                            onValueChange = { if (it.length <= 18) name = it },
+                            onValueChange = { if (it.length <= 18) { name = it; nameError = null } },
                             singleLine = true,
                             textStyle = NavalType.button.copy(color = Naval.ink),
                             cursorBrush = SolidColor(Naval.amberStrong),
@@ -225,9 +227,21 @@ fun ProfileScreen(state: AppState) {
                         if (name.trim() != profile.name) Naval.amberStrong else Naval.muted,
                         Modifier
                             .border(1.dp, Naval.line)
-                            .clickable { profile.rename(name); name = profile.name }
+                            .clickable {
+                                nameScope.launch {
+                                    // o servidor (ou, sem conta, o filtro local) decide; só grava se aceitar (#58)
+                                    val err = state.renameAccount(name)
+                                    nameError = err
+                                    if (err == null) name = profile.name
+                                }
+                            }
                             .padding(horizontal = 14.dp, vertical = 13.dp)
                     )
+                }
+
+                nameError?.let {
+                    Gap(6)
+                    HudLabel(it, Naval.danger)
                 }
 
                 Gap(22)
@@ -573,6 +587,10 @@ private fun AccountSection(state: AppState) {
                 )
             }
 
+            if (creating) {
+                Gap(14)
+                RulesAcceptLine()
+            }
             Gap(16)
             PrimaryButton(
                 if (creating) t(K.MENU_CREATE_ACCOUNT) else t(K.AUTH_SIGN_IN),

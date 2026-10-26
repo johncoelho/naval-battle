@@ -33,6 +33,7 @@ import br.com.navalbattle.AppState
 import br.com.navalbattle.OnlineAwardUi
 import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.game.ReportContext
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
@@ -277,6 +278,10 @@ fun ResultScreen(state: AppState, match: Match) {
         state.adNotice(AdPlace.WIN)?.let {
             Gap(6)
             HudLabel(it, Naval.amberStrong)
+        }
+        if (online && state.canActOnOpponent) {
+            Gap(8)
+            SecondaryButton(t(K.SAFETY_ACTIONS)) { state.openOpponentActions(ReportContext.RESULT) }
         }
         Gap(8)
         SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }

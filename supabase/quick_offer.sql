@@ -12,6 +12,7 @@ alter table public.online_matches add column if not exists offered_to uuid refer
 alter table public.online_matches add column if not exists offered_at timestamptz;
 alter table public.online_matches add column if not exists declined_by uuid[] not null default '{}';
 
+-- substituída em safety.sql (#58)
 create or replace function public.find_quick_offer(p_casual boolean, p_ranked boolean)
 returns setof public.online_matches
 language plpgsql security definer set search_path = public as $$

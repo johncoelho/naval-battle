@@ -57,6 +57,11 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Denunciar, bloquear e filtro de nome (#58, 0.42.0):** migração `player_safety` (`supabase/safety.sql`) a aplicar só depois do APROVADO
+  do Tech Lead e antes de ligar o app novo na Play (o ensaio `supabase/tests/safety_ensaio.sql` roda antes). Rodada diária da esteira: `select * from
+  public.reports_pending();` (propor ao John; nada aplicado sem o OK dele, exceto a troca automática de nome com 3 denunciantes) e
+  `select * from public.purge_moderation();` (12 meses). QA: SAF-01 a SAF-13. Se a edição das skills `esteira`/`feedback-triage` for negada, é pendência do John.
+
 - **Política de privacidade e regras da comunidade (#57):** `site/privacy.html` (pt/en/es em âncoras) e `site/terms.html`
   prontas; a página só vale depois de publicada (`gh workflow run pages.yml --ref main`, conferir pela URL). Mudança só em
   `site/` leva `[skip ci]` e não sobe versão. O texto de denúncias já está lá, marcado "0.42.0": a #58 precisa cumpri-lo

@@ -52,6 +52,7 @@ alter table public.online_matches enable row level security;
 -- Partida rápida separa conta de teste de jogador real (#23): cada um só enxerga
 -- sala rápida de quem é do mesmo tipo (vale também para a busca do app antigo,
 -- que lê a tabela direto); convite por código ou de amigo não muda
+-- substituída em safety.sql (#58)
 drop policy if exists "sala online: ler" on public.online_matches;
 create policy "sala online: ler"
   on public.online_matches for select
@@ -63,6 +64,7 @@ create policy "sala online: ler"
         and (not is_quick_match or public.is_test_user(host_id) = public.my_is_test()))
   );
 
+-- substituída em safety.sql (#58)
 drop policy if exists "sala online: criar" on public.online_matches;
 create policy "sala online: criar"
   on public.online_matches for insert
@@ -204,6 +206,7 @@ create policy "amizade: ler"
   on public.friendships for select
   using (auth.uid() = requester_id or auth.uid() = addressee_id);
 
+-- substituída em safety.sql (#58)
 drop policy if exists "amizade: pedir" on public.friendships;
 create policy "amizade: pedir"
   on public.friendships for insert
@@ -238,6 +241,7 @@ create trigger friendships_touch
 -- trancada por RLS a "só a própria linha", então a busca precisa de uma função
 -- com `security definer` que devolve só o mínimo (id e nome), nunca e-mail
 -- o avatar vai junto para a busca mostrar o rosto de cada comandante (0.20.0)
+-- substituída em safety.sql (#58)
 drop function if exists public.search_commander(text);
 create function public.search_commander(query text)
 returns table (id uuid, username text, avatar text)
@@ -261,6 +265,7 @@ grant execute on function public.search_commander(text) to authenticated;
 -- `security invoker` (o padrão, explícito aqui) mantém a chamada sujeita às
 -- mesmas políticas de RLS de quem chamou — a função não abre porta nenhuma.
 
+-- substituída em safety.sql (#58)
 create or replace function public.join_online_match(p_match_id uuid, p_guest_name text)
 returns setof public.online_matches
 language plpgsql security invoker as $$
@@ -303,6 +308,7 @@ grant execute on function public.decline_online_invite(uuid) to authenticated;
 -- deixa a sala 'waiting' para sempre, e aceitar uma dessas seria entrar numa
 -- partida sem ninguém do outro lado. Devolve algumas, mais antigas primeiro —
 -- o cliente pula as que o comandante já dispensou com "Agora não".
+-- substituída em safety.sql (#58)
 create or replace function public.find_quick_offer(p_casual boolean, p_ranked boolean)
 returns setof public.online_matches
 language sql security invoker stable as $$
@@ -410,6 +416,7 @@ create policy "ranking temporada: ler"
 -- ranked_season_stats não guarda esses dois campos (são de perfil, não de
 -- temporada) — a assinatura não mudou, mas as colunas de saída sim, por isso
 -- o drop antes de recriar (create or replace não troca o formato de retorno)
+-- substituída em safety.sql (#58)
 drop function if exists public.leaderboard_overall(integer);
 create function public.leaderboard_overall(p_limit integer default 50)
 returns table (user_id uuid, username text, insignia text, avatar text, rating integer, matches integer, wins integer)
@@ -428,6 +435,7 @@ $$;
 revoke all on function public.leaderboard_overall(integer) from public;
 grant execute on function public.leaderboard_overall(integer) to authenticated;
 
+-- substituída em safety.sql (#58)
 drop function if exists public.leaderboard_season(integer);
 create function public.leaderboard_season(p_limit integer default 50)
 returns table (user_id uuid, username text, insignia text, avatar text, points integer, matches integer, wins integer)
@@ -452,6 +460,7 @@ grant execute on function public.leaderboard_season(integer) to authenticated;
 -- Mesmo desempate dos placares (pontos, vitórias, aproveitamento, antiguidade).
 -- "position" é palavra reservada do SQL (usada em SUBSTRING ... FROM ... FOR
 -- ... e afins), por isso vai entre aspas em todo lugar que aparece como nome
+-- substituída em safety.sql (#58)
 create or replace function public.my_rank(p_season boolean)
 returns table ("position" bigint, rating integer)
 language sql security definer set search_path = public stable as $$
@@ -549,6 +558,7 @@ grant execute on function public.opponent_profile(uuid) to authenticated;
 -- dispensa cron ou tabela extra pra "fechar" a temporada: o próprio cálculo
 -- na hora da consulta já é o resultado final. Top 10% leva ouro, os próximos
 -- 20% prata, os próximos 30% bronze, o resto sem medalha.
+-- substituída em safety.sql (#58)
 create or replace function public.season_trophies(p_season_key text default null)
 returns table (
   user_id uuid, username text, insignia text, avatar text,

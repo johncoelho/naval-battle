@@ -30,6 +30,16 @@ select public.review_feedback('<id>', true|false, '<severity>', '<ability|null>'
 ```
 O jogador recebe o aviso automaticamente na próxima abertura do app.
 
+## 2b. Denúncias de jogadores (#58)
+
+Junto com o feedback, liste as denúncias abertas e **proponha** ao John; nada é aplicado sem o OK dele (a única ação automática
+é a troca de nome com 3 denunciantes distintos, que é regra fixa):
+```sql
+select * from public.reports_pending();
+```
+Com o OK: `select public.review_report('<id do jogador>', 'dismiss' | 'reset_name' | 'suspend', <dias>);` (fecha as denúncias abertas daquele
+jogador). A tabela `player_reports` guarda 12 meses: `select * from public.purge_moderation();` na rodada diária.
+
 ## 3. Transformar em trabalho
 
 - Bug aprovado e não corrigido → entra no próximo ciclo (`dev-cycle`), referenciando o feedback no

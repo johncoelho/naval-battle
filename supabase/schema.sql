@@ -113,6 +113,7 @@ create trigger profiles_guard_is_test
 
 -- cria a linha da carreira assim que a conta nasce, inclusive no login social,
 -- para o Google cair na mesma carreira do e-mail
+-- substituída em safety.sql (#58)
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
 declare
@@ -140,9 +141,5 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Placar público (para a ranqueada da próxima fase): só leitura, sem e-mail.
-create or replace view public.leaderboard as
-  select username, xp, wins, matches, best_streak
-  from public.profiles
-  order by xp desc
-  limit 100;
+-- A view `public.leaderboard` (placar público de 100) saiu em safety.sql (#58): o app nunca a usou e, por ser
+-- view, ignorava o RLS de profiles. O placar vem das RPCs leaderboard_overall / leaderboard_season.

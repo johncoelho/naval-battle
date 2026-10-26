@@ -33,6 +33,39 @@ App 0.42.0 (versionCode 109, provisória: sobe junto com a #58). Refs #56. Sem b
 - `Info.plist`: `ITSAppUsesNonExemptEncryption = false` e `CFBundleVersion = $(CURRENT_PROJECT_VERSION)`; scheme compartilhado `iosApp` e `iosApp/ExportOptions.plist`.
 - `ios.yml` e o `.ipa` do Sideloadly não mudam. A chave `.p8` vive só num arquivo temporário do runner (modo 600), apagado no fim.
 - Passo a passo e secrets do John em docs/BUILD.md, "iPhone na App Store".
+## [0.42.0] — 2026-10-26 · Denunciar, bloquear e filtro de nome de guerra (#58)
+
+App 0.42.0 (versionCode 109). Refs #58, #56, #13 (lote da versão; #56 e #13 têm commits e entradas próprias). Banco: migração
+`player_safety` (`supabase/safety.sql`), a aplicar só depois do APROVADO do Tech Lead e antes de ligar o app novo na Play.
+
+### Banco
+- Tabelas `player_blocks`, `player_reports` (motivo `name|abuse|cheat|other`, contexto `ranking|search|friends|match|result`, sem texto livre),
+  `name_terms` e `name_allow` (lista de termos pt/en/es com exceções), `name_resets` (`on delete cascade`) e `moderation_push_log`;
+  `profiles.suspended_until`. RLS ligado; denúncias e listas sem política (ninguém lê pelo app).
+- Filtro de nome no servidor (`name_is_offensive`: minúsculas, acento, leet, separador, letra repetida; termo de 5+ letras vale como pedaço, menor só como
+  palavra inteira; exceções contra Scunthorpe). **Nunca dá erro**: no `profiles` o nome ofensivo mantém o anterior (insert vira
+  `Comandante-xxxxxx`), e as cópias do cliente (`online_matches`, `friendships`, `ranked_season_stats`) usam o nome do perfil. O app antigo grava a carreira
+  inteira num upsert só, e um erro ali perderia o XP. Nome trocado à força não volta por 30 dias.
+- Bloqueio nos dois sentidos, todo no servidor (vale para o app antigo): política de leitura das salas, `join_online_match`, `find_quick_offer`, criar sala com
+  convite, pedido de amizade e `search_commander`. `block_player` desfaz a amizade e encerra as salas mirando um no outro. O ranking não esconde bloqueado;
+  só o **suspenso** sai (`leaderboard_*`, `my_rank`, `season_trophies`).
+- `report_player` (`ok|already|limit|self|invalid`, 10 por dia, `already` = mesmo motivo contra o mesmo jogador no dia), troca automática do nome com 3 denunciantes
+  distintos (fora `is_test`) em 7 dias, e push ao John no máximo 1 por hora com texto fixo. O e-mail do aviso fica só no banco (`moderation_notify_emails`, copiado de `ads_test_emails` por SQL).
+- Moderação pelo SQL do Supabase: `reports_pending()` e `review_report(jogador, 'dismiss'|'reset_name'|'suspend', dias)`; `purge_moderation()` apaga denúncias e
+  trocas de nome com mais de 12 meses (rodada diária da esteira, sem pg_cron).
+- `drop view public.leaderboard` (nunca usada por nenhuma versão do app; ignorava o RLS de `profiles`).
+- Nomes atuais que violam: 0 de 166 contas na conferência, então a troca em massa da migração não muda nada.
+- Ensaio que desfaz tudo: `supabase/tests/safety_ensaio.sql`.
+
+### App
+- Popup compartilhado de Denunciar / Bloquear (`ui/PlayerSafetyPopup.kt`) no ranking, na busca, nos amigos, em "adversário encontrado" e no resultado
+  da partida online; em Ajustes, lista de bloqueados com Desbloquear e links para a política de privacidade, as Regras da comunidade e o contato
+  (abre a política do site, sem e-mail no app). Cadastro mostra "Ao criar a conta você aceita as Regras da comunidade".
+- `game/NameFilter.kt` (mesma regra e lista do servidor) filtra o nome ao criar conta e ao trocar no Perfil (`set_username`), e mascara nome de adversário vindo de app antigo.
+  Aviso único "Seu nome foi trocado" quando o servidor troca à força.
+- Provocação desconhecida deixa de aparecer (antes o código cru ia para a tela e um cliente alterado mandava texto livre).
+- Textos em pt, en e es; sem prazo de 24 h nos textos.
+- Testes: `NameFilterTest`, `PlayerSafetyTest`, `TauntTest` e `NameTermsParityTest` (JVM, compara com o `safety.sql`).
 
 ## [0.41.0] — 2026-10-26 · Conquistas e placar do Google Play Games, desligados (#48)
 

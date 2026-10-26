@@ -3,6 +3,7 @@ package br.com.navalbattle.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +34,8 @@ import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawAvatar
 import br.com.navalbattle.design.drawTrophy
 import br.com.navalbattle.game.Avatar
+import br.com.navalbattle.game.ReportContext
+import br.com.navalbattle.game.displayOther
 import br.com.navalbattle.game.liveTierFor
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -120,9 +123,9 @@ fun LeaderboardScreen(state: AppState) {
         Gap(18)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             if (tab == BoardTab.TROPHIES) {
-                TrophyBoard(state.seasonTrophies)
+                TrophyBoard(state, state.seasonTrophies)
             } else {
-                LiveBoard(state.leaderboardEntries)
+                LiveBoard(state, state.leaderboardEntries)
             }
             Gap(16)
         }
@@ -133,7 +136,7 @@ fun LeaderboardScreen(state: AppState) {
 }
 
 @Composable
-private fun LiveBoard(entries: List<LeaderboardEntry>) {
+private fun LiveBoard(state: AppState, entries: List<LeaderboardEntry>) {
     if (entries.isEmpty()) {
         HudLabel(t(K.LEADERBOARD_EMPTY), Naval.muted)
         return
@@ -154,13 +157,16 @@ private fun LiveBoard(entries: List<LeaderboardEntry>) {
             avatar = entry.avatar,
             points = entry.rating,
             record = "${entry.wins}/${entry.matches}",
-            tier = tier
+            tier = tier,
+            onClick = if (state.canActOn(entry.userId)) {
+                { state.openPlayerActions(entry.userId, entry.username, ReportContext.RANKING) }
+            } else null
         )
     }
 }
 
 @Composable
-private fun TrophyBoard(trophies: List<SeasonTrophy>) {
+private fun TrophyBoard(state: AppState, trophies: List<SeasonTrophy>) {
     HudLabel(t(K.LEADERBOARD_TROPHIES_HEAD), Naval.muted)
     Gap(14)
     val medalists = trophies.filter { it.tier != null }
@@ -182,7 +188,10 @@ private fun TrophyBoard(trophies: List<SeasonTrophy>) {
             avatar = entry.avatar,
             points = entry.points,
             record = null,
-            tier = entry.tier
+            tier = entry.tier,
+            onClick = if (state.canActOn(entry.userId)) {
+                { state.openPlayerActions(entry.userId, entry.username, ReportContext.RANKING) }
+            } else null
         )
     }
 }
@@ -214,7 +223,8 @@ private fun BoardRow(
     avatar: String,
     points: Int,
     record: String?,
-    tier: String?
+    tier: String?,
+    onClick: (() -> Unit)? = null
 ) {
     Row(
         Modifier
@@ -222,6 +232,7 @@ private fun BoardRow(
             .padding(bottom = 8.dp)
             .background(Naval.surface2)
             .border(1.dp, if (tier != null) tierColor(tier).copy(alpha = 0.6f) else Naval.line)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -244,7 +255,7 @@ private fun BoardRow(
                 )
             }
             GapW(10)
-            Text(username.uppercase(), style = NavalType.mono, color = Naval.ink)
+            Text(displayOther(username, t(K.COMMANDER)).uppercase(), style = NavalType.mono, color = Naval.ink)
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(t(K.LEADERBOARD_POINTS, points), style = NavalType.button, color = Naval.amberStrong)

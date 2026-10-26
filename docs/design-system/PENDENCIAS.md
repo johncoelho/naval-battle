@@ -13,3 +13,6 @@
 
 - **Cartão Convidar amigo (#44, 0.38.0).** `ReferralCard` e os popups do convite estão em `docs/DESIGN_SYSTEM.md`, mas o
   artefato Claude Design `Naval Battle Command HUD` ainda não foi republicado com eles (skill `design-system`, passo 3).
+
+- **Popup de Denunciar e Bloquear (#58, 0.42.0).** `PlayerActionsPopup`, `ReportReasonPopup`, `BlockConfirmPopup` e `NameResetPopup` estão em
+  `docs/DESIGN_SYSTEM.md`, mas o artefato Claude Design `Naval Battle Command HUD` ainda não foi republicado com eles (skill `design-system`, passo 3).

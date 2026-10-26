@@ -11,6 +11,8 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
 
 ## Passos
 
+0. **Denúncias (#58):** `select * from public.purge_moderation();` (retenção de 12 meses) e `select * from public.reports_pending();`
+   no SQL; se houver denúncias abertas, avise o John com a lista (a skill `feedback-triage` tem o passo). Nada é aplicado sem o OK dele.
 1. **Estado:** `git -C D:/sourcecode/batalha-naval fetch origin`, issues abertas e cartões do quadro
    (comandos no `docs/ESTEIRA.md`).
 2. **Suporte** (`suporte`): triagem de issues novas e feedback pendente. Bug → Fila; melhoria →

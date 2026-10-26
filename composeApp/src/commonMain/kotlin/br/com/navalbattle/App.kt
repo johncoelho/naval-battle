@@ -51,6 +51,7 @@ import br.com.navalbattle.data.SeasonEnd
 import br.com.navalbattle.data.SeasonPassStatus
 import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.CloudResult
+import br.com.navalbattle.data.BlockedPlayer
 import br.com.navalbattle.data.CommanderHit
 import br.com.navalbattle.data.FeedbackUpdate
 import br.com.navalbattle.data.FriendProfile
@@ -91,6 +92,17 @@ import br.com.navalbattle.design.Skin
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalTheme
 import br.com.navalbattle.game.Ability
+import br.com.navalbattle.game.BlockOutcome
+import br.com.navalbattle.game.NameFilter
+import br.com.navalbattle.game.ReportContext
+import br.com.navalbattle.game.ReportOutcome
+import br.com.navalbattle.game.ReportReason
+import br.com.navalbattle.game.UsernameOutcome
+import br.com.navalbattle.game.displayOther
+import br.com.navalbattle.game.isKnownTaunt
+import br.com.navalbattle.game.parseBlockResult
+import br.com.navalbattle.game.parseReportResult
+import br.com.navalbattle.game.parseUsernameResult
 import br.com.navalbattle.game.AchievementCareer
 import br.com.navalbattle.game.AchievementEvent
 import br.com.navalbattle.game.LaunchNoticeDecision
@@ -183,6 +195,8 @@ import br.com.navalbattle.ui.NamesScreen
 import br.com.navalbattle.ui.OnlineScreen
 import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ProfileScreen
+import br.com.navalbattle.ui.NameResetPopup
+import br.com.navalbattle.ui.PlayerSafetyHost
 import br.com.navalbattle.ui.QuickOfferBanner
 import br.com.navalbattle.ui.QuickOfferNotice
 import br.com.navalbattle.ui.ReferralPopup
@@ -972,7 +986,169 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         friendships = (r as? CloudResult.Ok)?.value.orEmpty()
         (cloud.friendAvatars(session) as? CloudResult.Ok)?.value?.let { friendAvatars = it }
         (cloud.friendRankedAllowed(session) as? CloudResult.Ok)?.value?.let { friendRankedAllowed = it }
+        loadBlocks()
         refreshFriendPresence()
+    }
+
+    // ---------------- denunciar e bloquear (#58) ----------------
+
+    /** Passo do popup de segurança: ações, motivo da denúncia, confirmação do bloqueio ou o resultado. */
+    enum class SafetyStep { ACTIONS, REASON, BLOCK_CONFIRM, RESULT }
+
+    /** Quem o popup mostra: o jogador, de onde veio o toque e, se foi numa partida, a sala. */
+    data class SafetyTarget(val userId: String, val name: String, val context: ReportContext, val matchId: String? = null)
+
+    var safetyTarget by mutableStateOf<SafetyTarget?>(null)
+        private set
+    var safetyStep by mutableStateOf(SafetyStep.ACTIONS)
+        private set
+    var safetyResult by mutableStateOf<String?>(null)
+        private set
+    var safetyBusy by mutableStateOf(false)
+        private set
+
+    /** Jogadores que esta conta bloqueou (lista dos Ajustes e estado do botão Bloquear/Desbloquear). */
+    var blockedPlayers by mutableStateOf<List<BlockedPlayer>>(emptyList())
+        private set
+
+    fun isBlocked(userId: String): Boolean = blockedPlayers.any { it.userId == userId }
+
+    /** Denunciar e bloquear só existe com conta (o servidor precisa saber quem pede) e nunca contra si mesmo. */
+    fun canActOn(userId: String): Boolean =
+        profile.signedIn && userId.isNotBlank() && userId != profile.accountId
+
+    suspend fun loadBlocks() {
+        val session = profile.currentSession() ?: run { blockedPlayers = emptyList(); return }
+        (cloud.myBlocks(session) as? CloudResult.Ok)?.value?.let { blockedPlayers = it }
+    }
+
+    /** Abre o popup padrão de Denunciar / Bloquear para [userId]; o nome passa pelo filtro antes de ser mostrado. */
+    fun openPlayerActions(userId: String, name: String, context: ReportContext, matchId: String? = null) {
+        if (!canActOn(userId)) return
+        safetyResult = null
+        safetyStep = SafetyStep.ACTIONS
+        safetyTarget = SafetyTarget(userId, displayOther(name, t(K.COMMANDER)), context, matchId)
+    }
+
+    /** O adversário da partida online atual pode ser denunciado/bloqueado (tem conta e id conhecido). */
+    val canActOnOpponent: Boolean get() = onlineOpponentId?.let { canActOn(it) } == true
+
+    /** Abre o popup para o adversário da partida online, com a sala junto da denúncia. */
+    fun openOpponentActions(context: ReportContext) {
+        val id = onlineOpponentId ?: return
+        openPlayerActions(id, opponentProfile?.username.orEmpty(), context, onlineMatchId)
+    }
+
+    fun closePlayerActions() {
+        safetyTarget = null
+        safetyResult = null
+        safetyBusy = false
+    }
+
+    fun safetyGoTo(step: SafetyStep) {
+        safetyStep = step
+    }
+
+    fun reportSelected(reason: ReportReason) {
+        val target = safetyTarget ?: return
+        if (safetyBusy) return
+        safetyBusy = true
+        uiScope?.launch {
+            val r = authed { s -> cloud.reportPlayer(s, target.userId, reason.code, target.context.code, target.matchId) }
+            val outcome = if (r is CloudResult.Ok) parseReportResult(r.value) else ReportOutcome.ERROR
+            safetyResult = t(
+                when (outcome) {
+                    ReportOutcome.OK -> K.SAFETY_REPORT_SENT
+                    ReportOutcome.ALREADY -> K.SAFETY_REPORT_ALREADY
+                    ReportOutcome.LIMIT -> K.SAFETY_REPORT_LIMIT
+                    else -> K.SAFETY_ERROR
+                }
+            )
+            safetyStep = SafetyStep.RESULT
+            safetyBusy = false
+        } ?: run { safetyBusy = false }
+    }
+
+    fun blockSelected() {
+        val target = safetyTarget ?: return
+        if (safetyBusy) return
+        safetyBusy = true
+        uiScope?.launch {
+            val r = authed { s -> cloud.blockPlayer(s, target.userId) }
+            val outcome = if (r is CloudResult.Ok) parseBlockResult(r.value) else BlockOutcome.ERROR
+            if (outcome == BlockOutcome.OK) {
+                loadBlocks()
+                refreshFriendships()
+                // o convite ou a oferta dele que estava na tela some junto
+                if (pendingInvite?.hostId == target.userId) pendingInvite = null
+                if (quickOffer?.hostId == target.userId) quickOffer = null
+            }
+            safetyResult = t(if (outcome == BlockOutcome.OK) K.SAFETY_BLOCKED_DONE else K.SAFETY_ERROR)
+            safetyStep = SafetyStep.RESULT
+            safetyBusy = false
+        } ?: run { safetyBusy = false }
+    }
+
+    fun unblockPlayer(userId: String) {
+        uiScope?.launch {
+            authed { s -> cloud.unblockPlayer(s, userId) }
+            loadBlocks()
+        }
+    }
+
+    fun unblockSelected() {
+        val target = safetyTarget ?: return
+        unblockPlayer(target.userId)
+        safetyResult = t(K.SAFETY_UNBLOCKED_DONE)
+        safetyStep = SafetyStep.RESULT
+    }
+
+    /**
+     * Troca o nome de guerra (#58). Com conta, o servidor decide (filtro de nomes e nome já em uso) e só
+     * então o aparelho grava; convidado só passa pelo [NameFilter]. Devolve o erro para a tela, ou nulo se deu certo.
+     */
+    suspend fun renameAccount(value: String): String? {
+        val wanted = value.trim()
+        when (NameFilter.validate(wanted)) {
+            NameFilter.Check.INVALID -> return t(K.NAME_INVALID)
+            NameFilter.Check.OFFENSIVE -> return t(K.NAME_OFFENSIVE)
+            NameFilter.Check.OK -> Unit
+        }
+        if (profile.signedIn) {
+            val r = authed { s -> cloud.setUsername(s, wanted) }
+            if (r !is CloudResult.Ok) return t(K.NAME_ERROR)
+            when (parseUsernameResult(r.value)) {
+                UsernameOutcome.OK -> Unit
+                UsernameOutcome.INVALID -> return t(K.NAME_INVALID)
+                UsernameOutcome.OFFENSIVE -> return t(K.NAME_OFFENSIVE)
+                UsernameOutcome.TAKEN -> return t(K.NAME_TAKEN)
+                UsernameOutcome.ERROR -> return t(K.NAME_ERROR)
+            }
+        }
+        profile.rename(wanted)
+        return null
+    }
+
+    /** O servidor trocou o nome desta conta à força e ela ainda não viu o aviso (popup "Seu nome foi trocado"). */
+    var nameResetNotice by mutableStateOf(false)
+        private set
+
+    /**
+     * Antes de sincronizar a carreira: se o nome foi trocado no servidor, traz o nome novo (senão o upsert do
+     * aparelho levaria o nome velho de volta) e liga o aviso.
+     */
+    private suspend fun applyNameReset() {
+        if (!profile.signedIn) return
+        val hit = (authed { s -> cloud.myNameReset(s) } as? CloudResult.Ok)?.value ?: return
+        if (!hit) return
+        (authed { s -> cloud.loadProfile(s) } as? CloudResult.Ok)?.value?.username?.takeIf { it.isNotBlank() }
+            ?.let { profile.rename(it) }
+        nameResetNotice = true
+    }
+
+    fun ackNameReset() {
+        nameResetNotice = false
+        uiScope?.launch { authed { s -> cloud.nameResetAck(s) } }
     }
 
     /** Presença de cada amigo; com o jogo aberto há até [ONLINE_SECS] conta como no jogo. */
@@ -1024,6 +1200,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (!profile.signedIn || !profile.acceptInvites || match != null || pendingInvite != null) return
         val session = profile.currentSession() ?: return
         val found = (cloud.findPendingInvite(session) as? CloudResult.Ok)?.value ?: return
+        if (isBlocked(found.hostId)) return  // o servidor já esconde; isto cobre a lista ainda não relida (#58)
         pendingInvite = found
     }
 
@@ -1106,6 +1283,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         pushRegisteredFor = null
         if (session != null && token != null) uiScope?.launch { cloud.unregisterPushToken(session, token) }
         hasPassword = null
+        blockedPlayers = emptyList()
+        nameResetNotice = false
         profile.signOut()
     }
 
@@ -1194,6 +1373,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val (casual, ranked) = quickOfferTypes()
         if (!casual && !ranked) return
         val found = (cloud.findQuickOffer(session, casual, ranked, ignoredOffers.toSet()) as? CloudResult.Ok)?.value ?: return
+        if (isBlocked(found.hostId)) return  // #58
         // o estado pode ter mudado durante a chamada (entrou numa partida, abriu popup)
         if (match == null && !otherPopupShowing && quickOffer == null) {
             quickOffer = found
@@ -2469,14 +2649,15 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val parts = Protocol.parts(line)
         when (parts.firstOrNull()) {
             Protocol.HELLO -> {
-                parts.getOrNull(1)?.let { m.setName(m.mySide.other(), it) }
+                // nome ofensivo vindo de app antigo ou cliente alterado nunca chega à tela (#58)
+                parts.getOrNull(1)?.let { m.setName(m.mySide.other(), displayOther(it, t(K.COMMANDER))) }
                 // rede local: quem entra joga no modo de quem abriu a partida (no online
                 // isso já vem da sala). Só troca antes de qualquer frota ir a bordo
                 val hostMode = parts.getOrNull(2)?.let { code -> GameMode.entries.firstOrNull { it.name == code } }
                 if (hostMode != null && hostMode != m.mode && m.opponent == Opponent.LAN &&
                     m.mySide == Side.ENEMY && m.phase == Phase.PLACEMENT && m.fleetsReady == 0
                 ) {
-                    val hostName = parts.getOrNull(1)
+                    val hostName = parts.getOrNull(1)?.let { displayOther(it, t(K.COMMANDER)) }
                     mode = hostMode
                     startLanMatch(Side.ENEMY)
                     hostName?.let { match?.setName(Side.PLAYER, it) }
@@ -2496,7 +2677,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 m.act(Coord(x, y))
             }
 
-            Protocol.TAUNT -> parts.getOrNull(1)?.let { m.sendTaunt(m.mySide.other(), it) }
+            // só provocação conhecida: texto livre de cliente alterado é ignorado (#58)
+            Protocol.TAUNT -> parts.getOrNull(1)?.takeIf { isKnownTaunt(it) }?.let { m.sendTaunt(m.mySide.other(), it) }
 
             Protocol.REMATCH -> {
                 rematchRequestedByOpponent = true
@@ -2707,7 +2889,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Cria a conta e já sobe a carreira que existir neste aparelho. */
     suspend fun createAccount(email: String, password: String, username: String): Pair<Boolean, String> =
-        when (val r = cloud.signUp(email, password, username)) {
+        // nome ofensivo ou fora de 3 a 18 caracteres nem chega ao servidor (#58)
+        if (NameFilter.validate(username) != NameFilter.Check.OK) {
+            false to t(if (NameFilter.validate(username) == NameFilter.Check.OFFENSIVE) K.NAME_OFFENSIVE else K.NAME_INVALID)
+        } else when (val r = cloud.signUp(email, password, username)) {
             is CloudResult.Ok -> {
                 val local = profile.credits
                 profile.rememberSession(r.value)
@@ -2730,6 +2915,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             is CloudResult.Ok -> {
                 val local = profile.credits  // carteira do convidado: vai para a conta uma vez
                 profile.rememberSession(r.value)
+                applyNameReset()
                 val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
                 ensureWallet(local)
                 claimPendingWelcome()
@@ -2754,6 +2940,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             is CloudResult.Ok -> {
                 val local = profile.credits  // carteira do convidado: vai para a conta uma vez
                 profile.rememberSession(r.value)
+                applyNameReset()
                 val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
                 ensureWallet(local)
                 claimPendingWelcome()
@@ -2795,6 +2982,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         renew()
         // o saldo do aparelho antes da fusão (adotar a nuvem o sobrescreve): é o que a abertura leva
         val local = profile.credits
+        applyNameReset()
         mergeWithCloud()
         ensureWallet(local)
         claimPendingWelcome()
@@ -3138,6 +3326,9 @@ fun App() {
             LaunchNoticePopup(state)
             // por último: abre por cima do convite quando falta milha para aceitar
             MilesPopup(state)
+            // denunciar e bloquear (#58) abre por cima de qualquer tela; o aviso de nome trocado, por cima de tudo
+            PlayerSafetyHost(state)
+            NameResetPopup(state)
         }
     }
 }

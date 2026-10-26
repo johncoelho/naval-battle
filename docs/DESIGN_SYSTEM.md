@@ -124,6 +124,16 @@ sombra: profundidade vem de superfície mais clara + borda.
   do presente de boas-vindas (véu `bg` a 86%, `navalSafeArea()`, `navalPanelWidth()`).
 - O artefato Claude Design ainda precisa receber o cartão (ver `docs/design-system/PENDENCIAS.md`).
 
+### Popup de Denunciar e Bloquear (#58)
+
+- `ui/PlayerSafetyPopup.kt`, compartilhado e montado uma vez na raiz do app (`PlayerSafetyHost`), aberto por `AppState.openPlayerActions(...)` no ranking, na
+  busca, nos amigos, em "adversário encontrado" e no resultado da partida online. Molde padrão: véu `bg` a 86%, painel `surface2` com borda `amber`,
+  `HudLabel` de contexto, título `title` centralizado. Passos: `PlayerActionsPopup` (nome em `amberStrong`, Denunciar, Bloquear/Desbloquear, Fechar, todos
+  `SecondaryButton`), `ReportReasonPopup` (4 motivos em `SecondaryButton` com título em cima à esquerda e legenda embaixo à direita) e `BlockConfirmPopup`
+  (`danger` no Bloquear, saída segura "Voltar" à esquerda). `NameResetPopup`: aviso de nome trocado, uma ação (`PrimaryButton`).
+- Ajustes: seção "Segurança e regras" com a lista de bloqueados (linha `surface2`/`lineSoft`, "Desbloquear" em `HudLabel`/`amberStrong` com contorno) e três
+  `SecondaryButton`. Sem token novo. O artefato Claude Design ainda precisa receber o popup (ver `docs/design-system/PENDENCIAS.md`).
+
 ### Bloco Desafio da semana (#47)
 
 - No `DailyPopup`, abaixo do desafio do dia, o mesmo molde do cartão do desafio: painel `surface` com borda `lineSoft` (`amber` com

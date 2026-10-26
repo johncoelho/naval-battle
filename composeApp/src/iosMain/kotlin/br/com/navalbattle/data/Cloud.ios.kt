@@ -784,6 +784,50 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    // ------------------------------------------------------------------ segurança entre jogadores (#58)
+
+    // RPC que devolve texto volta como string solta no JSON (precisa de parseJson com fragmentos)
+    private suspend fun textRpc(fn: String, body: Map<String, Any?>, session: Session): CloudResult<String> = call {
+        CloudResult.Ok((post("/rest/v1/rpc/" + fn, body, token = session.accessToken) as? String).orEmpty())
+    }
+
+    actual suspend fun setUsername(session: Session, name: String): CloudResult<String> =
+        textRpc("set_username", mapOf("p_name" to name), session)
+
+    actual suspend fun blockPlayer(session: Session, userId: String): CloudResult<String> =
+        textRpc("block_player", mapOf("p_user" to userId), session)
+
+    actual suspend fun unblockPlayer(session: Session, userId: String): CloudResult<String> =
+        textRpc("unblock_player", mapOf("p_user" to userId), session)
+
+    actual suspend fun myBlocks(session: Session): CloudResult<List<BlockedPlayer>> = call {
+        val json = post("/rest/v1/rpc/my_blocks", emptyMap<String, Any?>(), token = session.accessToken)
+        val rows = (json as? List<*>).orEmpty().mapNotNull { it as? Map<*, *> }
+        CloudResult.Ok(rows.map { BlockedPlayer(it.strOr("user_id", ""), it.strOr("username", ""), it.strOr("avatar", "")) })
+    }
+
+    actual suspend fun reportPlayer(
+        session: Session,
+        userId: String,
+        reason: String,
+        context: String,
+        matchId: String?
+    ): CloudResult<String> {
+        val body = mutableMapOf<String, Any?>("p_user" to userId, "p_reason" to reason, "p_context" to context)
+        if (matchId != null) body["p_match"] = matchId
+        return textRpc("report_player", body, session)
+    }
+
+    actual suspend fun myNameReset(session: Session): CloudResult<Boolean> = call {
+        val json = post("/rest/v1/rpc/my_name_reset", emptyMap<String, Any?>(), token = session.accessToken)
+        CloudResult.Ok(!(json as? List<*>).isNullOrEmpty())
+    }
+
+    actual suspend fun nameResetAck(session: Session): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/name_reset_ack", emptyMap<String, Any?>(), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int> = call {
         val json = post(
             "/rest/v1/rpc/claim_daily_challenge",
@@ -1061,7 +1105,7 @@ actual class CloudApi actual constructor() {
     }
 
     private fun parseJson(text: String): Any? {
-        return NSJSONSerialization.JSONObjectWithData(stringToData(text), 0uL, null)
+        return NSJSONSerialization.JSONObjectWithData(stringToData(text), 4uL, null)  // 4 = fragmentos permitidos: RPC de texto devolve "ok" solto
     }
 
     // Evita o vaivém incerto de NSString.dataUsingEncoding no binding do Kotlin/Native —

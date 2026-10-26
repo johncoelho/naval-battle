@@ -28,6 +28,7 @@ internal data class ReleaseNote(val version: String, val key: K)
  * Uma linha por minor (0.X.0): patch não ganha linha. Teste em ReleaseNotesTest.
  */
 internal val releaseNotes = listOf(
+    ReleaseNote("0.42.0", K.RN_V0420),
     ReleaseNote("0.41.0", K.RN_V0410),
     ReleaseNote("0.40.0", K.RN_V0400),
     ReleaseNote("0.39.0", K.RN_V0390),

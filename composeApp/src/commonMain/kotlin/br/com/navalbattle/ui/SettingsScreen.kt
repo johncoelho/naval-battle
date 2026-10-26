@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
@@ -31,6 +32,7 @@ import br.com.navalbattle.data.shareStoreListing
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.QuickOfferKind
+import br.com.navalbattle.game.displayOther
 import br.com.navalbattle.i18n.I18n
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.Lang
@@ -48,6 +50,9 @@ fun SettingsScreen(state: AppState) {
     val profile = state.profile
     // "Privacidade dos anúncios" (#29) só aparece com anúncio ligado no servidor
     LaunchedEffect(Unit) { state.loadAds() }
+    // lista de bloqueados (#58)
+    LaunchedEffect(profile.signedIn) { if (profile.signedIn) state.loadBlocks() }
+    val uri = LocalUriHandler.current
 
     Column(
         Modifier
@@ -156,6 +161,51 @@ fun SettingsScreen(state: AppState) {
                     }
                 }
             }
+
+            Gap(26)
+            HudLabel(t(K.SETTINGS_SAFETY))
+            Gap(10)
+            if (profile.signedIn) {
+                HudLabel(t(K.SAFETY_BLOCKED_LIST), Naval.inkSoft)
+                Gap(6)
+                if (state.blockedPlayers.isEmpty()) {
+                    HudLabel(t(K.SAFETY_BLOCKED_EMPTY), Naval.muted)
+                } else {
+                    state.blockedPlayers.forEach { blocked ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 6.dp)
+                                .background(Naval.surface2)
+                                .border(1.dp, Naval.lineSoft)
+                                .padding(horizontal = 14.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                displayOther(blocked.username, t(K.COMMANDER)),
+                                style = NavalType.mono,
+                                color = Naval.ink,
+                                modifier = Modifier.weight(1f)
+                            )
+                            HudLabel(
+                                t(K.SAFETY_UNBLOCK),
+                                Naval.amberStrong,
+                                Modifier
+                                    .border(1.dp, Naval.line)
+                                    .clickable { state.unblockPlayer(blocked.userId) }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+                Gap(10)
+            }
+            SecondaryButton(t(K.SETTINGS_PRIVACY)) { uri.openUri(privacyUrl()) }
+            Gap(8)
+            SecondaryButton(t(K.SETTINGS_RULES)) { uri.openUri(communityRulesUrl()) }
+            Gap(8)
+            SecondaryButton(t(K.SETTINGS_CONTACT), t(K.SETTINGS_CONTACT_SUB)) { uri.openUri(privacyUrl()) }
 
             Gap(26)
             HudLabel(t(K.SETTINGS_ABOUT))

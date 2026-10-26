@@ -838,6 +838,53 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    // ------------------------------------------------------------------ segurança entre jogadores (#58)
+
+    actual suspend fun setUsername(session: Session, name: String): CloudResult<String> = call {
+        val body = JSONObject().put("p_name", name)
+        CloudResult.Ok(post("/rest/v1/rpc/set_username", body, token = session.accessToken).trim().trim('"'))
+    }
+
+    actual suspend fun blockPlayer(session: Session, userId: String): CloudResult<String> = call {
+        val body = JSONObject().put("p_user", userId)
+        CloudResult.Ok(post("/rest/v1/rpc/block_player", body, token = session.accessToken).trim().trim('"'))
+    }
+
+    actual suspend fun unblockPlayer(session: Session, userId: String): CloudResult<String> = call {
+        val body = JSONObject().put("p_user", userId)
+        CloudResult.Ok(post("/rest/v1/rpc/unblock_player", body, token = session.accessToken).trim().trim('"'))
+    }
+
+    actual suspend fun myBlocks(session: Session): CloudResult<List<BlockedPlayer>> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/my_blocks", JSONObject(), token = session.accessToken))
+        CloudResult.Ok((0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            BlockedPlayer(o.optString("user_id"), o.optString("username"), o.optString("avatar"))
+        })
+    }
+
+    actual suspend fun reportPlayer(
+        session: Session,
+        userId: String,
+        reason: String,
+        context: String,
+        matchId: String?
+    ): CloudResult<String> = call {
+        val body = JSONObject().put("p_user", userId).put("p_reason", reason).put("p_context", context)
+        if (matchId != null) body.put("p_match", matchId)
+        CloudResult.Ok(post("/rest/v1/rpc/report_player", body, token = session.accessToken).trim().trim('"'))
+    }
+
+    actual suspend fun myNameReset(session: Session): CloudResult<Boolean> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/my_name_reset", JSONObject(), token = session.accessToken))
+        CloudResult.Ok(arr.length() > 0)
+    }
+
+    actual suspend fun nameResetAck(session: Session): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/name_reset_ack", JSONObject(), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int> = call {
         val body = JSONObject().put("p_mission", mission).put("p_progress", progress)
         val o = JSONArray(post("/rest/v1/rpc/claim_daily_challenge", body, token = session.accessToken)).getJSONObject(0)

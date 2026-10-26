@@ -284,6 +284,27 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | FR-12 | P1 | A fecha e reabre o jogo três vezes em 1 h | B recebe só 1 aviso (anti-spam de 3 h por amigo) (#19) |
 | FR-13 | P1 | B desliga a opção (ou "Receber convites"), ou está no meio de uma partida; A fica online | B não recebe nada (#19) |
 
+## 10b. Segurança entre jogadores: denunciar, bloquear e nome (#58, QA01 × QA02)
+
+O ensaio `supabase/tests/safety_ensaio.sql` roda antes da migração. Casos com `is_test = false` nas duas contas só durante o teste (volta para `true` no fim).
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| SAF-01 | P0 | Perfil: renomear para um termo ofensivo (com acento e leet) | Recusado com a mensagem de nome não permitido; o nome antigo fica; nada gravado em `profiles` |
+| SAF-02 | P0 | Gravar por SQL um nome ofensivo em `profiles` da conta de teste e reabrir o app | O nome vira `Comandante-xxxxxx`, o aviso "Seu nome foi trocado" aparece uma vez e não volta |
+| SAF-03 | P0 | QA01 toca numa linha do ranking e denuncia (Nome ofensivo) | Linha em `player_reports` (`context = ranking`); repetir o mesmo motivo no dia mostra "já denunciou" |
+| SAF-04 | P0 | Denunciar pela busca de amigos | Grava com `context = search` |
+| SAF-05 | P0 | Terminar partida online e denunciar pelo Resultado | Grava com `context = result` e `match_id` da sala |
+| SAF-06 | P1 | Com `reports_daily_cap = 1`, denunciar duas vezes por motivos diferentes | A segunda mostra o limite diário (voltar o valor para 10) |
+| SAF-07 | P0 | QA01 bloqueia QA02, os dois procurando partida rápida; QA02 busca QA01; QA01 convida QA02; QA02 pede amizade | Não casam; a busca não acha; convite e pedido falham; a amizade, se havia, some |
+| SAF-08 | P1 | QA01 desbloqueia QA02 (Ajustes → Jogadores bloqueados) | Tudo volta a funcionar |
+| SAF-09 | P1 | Duas denúncias seguidas por contas diferentes dentro de 1 h | O John recebe só um push "Nova denúncia no Naval Battle" |
+| SAF-10 | P1 | Ajustes: Política de privacidade, Regras da comunidade e Fale conosco (Android e iPhone) | Abrem o site na língua do jogo; "Fale conosco" abre a política (Contato), sem app de e-mail |
+| SAF-11 | P1 | Cliente alterado manda provocação com texto livre | Nada aparece na partida |
+| SAF-12 | P0 | App antigo (0.41.0) contra o novo, com bloqueio feito | O bloqueio vale (a partida rápida não casa os dois) |
+| SAF-13 | P2 | `select * from public.purge_moderation();` com uma denúncia de 13 meses atrás | A antiga some, as recentes ficam |
+| SAF-14 | P1 | Terceiro denunciante distinto contra o mesmo nome em 7 dias | O nome vira `Comandante-xxxxxx` e a vítima vê o aviso uma vez |
+
 ## 11. Partida rápida de qualquer tela (A × B)
 
 | ID | P | Passos | Esperado |

@@ -41,6 +41,9 @@ import br.com.navalbattle.audio.AppForeground
 import br.com.navalbattle.audio.Sfx
 import br.com.navalbattle.audio.SoundPlayer
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.game.TAUNT_EMOJIS
+import br.com.navalbattle.game.TAUNT_PHRASES
+import br.com.navalbattle.game.tauntPhraseOf
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
@@ -670,19 +673,9 @@ private fun AbilityColumn(
     }
 }
 
-private val TAUNT_EMOJIS = listOf("🔥", "💥", "😈", "😅", "🎯", "🏳️")
-private val TAUNT_PHRASES = listOf(
-    "FIRE" to K.TAUNT_FIRE,
-    "NICE" to K.TAUNT_NICE_SHOT,
-    "GG" to K.TAUNT_GG,
-    "MERCY" to K.TAUNT_MERCY,
-    "LUCKY" to K.TAUNT_LUCKY,
-    "INCOMING" to K.TAUNT_INCOMING
-)
-
-/** Emoji chega pronto (é o próprio glifo); grito de guerra chega como código e traduz aqui. */
+/** Emoji chega pronto (é o próprio glifo); grito de guerra chega como código e traduz aqui. Código desconhecido não vira texto. */
 private fun tauntText(code: String): String =
-    TAUNT_PHRASES.firstOrNull { it.first == code }?.let { t(it.second) } ?: code
+    if (code in TAUNT_EMOJIS) code else tauntPhraseOf(code)?.let { t(it) }.orEmpty()
 
 /** Escolha de emoji ou grito de guerra para mandar ao outro aparelho, em rede local. */
 @Composable

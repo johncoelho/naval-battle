@@ -28,6 +28,8 @@ import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawAvatar
 import br.com.navalbattle.game.Avatar
 import br.com.navalbattle.game.Opponent
+import br.com.navalbattle.game.ReportContext
+import br.com.navalbattle.game.displayOther
 import br.com.navalbattle.game.Rank
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -85,7 +87,7 @@ fun OpponentFoundPopup(state: AppState) {
                 )
             }
             Gap(12)
-            Text(opponent.username.uppercase(), style = NavalType.title, color = Naval.ink)
+            Text(displayOther(opponent.username, t(K.COMMANDER)).uppercase(), style = NavalType.title, color = Naval.ink)
             Gap(4)
             HudLabel(Rank.of(opponent.xp).label.uppercase(), Naval.amberStrong)
             Gap(10)
@@ -99,6 +101,10 @@ fun OpponentFoundPopup(state: AppState) {
                 HudLabel(t(K.OPPONENT_FOUND_SWITCH, secondsLeft), Naval.amberStrong)
             } else {
                 PrimaryButton(t(K.OPPONENT_FOUND_CONTINUE)) { dismissed = true }
+                if (state.canActOnOpponent) {
+                    Gap(8)
+                    SecondaryButton(t(K.SAFETY_ACTIONS)) { state.openOpponentActions(ReportContext.MATCH) }
+                }
             }
         }
     }
