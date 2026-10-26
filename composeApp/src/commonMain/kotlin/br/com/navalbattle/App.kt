@@ -61,6 +61,7 @@ import br.com.navalbattle.data.AppleAuth
 import br.com.navalbattle.data.AppleAuthResult
 import br.com.navalbattle.data.DeleteAccountResult
 import br.com.navalbattle.data.appleInitialName
+import br.com.navalbattle.data.appleNameCandidates
 import br.com.navalbattle.data.shouldRevokeApple
 import br.com.navalbattle.data.GoogleAuth
 import br.com.navalbattle.data.GoogleAuthResult
@@ -2963,12 +2964,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** Pós-login por token de identidade (Google e Apple): guarda a sessão, funde a carreira e abre a carteira. */
-    private suspend fun afterIdTokenLogin(session: Session, initialName: String? = null): String {
+    private suspend fun afterIdTokenLogin(session: Session): String {
         val local = profile.credits  // carteira do convidado: vai para a conta uma vez
         profile.rememberSession(session)
         applyNameReset()  // nome trocado à força no servidor volta para cá antes de a carreira subir (#58)
-        // conta nova da Apple: o nome vem antes da fusão, para a carreira subir já com ele (nome ofensivo não entra, #58)
-        initialName?.let { if (!NameFilter.isOffensive(it)) profile.rename(it) }
         val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
         ensureWallet(local)
         claimPendingWelcome()
@@ -2978,21 +2977,48 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     val appleAuth = AppleAuth()
 
     /**
-     * Entra com a Apple (App Store 4.8). O nome só vem na primeira autorização e só vale para
-     * carreira nova na nuvem (ver [appleInitialName]); conta antiga vinculada nunca é renomeada.
+     * Entra com a Apple (App Store 4.8). O token não traz nome, então a sessão segue com o nome que já
+     * está na nuvem (`handle_new_user` o deixa único; "Comandante" repetido quebraria o `unique` de
+     * `profiles.username` e a sincronização). O nome da Apple (só na 1ª autorização) é aplicado DEPOIS da
+     * fusão e só em convidado sem nome e carreira nova na nuvem (ver [appleInitialName]).
      */
     suspend fun signInWithApple(): Pair<Boolean, String> = when (val a = appleAuth.signIn()) {
         is AppleAuthResult.Cancelled -> false to ""
         is AppleAuthResult.Fail -> false to a.message
         is AppleAuthResult.Ok -> when (val r = cloud.signInWithApple(a.idToken, a.rawNonce)) {
             is CloudResult.Ok -> {
+                val localName = profile.name  // antes do rememberSession, que preenche nome em branco
                 val cloudProfile = (cloud.loadProfile(r.value) as? CloudResult.Ok)?.value
+                // sem o perfil da nuvem não dá para garantir um nome único: não guarda a sessão
+                val cloudName = cloudProfile?.username?.takeIf { it.isNotBlank() }
+                    ?: return false to t(K.AUTH_APPLE_FAIL)
+                val session = r.value.copy(username = cloudName)
+                val merged = afterIdTokenLogin(session)
                 val initial = appleInitialName(
-                    a.givenName, r.value.email, cloudProfile?.username, cloudProfile?.xp ?: -1, cloudProfile?.matches ?: -1
+                    a.givenName, session.email, cloudProfile?.username,
+                    cloudProfile?.xp ?: -1, cloudProfile?.matches ?: -1, localName
                 )
-                true to afterIdTokenLogin(r.value, initial)
+                if (initial != null) applyAppleName(session, a.givenName.orEmpty(), cloudName)
+                true to merged
             }
             is CloudResult.Fail -> false to r.message
+        }
+    }
+
+    /**
+     * Nome da Apple depois da fusão: tenta o nome puro; se o servidor recusar (nome já em uso),
+     * `nome-xxxx` com o início do id; se recusar de novo, volta ao nome da nuvem. A conta nunca
+     * fica com um nome que o servidor não aceita (a sincronização inteira dependeria dele).
+     */
+    private suspend fun applyAppleName(session: Session, given: String, cloudName: String) {
+        for (candidate in appleNameCandidates(given, session.userId) + cloudName) {
+            if (candidate != cloudName && NameFilter.isOffensive(candidate)) continue  // filtro de nome (#58)
+            profile.rename(candidate)
+            val snap = profile.snapshot()
+            if (authed { s -> cloud.saveProfile(s, snap) } is CloudResult.Ok) {
+                lastPushed = snap
+                return
+            }
         }
     }
 

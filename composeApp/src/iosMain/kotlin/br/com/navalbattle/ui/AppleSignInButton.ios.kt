@@ -32,9 +32,9 @@ actual fun AppleSignInButton(modifier: Modifier, onClick: () -> Unit) {
     val target = androidx.compose.runtime.remember { AppleButtonTarget { latest.value() } }
     UIKitView(
         factory = {
-            val button = ASAuthorizationAppleIDButton.buttonWithType(
-                ASAuthorizationAppleIDButtonType.ASAuthorizationAppleIDButtonTypeSignIn,
-                ASAuthorizationAppleIDButtonStyle.ASAuthorizationAppleIDButtonStyleWhite
+            val button = ASAuthorizationAppleIDButton(
+                authorizationButtonType = ASAuthorizationAppleIDButtonType.ASAuthorizationAppleIDButtonTypeSignIn,
+                authorizationButtonStyle = ASAuthorizationAppleIDButtonStyle.ASAuthorizationAppleIDButtonStyleWhite
             )
             button.cornerRadius = 0.0
             button.addTarget(target, sel_registerName("fire"), UIControlEventTouchUpInside)

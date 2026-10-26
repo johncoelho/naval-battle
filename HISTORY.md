@@ -537,8 +537,9 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   (2) **Vincula por e-mail verificado** (comportamento padrão do Supabase, igual ao Google): ninguém perde conta, e o relay
   "ocultar meu e-mail" vira conta separada (no pior caso nasce uma conta a mais). Essa era a decisão em aberto da SPEC.
   (3) **Nonce**: sha256 hex para a Apple e o cru para o Supabase. (4) `AuthenticationServices` + `UIKitView`, nenhuma camada
-  nova na stack. (5) **Nome da Apple** só em carreira nova da nuvem (`appleInitialName`), para nunca renomear conta antiga
-  vinculada. (6) **Exclusão**: nenhum token da Apple é guardado; a revogação reautentica na hora e a Edge `apple-revoke`
+  nova na stack. (5) **Nome da Apple** só se o convidado não tinha nome e a carreira da nuvem é nova (`appleInitialName`), aplicado
+  **depois** da fusão e com sufixo `nome-xxxx` se o servidor recusar; a sessão segue com o nome da nuvem, porque
+  "Comandante" repetido quebraria o `unique` de `profiles.username` e a sincronização (revisão do Tech Lead, volta 1). (6) **Exclusão**: nenhum token da Apple é guardado; a revogação reautentica na hora e a Edge `apple-revoke`
   (ES256 por WebCrypto, sem biblioteca) troca o código e revoga. A exclusão **nunca** trava: cancelar a janela da Apple
   cancela a exclusão, mas falha técnica, Edge fora do ar ou **Edge sem os secrets** (`not_configured`) seguem e apagam a conta,
   porque a 5.1.1 obriga a exclusão. (7) Entitlement `com.apple.developer.applesignin` no `iosApp.entitlements`; o `ios.yml`

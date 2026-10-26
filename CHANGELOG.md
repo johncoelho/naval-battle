@@ -15,7 +15,7 @@ Versão definida no lote (#56 → #58 → #13); a entrada entra no cabeçalho da
 
 ### App
 - iPhone: botão oficial **Entrar com a Apple** acima do Google (App Store 4.8), com a dica "Já tem carreira? Escolha COMPARTILHAR MEU E-MAIL". Mesmo e-mail verificado cai na mesma carreira; "ocultar meu e-mail" cria conta separada e a Conta mostra "E-mail oculto pela Apple".
-- Nome da Apple só em carreira nova (`appleInitialName`). Android não muda (`AppleAuth.supported = false`, botão ausente).
+- Nome da Apple só se o convidado não tinha nome e a carreira da nuvem é nova (`appleInitialName`), aplicado depois da fusão; nome repetido ganha sufixo `nome-xxxx` e, se ainda assim o servidor recusar, a conta fica com o nome da nuvem. A sessão segue com o nome que já está na nuvem (não "Comandante", que repetido quebraria o `unique` de `profiles.username`). Android não muda (`AppleAuth.supported = false`, botão ausente).
 - Excluir conta com identidade Apple reautentica na Apple (cancelar cancela a exclusão) e chama a Edge `apple-revoke`; a conta é apagada mesmo se a revogação falhar.
 - `afterIdTokenLogin` compartilhado com o Google; `CloudApi.signInWithApple`, `authProviders`, `revokeApple`; `DeleteAccountResult`. 5 textos novos em pt/en/es. Testes: `AppleAccountTest`.
 - iOS: `iosApp.entitlements` com `com.apple.developer.applesignin` e `CODE_SIGN_ENTITLEMENTS` no target; sha256 e base64url movidos para `CryptoUtils.ios.kt`.

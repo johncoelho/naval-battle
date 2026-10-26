@@ -108,6 +108,7 @@ não bloqueia o release Android. No Android: botão da Apple ausente, login Goog
 | APL-08 | P1 | Conta e-mail/senha **não confirmada** com o mesmo e-mail → Apple compartilhando o e-mail | Documentar o resultado (o GoTrue não vincula identidade não verificada); nenhuma conta existente é alterada |
 | APL-09 | P0 | Conta Apple → Excluir conta → confirmar → cancelar a janela da Apple | Nada é apagado; aparece `AUTH_DELETE_APPLE_CONFIRM` |
 | APL-10 | P1 | Conta Apple de relay que já tem nome → sair e entrar de novo com a Apple | Entra e **não** é renomeada (o nome só vale em carreira nova) |
+| APL-11 | P0 | Segunda conta Apple (relay) sem `givenName`, ou com nome igual ao de outra conta → jogar uma partida | A carreira sincroniza: no banco `profiles.username` é único e `xp` subiu; nenhum "Comandante" repetido; convidado que já tinha nome o mantém |
 
 ## 5. Menu e navegação
 

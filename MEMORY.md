@@ -157,7 +157,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   --project-ref cwtslesnthbenxswdcbv APPLE_TEAM_ID=G25AHMZJ7Y APPLE_SIWA_KEY_ID=<KEYID> APPLE_SIWA_KEY_P8="$(cat AuthKey_<KEYID>.p8)"`
   (ou pelo painel). (3) **Deploy da Edge, ainda não feito:** `supabase functions deploy apple-revoke --project-ref
   cwtslesnthbenxswdcbv` (`verify_jwt` ligado). **Sem os secrets, a exclusão de conta Apple não revoga o token na Apple**
-  (a Edge responde `not_configured` e a conta apaga do mesmo jeito). QA no iPhone pelo TestFlight da #56: APL-01 a APL-10;
+  (a Edge responde `not_configured` e a conta apaga do mesmo jeito). QA no iPhone pelo TestFlight da #56: APL-01 a APL-11;
   no build do `ios-release.yml`, `codesign` deve listar `com.apple.developer.applesignin`; erro 1000 = entitlement perdida (plano B da #13).
   **Do Dev, depois do rebase sobre a #56:** acrescentar `com.apple.developer.applesignin` à lista (hoje vazia) de entitlements obrigatórias do passo de conferência do `ios-release.yml`.
 - **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. **0.34.5 (#35)** em

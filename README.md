@@ -416,8 +416,9 @@ A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
   "Já tem carreira? Escolha COMPARTILHAR MEU E-MAIL". E-mail verificado igual ao de uma conta existente
   **vincula** na mesma carreira (o Supabase liga as identidades sozinho). "Ocultar meu e-mail" (relay
   `@privaterelay.appleid.com`) cria **conta nova e separada**; na Conta aparece "E-mail oculto pela Apple" no lugar do
-  endereço. O nome da Apple (`givenName`, só na 1ª autorização) vira o nome só de **carreira nova**
-  (`appleInitialName`). Não aparece no Android (`AppleAuth.supported = false`): quem criou conta pela Apple usa
+  endereço. O nome da Apple (`givenName`, só na 1ª autorização) vira o nome só se o **convidado do aparelho não tinha
+  nome** e a carreira da nuvem é nova (`appleInitialName`), aplicado depois da fusão; nome repetido ganha o sufixo
+  `nome-xxxx` e, se o servidor ainda recusar, a conta fica com o nome que já tinha na nuvem (`profiles.username` é único). Não aparece no Android (`AppleAuth.supported = false`): quem criou conta pela Apple usa
   **Criar senha** no iPhone e entra por e-mail e senha. **Excluir conta** com identidade Apple pede a autenticação da
   Apple de novo (cancelar cancela a exclusão), e a Edge `apple-revoke` revoga o token. **Sem os secrets da Edge
   (`APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID`, `APPLE_SIWA_KEY_P8`), a exclusão de conta Apple não revoga o token na Apple**:
