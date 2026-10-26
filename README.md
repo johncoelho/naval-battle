@@ -470,7 +470,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
 | `PushMessaging` | token de push | Firebase Messaging | sem push (APNs pendente) |
 | `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes, a aba mostra só o Prêmio Beta (#30) |
-| `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque; recebe o `AdAudience` da faixa (TFUA, TFCD, `npa`, classificação) (`supported = true`) | vazio (`supported = false`) |
+| `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque; recebe o `AdAudience` da faixa (`setAgeRestrictedTreatment` UNSPECIFIED/CHILD/TEEN, `npa`, classificação máxima; as marcas TFUA/TFCD são obsoletas e não se usam; a do UMP deriva do tratamento) (`supported = true`) | vazio (`supported = false`) |
 | `AgeSignals` | faixa etária da loja (#49): `read()` devolve `AgeBand`, nunca lança | Play Age Signals; `-PageFake` troca pelo `FakeAgeSignalsManager` no debug | sem leitura (`supported = false`, `UNKNOWN`) |
 | `isTestLabDevice` | aparelho dos testes automáticos do Google | `Settings.System` `firebase.test.lab` | sempre falso |
 | `DailyReminder` | lembrete diário local | `AlarmManager` | `UNUserNotificationCenter` |

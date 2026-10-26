@@ -21,13 +21,21 @@ data class AgeReading(val band: AgeBand, val answered: Boolean) {
 /** Classificação máxima de conteúdo do anúncio pedida ao AdMob. [NONE] = sem limite (adulto). */
 enum class AdRating { NONE, G, PG }
 
+/**
+ * Tratamento de idade do AdMob (#53): espelho puro do `AgeRestrictedTreatment` do SDK 25.5, que
+ * substitui as marcas obsoletas TFUA e TFCD. [UNSPECIFIED] = adulto, sem restrição.
+ */
+enum class AdAgeTreatment { UNSPECIFIED, CHILD, TEEN }
+
 /** Como o anúncio deve ser pedido para uma faixa. */
 data class AdAudience(
     val personalized: Boolean,
-    val underAgeOfConsent: Boolean,
-    val childDirected: Boolean,
+    val treatment: AdAgeTreatment,
     val maxRating: AdRating
-)
+) {
+    /** Marca "menor de idade" do UMP; derivada do [treatment] para as duas nunca se contradizerem. */
+    val underAgeOfConsent: Boolean get() = treatment != AdAgeTreatment.UNSPECIFIED
+}
 
 object AgeRules {
     /** `AgeSignalsStatus.SHARED` da lib: o jogador deixou a Play compartilhar a faixa. */
@@ -64,10 +72,10 @@ object AgeRules {
 
     /** Anúncio por faixa. Desconhecido é tratado como adolescente (decisão registrada na #49). */
     fun audience(band: AgeBand): AdAudience = when (band) {
-        AgeBand.ADULT -> AdAudience(personalized = true, underAgeOfConsent = false, childDirected = false, maxRating = AdRating.NONE)
-        AgeBand.CHILD -> AdAudience(personalized = false, underAgeOfConsent = true, childDirected = true, maxRating = AdRating.G)
+        AgeBand.ADULT -> AdAudience(personalized = true, treatment = AdAgeTreatment.UNSPECIFIED, maxRating = AdRating.NONE)
+        AgeBand.CHILD -> AdAudience(personalized = false, treatment = AdAgeTreatment.CHILD, maxRating = AdRating.G)
         AgeBand.TEEN, AgeBand.UNKNOWN ->
-            AdAudience(personalized = false, underAgeOfConsent = true, childDirected = false, maxRating = AdRating.PG)
+            AdAudience(personalized = false, treatment = AdAgeTreatment.TEEN, maxRating = AdRating.PG)
     }
 
     /** A leitura guardada (faixa + hora) já venceu? [lastCheckMillis] = 0 → nunca leu. */

@@ -55,13 +55,17 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   R8-06, BIG-01 a BIG-09, EDGE-01 no `QA_TEST_PLAN`) e conferir o mapping no App bundle explorer. O aviso do SDK
   de anúncios saiu na #38 (0.34.13).
 
+- **API de idade do AdMob e hash do Gradle (#53/#54, 0.34.14):** `setAgeRestrictedTreatment` no lugar de TFUA/TFCD
+  (mapeamento em `AgeRules`) e `distributionSha256Sum` no wrapper. QA: ADS-26 com `-PageFake=child|teen|adult|unknown`
+  em QA01/QA02 (anúncio de teste carrega e paga). Versão 0.34.14 (101).
+
 - **Kotlin 2.3 e SDK de anúncios (#38, 0.34.13):** Kotlin 2.3.21, CMP 1.10.3, AGP 8.13.2, Gradle 8.14.3,
   `play-services-ads` 25.5.0. Só o `ios.yml` pega o Kotlin/Native: `iosSimulatorArm64Test` e o `.ipa` verdes antes de
   promover; se o Xcode do runner quebrar o link, fixar o Xcode no `ios.yml` precisa do OK do John. Bateria completa
   no app da Play (anúncio premiado, compras, online no QA01/QA02) e a ação de edge-to-edge sumir do Release dashboard.
 
 - **ECA Digital (#49, 0.34.7):** Play Age Signals 0.0.4 lê a faixa no primeiro toque em anúncio; menor e idade
-  desconhecida = anúncio não personalizado (TFUA, `npa`, PG/G). Gate `ads_min_app_version` pronto e **vazio**
+  desconhecida = anúncio não personalizado (tratamento TEEN/CHILD, `npa`, PG/G). Gate `ads_min_app_version` pronto e **vazio**
   (migração `ads_min_version` a aplicar na publicação; ligar `0.34.7` só com o OK do John e a 0.34.7 na Play).
   Falta o John conferir no Play Console: Classificação (IARC/ClassInd) e Público-alvo. QA: ADS-19 a ADS-21
   (`-PageFake=teen`).

@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import br.com.navalbattle.ActivityHolder
 import br.com.navalbattle.BuildConfig
+import br.com.navalbattle.game.AdAgeTreatment
 import br.com.navalbattle.game.AdAudience
 import br.com.navalbattle.game.AdRating
 import br.com.navalbattle.game.AdRules
@@ -12,6 +13,7 @@ import br.com.navalbattle.game.AdShowOutcome
 import com.google.ads.mediation.admob.AdMobAdapter
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AgeRestrictedTreatment
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
@@ -106,19 +108,19 @@ actual class RewardedAds actual constructor() {
     }
 
     /**
-     * TFUA, TFCD e classificação máxima (#49). A configuração do SDK é global e fica de um
-     * anúncio para o outro, então adulto volta explicitamente aos valores sem marca.
+     * Tratamento de idade (`setAgeRestrictedTreatment`, #53) e classificação máxima (#49). A
+     * configuração do SDK é global e fica de um anúncio para o outro, então adulto manda
+     * UNSPECIFIED explícito.
      */
     private fun applyAudience(audience: AdAudience) {
         MobileAds.setRequestConfiguration(
             RequestConfiguration.Builder()
-                .setTagForUnderAgeOfConsent(
-                    if (audience.underAgeOfConsent) RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE
-                    else RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_UNSPECIFIED
-                )
-                .setTagForChildDirectedTreatment(
-                    if (audience.childDirected) RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE
-                    else RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_UNSPECIFIED
+                .setAgeRestrictedTreatment(
+                    when (audience.treatment) {
+                        AdAgeTreatment.UNSPECIFIED -> AgeRestrictedTreatment.UNSPECIFIED
+                        AdAgeTreatment.CHILD -> AgeRestrictedTreatment.CHILD
+                        AdAgeTreatment.TEEN -> AgeRestrictedTreatment.TEEN
+                    }
                 )
                 .setMaxAdContentRating(
                     when (audience.maxRating) {

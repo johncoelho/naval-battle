@@ -9,6 +9,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.14] — 2026-10-26 · API de idade do AdMob e hash do Gradle (#53, #54)
+
+App 0.34.14 (versionCode 101). Refs #53, #54. Sem mudança de banco, de RPC, de contrato de rede nem de regra de
+idade.
+
+### Alterado
+- **#53, anúncio: `setAgeRestrictedTreatment`.** Os setters obsoletos `setTagForUnderAgeOfConsent` e
+  `setTagForChildDirectedTreatment` do `RequestConfiguration` saem; entra o tratamento único do SDK 25.5.
+  O mapeamento vai para `AgeRules` (commonMain, testável): `AdAgeTreatment` e `AdAudience.treatment` no lugar de
+  `childDirected`; `underAgeOfConsent` passa a ser derivado (só o adulto fica sem marca). Adulto UNSPECIFIED (explícito,
+  a config do SDK é global), adolescente e desconhecido TEEN (`npa=1`, PG), criança CHILD (`npa=1`, G). O
+  `setTagForUnderAgeOfConsent` do UMP e o `setMaxAdContentRating` ficam. Teste novo das 4 faixas.
+- **#54, build: `distributionSha256Sum`** no `gradle-wrapper.properties` (hash oficial do Gradle 8.14.3, que a
+  `main` já usava). O wrapper recusa distribuição adulterada ou corrompida, local e no CI. Verificado com
+  `GRADLE_USER_HOME` limpo: hash certo baixa e imprime 8.14.3; hash errado falha com "Verification of Gradle
+  distribution failed". Nenhum workflow mudou.
+
+---
+
 ## [Sem versão de app] — 2026-10-25 · Banco: anon sem EXECUTE em 6 RPCs antigas (#52)
 
 Só banco e docs, commit `[skip ci]` (nada publicado). Sem versão de app nem de `app_releases`.

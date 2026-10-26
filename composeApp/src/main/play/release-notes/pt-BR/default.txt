@@ -1,1 +1,1 @@
-Atualizacao tecnica: motor do app (Kotlin 2.3 e Compose 1.10) e SDK de anuncios renovados, que removem um aviso de compatibilidade com o Android 15. O jogo segue igual, sem mudanca de regras. Inclui o R8, o suporte a telas grandes e o saldo de dobroes guardado na conta (0.34.9 a 0.34.12).
+Ajuste tecnico nos anuncios: a faixa etaria do jogador agora e enviada ao AdMob pela API atual, que substitui as marcas antigas. Para o jogador nada muda: menores e quem nao compartilha a idade seguem com anuncios nao personalizados e de conteudo adequado.

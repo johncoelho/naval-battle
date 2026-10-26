@@ -53,7 +53,7 @@ class AgeRulesTest {
         val a = AgeRules.audience(AgeBand.CHILD)
         assertFalse(a.personalized)
         assertTrue(a.underAgeOfConsent)
-        assertTrue(a.childDirected)
+        assertEquals(AdAgeTreatment.CHILD, a.treatment)
         assertEquals(AdRating.G, a.maxRating)
     }
 
@@ -63,7 +63,7 @@ class AgeRulesTest {
         assertEquals(teen, AgeRules.audience(AgeBand.UNKNOWN))
         assertFalse(teen.personalized)
         assertTrue(teen.underAgeOfConsent)
-        assertFalse(teen.childDirected)
+        assertEquals(AdAgeTreatment.TEEN, teen.treatment)
         assertEquals(AdRating.PG, teen.maxRating)
     }
 
@@ -72,8 +72,25 @@ class AgeRulesTest {
         val a = AgeRules.audience(AgeBand.ADULT)
         assertTrue(a.personalized)
         assertFalse(a.underAgeOfConsent)
-        assertFalse(a.childDirected)
+        assertEquals(AdAgeTreatment.UNSPECIFIED, a.treatment)
         assertEquals(AdRating.NONE, a.maxRating)
+    }
+
+    @Test
+    fun cadaFaixaTemOTratamentoDoAdMob() {
+        val esperado = mapOf(
+            AgeBand.ADULT to AdAgeTreatment.UNSPECIFIED,
+            AgeBand.TEEN to AdAgeTreatment.TEEN,
+            AgeBand.UNKNOWN to AdAgeTreatment.TEEN,
+            AgeBand.CHILD to AdAgeTreatment.CHILD
+        )
+        for (band in AgeBand.entries) {
+            val a = AgeRules.audience(band)
+            assertEquals(esperado.getValue(band), a.treatment, "tratamento de $band")
+            // A marca do UMP nunca contradiz o tratamento: só o adulto fica sem marca.
+            assertEquals(band != AgeBand.ADULT, a.underAgeOfConsent, "UMP de $band")
+            assertEquals(band == AgeBand.ADULT, a.personalized, "personalizado de $band")
+        }
     }
 
     @Test

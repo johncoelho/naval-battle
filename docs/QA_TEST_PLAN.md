@@ -325,9 +325,10 @@ inválido suspende a conta AdMob). Servidor: `supabase/tests/ads_ensaio.sql` (bl
 | ADS-16 | P2 | Região que exige consentimento (VPN UE): primeiro anúncio; depois Ajustes → "Privacidade dos anúncios" | Formulário do UMP antes do anúncio; o botão dos Ajustes o reabre (no Brasil: "Sem ajuste de privacidade…") |
 | ADS-17 | P1 | Anúncio assistido com a confirmação atrasada (> 20 s) | "O prêmio entra assim que o Google confirmar."; o crédito aparece na próxima abertura, sem somar duas vezes |
 | ADS-18 | P1 | iPhone: vencer, ficar sem milhas | Sem botão de anúncio |
-| ADS-19 | P0 | Menor (build `.preview` com `-PageFake=teen` ou `child`): vencer e tocar no botão de anúncio | UMP sem formulário; anúncio de teste carrega; logcat do SDK mostra `tag_for_under_age_of_consent=1` e `npa=1` (criança também `tag_for_child_directed_treatment=1`); o prêmio credita normalmente |
+| ADS-19 | P0 | Menor (build `.preview` com `-PageFake=teen` ou `child`): vencer e tocar no botão de anúncio | UMP sem formulário; anúncio de teste carrega; `npa=1` na requisição (o tratamento TEEN/CHILD é conferido no ADS-26); o prêmio credita normalmente |
 | ADS-20 | P1 | Conta adulta (`-PageFake=adult`) e sem sinal (`-PageFake=unknown`, ou app da Play sem compartilhar) | Adulta: anúncio sem `npa` nem marca de menor. Sem sinal: igual a menor (não personalizado). Nenhum texto novo no jogo; o aviso da Play, se vier, só depois do toque no anúncio |
 | ADS-21 | P1 | Servidor: `ads_min_app_version = '0.34.7'` e conta com último aparelho `0.34.6` (ensaio `ads_ensaio.sql`) | `ads_status` desligado e `ad_reward_start` devolve `off`; com `0.34.7` libera; chave vazia = sem gate. Ligar só com o OK do John |
+| ADS-26 | P0 | Tratamento de idade do AdMob (#53): um build `.preview` por faixa (`-PageFake=child`, `teen`, `adult`, `unknown`) em QA01 e QA02; vencer e tocar no botão de anúncio | Em cada faixa o anúncio de teste carrega, fecha com prêmio e o crédito entra. Mapeamento esperado: adulto UNSPECIFIED, `teen` e `unknown` TEEN, `child` CHILD (provado no teste de unidade `cadaFaixaTemOTratamentoDoAdMob`); sem log da faixa (a idade não vai para log). Adulto depois de menor na mesma sessão não se reproduz com `-PageFake` (fixo no build); garantido pelo `Builder` novo com UNSPECIFIED explícito a cada pedido |
 
 ### 12c. Conferência de instalação por push (#26)
 
