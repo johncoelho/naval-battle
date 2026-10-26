@@ -406,6 +406,7 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   (falha > 1,09% ou ANR > 0,47% com ≥ 100 usuários, ou P0) sem esperar o John. Variável `PLAY_PRODUCTION_LIVE`
   fica `false` até o *Published* da produção 91, para não substituir um envio em revisão. Etapa "Em produção"
   no quadro: o QA deixa de fechar a issue. iOS fora (segue o `.ipa`).
+- **25/10 · Vitals só travam no ALARME; falta de dado não segura a liberação** (#51, aprovado pelo John) — porquê: o halt automático precisava ler falha e ANR e o único acesso era o secret no GitHub; ação `vitals` (só leitura, Reporting API, janela de 3 dias). Com a base de hoje quase nenhuma versão chega a 100 usuários por dia, então exigir `OK` deixaria tudo parado em 20%: `SEM_DADOS` e `POUCOS_USUARIOS` não travam o `advance`. O run só fica vermelho se a leitura falhar, para o Release não confundir "não li" com "alarme".
 - **25/10 · R8 ligado, área segura única e telas grandes** (#37, aprovado pelo John com as 9 recomendações do
   Tech Lead) — porquê: o painel da Play recomendou as três coisas. R8: regras mínimas porque não usamos
   Supabase-kt, Ktor nem serialização e não há reflexão; Age Signals e Credential Manager têm keep manual; o

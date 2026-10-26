@@ -8,6 +8,10 @@
 #   halt     [vc]         pausa o release em andamento (sem vc: o único em andamento)
 #   resume   <vc>         retoma um release pausado na mesma fração
 #   status                só leitura: mostra Alpha e produção
+#   vitals   <vc>         só leitura: falha e ANR percebidos do versionCode (Play Developer Reporting API,
+#                         janela de 3 dias) e veredito ALARME, OK, POUCOS_USUARIOS ou SEM_DADOS (issue #51).
+#                         Sai com 0 se leu (qualquer veredito) e com 1 só se a leitura falhou. Com
+#                         DRY_RUN=true não chama a API: roda o autoteste do veredito com amostras fixas.
 #
 # Ambiente:
 #   PLAY_SERVICE_ACCOUNT_JSON   conteúdo da chave (secret do GitHub); ou PLAY_SERVICE_ACCOUNT_FILE
@@ -15,12 +19,18 @@
 #   DRY_RUN=true                valida a edição na Play (edits.validate) e descarta, sem commit
 #   PLAY_PACKAGE                padrão aigamesfactory.navalbattleclassic
 #   PLAY_RETRY_WAIT             segundos entre tentativas (padrão 60)
+#   VITALS_CRASH_MAX            falha percebida máxima, em fração (padrão 0.0109 = 1,09%)
+#   VITALS_ANR_MAX              ANR percebido máximo, em fração (padrão 0.0047 = 0,47%)
+#   VITALS_MIN_USERS            piso de usuários distintos no dia para o dia valer (padrão 100)
 # Nunca imprime a chave nem o token. Erros em pt-BR; saída diferente de zero = nada foi publicado.
 set -eu
 
 PACKAGE="${PLAY_PACKAGE:-aigamesfactory.navalbattleclassic}"
 API="https://androidpublisher.googleapis.com/androidpublisher/v3/applications/$PACKAGE"
+API_BASE="$API"
+REPORTING_BASE="https://playdeveloperreporting.googleapis.com/v1beta1/apps/$PACKAGE"
 SCOPE="https://www.googleapis.com/auth/androidpublisher"
+VITALS_WINDOW_DAYS=3
 TMPDIR_RO=""
 TOKEN=""
 EDIT_ID=""
@@ -89,7 +99,7 @@ api() {
   local method="$1" path="$2" body="${3:-}" out="$TMPDIR_RO/resp.json"
   local args=(-sS --max-time 90 -o "$out" -w '%{http_code}' -X "$method" -H "@$TMPDIR_RO/auth.hdr")
   if [ -n "$body" ]; then args+=(-H 'Content-Type: application/json' --data-binary "$body"); fi
-  HTTP_CODE=$(curl "${args[@]}" "$API$path") || { HTTP_CODE=000; RESP=""; return 1; }
+  HTTP_CODE=$(curl "${args[@]}" "$API_BASE$path") || { HTTP_CODE=000; RESP=""; return 1; }
   RESP=$(cat "$out")
   case "$HTTP_CODE" in 2??) return 0 ;; *) return 1 ;; esac
 }
@@ -151,6 +161,174 @@ do_status() {
     {
       echo "### Play: alpha e production"
       echo '```'; summarize "$alpha" | sed 's/^/alpha /'; summarize "$prod" | sed 's/^/production /'; echo '```'
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
+}
+
+# ---- vitals (issue #51): só leitura na Play Developer Reporting API, sem edição ----
+
+# Definições jq do vitals. Os limites chegam por --argjson (cmax, amax, min). Dia = {date, users, crash,
+# anr, crash_all, anr_all}, taxas em fração. Comparação estrita (> limite) e piso inclusivo (>= usuários):
+# só dia com usuários >= piso conta para ALARME ou OK.
+VITALS_DEFS='
+def pad2: tostring | if length < 2 then "0" + . else . end;
+def day_of: "\(.startTime.year)-\(.startTime.month | pad2)-\(.startTime.day | pad2)";
+def metric($n): ((.metrics // []) | map(select(.metric == $n)) | .[0].decimalValue.value) as $v
+  | if $v == null then null else ($v | tonumber) end;
+def vitals_days($c; $a):
+  ((($c.rows // []) | map({date: day_of, k: "c", r: .}))
+   + (($a.rows // []) | map({date: day_of, k: "a", r: .}))) as $all
+  | $all | group_by(.date)
+  | map(. as $g | $g[0].date as $dt
+      | ([$g[] | select(.k == "c") | .r] | .[0]) as $cr
+      | ([$g[] | select(.k == "a") | .r] | .[0]) as $ar
+      | {date: $dt,
+         users: ([($cr // {} | metric("distinctUsers")), ($ar // {} | metric("distinctUsers"))] | map(select(. != null)) | max // 0),
+         crash: ($cr // {} | metric("userPerceivedCrashRate")),
+         anr: ($ar // {} | metric("userPerceivedAnrRate")),
+         crash_all: ($cr // {} | metric("crashRate")),
+         anr_all: ($ar // {} | metric("anrRate"))})
+  | sort_by(.date);
+def vitals_verdict:
+  if length == 0 then "SEM_DADOS"
+  elif any(.[]; (.users // 0) >= $min and (((.crash // 0) > $cmax) or ((.anr // 0) > $amax))) then "ALARME"
+  elif any(.[]; (.users // 0) >= $min) then "OK"
+  else "POUCOS_USUARIOS" end;
+'
+
+VITALS_CMAX="${VITALS_CRASH_MAX:-0.0109}"
+VITALS_AMAX="${VITALS_ANR_MAX:-0.0047}"
+VITALS_MIN="${VITALS_MIN_USERS:-100}"
+
+# vitals_jq FILTRO [opções do jq...] : roda o filtro com as definições e os limites
+vitals_jq() {
+  local filter="$1"; shift
+  jq "$@" --argjson cmax "$VITALS_CMAX" --argjson amax "$VITALS_AMAX" --argjson min "$VITALS_MIN" "$VITALS_DEFS $filter"
+}
+
+vitals_check_limits() {
+  case "$VITALS_CMAX" in ''|*[!0-9.]*|.*|*.|*.*.*) die "VITALS_CRASH_MAX inválido (use fração, ex.: 0.0109)." ;; esac
+  case "$VITALS_AMAX" in ''|*[!0-9.]*|.*|*.|*.*.*) die "VITALS_ANR_MAX inválido (use fração, ex.: 0.0047)." ;; esac
+  case "$VITALS_MIN" in ''|*[!0-9]*) die "VITALS_MIN_USERS inválido (só números, ex.: 100)." ;; esac
+}
+
+# Autoteste (dry_run): não chama a API nem precisa de credencial. Usa limites fixos, nunca o ambiente.
+vitals_selftest() {
+  local fails=0 n=0 got
+  VITALS_CMAX=0.0109; VITALS_AMAX=0.0047; VITALS_MIN=100
+  check() { # nome esperado entrada
+    n=$((n + 1))
+    got=$(printf '%s' "$3" | vitals_jq 'vitals_verdict' -r 2>&1) || got="erro do jq: $got"
+    if [ "$got" = "$2" ]; then
+      note "  ok    $1 -> $got"
+    else
+      note "  FALHA $1: esperado $2, veio $got"; fails=$((fails + 1))
+    fi
+  }
+  note "Autoteste do veredito do vitals (limites fixos: falha > 0.0109, ANR > 0.0047, piso de 100 usuários):"
+  check "dentro dos limites" OK '[{"users":150,"crash":0.005,"anr":0.001}]'
+  check "falha acima do limite" ALARME '[{"users":200,"crash":0.011,"anr":0.001}]'
+  check "ANR acima do limite" ALARME '[{"users":200,"crash":0.001,"anr":0.0048}]'
+  check "limite exato não alarma (estrito)" OK '[{"users":100,"crash":0.0109,"anr":0.0047}]'
+  check "todos os dias abaixo do piso" POUCOS_USUARIOS '[{"users":50,"crash":0.001,"anr":0.0}]'
+  check "99 usuários acima do limite" POUCOS_USUARIOS '[{"users":99,"crash":0.05,"anr":0.05}]'
+  check "99 usuários acima do limite e outro dia ok" OK '[{"users":99,"crash":0.05,"anr":0.05},{"users":120,"crash":0.001,"anr":0.0}]'
+  check "alarme em só um dos dias" ALARME '[{"users":120,"crash":0.001,"anr":0.0},{"users":130,"crash":0.02,"anr":0.0}]'
+  check "taxa ausente não alarma" OK '[{"users":150,"crash":null,"anr":null}]'
+  check "sem linhas" SEM_DADOS '[]'
+  # junção das duas consultas, no formato da Reporting API
+  local crash anr merged
+  crash='{"rows":[{"aggregationPeriod":"DAILY","startTime":{"year":2026,"month":10,"day":22},"metrics":[{"metric":"userPerceivedCrashRate","decimalValue":{"value":"0.0123"}},{"metric":"crashRate","decimalValue":{"value":"0.02"}},{"metric":"distinctUsers","decimalValue":{"value":"140"}}]},{"aggregationPeriod":"DAILY","startTime":{"year":2026,"month":10,"day":23},"metrics":[{"metric":"userPerceivedCrashRate","decimalValue":{"value":"0.001"}},{"metric":"distinctUsers","decimalValue":{"value":"90"}}]}]}'
+  anr='{"rows":[{"aggregationPeriod":"DAILY","startTime":{"year":2026,"month":10,"day":22},"metrics":[{"metric":"userPerceivedAnrRate","decimalValue":{"value":"0.001"}},{"metric":"anrRate","decimalValue":{"value":"0.002"}},{"metric":"distinctUsers","decimalValue":{"value":"140"}}]},{"aggregationPeriod":"DAILY","startTime":{"year":2026,"month":10,"day":23},"metrics":[{"metric":"userPerceivedAnrRate","decimalValue":{"value":"0.0"}},{"metric":"distinctUsers","decimalValue":{"value":"90"}}]}]}'
+  merged=$(vitals_jq 'vitals_days($c; $a)' -c -n --argjson c "$crash" --argjson a "$anr" 2>&1) || merged="erro do jq: $merged"
+  check "API crua: junção e alarme de falha" ALARME "$merged"
+  n=$((n + 1))
+  if [ "$(printf '%s' "$merged" | jq -r 'length, .[0].date, .[0].users, .[1].users, .[1].anr' 2>&1 | tr '\n' ' ')" = "2 2026-10-22 140 90 0 " ]; then
+    note "  ok    API crua: dois dias, usuários e ANR lidos"
+  else
+    note "  FALHA API crua: junção diferente da esperada ($merged)"; fails=$((fails + 1))
+  fi
+  n=$((n + 1))
+  if [ "$(vitals_jq 'vitals_days($c; $a)' -c -n --argjson c '{}' --argjson a '{}' 2>&1)" = "[]" ]; then
+    note "  ok    API crua sem linhas -> lista vazia"
+  else
+    note "  FALHA API crua sem linhas não deu lista vazia"; fails=$((fails + 1))
+  fi
+  if [ "$fails" -ne 0 ]; then die "Autoteste do vitals: $fails de $n verificações falharam."; fi
+  note "Autoteste do vitals ok ($n verificações). Nenhuma chamada à API."
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then echo "**Autoteste do vitals ok ($n verificações)**" >> "$GITHUB_STEP_SUMMARY"; fi
+}
+
+vitals_fail() { # $1 = o que estava fazendo
+  if [ "$HTTP_CODE" = "403" ]; then
+    api_fail "$1: a conta não pode ler relatórios ou a Reporting API está desligada"
+  fi
+  api_fail "$1"
+}
+
+do_vitals() {
+  local fresh end start body crash anr days verdict until_day tz="America/Los_Angeles"  # fuso que a API exige no DAILY
+
+  api GET "/crashRateMetricSet" || vitals_fail "Não consegui ler a atualidade dos dados de falha"
+  printf '%s' "$RESP" | jq -e 'type == "object"' >/dev/null 2>&1 || die "A Reporting API devolveu uma resposta inesperada para crashRateMetricSet."
+  fresh=$(printf '%s' "$RESP" | jq -r '
+    def p2: tostring | ("0" + .)[-2:];
+    [(.freshnessInfo.freshnesses // [])[] | select(.aggregationPeriod == "DAILY") | .latestEndTime][0]
+    | if . == null then empty else "\(.year)-\(.month | p2)-\(.day | p2)" end') || die "Não consegui interpretar a atualidade dos dados."
+
+  if [ -z "$fresh" ]; then
+    # a API ainda não tem dado diário do app: não é falha de leitura
+    days='[]'; until_day="n/d"
+  else
+    case "$fresh" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;; *) die "Data de atualidade inválida vinda da API (\"$fresh\")." ;; esac
+    end=$(date -u -d "$fresh" +%F) || die "Não consegui interpretar a data $fresh."
+    start=$(date -u -d "$end - $VITALS_WINDOW_DAYS days" +%F) || die "Não consegui calcular a janela de $VITALS_WINDOW_DAYS dias."
+    # latestEndTime é exclusivo: o último dia coberto é o anterior
+    until_day=$(date -u -d "$end - 1 day" +%F) || die "Não consegui calcular o último dia da janela."
+
+    body=$(jq -nc --arg s "$start" --arg e "$end" --arg tz "$tz" --arg vc "$VERSION_CODE" '
+      def dt($d): ($d | split("-") | map(tonumber)) as $p
+        | {year: $p[0], month: $p[1], day: $p[2], timeZone: {id: $tz}};
+      {timelineSpec: {aggregationPeriod: "DAILY", startTime: dt($s), endTime: dt($e)},
+       dimensions: ["versionCode"], filter: ("versionCode = " + $vc), pageSize: 100}')
+
+    crash=$(jq -c '. + {metrics: ["userPerceivedCrashRate", "crashRate", "distinctUsers"]}' <<<"$body")
+    api POST "/crashRateMetricSet:query" "$crash" || vitals_fail "Não consegui consultar a taxa de falha"
+    crash="$RESP"
+    anr=$(jq -c '. + {metrics: ["userPerceivedAnrRate", "anrRate", "distinctUsers"]}' <<<"$body")
+    api POST "/anrRateMetricSet:query" "$anr" || vitals_fail "Não consegui consultar a taxa de ANR"
+    anr="$RESP"
+    printf '%s' "$crash" | jq -e 'type == "object"' >/dev/null 2>&1 || die "Resposta inesperada da consulta de falha."
+    printf '%s' "$anr" | jq -e 'type == "object"' >/dev/null 2>&1 || die "Resposta inesperada da consulta de ANR."
+    days=$(vitals_jq 'vitals_days($c; $a)' -c -n --argjson c "$crash" --argjson a "$anr") || die "Não consegui juntar as consultas de falha e ANR."
+  fi
+
+  verdict=$(printf '%s' "$days" | vitals_jq 'vitals_verdict' -r) || die "Não consegui calcular o veredito."
+  case "$verdict" in ALARME|OK|POUCOS_USUARIOS|SEM_DADOS) ;; *) die "Veredito inesperado (\"$verdict\")." ;; esac
+
+  note "vitals de $PACKAGE, versionCode $VERSION_CODE, janela de $VITALS_WINDOW_DAYS dias (dia | usuários | falha % | ANR %):"
+  printf '%s' "$days" | jq -r '
+    def pct: if . == null then "-" else ((. * 10000 | round) / 100 | tostring) end;
+    .[] | "  \(.date) | \(.users) | \(.crash | pct) | \(.anr | pct)"'
+  note "vitals: $verdict (versionCode $VERSION_CODE, até $until_day)"
+  jq -nc --arg vc "$VERSION_CODE" --arg v "$verdict" --arg upto "$until_day" --argjson days "$days" \
+    --argjson cmax "$VITALS_CMAX" --argjson amax "$VITALS_AMAX" --argjson min "$VITALS_MIN" --argjson w "$VITALS_WINDOW_DAYS" \
+    '{versionCode: ($vc | tonumber), verdict: $v, until: $upto, window_days: $w,
+      limits: {crash_max: $cmax, anr_max: $amax, min_users: $min}, days: $days}' | sed 's/^/vitals_json: /'
+
+  if [ "$verdict" = "ALARME" ] && [ -n "${GITHUB_ACTIONS:-}" ]; then
+    echo "::warning::Android vitals em ALARME para o versionCode $VERSION_CODE (falha percebida > $VITALS_CMAX ou ANR percebido > $VITALS_AMAX com pelo menos $VITALS_MIN usuários no dia)."
+  fi
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    {
+      echo "### Android vitals: versionCode $VERSION_CODE → $verdict"
+      echo "Janela de $VITALS_WINDOW_DAYS dias, até $until_day. Limites: falha percebida > $VITALS_CMAX, ANR percebido > $VITALS_AMAX, piso de $VITALS_MIN usuários no dia."
+      echo
+      echo "| Dia | Usuários | Falha % | ANR % |"
+      echo "|---|---|---|---|"
+      printf '%s' "$days" | jq -r '
+        def pct: if . == null then "-" else ((. * 10000 | round) / 100 | tostring) end;
+        .[] | "| \(.date) | \(.users) | \(.crash | pct) | \(.anr | pct) |"'
     } >> "$GITHUB_STEP_SUMMARY"
   fi
 }
@@ -275,8 +453,12 @@ plan_resume() {
   MSG="Produção: retomada (versionCode $VERSION_CODE) na mesma fração"
 }
 
-# uma tentativa completa, numa edição nova
+# uma tentativa completa, numa edição nova (o vitals não abre edição)
 attempt() {
+  if [ "$ACTION" = "vitals" ]; then
+    do_vitals
+    return 0
+  fi
   open_edit
   if [ "$ACTION" = "status" ]; then
     do_status
@@ -310,9 +492,15 @@ main() {
   DRY_RUN="${DRY_RUN:-false}"
 
   case "$ACTION" in
-    promote|advance|halt|resume|status) ;;
-    *) echo "Uso: tools/play-rollout.sh <promote|advance|halt|resume|status> [versionCode] [fração]" >&2; exit 2 ;;
+    promote|advance|halt|resume|status|vitals) ;;
+    *) echo "Uso: tools/play-rollout.sh <promote|advance|halt|resume|status|vitals> [versionCode] [fração]" >&2; exit 2 ;;
   esac
+  if [ "$ACTION" = "vitals" ] && [ "$DRY_RUN" = "true" ]; then
+    # autoteste: sem credencial, sem rede, sem versionCode
+    command -v jq >/dev/null 2>&1 || { err "Falta a ferramenta jq no ambiente."; exit 1; }
+    vitals_selftest
+    exit 0
+  fi
   if [ "$ACTION" != "status" ] && ! { [ "$ACTION" = "halt" ] && [ -z "$VERSION_CODE" ]; }; then
     case "$VERSION_CODE" in
       ''|*[!0-9]*) die "Informe o versionCode (só números) para a ação $ACTION." ;;
@@ -321,6 +509,12 @@ main() {
   for tool in openssl curl jq; do
     command -v "$tool" >/dev/null 2>&1 || { err "Falta a ferramenta $tool no ambiente."; exit 1; }
   done
+
+  if [ "$ACTION" = "vitals" ]; then
+    vitals_check_limits
+    API_BASE="$REPORTING_BASE"
+    SCOPE="https://www.googleapis.com/auth/playdeveloperreporting"
+  fi
 
   setup_tmp
   get_token

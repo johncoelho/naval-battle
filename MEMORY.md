@@ -120,7 +120,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   `.ipa` do Sideloadly (que segue ativo até a versão da Apple ter tudo).
 - **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. **0.34.5 (#35)** em
   revisão (regra em §4). Aviso de lançamento (#36, ligar `launch_notice_enabled` quando a Play aprovar).
-  CI publica só na Alpha; a promoção para a produção (#39) está pronta: `promote-production.yml` + `tools/play-rollout.sh`, 20% → 50% → 100% (docs/ESTEIRA.md). **Pendente do John:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do *Published* da 91 (hoje `false`; permissões e Reporting API já feitas). Vitals no script: #51.
+  CI publica só na Alpha; a promoção para a produção (#39) está pronta: `promote-production.yml` + `tools/play-rollout.sh`, 20% → 50% → 100% (docs/ESTEIRA.md). **Pendente do John:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do *Published* da 91 (hoje `false`; permissões e Reporting API já feitas). Ação `vitals` no script (#51): lê falha/ANR por versionCode; só `ALARME` pausa.
 - **Saldo de dobrões no servidor (#34, 0.34.9):** migração `dobroes_saldo` aplicada (inerte, nenhuma carteira
   aberta; abre por conta quando o 0.34.9 entra). **Pendência** (decisão 8 do John, pode rodar sozinho): com a
   0.34.9 na **produção** e o QA aprovado (bateria completa, casos DOB-30 a DOB-55), conferir os 4 produtos no

@@ -10,13 +10,13 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "promote = Alpha -> 20%; advance = sobe a fração; halt = pausa; resume = retoma; status = só leitura"
+        description: "promote = Alpha -> 20%; advance = sobe a fração; halt = pausa; resume = retoma; status = só leitura; vitals = só leitura: falha e ANR da versão (Reporting API)"
         type: choice
         required: true
         default: status
-        options: [status, promote, advance, halt, resume]
+        options: [status, vitals, promote, advance, halt, resume]
       version_code:
-        description: "versionCode (obrigatório, menos em status; no halt, vazio pausa o único release em andamento)"
+        description: "versionCode (obrigatório, menos em status e no autoteste do vitals; no halt, vazio pausa o único release em andamento)"
         type: string
         required: false
       fraction:
@@ -25,14 +25,14 @@ on:
         default: "0.2"
         options: ["0.2", "0.5", "1"]
       dry_run:
-        description: "Valida na Play (edits.validate) e descarta, sem commit"
+        description: "Valida na Play (edits.validate) e descarta, sem commit; no vitals, autoteste do veredito (sem API)"
         type: boolean
         default: false
 
-# nunca duas edições de produção ao mesmo tempo; o status (só leitura) fica fora do grupo para
+# nunca duas edições de produção ao mesmo tempo; o status e o vitals (só leitura) ficam fora do grupo para
 # não cancelar um halt que esteja na fila (o GitHub cancela o pendente quando chega outro)
 concurrency:
-  group: play-production-${{ inputs.action == 'status' && github.run_id || 'write' }}
+  group: play-production-${{ (inputs.action == 'status' || inputs.action == 'vitals') && github.run_id || 'write' }}
   cancel-in-progress: false
 
 permissions:

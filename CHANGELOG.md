@@ -217,6 +217,19 @@ App 0.34.8 (versionCode 95). Refs #49.
 
 ---
 
+## [Sem versão do app] — 2026-10-26 · Ação `vitals` na promoção da produção (#51)
+
+Refs #51. Sem mudança de banco nem de código Kotlin; commit `[skip ci]`, sem versão do app.
+
+### Adicionado
+- **`tools/play-rollout.sh vitals <versionCode>`** (só leitura, sem edição): lê `crashRateMetricSet` e `anrRateMetricSet` na Play Developer Reporting API (escopo `playdeveloperreporting`, janela de 3 dias) e imprime uma linha por dia, `vitals: <VEREDITO>` e `vitals_json`, mais tabela no resumo do run. Veredito `ALARME` (falha percebida > 1,09% ou ANR percebido > 0,47% com ≥ 100 usuários no dia), `OK`, `POUCOS_USUARIOS` ou `SEM_DADOS`. Sai com 0 se leu e com 1 só se a leitura falhou. `dry_run=true` roda o autoteste do veredito, sem API.
+- **`promote-production.yml`**: opção `vitals` no `action`, descrições novas e `vitals` fora do grupo de escrita da concurrency (como o `status`). `android.yml`, `ios.yml` e `pages.yml` intocados.
+
+### Alterado
+- `.claude/agents/release.md`, `docs/ESTEIRA.md`, skill `play-store-release` e README: o Release lê o `vitals` antes de cada `advance`; só `ALARME` pausa.
+
+---
+
 ## [Sem versão do app] — 2026-10-25 · Promoção para a produção com liberação gradual (#39)
 
 Commit `[skip ci]`, sem subir versão: só `.github/`, `tools/` e documentação (o `android.yml` não muda).

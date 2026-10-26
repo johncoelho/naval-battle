@@ -103,30 +103,40 @@ lista cada envio com o status (*In review* / *Published*); o detalhe do envio mo
 Workflow manual `promote-production.yml` (`workflow_dispatch`, sem cron) chama `tools/play-rollout.sh`
 (openssl, curl e jq; Play Developer API v3, edits) com a conta `play-publisher-ci`. O `android.yml` segue
 só com a Alpha. O Release dispara com o versionCode **sempre explícito**:
-`gh workflow run promote-production.yml -f action=<promote|advance|halt|resume|status> -f version_code=N -f fraction=<0.2|0.5|1> [-f dry_run=true]`.
+`gh workflow run promote-production.yml -f action=<promote|advance|halt|resume|status|vitals> -f version_code=N -f fraction=<0.2|0.5|1> [-f dry_run=true]`.
 O histórico de runs (`gh run list -w promote-production.yml`) é o registro das etapas.
 
 | Etapa | Fração | Quando | Quem |
 |---|---|---|---|
 | `promote` | 20% | QA aprovou **todos** os cartões da versão | Release |
-| `advance` | 50% | ≥ 24 h em 20% (contadas do *Published* da produção), vitals OK, nenhuma P0 aberta contra a versão | Release |
+| `advance` | 50% | ≥ 24 h em 20% (contadas do *Published* da produção), sem `ALARME` no vitals, nenhuma P0 aberta contra a versão | Release |
 | `advance` | 100% (concluída) | ≥ 24 h em 50%, mesmas condições | Release |
 
 - **Travas do `promote`** (erro em pt-BR, sem commit): (1) variável de repositório `PLAY_PRODUCTION_LIVE`
   = `true` (nasce `false`; vira `true` depois do *Published* da produção 91); (2) o versionCode está num
   release concluído da faixa alpha; (3) é maior que todo versionCode da produção; (4) notas e nome copiados
   do release da Alpha. O Release também não promove se o Submission activity mostrar envio de produção *In review*.
+- **`vitals` (#51, só leitura):** `tools/play-rollout.sh vitals <versionCode>` lê a Play Developer Reporting API
+  (`crashRateMetricSet` e `anrRateMetricSet` por versionCode, dados com 1 a 2 dias de atraso; escopo
+  `playdeveloperreporting`, sem abrir edição) numa janela de 3 dias e imprime uma linha por dia
+  (`dia | usuários | falha % | ANR %`), `vitals: <VEREDITO> (versionCode N, até AAAA-MM-DD)` e `vitals_json: {...}`.
+  Veredito: `ALARME` (algum dia com ≥ 100 usuários e falha percebida > 1,09% ou ANR percebido > 0,47%), `OK`,
+  `POUCOS_USUARIOS` (há dados, mas todos os dias abaixo de 100) ou `SEM_DADOS` (nenhuma linha). **Só `ALARME` faz
+  halt**; `SEM_DADOS` e `POUCOS_USUARIOS` não travam o `advance` (com a base de hoje quase nenhuma versão chega a
+  100 usuários por dia). O run só fica vermelho (exit 1) se a **leitura** falhar (ex.: 403 = conta sem permissão
+  de relatórios ou API desligada); nesse caso o Release não avança naquela rodada e não faz halt. Limites por
+  ambiente (`VITALS_CRASH_MAX`, `VITALS_ANR_MAX`, `VITALS_MIN_USERS`) com padrão fixo. Com `dry_run=true` roda o
+  autoteste do veredito com amostras fixas, sem API. O Release comenta na issue
+  `Vitals (versionCode N, até D): falha X%, ANR Y%, U usuários → VEREDITO`.
 - `dry_run=true` valida na Play (`edits.validate`) e descarta a edição; ignora a trava 1 com aviso.
   `status` é só leitura e sempre funciona.
 - **Release novo durante uma liberação** (a Play não aceita dois `inProgress`): antigo em 50% ou mais e sem
   alarme: conclui o antigo (`advance` 1) e depois promove o novo; em 20%: o novo substitui o antigo e
   recomeça em 20%. O script recusa substituir um release em 50% ou mais.
 - **Halt:** `halt` grava `halted` (ninguém mais recebe; quem já recebeu fica), `resume` volta na mesma fração.
-  O Release interrompe **sem esperar o John** e avisa depois, na issue e no relatório, quando: falha percebida
-  > 1,09% ou ANR percebido > 0,47% no Android vitals (Play Developer Reporting API, `crashRateMetricSet` e
-  `anrRateMetricSet` por versionCode, só com ≥ 100 usuários no dia; chegam com 1 a 2 dias de atraso), ou P0 aberta
-  pelo Suporte contra a versão, ou falha em lote no log de diagnóstico. **Enquanto a ação `vitals` (#51, aguarda o
-  John) não existe, o script não lê o Android vitals: o halt vem só da P0 e do log de diagnóstico.** A correção da P0 sai em versão nova
+  O Release interrompe **sem esperar o John** e avisa depois, na issue e no relatório, quando: veredito `ALARME` do vitals
+  (ação `vitals`, #51: falha percebida > 1,09% ou ANR percebido > 0,47% em algum dia da janela, com ≥ 100 usuários
+  naquele dia), ou P0 aberta pelo Suporte contra a versão, ou falha em lote no log de diagnóstico. A correção da P0 sai em versão nova
   pelo caminho normal e substitui o release `halted`. Problema numa função com chave em `app_config`: desliga a chave antes.
 - **Comentário:** a cada etapa, o Release comenta em cada issue da versão `Produção: 20% (versionCode N)`
   (e 50%, 100%). Ao chegar a 100%: cartão para **Concluído** e fecha a issue.

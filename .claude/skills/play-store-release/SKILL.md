@@ -132,7 +132,7 @@ depois do QA aprovar a versão no emulador:
 - Workflow `.github/workflows/promote-production.yml` (só `workflow_dispatch`, `concurrency` `play-production`)
   chama `tools/play-rollout.sh` (openssl + curl + jq; Play Developer API v3: `edits.insert` →
   `tracks.get` → `tracks.update` → `edits.commit`; em `dry_run`, `edits.validate` + `edits.delete`). Ações:
-  `promote` (20%), `advance` (50%, depois 1 = 100%), `halt`, `resume`, `status`. O versionCode é sempre
+  `promote` (20%), `advance` (50%, depois 1 = 100%), `halt`, `resume`, `status`, `vitals` (só leitura). O versionCode é sempre
   explícito (o `promoteReleaseArtifact` do Gradle Play Publisher não serve: promove o último da faixa).
   `gh workflow run promote-production.yml -f action=promote -f version_code=N -f fraction=0.2`.
 - Travas do `promote`: `PLAY_PRODUCTION_LIVE` = `true` (variável de repositório; `false` até o *Published* da
@@ -144,7 +144,7 @@ depois do QA aprovar a versão no emulador:
   ≥ 100 usuários, P0) estão em `docs/ESTEIRA.md`. `resume` volta na mesma fração.
 - Mesma conta de serviço e mesmo secret (`PLAY_SERVICE_ACCOUNT_JSON`); o John já concedeu as permissões de
   produção e de relatórios e ativou a Reporting API (25/10). Falta só `PLAY_PRODUCTION_LIVE=true` depois do
-  *Published* da 91. O script ainda não lê vitals (#51). Notas só em pt-BR por enquanto (en-US e es-ES: issue à parte).
+  *Published* da 91. A ação `vitals <versionCode>` (#51, só leitura, Reporting API, escopo `playdeveloperreporting`, janela de 3 dias) dá o veredito `ALARME`/`OK`/`POUCOS_USUARIOS`/`SEM_DADOS` (1,09% de falha, 0,47% de ANR, piso de 100 usuários no dia); só `ALARME` faz halt, e o run só sai com 1 se a leitura falhar. `dry_run=true` roda o autoteste do veredito, sem API. Notas só em pt-BR por enquanto (en-US e es-ES: issue à parte).
 - Conflito de edição com o upload da Alpha: o script tenta de novo até 3 vezes, 60 s entre elas.
 
 ## 5. Manual upload path (fallback only — normally not needed anymore)
