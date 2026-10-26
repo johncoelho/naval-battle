@@ -1,13 +1,13 @@
 name: iPhone na App Store
 
 # Envia o app para a App Store Connect (aba TestFlight) só com xcodebuild, sem fastlane
-# (#56). O archive sai sem assinatura; a exportação assina com o certificado de distribuição
+# (#56). O archive sai com assinatura ad hoc local (as entitlements do projeto entram nele); a exportação assina com o certificado de distribuição
 # gerenciado pela Apple (assinatura em nuvem) usando a chave da API do App Store Connect.
 # O ios.yml e o .ipa do Sideloadly NÃO mudam. Detalhes e ensaio: docs/BUILD.md, "iPhone na
 # App Store". Segredo nunca vai para o log: sem set -x, sem echo/cat da chave.
 #
 # Três níveis (o job fica verde nos três):
-#   1. sem os secrets/variável: só o archive Release sem assinatura;
+#   1. sem os secrets/variável: só o archive Release com assinatura ad hoc;
 #   2. com tudo, enviar=false: archive + export assinado, .ipa como artefato (7 dias);
 #   3. com tudo, enviar=true: archive + export com destination=upload (TestFlight).
 # O disparo automático (depois do ios.yml verde na main) só roda com a variável de repositório
@@ -126,12 +126,16 @@ jobs:
           # este workflow sem somar um deslocamento aqui (o run_number volta a 1).
           echo "build=$RUN_NUMBER" >> "$GITHUB_OUTPUT"
 
-      - name: Archive Release sem assinatura
+      - name: Archive Release com assinatura ad hoc local
         env:
           BUILD_NUMBER: ${{ steps.ver.outputs.build }}
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
         run: |
           set -eo pipefail
+          # Plano A: assinatura ad hoc (-) só no archive, para as entitlements do projeto
+          # (CODE_SIGN_ENTITLEMENTS, que a #13 cria) entrarem no archive; NÃO sobrescrever
+          # CODE_SIGN_ENTITLEMENTS aqui. O export re-assina com o certificado da Apple.
+          # Plano B em docs/BUILD.md.
           xcodebuild archive \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
@@ -139,8 +143,10 @@ jobs:
             -sdk iphoneos \
             -destination "generic/platform=iOS" \
             -archivePath "$RUNNER_TEMP/iosApp.xcarchive" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
 
@@ -205,6 +211,11 @@ jobs:
               exit 1
             fi
           done
+          # binário de desenvolvimento (get-task-allow = true) a App Store recusa
+          if echo "$ENTS" | tr -d '[:space:]' | grep -q "<key>get-task-allow</key><true/>"; then
+            echo "::error::O .ipa assinado tem get-task-allow = true (assinatura de desenvolvimento). Nada foi enviado."
+            exit 1
+          fi
           echo "Assinatura conferida: time $TEAM."
 
       - name: Envia para o TestFlight (exporta de novo com destination=upload)
@@ -263,6 +274,6 @@ jobs:
                 echo "- Archive + export assinado, sem envio: o .ipa assinado está no artefato NavalBattle-ipa-assinado."
               fi
             else
-              echo "- Só o archive Release sem assinatura foi feito. Faltam: ${MISSING:-?}."
+              echo "- Só o archive Release com assinatura ad hoc foi feito. Faltam: ${MISSING:-?}."
             fi
           } >> "$GITHUB_STEP_SUMMARY"

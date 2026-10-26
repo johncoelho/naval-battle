@@ -659,7 +659,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   `PLAY_PRODUCTION_LIVE` (`false` até a produção 91 ser publicada); mesmo secret `PLAY_SERVICE_ACCOUNT_JSON`.
   Commit que só mexe em `.github/`, `tools/` e docs usa `[skip ci]` e não sobe versão.
 - **iPhone na App Store (#56):** `ios-release.yml` (manual, ou depois do `ios.yml` verde com a variável `IOS_APPSTORE_LIVE=true`):
-  `xcodebuild archive` Release sem assinatura e `-exportArchive` assinado em nuvem com a chave da API do App Store Connect
+  `xcodebuild archive` Release com assinatura ad hoc local e `-exportArchive` assinado em nuvem com a chave da API do App Store Connect
   (secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`; variável `APPLE_TEAM_ID`); `destination = upload` envia ao TestFlight. `CFBundleVersion`
   = número do run. Sem os secrets o job só faz o archive e fica verde. O `.ipa` sem assinatura do `ios.yml` segue. Ver docs/BUILD.md.
 - O passo a passo é a skill `dev-cycle` (pedido → publicação) e, para o Android, `play-store-release`.

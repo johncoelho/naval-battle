@@ -26,7 +26,7 @@ App 0.42.0 (versionCode 109, provisória: sobe junto com a #58). Refs #56. Sem b
 
 ### Infra
 - Workflow novo `.github/workflows/ios-release.yml` (autorizado pelo John na #56), **só com `xcodebuild`, sem fastlane**: archive Release
-  sem assinatura e exportação assinada pela assinatura em nuvem da Apple, com a chave da API do App Store Connect
+  com assinatura ad hoc local (plano A; entitlements do projeto) e exportação assinada pela assinatura em nuvem da Apple, com a chave da API do App Store Connect
   (`-allowProvisioningUpdates` + `-authenticationKey*`). Envio ao TestFlight pelo próprio export (`destination = upload`). Build = número do run.
 - Ensaio em três níveis, job verde nos três: sem secrets só o archive; com secrets e `enviar=false` gera o `.ipa` assinado (artefato de 7 dias);
   `enviar=true` sobe para o TestFlight. Disparo automático depois do `ios.yml` verde só com a variável `IOS_APPSTORE_LIVE=true`.

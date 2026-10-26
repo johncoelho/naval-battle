@@ -509,7 +509,7 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   ◆250 por semana e a ONLINE_PLAY_5 já exige combate dos dois lados, então combinar contas rende pouco. **RANKED_WIN_3**
   exige a mesma prova de combate e `not result_conflict` (vitória sem jogada ou com resultado em conflito não conta).
 - **26/10 · Pipeline do iPhone para a App Store sem fastlane** (#56) — porquê: fastlane seria camada nova (Ruby, gems) e o
-  `xcodebuild` do runner basta. Archive sem assinatura (a assinatura automática no archive usa perfil de desenvolvimento,
+  `xcodebuild` do runner basta. Archive com assinatura ad hoc local `CODE_SIGN_IDENTITY=-` (a assinatura automática no archive usa perfil de desenvolvimento,
   que pede aparelho registrado) e **assinatura em nuvem só na exportação**, com a chave da API do App Store Connect (papel
   Admin; App Manager não cria o certificado de distribuição gerenciado). O envio é o próprio export com `destination = upload`;
   plano B `altool`. Número de build = `run_number` do workflow (nunca renomear sem somar deslocamento). Trava

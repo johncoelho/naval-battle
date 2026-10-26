@@ -443,12 +443,12 @@ Com a conta paga do Apple Developer Program ativa, o envio à App Store Connect 
 
 Workflow separado do `ios.yml` (que não muda e segue gerando o `.ipa` sem assinatura do Sideloadly). Só `xcodebuild`, sem fastlane:
 
-1. `xcodebuild archive` (scheme compartilhado `iosApp`, Release, `CODE_SIGNING_ALLOWED=NO`, `CURRENT_PROJECT_VERSION` = número do run).
+1. `xcodebuild archive` (scheme compartilhado `iosApp`, Release, assinatura ad hoc local `CODE_SIGN_IDENTITY=-`, `CODE_SIGN_STYLE=Manual`, sem sobrescrever `CODE_SIGN_ENTITLEMENTS`, que vem do projeto; `CURRENT_PROJECT_VERSION` = número do run).
 2. `xcodebuild -exportArchive -allowProvisioningUpdates -authenticationKeyPath/ID/IssuerID` com `iosApp/ExportOptions.plist`: a Apple assina
    com o certificado de distribuição gerenciado (assinatura em nuvem) e cria o perfil App Store sozinha. Não há `.p12` nem perfil em secret.
-3. O export sempre sai com `destination = export`; o workflow confere o `.ipa` (TeamIdentifier = `APPLE_TEAM_ID` e a lista de entitlements obrigatórias, vazia até a #13 pedir `com.apple.developer.applesignin`) e só então, com `enviar=true`, exporta de novo com `destination = upload` (por `PlistBuddy`, numa cópia temporária) e a build sobe para o TestFlight. `enviar=true` só vale na `main`; o disparo automático só aceita run de push na `main` do próprio repositório.
-   Plano B se o upload pelo export falhar: `xcrun altool --upload-app -t ios --apiKey --apiIssuer`. Plano B se a Apple recusar o export de
-   archive sem assinatura: arquivar com `-allowProvisioningUpdates` + chave e registrar 1 aparelho no portal.
+3. O export sempre sai com `destination = export`; o workflow confere o `.ipa` (TeamIdentifier = `APPLE_TEAM_ID`, `get-task-allow` diferente de `true` e a lista de entitlements obrigatórias, vazia até a #13 pedir `com.apple.developer.applesignin`) e só então, com `enviar=true`, exporta de novo com `destination = upload` (por `PlistBuddy`, numa cópia temporária) e a build sobe para o TestFlight. `enviar=true` só vale na `main`; o disparo automático só aceita run de push na `main` do próprio repositório.
+   Plano B se o upload pelo export falhar: `xcrun altool --upload-app -t ios --apiKey --apiIssuer`. **Plano B** se a Apple recusar o export de
+   um archive com assinatura ad hoc (Plano A): arquivar com assinatura de verdade, `CODE_SIGN_STYLE=Automatic`, `-allowProvisioningUpdates` + chave da API, o que exige registrar 1 aparelho no portal (perfil de desenvolvimento).
 
 **O que o John cadastra** (Git Bash, um comando por vez; os dois primeiros pedem o valor na hora):
 
@@ -466,7 +466,7 @@ A chave é da equipe, papel **Admin** (App Manager não consegue criar o certifi
 
 | Situação | O que roda | Prova |
 |---|---|---|
-| Sem secrets | archive Release sem assinatura | framework Kotlin em Release, scheme, plist, ícone e Xcode; job **verde**; o resumo lista o que falta |
+| Sem secrets | archive Release com assinatura ad hoc | framework Kotlin em Release, scheme, plist, ícone e Xcode; job **verde**; o resumo lista o que falta |
 | Com secrets, `enviar=false` | archive + export assinado | assinatura em nuvem funciona; `.ipa` assinado como artefato por 7 dias |
 | Com secrets, `enviar=true` | archive + export + upload | a build aparece na aba TestFlight |
 
