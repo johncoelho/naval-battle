@@ -40,6 +40,11 @@ import br.com.navalbattle.data.AppRelease
 import br.com.navalbattle.data.appVersionName
 import br.com.navalbattle.data.isNewerVersion
 import br.com.navalbattle.data.DailyReminder
+import br.com.navalbattle.data.ReminderMessage
+import br.com.navalbattle.data.ReminderTexts
+import br.com.navalbattle.game.ReminderKind
+import br.com.navalbattle.game.ReturnReminder
+import br.com.navalbattle.game.epochDayOf
 import br.com.navalbattle.data.PushInbox
 import br.com.navalbattle.data.DailyStatus
 import br.com.navalbattle.data.SeasonEnd
@@ -1366,8 +1371,25 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             DailyReminder.cancel()
             return
         }
-        (authed { session -> cloud.dailyStatus(session) } as? CloudResult.Ok)?.value?.let { daily = it }
+        (authed { session -> cloud.dailyStatus(session) } as? CloudResult.Ok)?.value?.let {
+            daily = it
+            noteOpened(it)
+        }
         scheduleReminder()
+    }
+
+    /**
+     * Aviso de retorno (#42): grava o dia de hoje como "último dia aberto" e, se o aviso de retorno
+     * agendado já passou sem o jogador abrir o app, guarda que ele saiu (no máximo 1 a cada 7 dias).
+     */
+    private fun noteOpened(d: DailyStatus) {
+        val today = epochDayOf(d.today) ?: return
+        val pending = profile.pendingReturnDay
+        if (pending != 0 && ReturnReminder.noticeSettled(pending, today)) {
+            profile.markReturnNotice(pending)
+            profile.setPendingReturnDay(0)
+        }
+        profile.markOpenDay(today)
     }
 
     /** App voltou ao primeiro plano: o balão pode aparecer de novo. */
@@ -1392,12 +1414,23 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             return
         }
         refreshBalance()  // o servidor creditou
-        daily = daily?.copy(checkedIn = true, streak = done.streak)
-        dailyNotice = when {
+        daily = daily?.copy(checkedIn = true, streak = done.streak, returnReady = false)
+        val checkinNotice = when {
             done.weekCompleted -> t(K.DAILY_WEEK_DONE, done.doubloons)
             done.doubloons > 0 -> t(K.DAILY_GOT, done.doubloons)
             else -> null
         }
+        // prêmio de retorno (#42): o servidor já creditou os dobrões e as milhas
+        val returnNotice = when {
+            done.returnDoubloons > 0 -> t(K.DAILY_RETURN_GOT, done.returnDoubloons, done.returnMiles)
+            done.returnMiles > 0 -> t(K.DAILY_RETURN_GOT_MILES, done.returnMiles)
+            else -> null
+        }
+        if (returnNotice != null) {
+            daily?.let { epochDayOf(it.today) }?.let { profile.markReturnBonus(it) }
+            loadMiles()
+        }
+        dailyNotice = listOfNotNull(checkinNotice, returnNotice).joinToString("\n").ifEmpty { null }
         // momento em que o comandante está engajado: pede a notificação aqui, não na abertura
         if (profile.reminderOn) DailyReminder.requestPermission()
         scheduleReminder()
@@ -1463,7 +1496,28 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             if (!profile.reminderOn || !profile.signedIn) DailyReminder.cancel()
             return
         }
-        DailyReminder.schedule(t(K.REMINDER_TITLE), t(K.REMINDER_BODY, d.checkinReward), skipToday = d.checkedIn)
+        val today = epochDayOf(d.today) ?: return
+        val plan = ReturnReminder.plan(
+            today = today,
+            lastOpenDay = profile.lastOpenDay.takeIf { it > 0 },
+            lastReturnNoticeDay = profile.lastReturnNoticeDay.takeIf { it > 0 },
+            lastReturnBonusDay = profile.lastReturnBonusDay.takeIf { it > 0 },
+            reminderOn = profile.reminderOn,
+            signedIn = profile.signedIn,
+            checkedInToday = d.checkedIn
+        )
+        val returnSlot = plan.firstOrNull { it.kind == ReminderKind.RETURN || it.kind == ReminderKind.RETURN_NO_PRIZE }
+        profile.setPendingReturnDay(returnSlot?.let { today + it.dayOffset } ?: 0)
+        val title = t(K.REMINDER_TITLE)
+        DailyReminder.schedule(
+            plan,
+            ReminderTexts(
+                daily = ReminderMessage(title, t(K.REMINDER_BODY, d.checkinReward)),
+                away = ReminderMessage(title, t(K.REMINDER_AWAY_BODY)),
+                returnPrize = ReminderMessage(t(K.REMINDER_RETURN_TITLE), t(K.REMINDER_RETURN_BODY)),
+                returnNoPrize = ReminderMessage(t(K.REMINDER_RETURN_TITLE), t(K.REMINDER_RETURN_NO_PRIZE_BODY))
+            )
+        )
     }
 
     suspend fun loadMiles() {

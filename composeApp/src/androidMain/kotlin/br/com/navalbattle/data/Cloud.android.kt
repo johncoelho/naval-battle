@@ -737,7 +737,10 @@ actual class CloudApi actual constructor() {
                 missionTarget = o.optInt("mission_target", 1),
                 challengeClaimed = o.optBoolean("challenge_claimed", false),
                 challengeReward = o.optInt("challenge_reward", 50),
-                resetsInSeconds = o.optInt("resets_in_seconds", 0)
+                resetsInSeconds = o.optInt("resets_in_seconds", 0),
+                returnReady = o.optBoolean("return_ready", false),
+                returnDoubloons = o.optInt("return_doubloons", 0),
+                returnMiles = o.optInt("return_miles", 0)
             )
         )
     }
@@ -748,7 +751,9 @@ actual class CloudApi actual constructor() {
             DailyCheckin(
                 streak = o.optInt("streak", 0),
                 doubloons = o.optInt("doubloons", 0),
-                weekCompleted = o.optBoolean("week_completed", false)
+                weekCompleted = o.optBoolean("week_completed", false),
+                returnDoubloons = o.optInt("return_doubloons", 0),
+                returnMiles = o.optInt("return_miles", 0)
             )
         )
     }

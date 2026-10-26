@@ -110,6 +110,23 @@ fun DailyPopup(state: AppState) {
             HudLabel(t(K.DAILY_WEEK_HINT, d.weekBonus), Naval.inkSoft)
             HudLabel(t(K.DAILY_STREAK_RULE), Naval.muted)
             Gap(12)
+            // prêmio de retorno (#42): aparece antes do check-in e é pago junto com ele
+            if (!d.checkedIn && d.returnReady) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Naval.amber.copy(alpha = 0.16f))
+                        .border(1.dp, Naval.amber)
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HudLabel(t(K.DAILY_RETURN).uppercase(), Naval.amberStrong, Modifier.weight(1f))
+                    CoinLabel("+${d.returnDoubloons}", style = NavalType.mono)
+                    Spacer(Modifier.width(6.dp))
+                    Text(t(K.DAILY_RETURN_MILES, d.returnMiles), style = NavalType.mono, color = Naval.amberStrong)
+                }
+                Gap(10)
+            }
             if (d.checkedIn) {
                 SecondaryButton(t(K.DAILY_CHECKED), enabled = false, modifier = Modifier.fillMaxWidth()) {}
                 if (state.adAvailable(AdPlace.CHECKIN)) {

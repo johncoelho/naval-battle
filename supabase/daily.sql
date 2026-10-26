@@ -8,11 +8,20 @@
 -- fechou o dia 7, ganha o bônus da semana e a trilha recomeça no dia seguinte.
 -- Desafio: uma missão por dia, igual para todos, sorteada pela data. O app conta o
 -- progresso nas partidas (contra a IA e online) e resgata depois do check-in do dia.
+-- Prêmio de retorno (#42): no check-in, se o anterior foi há `daily_return_days` dias ou mais, paga
+-- dobrões + milhas, uma vez a cada `daily_return_cooldown_days` dias. Fora do teto de dobrões online
+-- (trava própria: reason 'return' no razão e kind 'return' em daily_claims). Conta is_test não recebe.
+-- Sem carteira (legado) o servidor não credita dobrões: registra o resgate, paga as milhas e devolve
+-- return_doubloons = 0.
 
 insert into public.app_config (key, value) values
   ('daily_checkin_doubloons', '25'),
   ('daily_week_bonus', '300'),
-  ('daily_challenge_doubloons', '50')
+  ('daily_challenge_doubloons', '50'),
+  ('daily_return_days', '5'),
+  ('daily_return_cooldown_days', '30'),
+  ('daily_return_doubloons', '100'),
+  ('daily_return_miles', '3')
 on conflict (key) do nothing;
 
 create table if not exists public.daily_progress (
@@ -35,11 +44,16 @@ create table if not exists public.daily_claims (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references auth.users(id) on delete cascade,
   day        date not null,
-  kind       text not null check (kind in ('checkin', 'week', 'challenge')),
+  kind       text not null check (kind in ('checkin', 'week', 'challenge', 'return')),
   doubloons  integer not null,
   created_at timestamptz not null default now(),
   unique (user_id, day, kind)
 );
+
+-- tabela que já existia: troca a constraint para aceitar 'return' (#42)
+alter table public.daily_claims drop constraint if exists daily_claims_kind_check;
+alter table public.daily_claims add constraint daily_claims_kind_check
+  check (kind in ('checkin', 'week', 'challenge', 'return'));
 
 alter table public.daily_claims enable row level security;
 
@@ -67,11 +81,29 @@ language sql stable as $$
   end;
 $$;
 
+-- O prêmio de retorno está disponível no check-in de hoje? Último check-in há `daily_return_days`
+-- dias ou mais, sem resgate de retorno nos últimos `daily_return_cooldown_days` dias, conta real.
+create or replace function public.daily_return_ready(p_user uuid, p_last date)
+returns boolean
+language sql stable security definer set search_path = public as $$
+  select p_last is not null
+     and public.brt_today() - p_last >= public.config_int('daily_return_days', 5)
+     and not public.is_test_user(p_user)
+     and not exists (
+       select 1 from public.daily_claims c
+        where c.user_id = p_user and c.kind = 'return'
+          and c.day > public.brt_today() - public.config_int('daily_return_cooldown_days', 30));
+$$;
+revoke all on function public.daily_return_ready(uuid, date) from public, anon, authenticated;
+
+-- Mudou o retorno (colunas novas no fim; o app antigo lê por chave e ignora): drop + create e os
+-- mesmos grants no fim do arquivo.
+drop function if exists public.daily_status();
 create or replace function public.daily_status()
 returns table (
   today date, streak integer, checked_in boolean, checkin_reward integer, week_bonus integer,
   mission text, mission_target integer, challenge_claimed boolean, challenge_reward integer,
-  resets_in_seconds integer
+  resets_in_seconds integer, return_ready boolean, return_doubloons integer, return_miles integer
 )
 language plpgsql security definer set search_path = public as $$
 #variable_conflict use_column
@@ -93,13 +125,20 @@ begin
     m.target,
     coalesce(p.challenge_claimed = d, false),
     public.config_int('daily_challenge_doubloons', 50),
-    public.brt_seconds_to_midnight()
+    public.brt_seconds_to_midnight(),
+    public.daily_return_ready(auth.uid(), p.last_checkin),
+    public.config_int('daily_return_doubloons', 100),
+    public.config_int('daily_return_miles', 3)
   from public.daily_mission(d) m;
 end $$;
 
--- check-in do dia: devolve o dia da trilha e os dobrões a creditar (0 se já tinha feito)
+-- check-in do dia: devolve o dia da trilha e os dobrões a creditar (0 se já tinha feito).
+-- `doubloons` é só check-in + bônus da semana (é o que o app antigo mostra); o prêmio de retorno vem
+-- à parte em return_doubloons / return_miles (0 quando não há). Mudou o retorno: drop + create.
+drop function if exists public.daily_checkin();
 create or replace function public.daily_checkin()
-returns table (streak integer, doubloons integer, week_completed boolean)
+returns table (streak integer, doubloons integer, week_completed boolean,
+               return_doubloons integer, return_miles integer)
 language plpgsql security definer set search_path = public as $$
 #variable_conflict use_column
 declare
@@ -108,6 +147,9 @@ declare
   next_streak integer;
   pay integer;
   bonus integer := 0;
+  ret_dob integer := 0;
+  ret_miles integer := 0;
+  cur integer;
 begin
   if auth.uid() is null then
     raise exception 'daily_auth';
@@ -119,6 +161,8 @@ begin
     streak := p.streak;
     doubloons := 0;
     week_completed := false;
+    return_doubloons := 0;
+    return_miles := 0;
     return next;
     return;
   end if;
@@ -129,6 +173,24 @@ begin
   if next_streak = 7 then
     bonus := public.config_int('daily_week_bonus', 300);
     insert into public.daily_claims (user_id, day, kind, doubloons) values (auth.uid(), d, 'week', bonus);
+  end if;
+
+  -- prêmio de retorno (#42): antes de gravar o dia novo, pois depende do check-in anterior.
+  -- Ordem de locks: daily: (acima) -> linha do perfil (miles_refresh) -> dobroes: (dobroes_apply)
+  if public.daily_return_ready(auth.uid(), p.last_checkin) then
+    ret_dob := public.config_int('daily_return_doubloons', 100);
+    ret_miles := public.config_int('daily_return_miles', 3);
+    insert into public.daily_claims (user_id, day, kind, doubloons) values (auth.uid(), d, 'return', ret_dob);
+    cur := public.miles_refresh(auth.uid());
+    update public.profiles
+       set nautical_miles = greatest(cur, least(public.config_int('miles_cap', 50), cur + ret_miles))
+     where id = auth.uid()
+    returning nautical_miles - cur into ret_miles;
+    if public.dobroes_has_wallet(auth.uid()) then
+      perform public.dobroes_apply(auth.uid(), ret_dob, 'return', d::text);
+    else
+      ret_dob := 0;
+    end if;
   end if;
 
   insert into public.daily_progress as dp (user_id, streak, last_checkin)
@@ -142,6 +204,8 @@ begin
   streak := next_streak;
   doubloons := pay + bonus;
   week_completed := next_streak = 7;
+  return_doubloons := ret_dob;
+  return_miles := ret_miles;
   return next;
 end $$;
 
@@ -181,7 +245,7 @@ begin
   return next;
 end $$;
 
-revoke all on function public.daily_status() from public;
+revoke all on function public.daily_status() from public, anon;
 revoke all on function public.daily_checkin() from public, anon;
 revoke all on function public.claim_daily_challenge(text, integer) from public, anon;
 grant execute on function public.daily_status() to authenticated;

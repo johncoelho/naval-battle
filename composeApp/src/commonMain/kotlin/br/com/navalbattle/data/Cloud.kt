@@ -240,11 +240,24 @@ data class DailyStatus(
     val missionTarget: Int,
     val challengeClaimed: Boolean,
     val challengeReward: Int,
-    val resetsInSeconds: Int
+    val resetsInSeconds: Int,
+    /** Prêmio de retorno (#42): disponível no check-in de hoje, e o valor (servidor antigo: 0/false). */
+    val returnReady: Boolean = false,
+    val returnDoubloons: Int = 0,
+    val returnMiles: Int = 0
 )
 
-/** Resultado do check-in: dia da trilha e dobrões a creditar (0 se já tinha feito). */
-data class DailyCheckin(val streak: Int, val doubloons: Int, val weekCompleted: Boolean)
+/**
+ * Resultado do check-in: dia da trilha e dobrões a creditar (0 se já tinha feito). O prêmio de
+ * retorno (#42) vem à parte, em [returnDoubloons] e [returnMiles] (0 quando não houve, ou servidor antigo).
+ */
+data class DailyCheckin(
+    val streak: Int,
+    val doubloons: Int,
+    val weekCompleted: Boolean,
+    val returnDoubloons: Int = 0,
+    val returnMiles: Int = 0
+)
 
 /** Novidades de uma versão publicada (tabela `app_releases`, ver `supabase/releases.sql`). */
 data class AppRelease(

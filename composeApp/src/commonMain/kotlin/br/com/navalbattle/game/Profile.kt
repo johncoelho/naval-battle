@@ -506,6 +506,21 @@ class Profile(private val prefs: Prefs) {
         prefs.putInt(K_REMINDER, if (on) 1 else 0)
     }
 
+    // Marcas locais do aviso de retorno (#42), em dias da data de Brasília (0 = nunca)
+    val lastOpenDay: Int get() = prefs.getInt(K_LAST_OPEN_DAY, 0)
+    val lastReturnNoticeDay: Int get() = prefs.getInt(K_RETURN_NOTICE_DAY, 0)
+    val lastReturnBonusDay: Int get() = prefs.getInt(K_RETURN_BONUS_DAY, 0)
+    val pendingReturnDay: Int get() = prefs.getInt(K_RETURN_PENDING_DAY, 0)
+
+    fun markOpenDay(day: Int) = prefs.putInt(K_LAST_OPEN_DAY, day)
+
+    fun markReturnNotice(day: Int) = prefs.putInt(K_RETURN_NOTICE_DAY, day)
+
+    fun markReturnBonus(day: Int) = prefs.putInt(K_RETURN_BONUS_DAY, day)
+
+    /** Dia do aviso de retorno agendado (0 = nenhum): vira "enviado" na próxima abertura. */
+    fun setPendingReturnDay(day: Int) = prefs.putInt(K_RETURN_PENDING_DAY, day)
+
     fun signOut() {
         // o saldo da conta fica com a conta: o convidado seguinte não herda dobrões (nem os leva para outra conta)
         if (walletOpen) {
@@ -800,6 +815,10 @@ class Profile(private val prefs: Prefs) {
         private const val K_SFX = "sfx"
         private const val K_CURRENCY_TIP = "currency_tip_seen"
         private const val K_REMINDER = "daily_reminder"
+        private const val K_LAST_OPEN_DAY = "last_open_day"
+        private const val K_RETURN_NOTICE_DAY = "last_return_notice_day"
+        private const val K_RETURN_BONUS_DAY = "last_return_bonus_day"
+        private const val K_RETURN_PENDING_DAY = "return_pending_day"
         private const val K_LAST_MODE = "last_mode"
         private const val K_DAILY_DAY = "daily_day"
         private const val K_DAILY_PLAYED = "daily_played"
