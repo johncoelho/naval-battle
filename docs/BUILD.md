@@ -446,7 +446,7 @@ Workflow separado do `ios.yml` (que não muda e segue gerando o `.ipa` sem assin
 1. `xcodebuild archive` (scheme compartilhado `iosApp`, Release, `CODE_SIGNING_ALLOWED=NO`, `CURRENT_PROJECT_VERSION` = número do run).
 2. `xcodebuild -exportArchive -allowProvisioningUpdates -authenticationKeyPath/ID/IssuerID` com `iosApp/ExportOptions.plist`: a Apple assina
    com o certificado de distribuição gerenciado (assinatura em nuvem) e cria o perfil App Store sozinha. Não há `.p12` nem perfil em secret.
-3. Com `enviar=true` o workflow troca `destination` para `upload` (por `PlistBuddy`, numa cópia temporária) e a build sobe para o TestFlight.
+3. O export sempre sai com `destination = export`; o workflow confere o `.ipa` (TeamIdentifier = `APPLE_TEAM_ID` e a lista de entitlements obrigatórias, vazia até a #13 pedir `com.apple.developer.applesignin`) e só então, com `enviar=true`, exporta de novo com `destination = upload` (por `PlistBuddy`, numa cópia temporária) e a build sobe para o TestFlight. `enviar=true` só vale na `main`; o disparo automático só aceita run de push na `main` do próprio repositório.
    Plano B se o upload pelo export falhar: `xcrun altool --upload-app -t ios --apiKey --apiIssuer`. Plano B se a Apple recusar o export de
    archive sem assinatura: arquivar com `-allowProvisioningUpdates` + chave e registrar 1 aparelho no portal.
 
@@ -469,6 +469,8 @@ A chave é da equipe, papel **Admin** (App Manager não consegue criar o certifi
 | Sem secrets | archive Release sem assinatura | framework Kotlin em Release, scheme, plist, ícone e Xcode; job **verde**; o resumo lista o que falta |
 | Com secrets, `enviar=false` | archive + export assinado | assinatura em nuvem funciona; `.ipa` assinado como artefato por 7 dias |
 | Com secrets, `enviar=true` | archive + export + upload | a build aparece na aba TestFlight |
+
+**Atenção ao reenviar:** se o envio falhar depois do upload, rode um run **novo**, não "Re-run": o re-run repete o mesmo `run_number`, e a Apple recusa número de build repetido na mesma versão. A Apple também recusa subir a mesma versão (`CFBundleShortVersionString`) depois de uma aprovada: a versão seguinte precisa de número maior.
 
 **Segurança:** o `.p8` é gravado em `$RUNNER_TEMP` com modo 600 e apagado num passo `if: always()`; nada de `set -x`, `echo` ou `cat` da
 chave. O número de build é o `run_number`: nunca renomear o workflow sem somar um deslocamento (a Apple recusa número repetido na mesma

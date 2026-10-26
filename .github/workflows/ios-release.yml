@@ -37,12 +37,17 @@ jobs:
   appstore:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' && vars.IOS_APPSTORE_LIVE == 'true')
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       vars.IOS_APPSTORE_LIVE == 'true')
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
+          persist-credentials: false
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Confere o Xcode
@@ -79,7 +84,12 @@ jobs:
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           EVENT: ${{ github.event_name }}
           ENVIAR: ${{ inputs.enviar }}
+          REF: ${{ github.ref }}
         run: |
+          if [ "$ENVIAR" = "true" ] && [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Enviar para o TestFlight só vale a partir da main (ref atual: $REF). Rode o workflow na main."
+            exit 1
+          fi
           missing=""
           [ -n "$ASC_KEY_ID" ] || missing="$missing ASC_KEY_ID"
           [ -n "$ASC_ISSUER_ID" ] || missing="$missing ASC_ISSUER_ID"
@@ -134,7 +144,7 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
 
-      - name: Exporta assinado (assinatura em nuvem) e envia se pedido
+      - name: Exporta assinado (assinatura em nuvem), sem enviar
         id: export
         if: steps.keys.outputs.has_keys == 'true'
         env:
@@ -142,7 +152,6 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
-          UPLOAD: ${{ steps.keys.outputs.upload }}
         run: |
           set -eo pipefail
           umask 077
@@ -153,9 +162,6 @@ jobs:
           OPTS="$RUNNER_TEMP/ExportOptions.plist"
           cp iosApp/ExportOptions.plist "$OPTS"
           /usr/libexec/PlistBuddy -c "Add :teamID string $APPLE_TEAM_ID" "$OPTS"
-          if [ "$UPLOAD" = "true" ]; then
-            /usr/libexec/PlistBuddy -c "Set :destination upload" "$OPTS"
-          fi
 
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/iosApp.xcarchive" \
@@ -166,9 +172,61 @@ jobs:
             -authenticationKeyID "$ASC_KEY_ID" \
             -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
-          if [ "$UPLOAD" != "true" ] && ls "$RUNNER_TEMP"/export/*.ipa >/dev/null 2>&1; then
-            echo "ipa=$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)" >> "$GITHUB_OUTPUT"
+          ls "$RUNNER_TEMP"/export/*.ipa >/dev/null
+          echo "ipa=$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)" >> "$GITHUB_OUTPUT"
+
+      # confere a assinatura do .ipa ANTES de qualquer envio
+      - name: Confere a assinatura e os entitlements do .ipa
+        if: steps.keys.outputs.has_keys == 'true'
+        env:
+          IPA: ${{ steps.export.outputs.ipa }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          # entitlements obrigatórias, separadas por espaço. Vazia por ora; a #13 acrescenta
+          # com.apple.developer.applesignin (Entrar com a Apple) quando o recurso existir.
+          REQUIRED_ENTITLEMENTS: ""
+        run: |
+          set -eo pipefail
+          CHECK_DIR="$RUNNER_TEMP/ipa-check"
+          rm -rf "$CHECK_DIR"
+          mkdir -p "$CHECK_DIR"
+          unzip -q "$IPA" -d "$CHECK_DIR"
+          APP="$CHECK_DIR/Payload/iosApp.app"
+          INFO=$(codesign -dv "$APP" 2>&1)
+          echo "$INFO" | grep -E '^(Identifier|TeamIdentifier|Authority)='
+          TEAM=$(echo "$INFO" | sed -n 's/^TeamIdentifier=//p' | head -1)
+          if [ "$TEAM" != "$APPLE_TEAM_ID" ]; then
+            echo "::error::O TeamIdentifier do .ipa ($TEAM) não é o APPLE_TEAM_ID esperado. Nada foi enviado."
+            exit 1
           fi
+          ENTS=$(codesign -d --entitlements :- "$APP" 2>/dev/null)
+          for ent in $REQUIRED_ENTITLEMENTS; do
+            if ! echo "$ENTS" | grep -q "<key>$ent</key>"; then
+              echo "::error::Entitlement obrigatória ausente no .ipa assinado: $ent. Nada foi enviado."
+              exit 1
+            fi
+          done
+          echo "Assinatura conferida: time $TEAM."
+
+      - name: Envia para o TestFlight (exporta de novo com destination=upload)
+        if: steps.keys.outputs.has_keys == 'true' && steps.keys.outputs.upload == 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: |
+          set -eo pipefail
+          umask 077
+          KEY_PATH="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          OPTS="$RUNNER_TEMP/ExportOptions.plist"
+          /usr/libexec/PlistBuddy -c "Set :destination upload" "$OPTS"
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/iosApp.xcarchive" \
+            -exportPath "$RUNNER_TEMP/upload" \
+            -exportOptionsPlist "$OPTS" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
 
       - name: Apaga a chave .p8 do runner
         if: always()
@@ -177,7 +235,7 @@ jobs:
         run: rm -f "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8" "$RUNNER_TEMP/ExportOptions.plist"
 
       - name: Sobe o .ipa assinado como artefato (7 dias)
-        if: steps.export.outputs.ipa != ''
+        if: steps.export.outputs.ipa != '' && steps.keys.outputs.upload != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: NavalBattle-ipa-assinado
