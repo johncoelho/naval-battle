@@ -176,21 +176,22 @@ begin
   end if;
 
   -- prêmio de retorno (#42): antes de gravar o dia novo, pois depende do check-in anterior.
-  -- Ordem de locks: daily: (acima) -> linha do perfil (miles_refresh) -> dobroes: (dobroes_apply)
+  -- Ordem de locks: daily: (acima) -> dobroes: (dobroes_apply) -> linha do perfil (miles_refresh).
+  -- `dobroes:` vem antes de qualquer linha de profiles. Sem carteira, o claim grava o que foi pago de fato (0).
   if public.daily_return_ready(auth.uid(), p.last_checkin) then
-    ret_dob := public.config_int('daily_return_doubloons', 100);
+    perform pg_advisory_xact_lock(hashtext('dobroes:' || auth.uid()::text));
+    ret_dob := case when public.dobroes_has_wallet(auth.uid())
+                    then public.config_int('daily_return_doubloons', 100) else 0 end;
     ret_miles := public.config_int('daily_return_miles', 3);
     insert into public.daily_claims (user_id, day, kind, doubloons) values (auth.uid(), d, 'return', ret_dob);
+    if ret_dob > 0 then
+      perform public.dobroes_apply(auth.uid(), ret_dob, 'return', d::text);
+    end if;
     cur := public.miles_refresh(auth.uid());
     update public.profiles
        set nautical_miles = greatest(cur, least(public.config_int('miles_cap', 50), cur + ret_miles))
      where id = auth.uid()
     returning nautical_miles - cur into ret_miles;
-    if public.dobroes_has_wallet(auth.uid()) then
-      perform public.dobroes_apply(auth.uid(), ret_dob, 'return', d::text);
-    else
-      ret_dob := 0;
-    end if;
   end if;
 
   insert into public.daily_progress as dp (user_id, streak, last_checkin)
@@ -251,3 +252,5 @@ revoke all on function public.claim_daily_challenge(text, integer) from public, 
 grant execute on function public.daily_status() to authenticated;
 grant execute on function public.daily_checkin() to authenticated;
 grant execute on function public.claim_daily_challenge(text, integer) to authenticated;
+
+notify pgrst, 'reload schema';

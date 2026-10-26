@@ -16,7 +16,7 @@
 --   carencia_20d=0/0                     segundo retorno 20 dias depois: não paga
 --   carencia_31d=100/3                   31 dias depois: paga de novo
 --   is_test=0/0/25 milhas=10 claims=0    conta de teste não recebe, nem registra (25 = só o check-in)
---   sem_carteira=0/3 credits=500 claim=1 legado: registra e paga milhas, não credita dobrões
+--   sem_carteira=0/3 credits=500 claim=1 pago=0 legado: registra e paga milhas, não credita dobrões
 --   teto_milhas=1/0                      49 -> 50 (cap) paga 1; já no teto paga 0
 --   privilegios=f/t/f                    anon não executa daily_status; authenticated sim; daily_return_ready fechada
 
@@ -114,9 +114,10 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
   perform pg_temp.volta(c, d - 10, null);
   select * into r from public.daily_checkin();
-  out := out || format('sem_carteira=%s/%s credits=%s claim=%s | ', r.return_doubloons, r.return_miles,
+  out := out || format('sem_carteira=%s/%s credits=%s claim=%s pago=%s | ', r.return_doubloons, r.return_miles,
     (select credits from public.profiles where id = c),
-    (select count(*) from public.daily_claims where user_id = c and kind = 'return'));
+    (select count(*) from public.daily_claims where user_id = c and kind = 'return'),
+    (select coalesce(sum(doubloons), -1) from public.daily_claims where user_id = c and kind = 'return'));
 
   ---------------------------------------------------------------- teto de milhas (49 -> 50, depois 50)
   perform set_config('request.jwt.claims', json_build_object('sub', e, 'role', 'authenticated')::text, true);

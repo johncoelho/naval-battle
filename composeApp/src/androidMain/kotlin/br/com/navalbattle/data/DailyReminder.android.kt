@@ -105,15 +105,15 @@ actual object DailyReminder {
             // versão antiga do app: só havia um lembrete diário às 19h
             val title = prefs.getString(EXTRA_TITLE, null) ?: return
             val body = prefs.getString(EXTRA_BODY, null) ?: return
-            val daily = fireAt(ReminderSlot(0, REMINDER_HOUR, ReminderKind.DAILY))
-            val at = if (daily > System.currentTimeMillis()) daily else daily + DAY_MS
+            // 7 dias de lembrete diário, para quem atualiza e não abre o app seguir recebendo
+            val now = System.currentTimeMillis()
+            val week = (0 until 7).map { fireAt(ReminderSlot(it, REMINDER_HOUR, ReminderKind.DAILY)) to ReminderKind.DAILY }
+                .filter { it.first > now }
             prefs.edit().putString(titleKey(ReminderKind.DAILY), title).putString(bodyKey(ReminderKind.DAILY), body)
-                .putString(PLAN, encode(listOf(at to ReminderKind.DAILY))).apply()
+                .putString(PLAN, encode(week)).apply()
         }
         scheduleNext(context)
     }
-
-    private const val DAY_MS = 24L * 60 * 60 * 1000
 
     private fun titleKey(kind: ReminderKind) = "title_" + kind.name
     private fun bodyKey(kind: ReminderKind) = "body_" + kind.name
