@@ -408,14 +408,16 @@ fun BattleScreen(state: AppState, match: Match) {
             }
         }
 
-        // dica da guiada (#43): fixa embaixo, sobre a frota própria (que não recebe toque); nunca sobre o alvo
+        // dica da guiada (#43): retrato = fixa embaixo, sobre a frota própria (que não recebe toque). Lado a lado
+        // (tablet/dobrável na horizontal) = embaixo à direita, na metade da frota própria (a guiada é Clássica: alvo
+        // à esquerda, frota à direita). Nunca sobre o alvo.
         state.guidedStep?.let { step ->
             GuidedTip(
                 step,
                 onSkip = { state.skipGuided() },
                 onFinish = { state.guidedEvent(GuidedEvent.FINISHED) },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
+                modifier = (if (sideBySide) Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.5f)
+                    else Modifier.align(Alignment.BottomCenter))
                     .navalSafeArea()
                     .navalPanelWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)

@@ -80,15 +80,15 @@ begin
     (select count(*) from public.dobroes_ledger where user_id = u_qa and reason = 'welcome'),
     soma = (select credits from public.profiles where id = u_qa));
 
+  -- teto diário online já cheio (500 com reason 'online' hoje): o presente ainda paga
+  perform public.dobroes_apply(u_cap, 500, 'online', 'ensaio-teto');
   -- teto de milhas
   update public.profiles set nautical_miles = 48, miles_day = public.brt_today() where id = u_cap;
   perform set_config('request.jwt.claims', json_build_object('sub', u_cap, 'role', 'authenticated')::text, true);
   select * into r from public.claim_welcome_gift();
   select nautical_miles into n from public.profiles where id = u_cap;
   out := out || format('milhas_teto=%s/%s | ', n, r.status);
-
-  -- teto diário online cheio não barra o presente (ele não passa por ali)
-  out := out || format('fora_do_teto_online=%s | ', r.status);
+  out := out || format('fora_do_teto_online=%s/%s | ', r.status, r.doubloons);
 
   out := out || format('privilegios=%s/%s/%s',
     has_function_privilege('authenticated', 'public.welcome_gift_reset(uuid)', 'execute'),

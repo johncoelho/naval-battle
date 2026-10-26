@@ -455,7 +455,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     // ---------------------------------------------------------------- primeira partida guiada (#43)
     GUIDED_EYEBROW("Primeira missão", "First mission", "Primera misión"),
     GUIDED_OFFER_TITLE("Aprenda jogando", "Learn by playing", "Aprende jugando"),
-    GUIDED_OFFER_BODY("Uma partida rápida contra a IA, com dicas em 4 passos. Ao terminar (ou pular) você ganha ◆%s dobrões + %s milhas de boas-vindas.", "A quick match against the AI with tips in 4 steps. When you finish (or skip) you get a welcome gift of ◆%s doubloons + %s miles.", "Una partida rápida contra la IA, con consejos en 4 pasos. Al terminar (o saltar) recibes ◆%s doblones + %s millas de bienvenida."),
+    GUIDED_OFFER_BODY("Uma partida rápida contra a IA, com dicas em 4 passos. Ao terminar (ou pular), a conta nova ganha ◆%s dobrões + %s milhas de boas-vindas.", "A quick match against the AI with tips in 4 steps. When you finish (or skip), a new account gets a welcome gift of ◆%s doubloons + %s miles.", "Una partida rápida contra la IA, con consejos en 4 pasos. Al terminar (o saltar), la cuenta nueva recibe ◆%s doblones + %s millas de bienvenida."),
     GUIDED_START("Começar", "Start", "Empezar"),
     GUIDED_SKIP("Pular", "Skip", "Saltar"),
     GUIDED_FINISH("Concluir", "Finish", "Terminar"),
@@ -472,7 +472,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     GUIDED_REPLAY_SUB("Sem presente de novo", "No gift again", "Sin regalo otra vez"),
     GIFT_TITLE("Presente de boas-vindas", "Welcome gift", "Regalo de bienvenida"),
     GIFT_GOT("◆%s dobrões + %s milhas", "◆%s doubloons + %s miles", "◆%s doblones + %s millas"),
-    GIFT_GUEST("Entre na conta para receber ◆%s + %s milhas", "Sign in to receive ◆%s + %s miles", "Entra en tu cuenta para recibir ◆%s + %s millas"),
+    GIFT_GUEST("Crie sua conta para receber ◆%s + %s milhas (conta nova)", "Create your account to receive ◆%s + %s miles (new accounts)", "Crea tu cuenta para recibir ◆%s + %s millas (cuentas nuevas)"),
     GIFT_CLOSE("Valeu!", "Thanks!", "¡Gracias!"),
     DAILY_CHIP_PENDING("Prêmio esperando", "Reward waiting", "Premio esperando"),
     DAILY_CHIP_DONE("Tudo feito hoje", "All done today", "Todo hecho hoy"),
