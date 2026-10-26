@@ -48,7 +48,7 @@ private fun AppRelease.localizedNotes(): String = when (I18n.lang) {
 @Composable
 fun UpdatePopup(state: AppState) {
     // "Depois" mora no AppState: o balão de partida rápida precisa saber se este popup está na tela
-    if (!state.updateAvailable || state.updatePopupDismissed || state.match != null) return
+    if (!state.updatePopupPending || state.match != null) return
     if (state.pendingInvite != null) return
     if (state.onlineLinkState == LinkState.SEARCHING || state.onlineLinkState == LinkState.HOSTING) return
 
@@ -110,13 +110,13 @@ fun UpdatePopup(state: AppState) {
             }
             Gap(20)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SecondaryButton(t(K.UPDATE_POPUP_LATER), modifier = Modifier.weight(1f)) { state.updatePopupDismissed = true }
+                SecondaryButton(t(K.UPDATE_POPUP_LATER), modifier = Modifier.weight(1f)) { state.dismissUpdatePopup() }
                 PrimaryButton(
                     if (ios) t(K.UPDATE_POPUP_SITE) else t(K.UPDATE_POPUP_STORE),
                     modifier = Modifier.weight(1f)
                 ) {
                     openStoreListing()
-                    state.updatePopupDismissed = true
+                    state.dismissUpdatePopup()
                 }
             }
         }

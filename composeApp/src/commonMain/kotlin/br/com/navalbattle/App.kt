@@ -107,6 +107,7 @@ import br.com.navalbattle.game.ChargeRequest
 import br.com.navalbattle.game.OnlineAwardQueue
 import br.com.navalbattle.game.PendingAward
 import br.com.navalbattle.game.PendingCredits
+import br.com.navalbattle.game.UpdatePrompt
 import br.com.navalbattle.game.Wallet
 import br.com.navalbattle.game.PremioState
 import br.com.navalbattle.game.avisoCompra
@@ -267,14 +268,39 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * iPhone: a tabela decide (o .ipa já está no site quando a versão é marcada lá).
      */
     suspend fun checkForUpdate() {
+        // no retorno ao app vale no máximo uma consulta a cada 5 min (UpdatePrompt)
+        val now = nowMillis()
+        if (!UpdatePrompt.shouldRecheck(lastUpdateCheckAt, now)) return
+        lastUpdateCheckAt = now
         val notes = (cloud.recentReleases(platformName) as? CloudResult.Ok)?.value.orEmpty()
             .filter { isNewerVersion(it.versionName, appVersionName) }
         val store = checkUpdateAvailable()
         updateNotes = notes
+        newestUpdateVersion = UpdatePrompt.newestOf(notes.map { it.versionName })
         updateAvailable = when {
             store != null -> store
             else -> notes.isNotEmpty()
         }
+    }
+
+    private var lastUpdateCheckAt = 0L
+
+    /** Maior versão nova vista na última consulta; nula quando só a loja avisa. */
+    var newestUpdateVersion by mutableStateOf<String?>(null)
+        private set
+
+    /** O popup de atualização deve estar na tela: há versão nova e ela ainda não foi dispensada. */
+    val updatePopupPending: Boolean
+        get() = UpdatePrompt.shouldShowUpdate(updateAvailable, newestUpdateVersion, dismissedUpdateVersion)
+
+    /** "Depois" / "Atualizar": só volta quando surgir versão maior que esta. */
+    fun dismissUpdatePopup() {
+        dismissedUpdateVersion = UpdatePrompt.dismissMark(newestUpdateVersion)
+    }
+
+    /** Toque na faixa do menu: mostra o popup de novo. */
+    fun reopenUpdatePopup() {
+        dismissedUpdateVersion = null
     }
 
     /**
@@ -766,8 +792,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Salas dispensadas com "Agora não" (ou já tentadas) — só nesta sessão do app. */
     private val ignoredOffers = mutableSetOf<String>()
 
-    /** "Depois" do popup de atualização — aqui para o balão saber se o popup está na tela. */
-    var updatePopupDismissed by mutableStateOf(false)
+    /** Versão dispensada com "Depois" (#46) — aqui para o balão saber se o popup está na tela. Só na sessão. */
+    var dismissedUpdateVersion by mutableStateOf<String?>(null)
 
     /**
      * Algum outro popup ocupando a tela agora — o balão nunca disputa espaço com
@@ -780,7 +806,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     private val blockingPopupShowing: Boolean
         get() {
             if (pendingInvite != null) return true
-            if (updateAvailable && !updatePopupDismissed) return true
+            if (updatePopupPending) return true
             if (seasonPopupShowing || seasonEnd != null || rankedLockedPrompt) return true
             if (feedbackReward != null) return true
             if (launchNoticeShowing) return true
@@ -1903,7 +1929,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Só no deque, nunca em partida, por cima de convite ou do popup de atualização. */
     val launchNoticeShowing: Boolean
         get() = launchNotice != null && screen == Screen.MENU && match == null &&
-            pendingInvite == null && !(updateAvailable && !updatePopupDismissed)
+            pendingInvite == null && !updatePopupPending
 
     /**
      * Pergunta ao servidor se o aviso vale para esta conta (interruptor, plataforma, já visto).

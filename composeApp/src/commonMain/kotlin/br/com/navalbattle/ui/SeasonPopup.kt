@@ -71,7 +71,7 @@ internal fun seasonNameKey(suffix: String) = when (suffix) {
 fun SeasonPopup(state: AppState) {
     val pass = state.seasonPass ?: return
     if (!state.seasonPopupShowing) return
-    if (state.updateAvailable && !state.updatePopupDismissed) return
+    if (state.updatePopupPending) return
     if (state.pendingInvite != null || state.match != null || state.seasonEnd != null) return
     val theme = SeasonTheme.ofKey(pass.seasonKey)
     val scope = rememberCoroutineScope()

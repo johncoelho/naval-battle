@@ -99,7 +99,7 @@ fun MenuScreen(state: AppState) {
                 Modifier
                     .fillMaxWidth()
                     .background(Naval.amber)
-                    .clickable { state.updatePopupDismissed = false }
+                    .clickable { state.reopenUpdatePopup() }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             )
             Gap(10)
