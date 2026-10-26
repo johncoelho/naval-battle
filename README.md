@@ -83,7 +83,7 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
 ### Desafio da semana
 
 - No Diário de bordo, abaixo do desafio do dia: uma missão por semana (segunda 00h a domingo 23h59, Brasília), igual para
-  todos e em rodízio fixo: **5 partidas online com combate**, **check-in em 5 dias** ou **3 ranqueadas vencidas**. O
+  todos e em rodízio fixo: **5 partidas online com combate**, **check-in em 5 dias** ou **3 ranqueadas vencidas com combate dos dois lados e sem conflito de resultado**. O
   servidor conta o progresso; o aparelho só mostra a barra.
 - Ao completar, **Resgatar** paga ◆250 + 5 milhas (até o teto de milhas), uma vez por semana. O prêmio é fixo e aparece
   antes do resgate; não entra no teto de dobrões das partidas online. Conta `is_test` não recebe.

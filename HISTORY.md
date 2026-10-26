@@ -472,13 +472,16 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **26/10 · Desafio da semana** (#47, aprovado pelo John, 0.40.0) — porquê: o desafio do dia confia no progresso enviado
   pelo app, o que não serve para um prêmio maior (◆250 + 5 milhas, mais que o dobro do check-in diário e perto da semana
   completa de check-in, 475). **Só missões que o servidor consegue provar**, em rodízio fixo pelo número da semana (nada
-  aleatório, ECA Digital): 5 partidas online com combate dos dois lados, check-in em 5 dias, 3 ranqueadas vencidas. "Afundar
+  aleatório, ECA Digital): 5 partidas online com combate dos dois lados, check-in em 5 dias, 3 ranqueadas vencidas com combate dos dois lados e sem conflito de resultado. "Afundar
   30 navios" e vitória casual ficaram de fora: o servidor não vê a partida contra a IA nem o vencedor da casual. Semana de
   segunda 00h a domingo 23h59 de Brasília. Pago por `dobroes_apply(..., 'weekly', <segunda>)`, que é a trava de uma vez só,
   **fora** do teto de 500/dia (somar ao teto puniria quem resgata no dia em que joga online); `is_test` não recebe; sem
   carteira devolve `no_wallet` e o `claim` grava o valor realmente pago (milhas até o `miles_cap`). Locks
   `weekly:<uid>` -> `dobroes:<uid>` -> perfil. Índices em `online_matches (host_id, created_at)` e `(guest_id, created_at)`
-  para a contagem por sala.
+  para a contagem por sala, criados com CREATE INDEX normal e não CONCURRENTLY (este não roda em transação, que é como a
+  migração roda, e a tabela é pequena). **Sem limite por adversário** (o `award_online_match` tem): o prêmio é de no máximo
+  ◆250 por semana e a ONLINE_PLAY_5 já exige combate dos dois lados, então combinar contas rende pouco. **RANKED_WIN_3**
+  exige a mesma prova de combate e `not result_conflict` (vitória sem jogada ou com resultado em conflito não conta).
 
 ## Artefatos de referência (SPECs e designs aprovados)
 

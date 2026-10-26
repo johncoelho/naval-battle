@@ -55,7 +55,8 @@ revoke all on public.weekly_claims from anon, authenticated;
 grant select on public.weekly_claims to authenticated;
 
 -- índices da contagem por sala (a tabela não tinha nenhum por jogador); online_messages já tem
--- (match_id, sender_id, client_seq)
+-- (match_id, sender_id, client_seq). CREATE INDEX normal, não CONCURRENTLY: o CONCURRENTLY não roda dentro de
+-- transação (a migração roda em uma) e a tabela é pequena, então o bloqueio de escrita dura instantes.
 create index if not exists online_matches_host_created_idx on public.online_matches (host_id, created_at);
 create index if not exists online_matches_guest_created_idx on public.online_matches (guest_id, created_at);
 
@@ -86,9 +87,15 @@ begin
     select count(*)::integer into n from public.daily_claims c
      where c.user_id = p_user and c.kind = 'checkin' and c.day >= p_week and c.day < p_week + 7;
   elsif m.code = 'RANKED_WIN_3' then
+    -- ranqueada vencida COM combate dos dois lados (mesma prova da ONLINE_PLAY_5) e sem conflito de resultado
     select count(*)::integer into n from public.online_matches om
      where om.ranked and om.winner_id = p_user and om.created_at >= t0 and om.created_at < t1
-       and (om.host_id = p_user or om.guest_id = p_user);
+       and om.guest_id is not null and (om.host_id = p_user or om.guest_id = p_user)
+       and not coalesce(om.result_conflict, false)
+       and exists (select 1 from public.online_messages x where x.match_id = om.id and x.sender_id = om.host_id
+                     and (x.body like 'ACT|%' or x.body like 'ABIL|%'))
+       and exists (select 1 from public.online_messages x where x.match_id = om.id and x.sender_id = om.guest_id
+                     and (x.body like 'ACT|%' or x.body like 'ABIL|%'));
   end if;
   return least(n, m.target);
 end $$;

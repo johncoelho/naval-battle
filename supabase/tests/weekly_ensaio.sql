@@ -11,7 +11,8 @@
 --                                             23h59 ficam fora (4); a de 1h antes do fim entra (5)
 --   online_sem_combate=5                      sala sem tiro do convidado e sala sem convidado não contam
 --   checkin=4/5/1                             check-ins fora da semana (1 depois, 1 antes) não contam; 5 = 5
---   ranked=2/3                                derrota ranqueada e vitória casual não contam
+--   ranked=2/2/3                              derrota ranqueada, vitória casual, ranqueada vencida sem combate
+--                                             e ranqueada com result_conflict não contam; com combate = 3
 --   status=<code>/<alvo>/<alvo-1>/f/250/5     weekly_status antes do resgate
 --   nao_feito=not_done/0                      progresso < alvo não paga
 --   ok=ok/250/5/250                           resgate paga 250 + 5 e o saldo sobe 250
@@ -46,8 +47,10 @@ begin
     elsif code = 'CHECKIN_5' then
       insert into public.daily_claims (user_id, day, kind, doubloons) values (u, w + i - 1, 'checkin', 25);
     else
-      insert into public.online_matches (host_id, guest_id, host_name, guest_name, status, ranked, winner_id, created_at)
-        values (u, o, 'ensaio', 'ensaio', 'finished', true, u, t0 + interval '1 hour' + i * interval '1 minute');
+      mid := gen_random_uuid();
+      insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, ranked, winner_id, created_at)
+        values (mid, u, o, 'ensaio', 'ensaio', 'finished', true, u, t0 + interval '1 hour' + i * interval '1 minute');
+      insert into public.online_messages (match_id, sender_id, body) values (mid, u, 'ACT|1|1'), (mid, o, 'ACT|2|2');
     end if;
   end loop;
 end $$;
@@ -139,8 +142,16 @@ begin
     values (x, o, 'e', 'e', 'finished', true, o, (w_rk::timestamp at time zone 'America/Sao_Paulo') + interval '2 days'),
            (x, o, 'e', 'e', 'finished', false, x, (w_rk::timestamp at time zone 'America/Sao_Paulo') + interval '2 days');
   n := public.weekly_progress_of(x, w_rk);
+  -- vencida sem combate (sem jogadas) e vencida com conflito de resultado: não contam
+  insert into public.online_matches (host_id, guest_id, host_name, guest_name, status, ranked, winner_id, created_at)
+    values (x, o, 'e', 'e', 'finished', true, x, (w_rk::timestamp at time zone 'America/Sao_Paulo') + interval '3 days');
+  mid := gen_random_uuid();
+  insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, ranked, winner_id, result_conflict, created_at)
+    values (mid, x, o, 'e', 'e', 'finished', true, x, true, (w_rk::timestamp at time zone 'America/Sao_Paulo') + interval '3 days');
+  insert into public.online_messages (match_id, sender_id, body) values (mid, x, 'ACT|1|1'), (mid, o, 'ACT|2|2');
+  n2 := public.weekly_progress_of(x, w_rk);
   perform pg_temp.fill(x, o, w_rk, 'RANKED_WIN_3', 3, 3);
-  out := out || format('ranked=%s/%s | ', n, public.weekly_progress_of(x, w_rk));
+  out := out || format('ranked=%s/%s/%s | ', n, n2, public.weekly_progress_of(x, w_rk));
 
   ---------------------------------------------------------------- a (carteira): status, resgate, duplo, corrida
   select * into cur from public.weekly_mission(cw);

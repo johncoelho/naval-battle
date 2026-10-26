@@ -25,7 +25,7 @@ App 0.40.0 (versionCode 107). Refs #47. Banco: migração `weekly_challenge` (`s
 ### Banco
 - Semana de segunda 00h a domingo 23h59 de Brasília (`brt_week_start()`). Missão em rodízio fixo pelo número da semana,
   igual para todos e sem sorteio: `ONLINE_PLAY_5` (5 partidas online com combate dos dois lados, mesma prova do
-  `award_online_match`), `CHECKIN_5` (check-in em 5 dias da semana) e `RANKED_WIN_3` (3 ranqueadas vencidas).
+  `award_online_match`), `CHECKIN_5` (check-in em 5 dias da semana) e `RANKED_WIN_3` (3 ranqueadas vencidas, com combate dos dois lados e sem `result_conflict`).
 - `weekly_claims` (RLS, só leitura do que é seu), `weekly_status()` e `claim_weekly()` (`ok | already | not_done |
   no_wallet | not_eligible`; grava o valor realmente pago, milhas até o `miles_cap`). Pago por
   `dobroes_apply(..., 'weekly', <segunda>)`, **fora** do teto de 500/dia; conta `is_test` não recebe. Locks

@@ -190,6 +190,7 @@ Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem
 | WEK-03 | P0 | Missão `ONLINE_PLAY_5`: 5 partidas online QA01 x QA02 com tiros dos dois lados | Barra sobe a cada partida até 5/5; Resgatar liga; ao resgatar, saldo do servidor +250 e +5 milhas |
 | WEK-04 | P0 | Tocar em Resgatar de novo (ou abrir o diário em outro aparelho) | Mostra "Prêmio da semana resgatado", nada novo creditado |
 | WEK-05 | P1 | Partida abandonada sem tiro | A barra não se move |
+| WEK-07 | P1 | Missão `RANKED_WIN_3`: ranqueada vencida sem tiros, e outra com resultado em conflito | Nenhuma move a barra; só ranqueada vencida com combate dos dois lados e sem conflito conta |
 | WEK-06 | P1 | Resgatar com 500 dobrões já pagos hoje por partidas online | Paga os ◆250 do mesmo jeito (não entra no teto) |
 
 ## 7. Dois jogadores no mesmo aparelho (só A)
