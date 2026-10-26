@@ -9,6 +9,22 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [a publicar] — 2026-10-26 · Entrar com a Apple no iPhone (#13)
+
+Versão definida no lote (#56 → #58 → #13); a entrada entra no cabeçalho da versão do lote. Refs #13. Sem banco, sem migração.
+
+### App
+- iPhone: botão oficial **Entrar com a Apple** acima do Google (App Store 4.8), com a dica "Já tem carreira? Escolha COMPARTILHAR MEU E-MAIL". Mesmo e-mail verificado cai na mesma carreira; "ocultar meu e-mail" cria conta separada e a Conta mostra "E-mail oculto pela Apple".
+- Nome da Apple só em carreira nova (`appleInitialName`). Android não muda (`AppleAuth.supported = false`, botão ausente).
+- Excluir conta com identidade Apple reautentica na Apple (cancelar cancela a exclusão) e chama a Edge `apple-revoke`; a conta é apagada mesmo se a revogação falhar.
+- `afterIdTokenLogin` compartilhado com o Google; `CloudApi.signInWithApple`, `authProviders`, `revokeApple`; `DeleteAccountResult`. 5 textos novos em pt/en/es. Testes: `AppleAccountTest`.
+- iOS: `iosApp.entitlements` com `com.apple.developer.applesignin` e `CODE_SIGN_ENTITLEMENTS` no target; sha256 e base64url movidos para `CryptoUtils.ios.kt`.
+
+### Servidor
+- Edge Function nova `apple-revoke` (`verify_jwt` ligado, WebCrypto, sem biblioteca). **Não implantada**: os secrets `APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID` e `APPLE_SIWA_KEY_P8` são do John. Sem eles a Edge responde `{revoked:false, reason:"not_configured"}`, registra no log e a exclusão de conta Apple não revoga o token na Apple.
+
+---
+
 ## [Site] — 2026-10-26 · Política de privacidade e regras da comunidade (#57)
 
 Sem versão do app (só `site/`, commit com `[skip ci]` e publicação com `gh workflow run pages.yml --ref main`). Refs #57.

@@ -16,3 +16,6 @@
 
 - **Popup de Denunciar e Bloquear (#58, 0.42.0).** `PlayerActionsPopup`, `ReportReasonPopup`, `BlockConfirmPopup` e `NameResetPopup` estão em
   `docs/DESIGN_SYSTEM.md`, mas o artefato Claude Design `Naval Battle Command HUD` ainda não foi republicado com eles (skill `design-system`, passo 3).
+- **Botão Entrar com a Apple (#13).** O botão oficial da Apple e as duas exceções (princípio 2: logotipo desenhado pelo
+  sistema; princípio 3: fundo branco fora da paleta) estão em `docs/DESIGN_SYSTEM.md`; o artefato Claude Design ainda
+  precisa registrá-las.

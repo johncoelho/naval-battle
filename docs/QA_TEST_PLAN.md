@@ -91,6 +91,24 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | AUTH-07 | P1 | Conta só Google (sem senha) → Perfil → Criar senha; nova senha 6+ e confirmação → Salvar | Botão mostra "Criar senha" (não "Trocar senha") e o cartão não pede senha atual; confirma "Senha criada"; o botão vira "Trocar senha"; sair e entrar por e-mail + essa senha cai na mesma carreira (senha digitada só pelo John) |
 | AUTH-08 | P1 | Conta criada por e-mail e senha → Perfil | Mostra "Trocar senha" pedindo a senha atual, como antes |
 
+### 4b. Entrar com a Apple (iPhone, #13)
+
+Só no iPhone, pelo **TestFlight** (build assinado com a entitlement; o `.ipa` do Sideloadly dá `AUTH_APPLE_UNAVAILABLE`). O iPhone
+não bloqueia o release Android. No Android: botão da Apple ausente, login Google e e-mail iguais, Excluir conta sem reautenticação.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| APL-01 | P0 | Sem sessão → Perfil → Entrar com a Apple → COMPARTILHAR MEU E-MAIL | Entra, sem erro 1000; conta nova com o nome da Apple; botão acima do Google e dica abaixo |
+| APL-02 | P0 | Tocar no botão e cancelar a janela da Apple | Volta para a tela de entrar, sem erro e sem sessão |
+| APL-03 | P1 | Conta criada pela Apple → Perfil | Aparece "Criar senha", não "Trocar senha" |
+| APL-04 | P1 | Entrar com a Apple em OCULTAR MEU E-MAIL | Entra em conta nova; na Conta aparece "E-mail oculto pela Apple", e o card de Criar senha mostra o endereço de relay |
+| APL-05 | P0 | Conta Google/e-mail com carreira e dobrões → sair → Apple compartilhando o mesmo e-mail | Mesma carreira e dobrões; no banco o `user_id` é o mesmo, com identidade `apple` a mais |
+| APL-06 | P1 | Fechar e reabrir o app com a sessão da Apple | Entra direto |
+| APL-07 | P0 | Conta Apple → Excluir conta → confirmar → janela da Apple → confirmar | Conta apagada; com os secrets da Edge, `apple-revoke` devolve `revoked:true` e o app some de Ajustes do iPhone > ID Apple > Iniciar sessão com a Apple. Sem os secrets: `reason:"not_configured"` no log e a conta apaga do mesmo jeito |
+| APL-08 | P1 | Conta e-mail/senha **não confirmada** com o mesmo e-mail → Apple compartilhando o e-mail | Documentar o resultado (o GoTrue não vincula identidade não verificada); nenhuma conta existente é alterada |
+| APL-09 | P0 | Conta Apple → Excluir conta → confirmar → cancelar a janela da Apple | Nada é apagado; aparece `AUTH_DELETE_APPLE_CONFIRM` |
+| APL-10 | P1 | Conta Apple de relay que já tem nome → sair e entrar de novo com a Apple | Entra e **não** é renomeada (o nome só vale em carreira nova) |
+
 ## 5. Menu e navegação
 
 | ID | P | Passos | Esperado |

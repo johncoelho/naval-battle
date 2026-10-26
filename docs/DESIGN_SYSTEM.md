@@ -142,6 +142,18 @@ sombra: profundidade vem de superfície mais clara + borda.
   diário do dia todo feito, o semanal ocupa o lugar de "Tudo feito hoje" (missão curta, barra de 4dp, progresso ou Resgatar).
 - Sem componente novo; o artefato Claude Design não muda.
 
+### Botão Entrar com a Apple (#13) — exceções aos princípios 2 e 3
+
+- Botão **oficial** `ASAuthorizationAppleIDButton` (HIG), tipo Sign in, estilo **White** (fundo noturno), 48 dp, largura
+  cheia e cantos retos como o `SecondaryButton`; entra pelo `AppleSignInButton` (`UIKitView`, só no iPhone). Fica **acima**
+  do botão do Google, do mesmo tamanho (a HIG pede destaque igual ou maior), com a dica `AUTH_APPLE_HINT` em `HudLabel`/`muted`.
+- **Exceção ao princípio 2 (nada de bitmap):** o logotipo da Apple é desenhado pelo sistema, não em Canvas.
+- **Exceção ao princípio 3 (cor informa):** o fundo branco do botão está fora da paleta `Naval`. Os dois casos são marca
+  de terceiro exigida pela revisão da App Store; a regra não vale para mais nenhum componente.
+- O texto do botão é localizado pelo sistema, no idioma do aparelho (a HIG não deixa trocar), por isso `K.AUTH_APPLE` não existe.
+- E-mail de relay na Conta: `HudLabel`/`muted` com "E-MAIL OCULTO PELA APPLE" no lugar do endereço.
+- O artefato Claude Design ainda precisa registrar as duas exceções (ver `docs/design-system/PENDENCIAS.md`).
+
 ## Largura máxima e área segura (#37)
 
 - **`Naval.contentMaxWidth` = 600 dp**: em tela grande (tablet, dobrável, Chromebook) o conteúdo das telas

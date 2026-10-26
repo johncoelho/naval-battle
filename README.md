@@ -412,6 +412,17 @@ A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
 - **Entrar com o Google**, sem senha nenhuma — cai na mesma carreira se o e-mail
   já tiver conta. O botão só aparece depois da configuração externa (ver
   [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código)).
+- **Entrar com a Apple** (só no iPhone, App Store 4.8; #13): botão oficial da Apple acima do Google, com a dica
+  "Já tem carreira? Escolha COMPARTILHAR MEU E-MAIL". E-mail verificado igual ao de uma conta existente
+  **vincula** na mesma carreira (o Supabase liga as identidades sozinho). "Ocultar meu e-mail" (relay
+  `@privaterelay.appleid.com`) cria **conta nova e separada**; na Conta aparece "E-mail oculto pela Apple" no lugar do
+  endereço. O nome da Apple (`givenName`, só na 1ª autorização) vira o nome só de **carreira nova**
+  (`appleInitialName`). Não aparece no Android (`AppleAuth.supported = false`): quem criou conta pela Apple usa
+  **Criar senha** no iPhone e entra por e-mail e senha. **Excluir conta** com identidade Apple pede a autenticação da
+  Apple de novo (cancelar cancela a exclusão), e a Edge `apple-revoke` revoga o token. **Sem os secrets da Edge
+  (`APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID`, `APPLE_SIWA_KEY_P8`), a exclusão de conta Apple não revoga o token na Apple**:
+  a Edge responde `{revoked:false, reason:"not_configured"}`, registra no log e a conta é apagada do mesmo jeito. A
+  exclusão feita no Android também não revoga (o jogador remove em Ajustes do iPhone > ID Apple).
 - Sincroniza ao entrar, na abertura do app, ao fim de cada partida, em cada compra e
   ao mudar nome ou insígnia.
 - **Regra de fusão:** ao entrar, se a nuvem tiver mais XP ela desce; senão, o aparelho sobe.
@@ -465,7 +476,7 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Avaliação (Android) | Play In-App Review (`com.google.android.play:review-ktx` 2.0.2): pede a nota da Play dentro do jogo; só `androidMain`, usa o mesmo `core-common` do App Update | aprovado pelo John em 25/10 (#45) |
 | Compras (Android) | Google Play Billing (`com.android.billingclient:billing` 9.1.0): lista produtos, abre a folha de compra e lê o que já foi comprado. O crédito é decidido no servidor | aprovado pelo John em 17/10 (#15) |
 | Publicação | Gradle Play Publisher 3.13.0 (faixa Alpha do teste fechado) | aprovado em 0.16 |
-| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check`, `dobroes-verify` e `ads-reward` (Deno) | `supabase/` |
+| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check`, `dobroes-verify`, `ads-reward` e `apple-revoke` (Deno) | `supabase/` |
 | Site | HTML estático no GitHub Pages | `site/`, `pages.yml` |
 | Testes | `kotlin.test` em `composeApp/src/commonTest` (JVM e simulador iOS) | aprovado em 10/10/2026 |
 | CI | GitHub Actions: `android.yml` (trava de release + testes + APK + `.aab` + Play), `ios.yml` (testes no simulador + framework + `.ipa`), `pages.yml` | JDK 21 Temurin |
@@ -495,6 +506,7 @@ supabase/functions/push/   Edge Function que envia FCM
 supabase/functions/push-check/     Edge Function: conferência de instalação (validate_only, sem entrega)
 supabase/functions/dobroes-verify/ Edge Function: confere a compra na Play e manda o crédito ao banco
 supabase/functions/ads-reward/     Edge Function: callback SSV do AdMob (assinatura do Google, sem JWT)
+supabase/functions/apple-revoke/   Edge Function: revoga o token do Entrar com a Apple na exclusão de conta (#13, ES256 por WebCrypto)
 site/               landing page e página de beta tester
 docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 .claude/skills/     processos repetíveis (ciclo de desenvolvimento, release, QA, …)
@@ -508,6 +520,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `Prefs` | chave-valor local | `SharedPreferences` | `NSUserDefaults` |
 | `CloudApi` | REST do Supabase | `HttpURLConnection` + `org.json` | `NSURLSession` |
 | `GoogleAuth` | login com Google | Credential Manager | fluxo OAuth com PKCE |
+| `AppleAuth` + `AppleSignInButton` | Entrar com a Apple (#13): `signIn()` devolve `AppleAuthResult` (token, nonce cru, código, nome); nunca lança | `supported = false`, botão vazio | `AuthenticationServices` (`ASAuthorizationController`), nonce sha256 hex; botão `ASAuthorizationAppleIDButton` via `UIKitView`; entitlement `iosApp.entitlements` |
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
 | `PushMessaging` | token de push | Firebase Messaging | sem push (APNs pendente) |
 | `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes, a aba mostra só o Prêmio Beta (#30) |

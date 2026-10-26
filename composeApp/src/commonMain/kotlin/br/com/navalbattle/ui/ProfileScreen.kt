@@ -52,7 +52,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.data.DeleteAccountResult
 import br.com.navalbattle.data.GameServices
+import br.com.navalbattle.data.isAppleRelayEmail
 import br.com.navalbattle.data.GoogleAuthConfig
 import br.com.navalbattle.data.PasswordAction
 import br.com.navalbattle.data.passwordAction
@@ -461,7 +463,11 @@ private fun AccountSection(state: AppState) {
         )
         Gap(4)
         HudLabel(
-            if (profile.signedIn) profile.accountEmail.uppercase() else t(K.AUTH_CREATE_HINT),
+            when {
+                !profile.signedIn -> t(K.AUTH_CREATE_HINT)
+                isAppleRelayEmail(profile.accountEmail) -> t(K.AUTH_APPLE_RELAY_EMAIL).uppercase()
+                else -> profile.accountEmail.uppercase()
+            },
             Naval.muted
         )
 
@@ -480,6 +486,8 @@ private fun AccountSection(state: AppState) {
                 Gap(10)
                 ChangePasswordCard(
                     create = creatingPassword,
+                    // o relay é o único jeito de entrar por e-mail e senha: mostra como "login"
+                    loginEmail = profile.accountEmail.takeIf { creatingPassword && isAppleRelayEmail(it) },
                     onSubmit = { current, new ->
                         busy = true; failed = false; message = null
                         scope.launch {
@@ -529,11 +537,17 @@ private fun AccountSection(state: AppState) {
                                 .clickable(enabled = !busy) {
                                     busy = true
                                     scope.launch {
-                                        val ok = state.deleteAccount()
+                                        val result = state.deleteAccount()
                                         busy = false
                                         confirmDelete = false
-                                        failed = !ok
-                                        message = t(if (ok) K.AUTH_DELETED else K.AUTH_DELETE_FAILED)
+                                        failed = result != DeleteAccountResult.DONE
+                                        message = t(
+                                            when (result) {
+                                                DeleteAccountResult.DONE -> K.AUTH_DELETED
+                                                DeleteAccountResult.FAILED -> K.AUTH_DELETE_FAILED
+                                                DeleteAccountResult.APPLE_CANCELLED -> K.AUTH_DELETE_APPLE_CONFIRM
+                                            }
+                                        )
                                     }
                                 }
                                 .padding(vertical = 14.dp),
@@ -612,6 +626,25 @@ private fun AccountSection(state: AppState) {
                 }
             }
 
+            if (state.appleAuth.supported) {
+                // Apple acima do Google, mesmo tamanho (HIG pede destaque igual ou maior)
+                Gap(8)
+                AppleSignInButton(Modifier.fillMaxWidth()) {
+                    if (busy) return@AppleSignInButton
+                    busy = true; failed = false; message = null
+                    scope.launch {
+                        val result = state.signInWithApple()
+                        busy = false
+                        // cancelou a janela da Apple: não é erro, só volta calado
+                        if (!result.first && result.second.isBlank()) return@launch
+                        failed = !result.first
+                        message = result.second
+                    }
+                }
+                Gap(6)
+                HudLabel(t(K.AUTH_APPLE_HINT), Naval.muted)
+            }
+
             if (GoogleAuthConfig.isConfigured) {
                 Gap(8)
                 SecondaryButton(t(K.AUTH_GOOGLE), enabled = !busy) {
@@ -671,6 +704,7 @@ private fun ForgotPasswordCard(email: String, busy: Boolean, onSend: () -> Unit)
 @Composable
 private fun ChangePasswordCard(
     create: Boolean,
+    loginEmail: String?,
     onSubmit: (current: String, new: String) -> Unit,
     onCancel: () -> Unit,
     busy: Boolean
@@ -688,6 +722,10 @@ private fun ChangePasswordCard(
             .padding(14.dp)
     ) {
         HudLabel(if (create) t(K.AUTH_CREATE_PASSWORD) else t(K.AUTH_CHANGE_PASSWORD), Naval.amberStrong)
+        loginEmail?.let {
+            Gap(6)
+            HudLabel("${t(K.AUTH_EMAIL)}: $it", Naval.muted)
+        }
         Gap(12)
         if (!create) {
             Field(t(K.AUTH_CURRENT_PASSWORD), current, KeyboardType.Password, true) { current = it.take(64) }

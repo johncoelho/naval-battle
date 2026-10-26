@@ -56,6 +56,20 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(session)
     }
 
+    actual suspend fun signInWithApple(idToken: String, nonce: String): CloudResult<Session> =
+        CloudResult.Fail("Entrar com a Apple não está disponível neste aparelho.")
+
+    actual suspend fun authProviders(session: Session): CloudResult<List<String>> = call {
+        val providers = JSONObject(get("/auth/v1/user", session.accessToken))
+            .optJSONObject("app_metadata")?.optJSONArray("providers")
+        CloudResult.Ok((0 until (providers?.length() ?: 0)).mapNotNull { providers?.optString(it)?.takeIf { p -> p.isNotBlank() } })
+    }
+
+    actual suspend fun revokeApple(session: Session, authorizationCode: String): CloudResult<Boolean> = call {
+        val o = JSONObject(post("/functions/v1/apple-revoke", JSONObject().put("code", authorizationCode), token = session.accessToken))
+        CloudResult.Ok(o.optBoolean("revoked", false))
+    }
+
     actual suspend fun refresh(refreshToken: String): CloudResult<Session> = call {
         val body = JSONObject().put("refresh_token", refreshToken)
         val json = post("/auth/v1/token?grant_type=refresh_token", body, token = null)

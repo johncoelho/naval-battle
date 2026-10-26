@@ -57,6 +57,11 @@ import br.com.navalbattle.data.FeedbackUpdate
 import br.com.navalbattle.data.FriendProfile
 import br.com.navalbattle.data.Friendship
 import br.com.navalbattle.data.GameServices
+import br.com.navalbattle.data.AppleAuth
+import br.com.navalbattle.data.AppleAuthResult
+import br.com.navalbattle.data.DeleteAccountResult
+import br.com.navalbattle.data.appleInitialName
+import br.com.navalbattle.data.shouldRevokeApple
 import br.com.navalbattle.data.GoogleAuth
 import br.com.navalbattle.data.GoogleAuthResult
 import br.com.navalbattle.data.LanGame
@@ -1265,15 +1270,30 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * Exclui a conta de vez (App Store 5.1.1): apaga tudo no servidor e zera a carreira
      * guardada no aparelho. Devolve falso se o servidor não confirmou — aí nada muda.
      */
-    suspend fun deleteAccount(): Boolean {
+    suspend fun deleteAccount(): DeleteAccountResult {
+        // conta com identidade Apple: a Apple pede autenticação de novo para dar um código que
+        // revoga o token. Cancelar cancela a exclusão; falha técnica ou revogação que não deu
+        // certo NÃO trava (a exclusão de conta é obrigação da App Store, 5.1.1)
+        if (appleAuth.supported) {
+            val providers = (authed { session -> cloud.authProviders(session) } as? CloudResult.Ok)?.value.orEmpty()
+            if (shouldRevokeApple(providers)) {
+                when (val a = appleAuth.signIn()) {
+                    is AppleAuthResult.Cancelled -> return DeleteAccountResult.APPLE_CANCELLED
+                    is AppleAuthResult.Ok -> a.authorizationCode?.takeIf { it.isNotBlank() }?.let { code ->
+                        authed { session -> cloud.revokeApple(session, code) }
+                    }
+                    is AppleAuthResult.Fail -> Unit
+                }
+            }
+        }
         val r = authed { session -> cloud.deleteAccount(session) }
-        if (r !is CloudResult.Ok) return false
+        if (r !is CloudResult.Ok) return DeleteAccountResult.FAILED
         pushRegistered = null
         pushRegisteredFor = null
         friendships = emptyList()
         profile.signOut()
         profile.reset(keepWallet = false)
-        return true
+        return DeleteAccountResult.DONE
     }
 
     /** Sai da conta e para de receber os avisos dela neste aparelho. */
@@ -2937,16 +2957,41 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         is GoogleAuthResult.Cancelled -> false to ""
         is GoogleAuthResult.Fail -> false to g.message
         is GoogleAuthResult.Ok -> when (val r = cloud.signInWithGoogle(g.idToken)) {
-            is CloudResult.Ok -> {
-                val local = profile.credits  // carteira do convidado: vai para a conta uma vez
-                profile.rememberSession(r.value)
-                applyNameReset()
-                val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
-                ensureWallet(local)
-                claimPendingWelcome()
-                true to merged
-            }
+            is CloudResult.Ok -> true to afterIdTokenLogin(r.value)
+            is CloudResult.Fail -> false to r.message
+        }
+    }
 
+    /** Pós-login por token de identidade (Google e Apple): guarda a sessão, funde a carreira e abre a carteira. */
+    private suspend fun afterIdTokenLogin(session: Session, initialName: String? = null): String {
+        val local = profile.credits  // carteira do convidado: vai para a conta uma vez
+        profile.rememberSession(session)
+        applyNameReset()  // nome trocado à força no servidor volta para cá antes de a carreira subir (#58)
+        // conta nova da Apple: o nome vem antes da fusão, para a carreira subir já com ele (nome ofensivo não entra, #58)
+        initialName?.let { if (!NameFilter.isOffensive(it)) profile.rename(it) }
+        val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
+        ensureWallet(local)
+        claimPendingWelcome()
+        return merged
+    }
+
+    val appleAuth = AppleAuth()
+
+    /**
+     * Entra com a Apple (App Store 4.8). O nome só vem na primeira autorização e só vale para
+     * carreira nova na nuvem (ver [appleInitialName]); conta antiga vinculada nunca é renomeada.
+     */
+    suspend fun signInWithApple(): Pair<Boolean, String> = when (val a = appleAuth.signIn()) {
+        is AppleAuthResult.Cancelled -> false to ""
+        is AppleAuthResult.Fail -> false to a.message
+        is AppleAuthResult.Ok -> when (val r = cloud.signInWithApple(a.idToken, a.rawNonce)) {
+            is CloudResult.Ok -> {
+                val cloudProfile = (cloud.loadProfile(r.value) as? CloudResult.Ok)?.value
+                val initial = appleInitialName(
+                    a.givenName, r.value.email, cloudProfile?.username, cloudProfile?.xp ?: -1, cloudProfile?.matches ?: -1
+                )
+                true to afterIdTokenLogin(r.value, initial)
+            }
             is CloudResult.Fail -> false to r.message
         }
     }

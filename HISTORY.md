@@ -528,6 +528,25 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   público. Push de denúncia ao John: 1 por hora, texto fixo, e-mail só no banco. Conferência antes de apagar a view `leaderboard`: nenhuma versão do app a leu
   (busca no histórico do git) e ela ignorava o RLS.
 
+## Fase 6 · iPhone na App Store (26/10)
+
+- **26/10 · Entrar com a Apple no iPhone** (#13, P0 aprovado pelo John; desenho do Tech Lead nos comentários 6425057925 e
+  6425081134) — porquê: a diretriz 4.8 da App Store exige uma opção de login equivalente quando há Google. Decisões:
+  (1) **só iPhone**, `AppleAuth.supported = false` no Android: a Apple exigiria Services ID e um secret que vence a cada 6
+  meses, custo sem ganho, e a 4.8 vale só para a App Store; quem criou conta pela Apple e quer o Android usa Criar senha (#9).
+  (2) **Vincula por e-mail verificado** (comportamento padrão do Supabase, igual ao Google): ninguém perde conta, e o relay
+  "ocultar meu e-mail" vira conta separada (no pior caso nasce uma conta a mais). Essa era a decisão em aberto da SPEC.
+  (3) **Nonce**: sha256 hex para a Apple e o cru para o Supabase. (4) `AuthenticationServices` + `UIKitView`, nenhuma camada
+  nova na stack. (5) **Nome da Apple** só em carreira nova da nuvem (`appleInitialName`), para nunca renomear conta antiga
+  vinculada. (6) **Exclusão**: nenhum token da Apple é guardado; a revogação reautentica na hora e a Edge `apple-revoke`
+  (ES256 por WebCrypto, sem biblioteca) troca o código e revoga. A exclusão **nunca** trava: cancelar a janela da Apple
+  cancela a exclusão, mas falha técnica, Edge fora do ar ou **Edge sem os secrets** (`not_configured`) seguem e apagam a conta,
+  porque a 5.1.1 obriga a exclusão. (7) Entitlement `com.apple.developer.applesignin` no `iosApp.entitlements`; o `ios.yml`
+  (Sideloadly) segue zerando `CODE_SIGN_ENTITLEMENTS`, então ali o botão aparece e dá `AUTH_APPLE_UNAVAILABLE`, aceito porque o
+  `.ipa` é transitório. (8) Botão oficial da Apple com duas exceções registradas no design system (princípios 2 e 3).
+  (9) O console foi feito em 26/10 (App ID com Sign in with Apple, provedor Apple no Supabase só com o Client ID
+  `br.com.navalbattle` e secret vazio); a chave `.p8` e os secrets da Edge ficam com o John, e a #13 sai sem eles.
+
 ## Artefatos de referência (SPECs e designs aprovados)
 
 | Data | Artefato |

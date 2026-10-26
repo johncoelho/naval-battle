@@ -49,6 +49,24 @@ actual class CloudApi actual constructor() {
             ?: CloudResult.Fail("Não consegui abrir a sessão com o Google.")
     }
 
+    actual suspend fun signInWithApple(idToken: String, nonce: String): CloudResult<Session> = call {
+        val body = mapOf("provider" to "apple", "id_token" to idToken, "nonce" to nonce)
+        val json = post("/auth/v1/token?grant_type=id_token", body, token = null)
+        sessionOf(json, fallbackName = "Comandante")?.let { CloudResult.Ok(it) }
+            ?: CloudResult.Fail("Não consegui abrir a sessão com a Apple.")
+    }
+
+    actual suspend fun authProviders(session: Session): CloudResult<List<String>> = call {
+        val meta = (get("/auth/v1/user", session.accessToken) as? Map<*, *>)?.get("app_metadata") as? Map<*, *>
+        val providers = (meta?.get("providers") as? List<*>).orEmpty().mapNotNull { (it as? String)?.takeIf { p -> p.isNotBlank() } }
+        CloudResult.Ok(providers)
+    }
+
+    actual suspend fun revokeApple(session: Session, authorizationCode: String): CloudResult<Boolean> = call {
+        val json = post("/functions/v1/apple-revoke", mapOf("code" to authorizationCode), token = session.accessToken)
+        CloudResult.Ok(((json as? Map<*, *>)?.get("revoked") as? Boolean) ?: false)
+    }
+
     actual suspend fun refresh(refreshToken: String): CloudResult<Session> = call {
         val body = mapOf("refresh_token" to refreshToken)
         val json = post("/auth/v1/token?grant_type=refresh_token", body, token = null)

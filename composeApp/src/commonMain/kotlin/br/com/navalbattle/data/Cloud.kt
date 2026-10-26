@@ -360,6 +360,21 @@ expect class CloudApi() {
 
     /** Troca o token de identidade do Google (ver [GoogleAuth]) por uma sessão do jogo. */
     suspend fun signInWithGoogle(idToken: String): CloudResult<Session>
+
+    /**
+     * Troca o token da Apple (ver [AppleAuth]) por uma sessão. [nonce] é o CRU: o GoTrue
+     * confere o sha256 dele com o `nonce` do token. No Android fica inerte (só para compilar).
+     */
+    suspend fun signInWithApple(idToken: String, nonce: String): CloudResult<Session>
+
+    /** Provedores de login da conta (`app_metadata.providers` do `GET /auth/v1/user`). */
+    suspend fun authProviders(session: Session): CloudResult<List<String>>
+
+    /**
+     * Revoga o token da Apple na exclusão de conta (Edge `apple-revoke`). Devolve verdadeiro só
+     * se a Apple revogou; sem os secrets da Edge ou com falha devolve falso, e a exclusão segue.
+     */
+    suspend fun revokeApple(session: Session, authorizationCode: String): CloudResult<Boolean>
     suspend fun refresh(refreshToken: String): CloudResult<Session>
     suspend fun loadProfile(session: Session): CloudResult<CloudProfile?>
     suspend fun saveProfile(session: Session, profile: CloudProfile): CloudResult<Unit>
