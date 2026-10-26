@@ -106,6 +106,12 @@ import br.com.navalbattle.game.FleetCodec
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.GuidedEvent
 import br.com.navalbattle.game.GuidedStep
+import br.com.navalbattle.game.ReferralInvite
+import br.com.navalbattle.game.ReferralOutcome
+import br.com.navalbattle.game.isValidReferralCodeShape
+import br.com.navalbattle.game.normalizeReferralCode
+import br.com.navalbattle.game.referralOutcome
+import br.com.navalbattle.game.referralUnseenTotal
 import br.com.navalbattle.game.WelcomeGift
 import br.com.navalbattle.game.WelcomeOutcome
 import br.com.navalbattle.game.nextGuidedStep
@@ -165,6 +171,7 @@ import br.com.navalbattle.ui.PlacementScreen
 import br.com.navalbattle.ui.ProfileScreen
 import br.com.navalbattle.ui.QuickOfferBanner
 import br.com.navalbattle.ui.QuickOfferNotice
+import br.com.navalbattle.ui.ReferralPopup
 import br.com.navalbattle.ui.SettingsScreen
 import br.com.navalbattle.ui.ReleaseNotesScreen
 import br.com.navalbattle.ui.ResultScreen
@@ -204,6 +211,11 @@ private const val AGE_CHECKED_KEY = "age_checked_at"
 /** Espera da confirmação do Google depois do anúncio (#29): 10 consultas a cada 2 s, cerca de 20 s. */
 private const val AD_CONFIRM_TRIES = 10
 private const val AD_CONFIRM_STEP_MS = 2000L
+
+/** Qual popup de convite (#44) está aberto e com que dados. */
+enum class ReferralPopupKind { ACCEPTED, INVITEE_PAID, INVITER_PAID }
+
+data class ReferralPopupData(val kind: ReferralPopupKind, val name: String, val amount: Int)
 
 class AppState(val profile: Profile, private val cloud: CloudApi) {
     var screen by mutableStateOf(Screen.SPLASH)
@@ -425,6 +437,67 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Depois de entrar ou abrir o app com conta: resgata o presente que ficou pendente. */
     private suspend fun claimPendingWelcome() {
         if (profile.welcomePending && profile.signedIn) runWelcomeClaim()
+    }
+
+    // ---------------- convide um amigo (#44) ----------------
+
+    /** Código de convite desta conta; nulo até o servidor responder (ou sem conta). */
+    var referralCode by mutableStateOf<String?>(null)
+        private set
+
+    /** Convites que esta conta fez e o que já rendeu (`referral_status`). */
+    var referralInvites by mutableStateOf<List<ReferralInvite>>(emptyList())
+        private set
+
+    /** Popup aberto: convite aceito, convidado premiado ou quem convidou premiado. */
+    var referralPopup by mutableStateOf<ReferralPopupData?>(null)
+        private set
+
+    suspend fun loadReferralCode() {
+        if (!profile.signedIn || referralCode != null) return
+        referralCode = (authed { s -> cloud.referralMyCode(s) } as? CloudResult.Ok)?.value?.takeIf { it.isNotBlank() }
+    }
+
+    /** Digita o código de um amigo. A forma errada nem vai à rede; o servidor decide o resto e cria a amizade. */
+    suspend fun redeemReferral(text: String): ReferralOutcome {
+        if (!isValidReferralCodeShape(text)) return ReferralOutcome.INVALID
+        val r = (authed { s -> cloud.referralRedeem(s, normalizeReferralCode(text)) } as? CloudResult.Ok)?.value
+        val outcome = referralOutcome(r)
+        if (outcome == ReferralOutcome.OK && r != null) {
+            referralPopup = ReferralPopupData(ReferralPopupKind.ACCEPTED, r.inviterName, 0)
+            refreshFriendships()
+        }
+        return outcome
+    }
+
+    /** Depois da recompensa online: o servidor paga o convite se esta sala valer (1ª partida com combate). */
+    private suspend fun settleReferral(matchId: String) {
+        val r = (authed { s -> cloud.referralSettle(s, matchId) } as? CloudResult.Ok)?.value ?: return
+        if (r.status == "paid" && r.doubloons > 0) {
+            profile.setServerBalance(r.balance)
+            referralPopup = ReferralPopupData(ReferralPopupKind.INVITEE_PAID, "", r.doubloons)
+        }
+    }
+
+    /** Ao abrir o menu com conta: lê os convites feitos e avisa dos prêmios ainda não vistos. */
+    suspend fun loadReferralStatus() {
+        if (!profile.signedIn) return
+        val list = (authed { s -> cloud.referralStatus(s) } as? CloudResult.Ok)?.value ?: return
+        referralInvites = list
+        val total = referralUnseenTotal(list)
+        if (total > 0) {
+            refreshBalance()
+            if (referralPopup == null) referralPopup = ReferralPopupData(ReferralPopupKind.INVITER_PAID, "", total)
+        }
+    }
+
+    fun closeReferralPopup() {
+        val popup = referralPopup ?: return
+        referralPopup = null
+        if (popup.kind == ReferralPopupKind.INVITER_PAID) {
+            referralInvites = referralInvites.map { it.copy(unseen = false) }
+            uiScope?.launch { authed { s -> cloud.referralAck(s) } }
+        }
     }
 
     fun newMatch(opponent: Opponent) {
@@ -1007,6 +1080,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             if (seasonPopupShowing || seasonEnd != null || rankedLockedPrompt) return true
             if (feedbackReward != null) return true
             if (guidedOffer || welcomeGiftPaid != null || welcomeGuestNotice) return true
+            if (referralPopup != null) return true
             if (launchNoticeShowing) return true
             return feedbackPopupNeeded && !updateAvailable && !seasonPopupShowing
         }
@@ -1893,6 +1967,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 }
             }
             if (r.amount > 0) refreshBalance()
+            settleReferral(a.matchId)
         }
     }
 
@@ -2830,6 +2905,7 @@ fun App() {
         if (AppForeground.active) {
             state.loadMiles()
             state.loadDaily()
+            if (state.screen == Screen.MENU) state.loadReferralStatus()
             state.registerPush()
             state.reportDeviceCheck()
         }
@@ -2914,6 +2990,7 @@ fun App() {
             DailyPopup(state)
             GuidedOfferPopup(state)
             WelcomeGiftPopup(state)
+            ReferralPopup(state)
             FeedbackPopup(state)
             if (state.match == null) FeedbackRewardPopup(state)
             // aviso de lançamento: por cima da temporada; o convite dela aparece embaixo ao tocar "Entendi"

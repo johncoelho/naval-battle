@@ -16,3 +16,6 @@ expect fun openStoreListing()
 
 /** Abre o seletor de compartilhamento do aparelho com o link da loja pronto. */
 expect fun shareStoreListing()
+
+/** Abre o seletor de compartilhamento do aparelho com [text] (convite de amigo, #44). */
+expect fun shareText(text: String)

@@ -1,5 +1,8 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.ReferralInvite
+import br.com.navalbattle.game.ReferralRedeem
+import br.com.navalbattle.game.ReferralSettle
 import br.com.navalbattle.game.WelcomeGift
 import br.com.navalbattle.game.LaunchNoticeStatus
 
@@ -768,6 +771,36 @@ actual class CloudApi actual constructor() {
                 balance = o.optInt("balance", 0)
             )
         )
+    }
+
+    actual suspend fun referralMyCode(session: Session): CloudResult<String> = call {
+        val o = JSONArray(post("/rest/v1/rpc/referral_my_code", JSONObject(), token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(o.optString("code"))
+    }
+
+    actual suspend fun referralRedeem(session: Session, code: String): CloudResult<ReferralRedeem> = call {
+        val body = JSONObject().put("p_code", code)
+        val o = JSONArray(post("/rest/v1/rpc/referral_redeem", body, token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(ReferralRedeem(o.optString("status"), o.optString("inviter_name")))
+    }
+
+    actual suspend fun referralSettle(session: Session, matchId: String): CloudResult<ReferralSettle> = call {
+        val body = JSONObject().put("p_match_id", matchId)
+        val o = JSONArray(post("/rest/v1/rpc/referral_settle", body, token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(ReferralSettle(o.optString("status"), o.optInt("doubloons", 0), o.optInt("balance", 0)))
+    }
+
+    actual suspend fun referralStatus(session: Session): CloudResult<List<ReferralInvite>> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/referral_status", JSONObject(), token = session.accessToken))
+        CloudResult.Ok((0 until arr.length()).map { i ->
+            val o = arr.getJSONObject(i)
+            ReferralInvite(o.optString("invitee_name"), o.optString("state"), o.optInt("amount", 0), o.optBoolean("unseen", false))
+        })
+    }
+
+    actual suspend fun referralAck(session: Session): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/referral_ack", JSONObject(), token = session.accessToken)
+        CloudResult.Ok(Unit)
     }
 
     actual suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int> = call {

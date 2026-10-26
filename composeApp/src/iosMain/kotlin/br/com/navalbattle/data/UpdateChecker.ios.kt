@@ -1,6 +1,7 @@
 package br.com.navalbattle.data
 
 import platform.Foundation.NSURL
+import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 
 // O iPhone instala o .ipa pelo site (sem App Store ainda): não há loja para perguntar,
@@ -15,3 +16,9 @@ actual fun openStoreListing() {
 }
 
 actual fun shareStoreListing() {}
+
+actual fun shareText(text: String) {
+    val root = UIApplication.sharedApplication.keyWindow?.rootViewController ?: return
+    val sheet = UIActivityViewController(activityItems = listOf(text), applicationActivities = null)
+    root.presentViewController(sheet, animated = true, completion = null)
+}

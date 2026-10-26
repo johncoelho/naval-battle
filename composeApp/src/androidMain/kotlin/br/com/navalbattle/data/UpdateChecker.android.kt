@@ -53,3 +53,13 @@ actual fun shareStoreListing() {
     }
     context.startActivity(Intent.createChooser(send, null).addFlags(newTaskFlag))
 }
+
+actual fun shareText(text: String) {
+    val context = ActivityHolder.current ?: AudioContextHolder.appContext
+    val newTaskFlag = if (ActivityHolder.current == null) Intent.FLAG_ACTIVITY_NEW_TASK else 0
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text)
+    }
+    context.startActivity(Intent.createChooser(send, null).addFlags(newTaskFlag))
+}

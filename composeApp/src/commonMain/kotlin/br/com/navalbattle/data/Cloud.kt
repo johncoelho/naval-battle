@@ -1,5 +1,8 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.ReferralInvite
+import br.com.navalbattle.game.ReferralRedeem
+import br.com.navalbattle.game.ReferralSettle
 import br.com.navalbattle.game.WelcomeGift
 import br.com.navalbattle.game.LaunchNoticeStatus
 
@@ -650,6 +653,21 @@ expect class CloudApi() {
 
     /** Presente de boas-vindas da conta nova (#43): o servidor decide e paga; status ok | already | not_eligible | no_wallet. */
     suspend fun claimWelcomeGift(session: Session): CloudResult<WelcomeGift>
+
+    /** Código de convite da conta (#44, RPC `referral_my_code`); o servidor cria na primeira chamada. */
+    suspend fun referralMyCode(session: Session): CloudResult<String>
+
+    /** Digita o código de um amigo (RPC `referral_redeem`): cria a amizade na hora; o prêmio vem na 1ª partida online. */
+    suspend fun referralRedeem(session: Session, code: String): CloudResult<ReferralRedeem>
+
+    /** Depois de uma partida online: o servidor paga o convite se a sala valer (RPC `referral_settle`). */
+    suspend fun referralSettle(session: Session, matchId: String): CloudResult<ReferralSettle>
+
+    /** Convites que a conta fez e o que já rendeu (RPC `referral_status`). */
+    suspend fun referralStatus(session: Session): CloudResult<List<ReferralInvite>>
+
+    /** Marca os prêmios de convite como vistos (RPC `referral_ack`). */
+    suspend fun referralAck(session: Session): CloudResult<Unit>
 
     /** Gasta 1 milha ao começar a partida online [matchId] — uma vez por sala. Devolve o saldo. */
     suspend fun spendMile(session: Session, matchId: String): CloudResult<Int>

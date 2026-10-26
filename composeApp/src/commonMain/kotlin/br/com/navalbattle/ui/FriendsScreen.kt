@@ -149,6 +149,8 @@ fun FriendsScreen(state: AppState) {
         }
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Gap(10)
+            if (query.isBlank()) ReferralCard(state)
             // resultados da busca, logo abaixo do campo
             if (query.trim().length >= 2) {
                 Gap(10)

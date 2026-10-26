@@ -774,6 +774,44 @@ enum class K(val pt: String, val en: String, val es: String) {
 
     FRIENDS_TITLE("Amigos", "Friends", "Amigos"),
     FRIENDS_SEARCH_HINT("Buscar comandante pelo nome", "Search commander by name", "Buscar comandante por nombre"),
+
+    // ---------------------------------------------------------------- convide um amigo (#44)
+    REFERRAL_TITLE("Convidar amigo", "Invite a friend", "Invitar a un amigo"),
+    REFERRAL_BODY(
+        "Seu amigo digita o código, vocês viram amigos na hora e, quando ele terminar a 1ª partida online, cada um ganha ◆%1. Até %2 convites premiados (1 por dia).",
+        "Your friend types the code, you become friends right away, and when they finish their first online match you each get ◆%1. Up to %2 rewarded invites (1 per day).",
+        "Tu amigo escribe el código, se hacen amigos al instante y, cuando termine su 1.ª partida en línea, cada uno gana ◆%1. Hasta %2 invitaciones premiadas (1 por día)."
+    ),
+    REFERRAL_YOUR_CODE("Seu código", "Your code", "Tu código"),
+    REFERRAL_SHARE("Compartilhar", "Share", "Compartir"),
+    REFERRAL_SHARE_TEXT(
+        "Vem jogar Naval Battle comigo! Baixe em %1 e, em Amigos, digite o código %2 para a gente ganhar dobrões.",
+        "Come play Naval Battle with me! Get it at %1 and, in Friends, enter code %2 so we both earn doubloons.",
+        "¡Ven a jugar Naval Battle conmigo! Descárgalo en %1 y, en Amigos, escribe el código %2 para que ganemos doblones."
+    ),
+    REFERRAL_PAID_COUNT("%1 de %2 convites premiados", "%1 of %2 invites rewarded", "%1 de %2 invitaciones premiadas"),
+    REFERRAL_HAVE_CODE("Tenho um código de convite", "I have an invite code", "Tengo un código de invitación"),
+    REFERRAL_HINT("Código de 6 caracteres", "6-character code", "Código de 6 caracteres"),
+    REFERRAL_REDEEM("Resgatar", "Redeem", "Canjear"),
+    REFERRAL_WORKING("Verificando...", "Checking...", "Verificando..."),
+    REFERRAL_NEED_ACCOUNT("Entre na sua conta para convidar amigos.", "Sign in to invite friends.", "Inicia sesión para invitar amigos."),
+    REFERRAL_ERR_INVALID("Código não encontrado. Confira as letras e os números.", "Code not found. Check the letters and numbers.", "Código no encontrado. Revisa las letras y los números."),
+    REFERRAL_ERR_SELF("Este é o seu próprio código.", "That is your own code.", "Ese es tu propio código."),
+    REFERRAL_ERR_ALREADY("Você já usou um código de convite.", "You already used an invite code.", "Ya usaste un código de invitación."),
+    REFERRAL_ERR_TOO_OLD("Convite vale só para conta criada nos últimos 7 dias.", "Invites only work for accounts created in the last 7 days.", "La invitación solo vale para cuentas creadas en los últimos 7 días."),
+    REFERRAL_ERR_NOT_ELIGIBLE("Esta conta não pode usar convite.", "This account cannot use an invite.", "Esta cuenta no puede usar invitaciones."),
+    REFERRAL_ERR_DISABLED("Convites desligados por enquanto.", "Invites are off for now.", "Invitaciones desactivadas por ahora."),
+    REFERRAL_ERR_TOO_MANY("Muitas tentativas hoje. Tente amanhã.", "Too many tries today. Try again tomorrow.", "Demasiados intentos hoy. Prueba mañana."),
+    REFERRAL_ERR_OFFLINE("Sem conexão. Tente de novo.", "No connection. Try again.", "Sin conexión. Inténtalo de nuevo."),
+    REFERRAL_ACCEPTED_TITLE("Convite aceito", "Invite accepted", "Invitación aceptada"),
+    REFERRAL_ACCEPTED_BODY(
+        "Você e %1 agora são amigos. Quando você terminar sua 1ª partida online, os dois ganham ◆%2.",
+        "You and %1 are now friends. When you finish your first online match, you both get ◆%2.",
+        "Tú y %1 ahora son amigos. Cuando termines tu 1.ª partida en línea, los dos ganan ◆%2."
+    ),
+    REFERRAL_INVITEE_GOT("◆%s pela 1ª partida online com convite", "◆%s for your first online match with an invite", "◆%s por tu 1.ª partida en línea con invitación"),
+    REFERRAL_INVITER_TITLE("Seu convite rendeu", "Your invite paid off", "Tu invitación rindió"),
+    REFERRAL_INVITER_GOT("◆%s por amigos que você convidou", "◆%s for friends you invited", "◆%s por amigos que invitaste"),
     FRIENDS_ADD("Adicionar", "Add", "Agregar"),
     FRIENDS_REQUEST_SENT("Pedido enviado", "Request sent", "Pedido enviado"),
     FRIENDS_ALREADY("Amigo", "Friend", "Amigo"),

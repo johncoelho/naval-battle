@@ -1,5 +1,8 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.ReferralInvite
+import br.com.navalbattle.game.ReferralRedeem
+import br.com.navalbattle.game.ReferralSettle
 import br.com.navalbattle.game.WelcomeGift
 import br.com.navalbattle.game.LaunchNoticeStatus
 
@@ -712,6 +715,37 @@ actual class CloudApi actual constructor() {
                 balance = o.intOr("balance", 0)
             )
         )
+    }
+
+    actual suspend fun referralMyCode(session: Session): CloudResult<String> = call {
+        val o = firstRow(post("/rest/v1/rpc/referral_my_code", emptyMap<String, Any?>(), token = session.accessToken))
+        CloudResult.Ok(o.strOr("code", ""))
+    }
+
+    actual suspend fun referralRedeem(session: Session, code: String): CloudResult<ReferralRedeem> = call {
+        val o = firstRow(post("/rest/v1/rpc/referral_redeem", mapOf("p_code" to code), token = session.accessToken))
+        CloudResult.Ok(ReferralRedeem(o.strOr("status", ""), o.strOr("inviter_name", "")))
+    }
+
+    actual suspend fun referralSettle(session: Session, matchId: String): CloudResult<ReferralSettle> = call {
+        val o = firstRow(post("/rest/v1/rpc/referral_settle", mapOf("p_match_id" to matchId), token = session.accessToken))
+        CloudResult.Ok(ReferralSettle(o.strOr("status", ""), o.intOr("doubloons", 0), o.intOr("balance", 0)))
+    }
+
+    actual suspend fun referralStatus(session: Session): CloudResult<List<ReferralInvite>> = call {
+        val json = post("/rest/v1/rpc/referral_status", emptyMap<String, Any?>(), token = session.accessToken)
+        val rows = (json as? List<*>).orEmpty().mapNotNull { it as? Map<*, *> }
+        CloudResult.Ok(rows.map { o ->
+            ReferralInvite(
+                o.strOr("invitee_name", ""), o.strOr("state", ""), o.intOr("amount", 0),
+                (o["unseen"] as? Boolean) ?: false
+            )
+        })
+    }
+
+    actual suspend fun referralAck(session: Session): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/referral_ack", emptyMap<String, Any?>(), token = session.accessToken)
+        CloudResult.Ok(Unit)
     }
 
     actual suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int> = call {
