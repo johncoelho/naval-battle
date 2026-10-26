@@ -225,6 +225,9 @@ Refs #51. Sem mudança de banco nem de código Kotlin; commit `[skip ci]`, sem v
 - **`tools/play-rollout.sh vitals <versionCode>`** (só leitura, sem edição): lê `crashRateMetricSet` e `anrRateMetricSet` na Play Developer Reporting API (escopo `playdeveloperreporting`, janela de 3 dias) e imprime uma linha por dia, `vitals: <VEREDITO>` e `vitals_json`, mais tabela no resumo do run. Veredito `ALARME` (falha percebida > 1,09% ou ANR percebido > 0,47% com ≥ 100 usuários no dia), `OK`, `POUCOS_USUARIOS` ou `SEM_DADOS`. Sai com 0 se leu e com 1 só se a leitura falhou. `dry_run=true` roda o autoteste do veredito, sem API.
 - **`promote-production.yml`**: opção `vitals` no `action`, descrições novas e `vitals` fora do grupo de escrita da concurrency (como o `status`). `android.yml`, `ios.yml` e `pages.yml` intocados.
 
+### Corrigido (revisão do Tech Lead, volta 1)
+- `vitals` falha fechada: métrica ausente (falha, ANR ou `distinctUsers`) num dia com dados e atualidade DAILY ausente viram erro (exit 1); a janela usa a menor atualidade de `crashRateMetricSet` e `anrRateMetricSet`; linhas de outro versionCode são recusadas; autoteste compara no jq (compatível com jq 1.7); `grep -E 'vitals(_json)?: '` no Release.
+
 ### Alterado
 - `.claude/agents/release.md`, `docs/ESTEIRA.md`, skill `play-store-release` e README: o Release lê o `vitals` antes de cada `advance`; só `ALARME` pausa.
 

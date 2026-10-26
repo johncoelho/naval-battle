@@ -169,7 +169,8 @@ do_status() {
 
 # Definições jq do vitals. Os limites chegam por --argjson (cmax, amax, min). Dia = {date, users, crash,
 # anr, crash_all, anr_all}, taxas em fração. Comparação estrita (> limite) e piso inclusivo (>= usuários):
-# só dia com usuários >= piso conta para ALARME ou OK.
+# só dia com usuários >= piso conta para ALARME ou OK. INCOMPLETO (sem usuários, ou sem falha/ANR num dia com
+# usuários >= piso, e sem ALARME em outro dia) é leitura falha: o do_vitals sai com 1 (falha fechada).
 VITALS_DEFS='
 def pad2: tostring | if length < 2 then "0" + . else . end;
 def day_of: "\(.startTime.year)-\(.startTime.month | pad2)-\(.startTime.day | pad2)";
@@ -183,7 +184,7 @@ def vitals_days($c; $a):
       | ([$g[] | select(.k == "c") | .r] | .[0]) as $cr
       | ([$g[] | select(.k == "a") | .r] | .[0]) as $ar
       | {date: $dt,
-         users: ([($cr // {} | metric("distinctUsers")), ($ar // {} | metric("distinctUsers"))] | map(select(. != null)) | max // 0),
+         users: ([($cr // {} | metric("distinctUsers")), ($ar // {} | metric("distinctUsers"))] | map(select(. != null)) | max),
          crash: ($cr // {} | metric("userPerceivedCrashRate")),
          anr: ($ar // {} | metric("userPerceivedAnrRate")),
          crash_all: ($cr // {} | metric("crashRate")),
@@ -192,6 +193,7 @@ def vitals_days($c; $a):
 def vitals_verdict:
   if length == 0 then "SEM_DADOS"
   elif any(.[]; (.users // 0) >= $min and (((.crash // 0) > $cmax) or ((.anr // 0) > $amax))) then "ALARME"
+  elif any(.[]; .users == null or (.users >= $min and (.crash == null or .anr == null))) then "INCOMPLETO"
   elif any(.[]; (.users // 0) >= $min) then "OK"
   else "POUCOS_USUARIOS" end;
 '
@@ -234,7 +236,11 @@ vitals_selftest() {
   check "99 usuários acima do limite" POUCOS_USUARIOS '[{"users":99,"crash":0.05,"anr":0.05}]'
   check "99 usuários acima do limite e outro dia ok" OK '[{"users":99,"crash":0.05,"anr":0.05},{"users":120,"crash":0.001,"anr":0.0}]'
   check "alarme em só um dos dias" ALARME '[{"users":120,"crash":0.001,"anr":0.0},{"users":130,"crash":0.02,"anr":0.0}]'
-  check "taxa ausente não alarma" OK '[{"users":150,"crash":null,"anr":null}]'
+  check "taxa ausente com 100 usuários ou mais" INCOMPLETO '[{"users":150,"crash":null,"anr":null}]'
+  check "só a ANR ausente" INCOMPLETO '[{"users":150,"crash":0.001,"anr":null}]'
+  check "taxa ausente com 99 usuários" POUCOS_USUARIOS '[{"users":99,"crash":null,"anr":null}]'
+  check "sem distinctUsers" INCOMPLETO '[{"users":null,"crash":0.001,"anr":0.0}]'
+  check "ALARME vence o dia incompleto" ALARME '[{"users":150,"crash":0.02,"anr":0.0},{"users":null,"crash":null,"anr":null}]'
   check "sem linhas" SEM_DADOS '[]'
   # junção das duas consultas, no formato da Reporting API
   local crash anr merged
@@ -243,7 +249,7 @@ vitals_selftest() {
   merged=$(vitals_jq 'vitals_days($c; $a)' -c -n --argjson c "$crash" --argjson a "$anr" 2>&1) || merged="erro do jq: $merged"
   check "API crua: junção e alarme de falha" ALARME "$merged"
   n=$((n + 1))
-  if [ "$(printf '%s' "$merged" | jq -r 'length, .[0].date, .[0].users, .[1].users, .[1].anr' 2>&1 | tr '\n' ' ')" = "2 2026-10-22 140 90 0 " ]; then
+  if printf '%s' "$merged" | jq -e 'length == 2 and .[0].date == "2026-10-22" and .[0].users == 140 and .[1].users == 90 and .[1].anr == 0' >/dev/null 2>&1; then
     note "  ok    API crua: dois dias, usuários e ANR lidos"
   else
     note "  FALHA API crua: junção diferente da esperada ($merged)"; fails=$((fails + 1))
@@ -266,50 +272,65 @@ vitals_fail() { # $1 = o que estava fazendo
   api_fail "$1"
 }
 
-do_vitals() {
-  local fresh end start body crash anr days verdict until_day tz="America/Los_Angeles"  # fuso que a API exige no DAILY
-
-  api GET "/crashRateMetricSet" || vitals_fail "Não consegui ler a atualidade dos dados de falha"
-  printf '%s' "$RESP" | jq -e 'type == "object"' >/dev/null 2>&1 || die "A Reporting API devolveu uma resposta inesperada para crashRateMetricSet."
-  fresh=$(printf '%s' "$RESP" | jq -r '
+# vitals_fresh CONJUNTO : lê a atualidade DAILY (fim exclusivo, AAAA-MM-DD) em $FRESH; ausência é falha
+vitals_fresh() {
+  api GET "/$1" || vitals_fail "Não consegui ler a atualidade de $1"
+  printf '%s' "$RESP" | jq -e 'type == "object"' >/dev/null 2>&1 || die "A Reporting API devolveu uma resposta inesperada para $1."
+  FRESH=$(printf '%s' "$RESP" | jq -r '
     def p2: tostring | ("0" + .)[-2:];
     [(.freshnessInfo.freshnesses // [])[] | select(.aggregationPeriod == "DAILY") | .latestEndTime][0]
-    | if . == null then empty else "\(.year)-\(.month | p2)-\(.day | p2)" end') || die "Não consegui interpretar a atualidade dos dados."
+    | if . == null then empty else "\(.year)-\(.month | p2)-\(.day | p2)" end') || die "Não consegui interpretar a atualidade de $1."
+  [ -n "$FRESH" ] || die "A Reporting API não informou a atualidade DAILY de $1 (resposta fora do formato; um app em produção sempre tem)."
+  case "$FRESH" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;; *) die "Data de atualidade inválida vinda da API (\"$FRESH\")." ;; esac
+}
 
-  if [ -z "$fresh" ]; then
-    # a API ainda não tem dado diário do app: não é falha de leitura
-    days='[]'; until_day="n/d"
-  else
-    case "$fresh" in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;; *) die "Data de atualidade inválida vinda da API (\"$fresh\")." ;; esac
-    end=$(date -u -d "$fresh" +%F) || die "Não consegui interpretar a data $fresh."
-    start=$(date -u -d "$end - $VITALS_WINDOW_DAYS days" +%F) || die "Não consegui calcular a janela de $VITALS_WINDOW_DAYS dias."
-    # latestEndTime é exclusivo: o último dia coberto é o anterior
-    until_day=$(date -u -d "$end - 1 day" +%F) || die "Não consegui calcular o último dia da janela."
+# todas as linhas precisam ser do versionCode pedido (protege contra um filter ignorado)
+vitals_check_version() { # $1 = JSON da resposta, $2 = nome
+  printf '%s' "$1" | jq -e --arg vc "$VERSION_CODE" '
+    [(.rows // [])[] | select(((.dimensions // []) | map(select(.dimension == "versionCode")) | .[0].int64Value) != $vc)] | length == 0' >/dev/null 2>&1     || die "A consulta de $2 trouxe linha de outro versionCode (ou sem a dimensão versionCode); o filtro foi ignorado."
+}
 
-    body=$(jq -nc --arg s "$start" --arg e "$end" --arg tz "$tz" --arg vc "$VERSION_CODE" '
-      def dt($d): ($d | split("-") | map(tonumber)) as $p
-        | {year: $p[0], month: $p[1], day: $p[2], timeZone: {id: $tz}};
-      {timelineSpec: {aggregationPeriod: "DAILY", startTime: dt($s), endTime: dt($e)},
-       dimensions: ["versionCode"], filter: ("versionCode = " + $vc), pageSize: 100}')
+do_vitals() {
+  local fresh_crash fresh_anr end start body crash anr days verdict until_day tz="America/Los_Angeles"  # fuso que a API exige no DAILY
 
-    crash=$(jq -c '. + {metrics: ["userPerceivedCrashRate", "crashRate", "distinctUsers"]}' <<<"$body")
-    api POST "/crashRateMetricSet:query" "$crash" || vitals_fail "Não consegui consultar a taxa de falha"
-    crash="$RESP"
-    anr=$(jq -c '. + {metrics: ["userPerceivedAnrRate", "anrRate", "distinctUsers"]}' <<<"$body")
-    api POST "/anrRateMetricSet:query" "$anr" || vitals_fail "Não consegui consultar a taxa de ANR"
-    anr="$RESP"
-    printf '%s' "$crash" | jq -e 'type == "object"' >/dev/null 2>&1 || die "Resposta inesperada da consulta de falha."
-    printf '%s' "$anr" | jq -e 'type == "object"' >/dev/null 2>&1 || die "Resposta inesperada da consulta de ANR."
-    days=$(vitals_jq 'vitals_days($c; $a)' -c -n --argjson c "$crash" --argjson a "$anr") || die "Não consegui juntar as consultas de falha e ANR."
-  fi
+  vitals_fresh crashRateMetricSet; fresh_crash="$FRESH"
+  vitals_fresh anrRateMetricSet; fresh_anr="$FRESH"
+  # a atualidade é de cada conjunto: usa a menor das duas nas duas consultas
+  end="$fresh_crash"
+  if [[ "$fresh_anr" < "$end" ]]; then end="$fresh_anr"; fi
+  end=$(date -u -d "$end" +%F) || die "Não consegui interpretar a data $end."
+  start=$(date -u -d "$end - $VITALS_WINDOW_DAYS days" +%F) || die "Não consegui calcular a janela de $VITALS_WINDOW_DAYS dias."
+  # o fim é exclusivo: o último dia coberto é o anterior
+  until_day=$(date -u -d "$end - 1 day" +%F) || die "Não consegui calcular o último dia da janela."
+
+  body=$(jq -nc --arg s "$start" --arg e "$end" --arg tz "$tz" --arg vc "$VERSION_CODE" '
+    def dt($d): ($d | split("-") | map(tonumber)) as $p
+      | {year: $p[0], month: $p[1], day: $p[2], timeZone: {id: $tz}};
+    {timelineSpec: {aggregationPeriod: "DAILY", startTime: dt($s), endTime: dt($e)},
+     dimensions: ["versionCode"], filter: ("versionCode = " + $vc), pageSize: 100}')
+
+  crash=$(jq -c '. + {metrics: ["userPerceivedCrashRate", "crashRate", "distinctUsers"]}' <<<"$body")
+  api POST "/crashRateMetricSet:query" "$crash" || vitals_fail "Não consegui consultar a taxa de falha"
+  crash="$RESP"
+  anr=$(jq -c '. + {metrics: ["userPerceivedAnrRate", "anrRate", "distinctUsers"]}' <<<"$body")
+  api POST "/anrRateMetricSet:query" "$anr" || vitals_fail "Não consegui consultar a taxa de ANR"
+  anr="$RESP"
+  printf '%s' "$crash" | jq -e 'type == "object"' >/dev/null 2>&1 || die "Resposta inesperada da consulta de falha."
+  printf '%s' "$anr" | jq -e 'type == "object"' >/dev/null 2>&1 || die "Resposta inesperada da consulta de ANR."
+  vitals_check_version "$crash" "falha"
+  vitals_check_version "$anr" "ANR"
+  days=$(vitals_jq 'vitals_days($c; $a)' -c -n --argjson c "$crash" --argjson a "$anr") || die "Não consegui juntar as consultas de falha e ANR."
 
   verdict=$(printf '%s' "$days" | vitals_jq 'vitals_verdict' -r) || die "Não consegui calcular o veredito."
-  case "$verdict" in ALARME|OK|POUCOS_USUARIOS|SEM_DADOS) ;; *) die "Veredito inesperado (\"$verdict\")." ;; esac
+  case "$verdict" in ALARME|OK|POUCOS_USUARIOS|SEM_DADOS|INCOMPLETO) ;; *) die "Veredito inesperado (\"$verdict\")." ;; esac
 
   note "vitals de $PACKAGE, versionCode $VERSION_CODE, janela de $VITALS_WINDOW_DAYS dias (dia | usuários | falha % | ANR %):"
   printf '%s' "$days" | jq -r '
     def pct: if . == null then "-" else ((. * 10000 | round) / 100 | tostring) end;
     .[] | "  \(.date) | \(.users) | \(.crash | pct) | \(.anr | pct)"'
+  if [ "$verdict" = "INCOMPLETO" ]; then
+    die "Leitura incompleta: a Reporting API não trouxe usuários, falha ou ANR de um dia com dados (nome de métrica mudou?). Nenhum veredito foi emitido."
+  fi
   note "vitals: $verdict (versionCode $VERSION_CODE, até $until_day)"
   jq -nc --arg vc "$VERSION_CODE" --arg v "$verdict" --arg upto "$until_day" --argjson days "$days" \
     --argjson cmax "$VITALS_CMAX" --argjson amax "$VITALS_AMAX" --argjson min "$VITALS_MIN" --argjson w "$VITALS_WINDOW_DAYS" \
@@ -528,7 +549,7 @@ main() {
     set -e
     [ "$rc" -ne 75 ] && break
     if [ "$tries" -ge 3 ]; then err "A Play seguiu ocupada ou instável após 3 tentativas."; exit 1; fi
-    note "Edição em conflito ou Play instável; nova tentativa em ${PLAY_RETRY_WAIT:-60} s ($tries/3)."
+    note "API ocupada, instável ou em conflito; nova tentativa em ${PLAY_RETRY_WAIT:-60} s ($tries/3)."
     sleep "${PLAY_RETRY_WAIT:-60}"
   done
   exit "$rc"

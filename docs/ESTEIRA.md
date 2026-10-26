@@ -123,7 +123,7 @@ O histórico de runs (`gh run list -w promote-production.yml`) é o registro das
   Veredito: `ALARME` (algum dia com ≥ 100 usuários e falha percebida > 1,09% ou ANR percebido > 0,47%), `OK`,
   `POUCOS_USUARIOS` (há dados, mas todos os dias abaixo de 100) ou `SEM_DADOS` (nenhuma linha). **Só `ALARME` faz
   halt**; `SEM_DADOS` e `POUCOS_USUARIOS` não travam o `advance` (com a base de hoje quase nenhuma versão chega a
-  100 usuários por dia). O run só fica vermelho (exit 1) se a **leitura** falhar (ex.: 403 = conta sem permissão
+  100 usuários por dia). Falha fechada: atualidade DAILY ausente, linha de outro versionCode ou dia com ≥ 100 usuários sem falha/ANR (ou sem usuários) vira erro, não veredito (internamente `INCOMPLETO`); a data final é a menor das atualidades dos dois conjuntos. O run só fica vermelho (exit 1) se a **leitura** falhar (ex.: 403 = conta sem permissão
   de relatórios ou API desligada); nesse caso o Release não avança naquela rodada e não faz halt. Limites por
   ambiente (`VITALS_CRASH_MAX`, `VITALS_ANR_MAX`, `VITALS_MIN_USERS`) com padrão fixo. Com `dry_run=true` roda o
   autoteste do veredito com amostras fixas, sem API. O Release comenta na issue
