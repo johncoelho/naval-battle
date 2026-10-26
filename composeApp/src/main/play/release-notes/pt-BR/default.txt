@@ -1,1 +1,1 @@
-Convide um amigo: em Amigos, compartilhe seu codigo de 6 caracteres. Quem tem conta de ate 7 dias digita o codigo, os dois viram amigos na hora e, quando o convidado termina a primeira partida online, cada um ganha 100 dobroes. Voce ganha por 1 convite por dia, ate 10 no total. Contra a IA continua sem dobroes.
+Pedido de avaliacao: depois da 3a vitoria ou de subir de patente, ao voltar ao menu, a Play pode pedir sua nota sem sair do jogo. No maximo uma vez a cada 30 dias, nunca depois de derrota e nunca atrapalha a partida. Nao aparece no iPhone.

@@ -55,6 +55,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Pedido de avaliação na Play (#45, 0.39.0):** Play In-App Review 2.0.2 (aprovada em 25/10). Sem banco. QA: REV-01 a
+  REV-04 (build `-PreviewFake=true` para o fluxo falso; APK `-PqaSign` para a lib real).
 - **Convide um amigo (#44, 0.38.0):** migração `referral` (`supabase/referral.sql`) a aplicar só depois do APROVADO do
   Tech Lead e antes de ligar o app novo na Play. QA: REF-01 a REF-07, com `referral_allow_qa = 'true'` só durante o
   teste e `'false'` no fim (como o `is_test` das QA).

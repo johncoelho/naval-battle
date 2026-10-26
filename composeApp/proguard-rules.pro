@@ -1,7 +1,7 @@
 # Regras do R8 para o release (#37). Debug não minifica.
 # O projeto não usa Supabase-kt, Ktor nem kotlinx.serialization (rede é HttpURLConnection + org.json,
 # do próprio Android) e não tem reflexão própria: sons são R.raw.* direto e enums são gravados por
-# `name`. Por isso as regras manuais são poucas. AdMob/UMP, Billing, Firebase Messaging e App Update
+# `name`. Por isso as regras manuais são poucas. AdMob/UMP, Billing, Firebase Messaging, App Update e In-App Review
 # trazem as próprias regras de consumidor nas AARs. Se o R8 reclamar de classe ausente, usar
 # -dontwarn pontual; nunca -dontobfuscate geral.
 

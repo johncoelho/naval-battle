@@ -461,6 +461,12 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   da conta com `referral_allow_qa`; colunas `settled_at` e `inviter_paid_at`; só vale sala criada depois do resgate; quem convida
   sem carteira fica `pending` e é pago em `referral_status`; `referral_settle` após toda recompensa online; link da Play nas duas
   plataformas; `referral_enabled` e `referral_bad_tries_per_day` em `app_config`.
+- 26/10 · Play In-App Review 2.0.2 entra na stack; pedido de avaliação só depois de vitória (#45, aprovado pelo John em
+  25/10) — porquê: a nota na Play pesa na descoberta e a ficha só tinha o botão de Ajustes. Biblioteca Java/Kotlin 1.x, só
+  `androidMain`, com as regras de R8 na AAR. Momento positivo: ao voltar ao menu depois da 3ª vitória (ou da seguinte, se o
+  momento passou) ou de subir de patente; 1 pedido a cada 30 dias e 3 na vida; sem pergunta prévia (a política da Google
+  proíbe filtrar quem avalia) e sem pedir em Firebase Test Lab. iPhone: sem pedido (o .ipa não vem da App Store). O botão
+  que abre a ficha (`openStoreListing`) segue em Ajustes → Sobre.
 
 ## Artefatos de referência (SPECs e designs aprovados)
 

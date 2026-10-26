@@ -52,6 +52,13 @@ AVD Pixel Tablet ou Pixel 9 Pro Fold (API 36), ou no Pixel_6 `adb shell wm size 
 `wm density 320` (800x1280 dp, a densidade real de um tablet: com 240 a altura sobra e esconde problema) +
 `settings put system user_rotation 1` para paisagem, reiniciando o app (`wm size reset` e `wm density reset` ao fim).
 
+### Avaliação falsa na Play (#45)
+
+`./gradlew :composeApp:assembleDebug -PreviewFake=true` troca o `ReviewManager` real pelo `FakeReviewManager`:
+o fluxo abre sem a Play e sem depender da cota da Google. Só no debug e no `.preview` (`BuildConfig.REVIEW_FAKE`);
+o release fixa `false`. Para repetir o pedido no mesmo aparelho, limpe os dados do app (as marcas `review_last_ask`
+e `review_ask_count` ficam no `SharedPreferences`). No app da Play o pedido só aparece se a cota da Google deixar.
+
 ## Integração contínua
 
 `.github/workflows/android.yml`, disparado a cada push na `main`:

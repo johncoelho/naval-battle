@@ -9,6 +9,15 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.39.0] — 2026-10-26 · Pedido de avaliação na Play (#45)
+
+App 0.39.0 (versionCode 106). Refs #45. Sem banco.
+
+### App
+- Play In-App Review (`com.google.android.play:review-ktx` 2.0.2, aprovada pelo John em 25/10): ao voltar ao menu depois de uma vitória que seja a 3ª da carreira (ou depois dela, se o momento passou) ou que suba de patente, o app pede a avaliação da Play sem sair do jogo. Nunca depois de derrota, nunca dentro da partida e nunca com outro popup na tela; sem pergunta prévia (política da Google).
+- Limites: 1 pedido a cada 30 dias e 3 na vida da instalação (marcas locais `review_last_ask`, `review_ask_count`, gravadas antes do pedido). Aparelho do Firebase Test Lab nunca pede. A Google aplica a cota dela e pode não mostrar nada; o jogo segue igual.
+- `game/ReviewPrompt.kt` (regra pura, constantes `private const val`), `expect object StoreReview` (Android real, iPhone sem pedido), testes `ReviewPromptTest`. `-PreviewFake=true` usa o `FakeReviewManager` no debug (`BuildConfig.REVIEW_FAKE`; o release fixa `false`).
+- Novidades da 0.39.0 nas três línguas. R8: `assembleRelease -PqaSign` compila; a lib usa as regras de consumidor da AAR.
 ## [0.38.0] — 2026-10-26 · Convide um amigo (#44)
 
 App 0.38.0 (versionCode 105). Refs #44. Banco: migração `referral` (`supabase/referral.sql`).

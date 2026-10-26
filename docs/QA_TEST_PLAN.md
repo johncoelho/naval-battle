@@ -388,6 +388,10 @@ inválido suspende a conta AdMob). Servidor: `supabase/tests/ads_ensaio.sql` (bl
 | ADS-20 | P1 | Conta adulta (`-PageFake=adult`) e sem sinal (`-PageFake=unknown`, ou app da Play sem compartilhar) | Adulta: anúncio sem `npa` nem marca de menor. Sem sinal: igual a menor (não personalizado). Nenhum texto novo no jogo; o aviso da Play, se vier, só depois do toque no anúncio |
 | ADS-21 | P1 | Servidor: `ads_min_app_version = '0.34.7'` e conta com último aparelho `0.34.6` (ensaio `ads_ensaio.sql`) | `ads_status` desligado e `ad_reward_start` devolve `off`; com `0.34.7` libera; chave vazia = sem gate. Ligar só com o OK do John |
 | ADS-26 | P0 | Tratamento de idade do AdMob (#53): um build `.preview` por faixa (`-PageFake=child`, `teen`, `adult`, `unknown`) em QA01 e QA02; vencer e tocar no botão de anúncio | Em cada faixa o anúncio de teste carrega, fecha com prêmio e o crédito entra. Mapeamento esperado: adulto UNSPECIFIED, `teen` e `unknown` TEEN, `child` CHILD (provado no teste de unidade `cadaFaixaTemOTratamentoDoAdMob`); sem log da faixa (a idade não vai para log). Adulto depois de menor na mesma sessão não se reproduz com `-PageFake` (fixo no build); garantido pelo `Builder` novo com UNSPECIFIED explícito a cada pedido |
+| REV-01 | P1 | Build debug `-PreviewFake=true` (dados limpos), carreira com 2 vitórias: vencer a 3ª partida contra a IA e voltar ao menu (#45) | O fluxo falso de avaliação roda uma vez ao voltar ao menu; nada aparece dentro da partida nem na tela de resultado |
+| REV-02 | P1 | Logo depois, vencer outra partida e voltar ao menu (mesmo dia) | Não pede de novo (30 dias); o jogo segue normal |
+| REV-03 | P1 | Dados limpos, 3 vitórias já feitas, perder a partida e voltar ao menu | Não pede depois de derrota |
+| REV-04 | P0 | APK minificado (`assembleRelease -PqaSign`) com a lib real: vencer a 3ª partida e voltar ao menu | Abre o fluxo ou não mostra nada (cota da Google); o jogo não trava nem fecha, logcat sem `FATAL EXCEPTION` |
 
 ### 12c. Conferência de instalação por push (#26)
 
