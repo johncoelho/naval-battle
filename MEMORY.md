@@ -52,8 +52,13 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 - **R8, edge-to-edge e telas grandes (#37, 0.34.12):** release minificado, `navalSafeArea`, conteúdo em até 600 dp
   e batalha lado a lado em tablet. R8 quebra só no release: antes de promover, bateria no app da Play (R8-01 a
-  R8-06, BIG-01 a BIG-09, EDGE-01 no `QA_TEST_PLAN`) e conferir o mapping no App bundle explorer. Aviso do SDK
-  de anúncios é a #38.
+  R8-06, BIG-01 a BIG-09, EDGE-01 no `QA_TEST_PLAN`) e conferir o mapping no App bundle explorer. O aviso do SDK
+  de anúncios saiu na #38 (0.34.13).
+
+- **Kotlin 2.3 e SDK de anúncios (#38, 0.34.13):** Kotlin 2.3.21, CMP 1.10.3, AGP 8.13.2, Gradle 8.14.3,
+  `play-services-ads` 25.5.0. Só o `ios.yml` pega o Kotlin/Native: `iosSimulatorArm64Test` e o `.ipa` verdes antes de
+  promover; se o Xcode do runner quebrar o link, fixar o Xcode no `ios.yml` precisa do OK do John. Bateria completa
+  no app da Play (anúncio premiado, compras, online no QA01/QA02) e a ação de edge-to-edge sumir do Release dashboard.
 
 - **ECA Digital (#49, 0.34.7):** Play Age Signals 0.0.4 lê a faixa no primeiro toque em anúncio; menor e idade
   desconhecida = anúncio não personalizado (TFUA, `npa`, PG/G). Gate `ads_min_app_version` pronto e **vazio**
@@ -69,7 +74,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   no SSV dos 4 blocos do AdMob; mensagem GDPR do UMP; e-mail do John em `app_config.ads_test_emails`
   (só no banco); QA com anúncio de teste (ADS-01 a ADS-18); Play Console ("Contém anúncios", ID de
   publicidade, Segurança dos dados) longe do pedido de produção; ligar só com o OK do John. SDK
-  25.2.0 (25.3+ exige Kotlin 2.3). **Ligar não é só virar `ads_enabled`:** a 0.34.0 tira a permissão
+  25.5.0 (Kotlin 2.3.21 desde a 0.34.13, #38). **Ligar não é só virar `ads_enabled`:** a 0.34.0 tira a permissão
   `AD_ID` do manifest (`tools:node="remove"`); antes de ligar, versão nova sem essa remoção e a
   declaração de ID de publicidade e a Segurança dos dados atualizadas na Play.
 - **Diagnóstico da conferência de compra (#27, 0.33.1):** Edge `dobroes-verify` registra etapa e motivo

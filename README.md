@@ -412,15 +412,15 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 
 | Camada | Escolha | Versão / onde |
 |---|---|---|
-| Linguagem | Kotlin Multiplatform | 2.1.0 (`gradle/libs.versions.toml`) |
-| UI | Compose Multiplatform (runtime, foundation, material3, resources) | 1.7.3 |
-| Build | Gradle + Android Gradle Plugin | 8.11.1 / AGP 8.7.3 |
+| Linguagem | Kotlin Multiplatform | 2.3.21 (`gradle/libs.versions.toml`); `-Xexpect-actual-classes` ligado (expect/actual de classe segue Beta) |
+| UI | Compose Multiplatform (runtime, foundation, material3, resources) | 1.10.3 (material3 1.9.0); coordenadas explícitas no catálogo, sem os atalhos `compose.*` obsoletos. 1.10.3 é o último que ainda publica `iosX64`; do 1.11 em diante some o simulador Intel |
+| Build | Gradle + Android Gradle Plugin | 8.14.3 / AGP 8.13.2 (nada de AGP 9.x: quebra o plugin KMP) |
 | Android | compileSdk / targetSdk 36, minSdk 26, JVM target 17, activity-compose 1.10.1 | catálogo + `composeApp/build.gradle.kts` |
 | iOS | framework KMP + projeto Xcode (`iosApp/`), `.ipa` sem assinatura no CI | Xcode do runner `macos` |
 | Login Google (Android) | Credential Manager (`androidx.credentials` 1.3.0 + `googleid` 1.1.1) | aprovado em 0.11 |
 | Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
 | Push (Android) | Firebase Cloud Messaging (`firebase-bom` 33.7.0, plugin `google-services` 4.4.2 só se houver `google-services.json`) | aprovado em 0.60 |
-| Anúncio premiado (Android) | Google Mobile Ads (`play-services-ads` 25.2.0) e consentimento UMP (`user-messaging-platform` 4.0.0), só anúncio premiado opcional; SDK e UMP só depois do primeiro toque. 25.2.0 é a maior que compila com o Kotlin 2.1.0 (25.3+ trazem metadata Kotlin 2.3) | aprovado pelo John em 18/10 (#29) |
+| Anúncio premiado (Android) | Google Mobile Ads (`play-services-ads` 25.5.0, traz a dependência transitiva `com.google.android.play:hsdp` 2.0.1) e consentimento UMP (`user-messaging-platform` 4.0.0), só anúncio premiado opcional; SDK e UMP só depois do primeiro toque. A 25.5.0 tira a API obsoleta de edge-to-edge (`LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`) que a Play apontava na 25.2.0 | aprovado pelo John em 18/10 (#29) |
 | Faixa etária (Android) | Play Age Signals API (`com.google.android.play:age-signals` 0.0.4, beta; `requestAgeSignalsAccess` + `checkAgeSignals`), só para escolher o tipo de anúncio; a idade não sai do aparelho | aprovado pelo John em 25/10 (#49) |
 | Compras (Android) | Google Play Billing (`com.android.billingclient:billing` 9.1.0): lista produtos, abre a folha de compra e lê o que já foi comprado. O crédito é decidido no servidor | aprovado pelo John em 17/10 (#15) |
 | Publicação | Gradle Play Publisher 3.13.0 (faixa Alpha do teste fechado) | aprovado em 0.16 |

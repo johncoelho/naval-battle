@@ -9,6 +9,12 @@ plugins {
 }
 
 kotlin {
+    // expect/actual de classe segue Beta no Kotlin 2.3 e o projeto usa o padrão em todo o data/ e audio/
+    // (README, contratos); o flag só silencia o aviso que repetia em cada declaração
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_17)
@@ -29,20 +35,20 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material3)
+            implementation(libs.compose.ui)
             // efeitos e trilha empacotados uma vez sÃ³ (composeResources/files) e lidos
             // dos dois lados â€” no iOS Ã© o que falta pra Ã¡udio de verdade existir
-            implementation(compose.components.resources)
+            implementation(libs.compose.resources)
         }
         // testes de unidade da lÃ³gica de jogo (game/), rodam no JVM e no simulador iOS
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
         androidMain.dependencies {
-            implementation(compose.preview)
+            implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
             // login com o Google via Credential Manager â€” precisa do Client ID
             // "Web application" cadastrado em GoogleAuthConfig e do provedor Google
@@ -104,8 +110,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 99
-        versionName = "0.34.12"
+        versionCode = 100
+        versionName = "0.34.13"
     }
 
     /**

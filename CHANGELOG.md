@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.13] — 2026-10-25 · Kotlin 2.3 e SDK de anúncios 25.5 (#38)
+
+App 0.34.13 (versionCode 100). Refs #38. Sem mudança de banco, de RPC nem de contrato de rede. Sobe a
+stack (aprovado pelo John em 25/10; README → Especificação técnica e HISTORY).
+
+### Alterado
+- **Kotlin 2.1.0 → 2.3.21**, **Compose Multiplatform 1.7.3 → 1.10.3** (Material3 1.9.0, `iosX64` mantido),
+  **AGP 8.7.3 → 8.13.2**, **Gradle 8.11.1 → 8.14.3** (wrapper regerado), **`play-services-ads` 25.2.0 → 25.5.0**
+  (tira a `LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES` obsoleta que a Play apontava; entra `hsdp` 2.0.1 transitivo).
+  `kotlinx-coroutines` sobe junto, via Compose. Firebase BOM, Billing, UMP e Age Signals ficam como estavam.
+- `compose.runtime/foundation/material3/ui/...` (atalhos obsoletos no CMP 1.10) viram coordenadas do catálogo
+  (`gradle/libs.versions.toml`); `-Xexpect-actual-classes` silencia o aviso Beta repetido pelo Kotlin 2.3;
+  `quadraticBezierTo` → `quadraticTo` em `DoubloonArt`. Sem mudança de regra nem de tela.
+- Verificado: 151 testes JVM verdes, `compileCommonMainKotlinMetadata` e `assembleRelease` (R8) sem aviso novo
+  do R8; release minificado no Pixel_6 (convidado, partida contra a IA, loja, ajustes) sem FATAL.
+
+---
+
 ## [0.34.12] — 2026-10-25 · R8, edge-to-edge e telas grandes (#37)
 
 App 0.34.12 (versionCode 99). Refs #37. Sem mudança de banco, de RPC nem de contrato de rede.

@@ -74,8 +74,8 @@ private fun DrawScope.drawAnchor(center: Offset, size: Float, color: Color, alph
     // braços em arco
     val arms = Path().apply {
         moveTo(center.x - s * 0.62f, center.y + s * 0.12f)
-        quadraticBezierTo(center.x - s * 0.5f, center.y + s * 0.78f, center.x, center.y + s * 0.66f)
-        quadraticBezierTo(center.x + s * 0.5f, center.y + s * 0.78f, center.x + s * 0.62f, center.y + s * 0.12f)
+        quadraticTo(center.x - s * 0.5f, center.y + s * 0.78f, center.x, center.y + s * 0.66f)
+        quadraticTo(center.x + s * 0.5f, center.y + s * 0.78f, center.x + s * 0.62f, center.y + s * 0.12f)
     }
     drawPath(arms, color, alpha = alpha, style = stroke)
 }
@@ -118,10 +118,10 @@ private fun DrawScope.coinStack(baseX: Float, baseY: Float, width: Float, count:
 private fun DrawScope.sparkle(c: Offset, r: Float, color: Color = Color.White) {
     val p = Path().apply {
         moveTo(c.x, c.y - r)
-        quadraticBezierTo(c.x, c.y, c.x + r, c.y)
-        quadraticBezierTo(c.x, c.y, c.x, c.y + r)
-        quadraticBezierTo(c.x, c.y, c.x - r, c.y)
-        quadraticBezierTo(c.x, c.y, c.x, c.y - r)
+        quadraticTo(c.x, c.y, c.x + r, c.y)
+        quadraticTo(c.x, c.y, c.x, c.y + r)
+        quadraticTo(c.x, c.y, c.x - r, c.y)
+        quadraticTo(c.x, c.y, c.x, c.y - r)
         close()
     }
     drawPath(p, color, alpha = 0.9f)
