@@ -13,12 +13,15 @@ class NameFilterTest {
 
     private val offensive = listOf(
         "Caralho", "CARÁLHO", "c4r4lh0", "c.a.r.a.l.h.o", "caaaralhooo", "Fuuuck", "f-u-c-k-e-r",
-        "Sh1ttyPlayer", "FilhodaPuta", "M3rd4", "p0rr4", "Puta", "xX_Hitler_Xx", "NaZiSta", "m1erd@", "Bitch", "N1gg3r", "c u z a o"
+        "Sh1ttyPlayer", "FilhodaPuta", "M3rd4", "p0rr4", "Puta", "xX_Hitler_Xx", "NaZiSta", "m1erd@", "Bitch", "N1gg3r", "c u z a o",
+        // termo curto colado a dígito ou a outra palavra em CamelCase (volta 1 do Tech Lead)
+        "Fuck1", "Fuck123", "Puta1", "Porra1", "Cunt1", "Dick1", "FuckBoy", "PorraLouca"
     )
 
     private val fine = listOf(
         "Cuca", "Escudo", "Computador", "Enviado", "Nigeria", "Therapist", "Capitao Silva", "Scunthorpe",
-        "Assassino", "Cassino", "Pirata", "Almirante", "Notario", "Evergarden", "Skipper"
+        "Assassino", "Cassino", "Pirata", "Almirante", "Notario", "Evergarden", "Skipper",
+        "Hancock", "Dickens", "Fagundes", "Temporada"
     )
 
     @Test

@@ -58,6 +58,18 @@ object NameFilter {
         ALLOW.map { normalize(it) }.distinct().sortedWith(compareByDescending<String> { it.length }.thenBy { it })
     }
 
+    private fun foldAccent(ch: Char): Char = when (ch) {
+        'á', 'à', 'â', 'ã', 'ä', 'å' -> 'a'
+        'é', 'è', 'ê', 'ë' -> 'e'
+        'í', 'ì', 'î', 'ï' -> 'i'
+        'ó', 'ò', 'ô', 'õ', 'ö' -> 'o'
+        'ú', 'ù', 'û', 'ü' -> 'u'
+        'ç' -> 'c'
+        'ñ' -> 'n'
+        'ý', 'ÿ' -> 'y'
+        else -> ch
+    }
+
     private fun foldChar(ch: Char): Char = when (ch) {
         'á', 'à', 'â', 'ã', 'ä', 'å' -> 'a'
         'é', 'è', 'ê', 'ë' -> 'e'
@@ -106,12 +118,37 @@ object NameFilter {
         return words
     }
 
+    /**
+     * Segundo conjunto de palavras, SEM leet: dígito e símbolo separam e a troca de minúscula para maiúscula também
+     * (FuckBoy, Fuck1, Puta1). Os termos curtos valem contra os dois conjuntos (mesma regra de `name_tokens_plain`).
+     */
+    fun tokensPlain(text: String): List<String> {
+        val spaced = StringBuilder()
+        for ((i, ch) in text.withIndex()) {
+            if (i > 0 && text[i - 1].isLowerCase() && ch.isUpperCase()) spaced.append(' ')
+            spaced.append(ch)
+        }
+        val words = mutableListOf<String>()
+        val cur = StringBuilder()
+        for (raw in spaced.toString().lowercase()) {
+            val ch = foldAccent(raw)
+            if (isLetter(ch)) {
+                cur.append(ch)
+            } else if (cur.isNotEmpty()) {
+                words += squeeze(cur.toString())
+                cur.clear()
+            }
+        }
+        if (cur.isNotEmpty()) words += squeeze(cur.toString())
+        return words
+    }
+
     fun isOffensive(text: String): Boolean {
         var compact = normalize(text)
         if (compact.isEmpty()) return false
         for (a in allowSorted) compact = compact.replace(a, "")
         val allowSet = allowSorted.toSet()
-        val words = tokens(text).filter { it !in allowSet }
+        val words = (tokens(text) + tokensPlain(text)).filter { it !in allowSet }
         return subTerms.any { compact.contains(it) } || words.any { it in wordTerms }
     }
 

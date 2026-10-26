@@ -44,8 +44,8 @@
     border:1px solid var(--line);padding:6px 12px;background:var(--surface)}
   .langnav a.on{color:var(--bg);background:var(--amberStrong);border-color:var(--amberStrong)}
   .lang{display:none}
-  .lang:target{display:block}
-  body:not(:has(.lang:target)) #pt{display:block}
+  .lang:target,.lang:has(:target){display:block}
+  body:not(:has(.lang:target)):not(:has(.lang :target)) #pt{display:block}
 
   .tablewrap{overflow-x:auto;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
   table{border-collapse:collapse;width:100%;min-width:560px}
@@ -219,7 +219,7 @@
     <li>13/09/2026 — primeira versão.</li>
   </ul>
 
-  <h2>Contato</h2>
+  <h2 id="contato-pt">Contato</h2>
   <p>Dúvidas e pedidos sobre esta política: <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>.</p>
 
   <a class="back" href="./">← Voltar para o Naval Battle</a>
@@ -377,7 +377,7 @@
     <li>2026-09-13 — first version.</li>
   </ul>
 
-  <h2>Contact</h2>
+  <h2 id="contato-en">Contact</h2>
   <p>Questions and requests about this policy: <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>.</p>
 
   <a class="back" href="./">← Back to Naval Battle</a>
@@ -540,7 +540,7 @@
     <li>13/09/2026 — primera versión.</li>
   </ul>
 
-  <h2>Contacto</h2>
+  <h2 id="contato-es">Contacto</h2>
   <p>Dudas y solicitudes sobre esta política: <a href="mailto:joncqs@gmail.com">joncqs@gmail.com</a>.</p>
 
   <a class="back" href="./">← Volver a Naval Battle</a>
@@ -553,6 +553,7 @@
     var L = { pt: 'pt-BR', en: 'en', es: 'es' };
     function cur() {
       var h = (location.hash || '').replace('#', '');
+      if (h.indexOf('contato-') === 0) h = h.slice(8);  // #contato-en abre a seção Contato do inglês
       return L[h] ? h : 'pt';
     }
     function mark() {

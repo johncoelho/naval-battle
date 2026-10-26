@@ -240,6 +240,9 @@ private const val SITE_URL = "https://johncoelho.github.io/naval-battle/"
 /** Política de privacidade na língua do jogo (âncora #pt, #en ou #es). A seção Contato fica nela. */
 internal fun privacyUrl(): String = SITE_URL + "privacy.html#" + br.com.navalbattle.i18n.I18n.lang.code
 
+/** Seção Contato da política, na língua do jogo (âncora #contato-pt, #contato-en ou #contato-es). */
+internal fun contactUrl(): String = SITE_URL + "privacy.html#contato-" + br.com.navalbattle.i18n.I18n.lang.code
+
 /** Regras da comunidade e termos de uso na língua do jogo. */
 internal fun communityRulesUrl(): String = SITE_URL + "terms.html#" + br.com.navalbattle.i18n.I18n.lang.code
 

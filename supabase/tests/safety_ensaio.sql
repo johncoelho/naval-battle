@@ -24,7 +24,7 @@
 --   conta_nova_google=Comandante-xxxxxx handle_new_user
 --   sala_nome=<nome do perfil>   host_name ofensivo vira o nome do perfil
 --   set_username: ok/offensive/taken/invalid
---   termos_ofensivos=N/N termos_ok=N/N   variações (acento, leet, separador, repetição) e exceções
+--   termos_ofensivos=26/26 termos_ok=19/19   variações (acento, leet, separador, repetição) e exceções
 --   denuncia=ok repetida=already propria=self invalida=invalid limite=limit
 --   terceiro_troca_nome=Comandante-xxxxxx denuncias_status=3 name_reset  reset_registrado=1
 --   push_john=1 push_log=1       um único push, mesmo com 3 denúncias na hora
@@ -41,9 +41,11 @@ declare
   room uuid := gen_random_uuid(); room2 uuid := gen_random_uuid();
   out text := ''; f_old int; n int; v text; tot int; fs text[]; f text; bad text := '';
   bad_names text[] := array['Caralho', 'CARÁLHO', 'c4r4lh0', 'c.a.r.a.l.h.o', 'caaaralhooo', 'Fuuuck', 'f-u-c-k-e-r',
-    'Sh1ttyPlayer', 'FilhodaPuta', 'M3rd4', 'p0rr4', 'Puta', 'xX_Hitler_Xx', 'NaZiSta', 'm1erd@', 'Bitch', 'N1gg3r', 'c u z a o'];
+    'Sh1ttyPlayer', 'FilhodaPuta', 'M3rd4', 'p0rr4', 'Puta', 'xX_Hitler_Xx', 'NaZiSta', 'm1erd@', 'Bitch', 'N1gg3r', 'c u z a o',
+    'Fuck1', 'Fuck123', 'Puta1', 'Porra1', 'Cunt1', 'Dick1', 'FuckBoy', 'PorraLouca'];
   ok_names text[] := array['Cuca', 'Escudo', 'Computador', 'Enviado', 'Nigeria', 'Therapist', 'Capitao Silva', 'Scunthorpe',
-    'Assassino', 'Cassino', 'Pirata', 'Almirante', 'Notario', 'Evergarden', 'Skipper'];
+    'Assassino', 'Cassino', 'Pirata', 'Almirante', 'Notario', 'Evergarden', 'Skipper',
+    'Hancock', 'Dickens', 'Fagundes', 'Temporada'];
   x text;
 begin
   -- ------------------------------------------------------------ cenário

@@ -205,7 +205,7 @@ fun SettingsScreen(state: AppState) {
             Gap(8)
             SecondaryButton(t(K.SETTINGS_RULES)) { uri.openUri(communityRulesUrl()) }
             Gap(8)
-            SecondaryButton(t(K.SETTINGS_CONTACT), t(K.SETTINGS_CONTACT_SUB)) { uri.openUri(privacyUrl()) }
+            SecondaryButton(t(K.SETTINGS_CONTACT), t(K.SETTINGS_CONTACT_SUB)) { uri.openUri(contactUrl()) }
 
             Gap(26)
             HudLabel(t(K.SETTINGS_ABOUT))

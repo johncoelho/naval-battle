@@ -186,7 +186,7 @@ returns boolean
 language plpgsql stable security definer set search_path = public as $$
 declare
   c text := public.normalize_name(p_text);
-  toks text[] := public.name_tokens(p_text);
+  toks text[] := public.name_tokens(p_text) || public.name_tokens_plain(p_text);
   a text;
 begin
   if c = '' then return false; end if;
@@ -201,7 +201,23 @@ begin
        or (t.kind = 'word' and t.term = any (toks))
   );
 end $$;
+-- segundo conjunto de palavras, SEM leet: dígito e símbolo separam, e a troca de minúscula para maiúscula também
+-- (FuckBoy, Fuck1, Puta1). Os termos curtos (word) valem contra os dois conjuntos; sem ele, o leet colava o dígito
+-- na palavra (Fuck1 virava "fucki") e o termo curto passava. App: NameFilter.tokensPlain.
+create or replace function public.name_tokens_plain(p_text text)
+returns text[] language sql immutable as $$
+  select coalesce(array(
+    select regexp_replace(w, '(.)\1+', '\1', 'g')
+    from unnest(regexp_split_to_array(
+           trim(regexp_replace(
+             translate(lower(regexp_replace(coalesce(p_text, ''), '([[:lower:]])([[:upper:]])', '\1 \2', 'g')),
+               'áàâãäåéèêëíìîïóòôõöúùûüçñýÿ', 'aaaaaaeeeeiiiiooooouuuucnyy'),
+             '[^a-z]+', ' ', 'g')), ' ')) w
+    where w <> ''), '{}'::text[]);
+$$;
+
 revoke all on function public.name_fold(text) from public, anon, authenticated;
+revoke all on function public.name_tokens_plain(text) from public, anon, authenticated;
 revoke all on function public.normalize_name(text) from public, anon, authenticated;
 revoke all on function public.name_tokens(text) from public, anon, authenticated;
 revoke all on function public.name_is_offensive(text) from public, anon, authenticated;

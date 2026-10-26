@@ -54,6 +54,8 @@ App 0.42.0 (versionCode 109). Refs #58, #56, #13 (lote da versão; #56 e #13 tê
 - Moderação pelo SQL do Supabase: `reports_pending()` e `review_report(jogador, 'dismiss'|'reset_name'|'suspend', dias)`; `purge_moderation()` apaga denúncias e
   trocas de nome com mais de 12 meses (rodada diária da esteira, sem pg_cron).
 - `drop view public.leaderboard` (nunca usada por nenhuma versão do app; ignorava o RLS de `profiles`).
+- Termo curto (`word`) também vale contra um segundo conjunto de palavras, sem leet: dígito, símbolo e a troca de minúscula para maiúscula separam
+  (`Fuck1`, `Puta1`, `FuckBoy`, `PorraLouca` reprovam; `Hancock`, `Dickens`, `Fagundes` e `Temporada` passam). Mesmo conjunto em `NameFilter.tokensPlain`.
 - Nomes atuais que violam: 0 de 166 contas na conferência, então a troca em massa da migração não muda nada.
 - Ensaio que desfaz tudo: `supabase/tests/safety_ensaio.sql`.
 
@@ -63,6 +65,7 @@ App 0.42.0 (versionCode 109). Refs #58, #56, #13 (lote da versão; #56 e #13 tê
   (abre a política do site, sem e-mail no app). Cadastro mostra "Ao criar a conta você aceita as Regras da comunidade".
 - `game/NameFilter.kt` (mesma regra e lista do servidor) filtra o nome ao criar conta e ao trocar no Perfil (`set_username`), e mascara nome de adversário vindo de app antigo.
   Aviso único "Seu nome foi trocado" quando o servidor troca à força.
+- "Fale conosco" abre a seção Contato da política (`privacy.html#contato-<língua>`); a página aceita a âncora dentro da seção.
 - Provocação desconhecida deixa de aparecer (antes o código cru ia para a tela e um cliente alterado mandava texto livre).
 - Textos em pt, en e es; sem prazo de 24 h nos textos.
 - Testes: `NameFilterTest`, `PlayerSafetyTest`, `TauntTest` e `NameTermsParityTest` (JVM, compara com o `safety.sql`).
