@@ -9,8 +9,8 @@ plugins {
 }
 
 kotlin {
-    // expect/actual de classe segue Beta no Kotlin 2.3 e o projeto usa o padrão em todo o data/ e audio/
-    // (README, contratos); o flag só silencia o aviso que repetia em cada declaração
+    // expect/actual de classe segue Beta no Kotlin 2.3 e o projeto usa o padrï¿½o em todo o data/ e audio/
+    // (README, contratos); o flag sï¿½ silencia o aviso que repetia em cada declaraï¿½ï¿½o
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
@@ -110,8 +110,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 103
-        versionName = "0.36.0"
+        versionCode = 104
+        versionName = "0.37.0"
     }
 
     /**

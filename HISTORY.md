@@ -441,6 +441,15 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   com tiro aleatório (sem camada nova). `welcome_gift_reset` não apaga a linha do razão: renomeia o `reason` para
   `welcome_reset`, assim a soma do razão continua igual ao saldo.
 
+- 26/10 · Aviso de retorno é notificação LOCAL, não push do servidor (#42) — o servidor não tem agendador e o
+  aparelho já agenda o lembrete diário e sabe quando foi aberto; funciona sem rede, sem FCM e no iPhone, sem camada
+  nova. Só com conta e "Lembrete diário" ligado; 2 dias troca o texto das 19h, 5 dias um aviso às 12h (e o das 19h
+  daquele dia não sai), no máximo 1 aviso de retorno a cada 7 dias, depois nada até abrir o app.
+- 26/10 · Prêmio de retorno de ◆100 + 3 milhas no check-in após 5 dias ou mais, carência de 30 dias (#42) — decidido
+  e pago no servidor (`dobroes_apply`, `reason = 'return'`), fora do teto online de 500/dia (trava própria), valor
+  fixo mostrado antes do resgate, `is_test` não recebe. Sem carteira (legado) o servidor só registra e paga as milhas.
+  `doubloons` do check-in segue só check-in + semana (o app antigo mostra isso); o retorno vai em colunas novas.
+
 ## Artefatos de referência (SPECs e designs aprovados)
 
 | Data | Artefato |

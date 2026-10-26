@@ -210,9 +210,13 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   5 navios, usar 2 habilidades, 60% de acerto), contado nas partidas contra a IA e online
   e resgatado depois do check-in. O servidor trava cada prêmio uma vez por dia
   (`supabase/daily.sql`, valores em `app_config`). **Lembrete diário** às 19h por
-  notificação local (sem push; desliga nos Ajustes): Android agenda pelo AlarmManager e
-  reagenda ao disparar e refaz o lembrete depois de reiniciar o aparelho ou atualizar o app,
-  iPhone deixa a semana agendada (`data/DailyReminder.kt`). Ajustes → **Testar notificação**
+  notificação local (sem push; desliga nos Ajustes): o app calcula o plano dos próximos 7 dias
+  (`game/ReturnReminder.kt`) e o entrega a `data/DailyReminder.kt`; Android guarda o plano, agenda
+  o próximo pelo AlarmManager, reagenda ao disparar e refaz depois de reiniciar o aparelho ou
+  atualizar o app, iPhone deixa o plano agendado. **Aviso de retorno:** com 2 dias sem abrir o
+  lembrete das 19h troca o texto; com 5 dias sai um aviso às 12h (e o das 19h do dia não sai), no
+  máximo 1 a cada 7 dias, nada depois até abrir o app. **Prêmio de retorno:** o check-in depois de
+  5 dias ou mais paga ◆100 + 3 milhas (carência de 30 dias, fora do teto online, `is_test` não recebe). Ajustes → **Testar notificação**
   dispara uma em 5 segundos e um aviso aparece quando o aparelho bloqueia as notificações do
   jogo, com atalho para os ajustes do sistema.
 - **Conexão instável (Online)** — cada jogada entra numa fila e é reenviada até o

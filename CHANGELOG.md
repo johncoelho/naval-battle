@@ -9,6 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.37.0] — 2026-10-26 · Aviso de retorno (2 e 5 dias) e prêmio de retorno (#42)
+
+App 0.37.0 (versionCode 104). Refs #42. Banco: migração `daily_return_bonus` (`supabase/daily.sql`).
+
+### App
+- Aviso de retorno por notificação LOCAL (sem servidor de push, também no iPhone), só com conta e "Lembrete diário"
+  ligado. 2 dias sem abrir: o lembrete das 19h troca o texto. 5 dias: um aviso às 12h e o das 19h daquele dia não sai.
+  No máximo 1 aviso de retorno a cada 7 dias; em carência do prêmio o aviso sai sem prometer prêmio. Depois do dia 5,
+  nada até o jogador abrir o app.
+- `game/ReturnReminder.kt` (plano puro), `DailyReminder` recebe o plano e os textos (Android guarda o plano e o
+  receiver escolhe o texto; iOS agenda os pedidos já com o texto de cada dia). Marcas locais `last_open_day`,
+  `last_return_notice_day`, `last_return_bonus_day`. Linha "Prêmio de retorno" no Diário de bordo.
+- Textos nas três línguas, Novidades da 0.37.0, testes `ReturnReminderTest`.
+
+### Banco
+- `daily_claims.kind` aceita `'return'`. `daily_checkin()` paga ◆100 + 3 milhas quando o último check-in foi há 5 dias
+  ou mais (carência de 30 dias, `dobroes_apply` com `reason = 'return'`, fora do teto de 500/dia, conta `is_test` não
+  recebe, sem carteira só registra e paga as milhas). `daily_checkin` e `daily_status` ganham colunas (`return_*`),
+  o app antigo lê por chave. `app_config`: `daily_return_days`, `daily_return_cooldown_days`, `daily_return_doubloons`,
+  `daily_return_miles`.
+- Ensaio `supabase/tests/daily_return_ensaio.sql` (desfaz tudo).
+
 ## [0.36.0] — 2026-10-26 · Primeira partida guiada e presente de boas-vindas (#43)
 
 App 0.36.0 (versionCode 103). Refs #43. Banco: migração `welcome_gift` (`supabase/welcome.sql`).

@@ -139,6 +139,19 @@ Telas grandes: AVD Pixel Tablet e Pixel 9 Pro Fold (API 36), mais o QA01 em retr
 | IA-06 | P1 | Cartucho avulso comprado (ver LOJA-03) | Libera um uso mesmo em recarga e some depois |
 | IA-07 | P2 | Sons e trilha | Tocam; respeitam os toggles de Ajustes |
 
+### 6a. Aviso de retorno e prêmio de retorno (#42)
+
+Conta QA01 com "Lembrete diário" ligado e notificações permitidas. Ensaio do banco: `supabase/tests/daily_return_ensaio.sql`.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| RET-01 | P0 | Ensaio `daily_return_ensaio.sql` | Resultado igual ao esperado no cabeçalho do arquivo (retorno 100 + 3, carência de 30 dias) |
+| RET-02 | P0 | QA01: recuar `daily_progress.last_checkin` 5 dias por SQL, abrir o Diário de bordo | Linha "Prêmio de retorno ◆100 + 3 milhas" antes do check-in; após o check-in o saldo e as milhas do servidor sobem |
+| RET-03 | P0 | Repetir logo depois (recuar de novo, mesma conta) | Sem prêmio (carência) |
+| RET-04 | P1 | Emulador com o relógio adiantado 2 dias sem abrir o app | Às 19h sai o lembrete com o texto "esperando" |
+| RET-05 | P1 | Adiantado 5 dias sem abrir; depois mais 2 dias | Um aviso às 12h e nenhum às 19h daquele dia; nenhum aviso de retorno depois |
+| RET-06 | P1 | Ajustes → "Lembrete diário" desligado e relógio adiantado | Nenhum aviso |
+
 ### 6b. Primeira partida guiada e presente (#43)
 
 Antes de cada rodada, `welcome_gift_reset` da conta QA (administrador) e carreira local zerada.

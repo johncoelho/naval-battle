@@ -55,6 +55,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Aviso de retorno e prêmio de retorno (#42, 0.37.0):** migração `daily_return_bonus` (`supabase/daily.sql`) a
+  aplicar só depois do APROVADO do Tech Lead e antes de ligar o app novo na Play. QA: RET-01 a RET-06 (relógio do
+  emulador adiantado; `last_checkin` recuado 5 dias por SQL na conta QA).
+
 - **Primeira partida guiada e presente (#43, 0.36.0):** migração `welcome_gift` (`supabase/welcome.sql`) a aplicar
   só depois do APROVADO do Tech Lead; ela fixa `welcome_gift_since` na hora da aplicação (só conta criada depois
   recebe). Aplicar antes de ligar o app novo na Play. QA: WEL-01 a WEL-06, com `welcome_gift_reset(uuid)` na conta QA.
