@@ -788,6 +788,12 @@ enum class K(val pt: String, val en: String, val es: String) {
 
     OPPONENT_FOUND_EYEBROW("Adversário encontrado", "Opponent found", "Adversario encontrado"),
     OPPONENT_FOUND_CONTINUE("Continuar", "Continue", "Continuar"),
+    OPPONENT_FOUND_SWITCH("Indo para a partida online em %s s…", "Heading to the online match in %s s…", "Yendo a la partida en línea en %s s…"),
+
+    PRACTICE_OFFER("Treinar contra a IA enquanto procuramos", "Train against the AI while we search", "Entrenar contra la IA mientras buscamos"),
+    PRACTICE_OFFER_SUB("A partida online começa quando alguém entrar", "The online match starts when someone joins", "La partida en línea empieza cuando alguien entre"),
+    PRACTICE_BANNER("Treino contra a IA · procurando adversário", "Training vs the AI · looking for an opponent", "Entrenamiento contra la IA · buscando rival"),
+    PRACTICE_STOP("Parar de procurar", "Stop searching", "Dejar de buscar"),
 
     SEASON_POPUP_EYEBROW("Nova temporada", "New season", "Nueva temporada"),
     SEASON_POPUP_TITLE("Temporada de %s começou", "The %s season has started", "La temporada de %s comenzó"),

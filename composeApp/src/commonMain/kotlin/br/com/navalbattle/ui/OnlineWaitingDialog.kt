@@ -15,7 +15,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import br.com.navalbattle.data.nowMillis
+import br.com.navalbattle.game.QuickPractice
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -39,7 +46,18 @@ import br.com.navalbattle.i18n.t
 @Composable
 fun OnlineWaitingDialog(state: AppState) {
     val waiting = state.onlineLinkState == LinkState.SEARCHING || state.onlineLinkState == LinkState.HOSTING
-    if (!waiting) return
+    // treinando contra a IA a faixa da batalha assume o lugar do diálogo (#41)
+    if (!waiting || state.practiceWhileSearching) return
+
+    // o botão do treino nasce aos 20 s de busca da partida rápida
+    var now by remember { mutableStateOf(nowMillis()) }
+    LaunchedEffect(state.quickSearchStartedAt) {
+        while (true) {
+            delay(1000)
+            now = nowMillis()
+        }
+    }
+    val offer = QuickPractice.practiceOfferVisible(state.quickSearchStartedAt, now, state.quickSearchStartedAt > 0L)
 
     Box(
         Modifier
@@ -72,6 +90,10 @@ fun OnlineWaitingDialog(state: AppState) {
                     Gap(4)
                     androidx.compose.material3.Text(code, style = NavalType.display, color = Naval.amberStrong)
                 }
+            }
+            if (offer) {
+                Gap(20)
+                PrimaryButton(t(K.PRACTICE_OFFER), subtitle = t(K.PRACTICE_OFFER_SUB)) { state.startPracticeWhileSearching() }
             }
             Gap(20)
             SecondaryButton(t(K.AUTH_CANCEL)) { state.cancelOnlineWait() }

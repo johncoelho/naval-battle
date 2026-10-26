@@ -131,6 +131,7 @@ fun ResultScreen(state: AppState, match: Match) {
             .navalSafeArea()
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
+        PracticeBanner(state, match)
         ScreenTopBar(t(K.RESULT_TITLE), match.mode.label.uppercase())
         Gap(16)
 

@@ -208,6 +208,7 @@ fun BattleScreen(state: AppState, match: Match) {
                 .navalSafeArea()
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
+            PracticeBanner(state, match)
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 ScreenTopBar(
                     when {

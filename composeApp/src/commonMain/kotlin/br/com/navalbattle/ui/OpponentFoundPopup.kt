@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import br.com.navalbattle.game.QuickPractice
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -36,10 +39,20 @@ import br.com.navalbattle.i18n.t
  */
 @Composable
 fun OpponentFoundPopup(state: AppState) {
-    if (state.match?.opponent != Opponent.ONLINE) return
-    val opponent = state.opponentProfile ?: return
+    // troca do treino contra a IA pela online (#41): 3 s de aviso, sem "recusar" nem "Continuar"
+    val switching = state.practiceSwitchSide != null
+    if (!switching && state.match?.opponent != Opponent.ONLINE) return
+    val opponent = state.opponentProfile
+    if (opponent == null && !switching) return
     var dismissed by remember(state.match, opponent) { mutableStateOf(false) }
-    if (dismissed) return
+    if (dismissed && !switching) return
+    var secondsLeft by remember(state.practiceSwitchSide) { mutableStateOf(QuickPractice.switchSeconds) }
+    LaunchedEffect(state.practiceSwitchSide) {
+        while (state.practiceSwitchSide != null && secondsLeft > 1) {
+            delay(1000)
+            secondsLeft -= 1
+        }
+    }
 
     Box(
         Modifier
@@ -59,6 +72,10 @@ fun OpponentFoundPopup(state: AppState) {
         ) {
             HudLabel(t(K.OPPONENT_FOUND_EYEBROW), Naval.muted)
             Gap(14)
+            if (opponent == null) {
+                HudLabel(t(K.OPPONENT_FOUND_SWITCH, secondsLeft), Naval.amberStrong)
+                return@Column
+            }
             Canvas(Modifier.size(78.dp)) {
                 drawAvatar(
                     avatar = Avatar.of(opponent.avatar),
@@ -78,7 +95,11 @@ fun OpponentFoundPopup(state: AppState) {
                 HudLabel(t(K.LEADERBOARD_POINTS, opponent.rankedRating), Naval.inkSoft)
             }
             Gap(20)
-            PrimaryButton(t(K.OPPONENT_FOUND_CONTINUE)) { dismissed = true }
+            if (switching) {
+                HudLabel(t(K.OPPONENT_FOUND_SWITCH, secondsLeft), Naval.amberStrong)
+            } else {
+                PrimaryButton(t(K.OPPONENT_FOUND_CONTINUE)) { dismissed = true }
+            }
         }
     }
 }

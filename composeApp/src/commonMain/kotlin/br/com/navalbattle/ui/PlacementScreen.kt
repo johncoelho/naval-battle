@@ -89,6 +89,7 @@ fun PlacementScreen(state: AppState, match: Match) {
     // o tabuleiro respeita a altura que sobra: em tablet deitado o Confirmar não sai da tela
     val boardSide = placementBoardSideDp(maxWidth.value, maxHeight.value).dp
     Column(Modifier.fillMaxSize()) {
+        PracticeBanner(state, match)
         ScreenTopBar(
             if (match.opponent == Opponent.LOCAL) {
                 "${t(K.PLACEMENT)} · ${match.sideName(match.placingSide).uppercase()}"

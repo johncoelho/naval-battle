@@ -107,6 +107,7 @@ import br.com.navalbattle.game.ChargeRequest
 import br.com.navalbattle.game.OnlineAwardQueue
 import br.com.navalbattle.game.PendingAward
 import br.com.navalbattle.game.PendingCredits
+import br.com.navalbattle.game.QuickPractice
 import br.com.navalbattle.game.UpdatePrompt
 import br.com.navalbattle.game.Wallet
 import br.com.navalbattle.game.PremioState
@@ -359,7 +360,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 closeOnline()
             }
 
-            else -> Unit
+            else -> if (practiceWhileSearching) {
+                // sair do treino para o menu fecha a sala rápida
+                onlineLink.finish("abandoned")
+                closeOnline()
+            }
         }
         match = null
         screen = Screen.MENU
@@ -512,6 +517,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineLink.close()
         onlineCode = null
         onlineInvitedFriend = false
+        practiceWhileSearching = false
+        practiceSwitchSide = null
+        quickSearchStartedAt = nowMillis()
         onlineLink.quickMatch(
             session = session,
             mode = mode.name,
@@ -536,6 +544,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     fun closeOnline() {
         onlineLink.close()
+        quickSearchStartedAt = 0L
+        practiceWhileSearching = false
+        practiceSwitchSide = null
+        practiceLines.clear()
         onlineLinkState = LinkState.IDLE
         onlineCode = null
         onlineInvitedFriend = false
@@ -555,7 +567,70 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     private fun onOnlineState(state: LinkState, side: Side) {
         onlineLinkState = state
         if (state != LinkState.CONNECTED) return
+        if (practiceWhileSearching) {
+            // alguém entrou durante o treino contra a IA (#41): aviso de 3 s e troca para a online
+            beginPracticeSwitch(side)
+            return
+        }
+        if (match?.opponent == Opponent.AI && quickSearchStartedAt == 0L) {
+            // CONNECTED que chegou depois do "Parar de procurar": fecha a sala e não troca de tela
+            onlineLink.finish("abandoned")
+            closeOnline()
+            return
+        }
         startOnlineMatch(side)
+    }
+
+    // ---------------- treino contra a IA enquanto a partida rápida procura (#41) ----------------
+
+    /** Quando a busca da partida rápida começou (0 = sem busca rápida); a oferta do treino nasce aos 20 s. */
+    var quickSearchStartedAt by mutableStateOf(0L)
+        private set
+
+    /** Treinando contra a IA com a sala rápida ainda aberta. */
+    var practiceWhileSearching by mutableStateOf(false)
+        private set
+
+    /** Lado do convidado que entrou durante o treino: enquanto não nulo, o aviso de 3 s está na tela. */
+    var practiceSwitchSide by mutableStateOf<Side?>(null)
+        private set
+
+    /** Mensagens do adversário que chegam durante o aviso — repetidas na partida online depois da troca. */
+    private val practiceLines = mutableListOf<String>()
+
+    /** A sala rápida segue aberta (OnlineLink não é tocado) e abre uma partida normal contra a IA. */
+    fun startPracticeWhileSearching() {
+        if (onlineLinkState != LinkState.SEARCHING && onlineLinkState != LinkState.HOSTING) return
+        if (!QuickPractice.practiceOfferVisible(quickSearchStartedAt, nowMillis(), quickSearchStartedAt > 0L)) return
+        practiceWhileSearching = true
+        newMatch(Opponent.AI)
+    }
+
+    /** "Parar de procurar": fecha a sala; o treino vira partida comum contra a IA. */
+    fun stopSearchKeepPractice() {
+        if (!practiceWhileSearching) return
+        onlineLink.finish("abandoned")
+        closeOnline()
+    }
+
+    private fun beginPracticeSwitch(side: Side) {
+        practiceSwitchSide = side
+        practiceLines.clear()
+        onlineLink.opponentId?.let { id -> uiScope?.launch { loadOpponentProfile(id) } }
+        uiScope?.launch {
+            delay(QuickPractice.switchDelayMillis)
+            // se a sala fechou nesse meio-tempo (Parar de procurar, sair), não troca
+            if (practiceSwitchSide != side || onlineLinkState != LinkState.CONNECTED) return@launch
+            val buffered = practiceLines.toList()
+            practiceLines.clear()
+            practiceWhileSearching = false
+            practiceSwitchSide = null
+            // o treino é descartado: nenhum registerMatch (só a tela de resultado grava)
+            if (QuickPractice.onOpponentJoined(true) == QuickPractice.JoinAction.AUTO_SWITCH) {
+                startOnlineMatch(side)
+                buffered.forEach { onLine(it) }
+            }
+        }
     }
 
     private fun startOnlineMatch(side: Side) {
@@ -1999,6 +2074,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Uma linha chegou do outro aparelho — mesmo protocolo para LAN e online. */
     private fun onLine(line: String) {
+        if (practiceSwitchSide != null) {
+            // durante o aviso a partida ainda é a da IA: guarda e repete depois da troca
+            practiceLines += line
+            return
+        }
         val m = match ?: return
         val parts = Protocol.parts(line)
         when (parts.firstOrNull()) {
@@ -2649,7 +2729,7 @@ fun App() {
                 if (state.match == null && state.pendingInvite == null) QuickOfferBanner(state, offer)
             }
             state.quickOfferNotice?.let { notice -> QuickOfferNotice(state, notice) }
-            if (state.screen == Screen.PLACEMENT) OpponentFoundPopup(state)
+            if (state.screen == Screen.PLACEMENT || state.practiceSwitchSide != null) OpponentFoundPopup(state)
             UpdatePopup(state)
             if (state.match == null) SeasonEndPopup(state)
             if (state.match == null) SeasonPopup(state)
