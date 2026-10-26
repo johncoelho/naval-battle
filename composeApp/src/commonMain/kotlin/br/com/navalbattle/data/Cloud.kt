@@ -4,6 +4,8 @@ import br.com.navalbattle.game.ReferralInvite
 import br.com.navalbattle.game.ReferralRedeem
 import br.com.navalbattle.game.ReferralSettle
 import br.com.navalbattle.game.WelcomeGift
+import br.com.navalbattle.game.WeeklyClaim
+import br.com.navalbattle.game.WeeklyStatus
 import br.com.navalbattle.game.LaunchNoticeStatus
 
 /**
@@ -668,6 +670,12 @@ expect class CloudApi() {
 
     /** Marca os prêmios de convite como vistos (RPC `referral_ack`). */
     suspend fun referralAck(session: Session): CloudResult<Unit>
+
+    /** Desafio da semana (#47): missão, progresso e prêmio vindos do servidor; null quando o servidor não o oferece. */
+    suspend fun weeklyStatus(session: Session): CloudResult<WeeklyStatus?>
+
+    /** Resgata o prêmio da semana: o servidor confere o progresso, paga e devolve ok, already, not_done, no_wallet ou not_eligible. */
+    suspend fun claimWeekly(session: Session): CloudResult<WeeklyClaim>
 
     /** Gasta 1 milha ao começar a partida online [matchId] — uma vez por sala. Devolve o saldo. */
     suspend fun spendMile(session: Session, matchId: String): CloudResult<Int>

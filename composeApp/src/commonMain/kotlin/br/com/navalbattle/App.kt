@@ -115,6 +115,10 @@ import br.com.navalbattle.game.normalizeReferralCode
 import br.com.navalbattle.game.referralOutcome
 import br.com.navalbattle.game.referralUnseenTotal
 import br.com.navalbattle.game.WelcomeGift
+import br.com.navalbattle.game.WeeklyOutcome
+import br.com.navalbattle.game.WeeklyStatus
+import br.com.navalbattle.game.weeklyCanClaim
+import br.com.navalbattle.game.weeklyOutcome
 import br.com.navalbattle.game.WelcomeOutcome
 import br.com.navalbattle.game.nextGuidedStep
 import br.com.navalbattle.game.shouldOfferGuided
@@ -1480,11 +1484,22 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     val dailyChallengeDone: Boolean
         get() = daily?.let { dailyProgress >= it.missionTarget } ?: false
 
+    /** Desafio da semana (#47), vindo do servidor junto com o diário; null se o servidor não o oferece. */
+    var weekly by mutableStateOf<WeeklyStatus?>(null)
+        private set
+
+    var weeklyBusy by mutableStateOf(false)
+        private set
+
+    /** Meta da semana batida e prêmio ainda não resgatado. */
+    val weeklyReady: Boolean
+        get() = weekly?.let { weeklyCanClaim(it.progress, it.target, it.claimed) } ?: false
+
     /** Tem prêmio esperando: check-in de hoje ou desafio cumprido e não resgatado. */
     val dailyPending: Boolean
         get() {
             val d = daily ?: return false
-            return !d.checkedIn || (!d.challengeClaimed && dailyChallengeDone)
+            return !d.checkedIn || (!d.challengeClaimed && dailyChallengeDone) || weeklyReady
         }
 
     /**
@@ -1498,6 +1513,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     suspend fun loadDaily() {
         if (!profile.signedIn) {
             daily = null
+            weekly = null
             DailyReminder.cancel()
             return
         }
@@ -1505,7 +1521,41 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             daily = it
             noteOpened(it)
         }
+        loadWeekly()
         scheduleReminder()
+    }
+
+    /** Lê o desafio da semana (o servidor conta o progresso); falha de rede mantém o que já estava na tela. */
+    private suspend fun loadWeekly() {
+        val r = authed { session -> cloud.weeklyStatus(session) } as? CloudResult.Ok ?: return
+        weekly = r.value
+    }
+
+    /** Resgata o prêmio da semana: o servidor confere, paga e devolve o saldo (o aparelho nunca credita). */
+    suspend fun claimWeekly() {
+        val w = weekly ?: return
+        if (weeklyBusy || dailyBusy || !weeklyCanClaim(w.progress, w.target, w.claimed)) return
+        weeklyBusy = true
+        dailyNotice = null
+        if (!ensureWallet()) {
+            weeklyBusy = false
+            dailyNotice = t(K.DAILY_FAILED)
+            return
+        }
+        val claim = (authed { session -> cloud.claimWeekly(session) } as? CloudResult.Ok)?.value
+        weeklyBusy = false
+        when (weeklyOutcome(claim)) {
+            WeeklyOutcome.PAID -> {
+                claim?.let { profile.setServerBalance(it.balance) }
+                loadMiles()
+                weekly = w.copy(claimed = true, progress = w.target)
+                dailyNotice = claim?.let { t(K.WEEKLY_GOT, it.doubloons, it.miles) }
+            }
+            WeeklyOutcome.DONE_BEFORE -> weekly = w.copy(claimed = true)
+            WeeklyOutcome.NOT_DONE -> loadWeekly()
+            WeeklyOutcome.NOT_ELIGIBLE -> weekly = null
+            WeeklyOutcome.NO_WALLET, WeeklyOutcome.OFFLINE -> dailyNotice = t(K.DAILY_FAILED)
+        }
     }
 
     /**

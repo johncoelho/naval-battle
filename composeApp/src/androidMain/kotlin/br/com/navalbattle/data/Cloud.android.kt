@@ -4,6 +4,8 @@ import br.com.navalbattle.game.ReferralInvite
 import br.com.navalbattle.game.ReferralRedeem
 import br.com.navalbattle.game.ReferralSettle
 import br.com.navalbattle.game.WelcomeGift
+import br.com.navalbattle.game.WeeklyClaim
+import br.com.navalbattle.game.WeeklyStatus
 import br.com.navalbattle.game.LaunchNoticeStatus
 
 import java.io.BufferedReader
@@ -801,6 +803,39 @@ actual class CloudApi actual constructor() {
     actual suspend fun referralAck(session: Session): CloudResult<Unit> = call {
         post("/rest/v1/rpc/referral_ack", JSONObject(), token = session.accessToken)
         CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun weeklyStatus(session: Session): CloudResult<WeeklyStatus?> = call {
+        val arr = JSONArray(post("/rest/v1/rpc/weekly_status", JSONObject(), token = session.accessToken))
+        if (arr.length() == 0) {
+            CloudResult.Ok(null)
+        } else {
+            val o = arr.getJSONObject(0)
+            CloudResult.Ok(
+                WeeklyStatus(
+                    week = o.optString("week"),
+                    mission = o.optString("mission"),
+                    target = o.optInt("target", 1),
+                    progress = o.optInt("progress", 0),
+                    claimed = o.optBoolean("claimed", false),
+                    doubloons = o.optInt("doubloons", 0),
+                    miles = o.optInt("miles", 0),
+                    resetsInSeconds = o.optInt("resets_in_seconds", 0)
+                )
+            )
+        }
+    }
+
+    actual suspend fun claimWeekly(session: Session): CloudResult<WeeklyClaim> = call {
+        val o = JSONArray(post("/rest/v1/rpc/claim_weekly", JSONObject(), token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(
+            WeeklyClaim(
+                status = o.optString("status"),
+                doubloons = o.optInt("doubloons", 0),
+                miles = o.optInt("miles", 0),
+                balance = o.optInt("balance", 0)
+            )
+        )
     }
 
     actual suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int> = call {

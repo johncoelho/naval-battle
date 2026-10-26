@@ -4,6 +4,8 @@ import br.com.navalbattle.game.ReferralInvite
 import br.com.navalbattle.game.ReferralRedeem
 import br.com.navalbattle.game.ReferralSettle
 import br.com.navalbattle.game.WelcomeGift
+import br.com.navalbattle.game.WeeklyClaim
+import br.com.navalbattle.game.WeeklyStatus
 import br.com.navalbattle.game.LaunchNoticeStatus
 
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -746,6 +748,40 @@ actual class CloudApi actual constructor() {
     actual suspend fun referralAck(session: Session): CloudResult<Unit> = call {
         post("/rest/v1/rpc/referral_ack", emptyMap<String, Any?>(), token = session.accessToken)
         CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun weeklyStatus(session: Session): CloudResult<WeeklyStatus?> = call {
+        val json = post("/rest/v1/rpc/weekly_status", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        if (o == null) {
+            CloudResult.Ok(null)
+        } else {
+            CloudResult.Ok(
+                WeeklyStatus(
+                    week = o.strOr("week", ""),
+                    mission = o.strOr("mission", ""),
+                    target = o.intOr("target", 1),
+                    progress = o.intOr("progress", 0),
+                    claimed = (o["claimed"] as? Boolean) ?: false,
+                    doubloons = o.intOr("doubloons", 0),
+                    miles = o.intOr("miles", 0),
+                    resetsInSeconds = o.intOr("resets_in_seconds", 0)
+                )
+            )
+        }
+    }
+
+    actual suspend fun claimWeekly(session: Session): CloudResult<WeeklyClaim> = call {
+        val json = post("/rest/v1/rpc/claim_weekly", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            WeeklyClaim(
+                status = (o["status"] as? String).orEmpty(),
+                doubloons = o.intOr("doubloons", 0),
+                miles = o.intOr("miles", 0),
+                balance = o.intOr("balance", 0)
+            )
+        )
     }
 
     actual suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int> = call {

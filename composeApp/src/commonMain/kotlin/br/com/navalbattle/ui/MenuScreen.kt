@@ -70,6 +70,8 @@ import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Rank
+import br.com.navalbattle.game.weeklyFraction
+import br.com.navalbattle.game.weeklyMissionKey
 import br.com.navalbattle.game.ShipClass
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -362,6 +364,25 @@ private fun DayCard(state: AppState) {
                         Text(t(K.MENU_DAY_CHECKIN), style = NavalType.mono, color = Naval.amberStrong, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Gap(2)
                         HudLabel("+${d.checkinReward}", Naval.muted)
+                    }
+                    allDone && state.weekly?.claimed == false -> {
+                        // dia todo feito: o semanal (#47) assume o cartão, com missão curta e progresso
+                        val wk = state.weekly!!
+                        Text(t(weeklyMissionKey(wk.mission)), style = NavalType.monoSmall, color = Naval.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Gap(4)
+                        Box(Modifier.fillMaxWidth().height(4.dp).background(Naval.surface2)) {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth(weeklyFraction(wk.progress, wk.target))
+                                    .height(4.dp)
+                                    .background(if (state.weeklyReady) Naval.greenBright else Naval.amber)
+                            )
+                        }
+                        Gap(3)
+                        HudLabel(
+                            if (state.weeklyReady) t(K.WEEKLY_CLAIM).uppercase() else t(K.WEEKLY_CHIP, wk.progress.coerceAtMost(wk.target), wk.target).uppercase(),
+                            if (state.weeklyReady) Naval.amberStrong else Naval.muted
+                        )
                     }
                     allDone -> {
                         Text("✓ " + t(K.MENU_DAY_DONE), style = NavalType.mono, color = Naval.greenBright, maxLines = 1, overflow = TextOverflow.Ellipsis)

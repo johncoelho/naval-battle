@@ -35,6 +35,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.data.DailyStatus
+import br.com.navalbattle.game.weeklyFraction
+import br.com.navalbattle.game.weeklyMissionKey
 import br.com.navalbattle.design.DoubloonPackArt
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.game.AdPlace
@@ -204,6 +206,56 @@ fun DailyPopup(state: AppState) {
                         enabled = state.dailyChallengeDone && !state.dailyBusy,
                         modifier = Modifier.fillMaxWidth()
                     ) { scope.launch { state.claimDailyChallenge() } }
+                }
+            }
+
+            // desafio da semana (#47): o servidor conta o progresso; prêmio fixo à vista
+            state.weekly?.let { w ->
+                val ready = state.weeklyReady
+                Gap(14)
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Naval.surface)
+                        .border(1.dp, if (ready) Naval.amber else Naval.lineSoft)
+                        .padding(14.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        HudLabel(t(K.WEEKLY_TITLE).uppercase(), Naval.muted, Modifier.weight(1f))
+                        CoinLabel("+${w.doubloons}", style = NavalType.mono)
+                        Spacer(Modifier.width(6.dp))
+                        Text(t(K.WEEKLY_REWARD_MILES, w.miles), style = NavalType.mono, color = Naval.amberStrong)
+                    }
+                    Gap(6)
+                    Text(t(weeklyMissionKey(w.mission)), style = NavalType.mono, color = Naval.ink)
+                    HudLabel(t(K.WEEKLY_WHERE), Naval.muted)
+                    Gap(10)
+                    val progress = w.progress.coerceIn(0, w.target.coerceAtLeast(1))
+                    val fraction = weeklyFraction(w.progress, w.target)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f).height(8.dp).background(Naval.surface2).border(1.dp, Naval.lineSoft)) {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth(fraction)
+                                    .height(8.dp)
+                                    .background(if (fraction >= 1f) Naval.greenBright else Naval.amber)
+                            )
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Text("$progress / ${w.target}", style = NavalType.monoSmall, color = Naval.inkSoft)
+                    }
+                    Gap(12)
+                    if (w.claimed) {
+                        SecondaryButton(t(K.WEEKLY_CLAIMED), enabled = false, modifier = Modifier.fillMaxWidth()) {}
+                    } else {
+                        PrimaryButton(
+                            t(K.WEEKLY_CLAIM),
+                            enabled = ready && !state.weeklyBusy && !state.dailyBusy,
+                            modifier = Modifier.fillMaxWidth()
+                        ) { scope.launch { state.claimWeekly() } }
+                    }
+                    Gap(6)
+                    HudLabel(t(K.WEEKLY_RESETS, countdown(w.resetsInSeconds)), Naval.muted)
                 }
             }
 
