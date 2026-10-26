@@ -80,6 +80,14 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   recebe no máximo 1 prêmio por dia e 10 no total (passou disso, a amizade fica e só o convidado recebe). O valor é fixo e
   aparece antes do resgate; contra a IA continua sem dobrões. Conta `is_test` e conta QA não contam.
 
+### Desafio da semana
+
+- No Diário de bordo, abaixo do desafio do dia: uma missão por semana (segunda 00h a domingo 23h59, Brasília), igual para
+  todos e em rodízio fixo: **5 partidas online com combate**, **check-in em 5 dias** ou **3 ranqueadas vencidas**. O
+  servidor conta o progresso; o aparelho só mostra a barra.
+- Ao completar, **Resgatar** paga ◆250 + 5 milhas (até o teto de milhas), uma vez por semana. O prêmio é fixo e aparece
+  antes do resgate; não entra no teto de dobrões das partidas online. Conta `is_test` não recebe.
+
 ### Formas de jogar
 
 - **Partida rápida** — contra a IA, que caça em padrão de paridade e persegue contatos.
@@ -627,6 +635,12 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   uuids em ordem crescente) antes de `dobroes:<uid>`. Tabelas `referral_codes`, `referrals`, `referral_tries` (RLS, só
   leitura do que é seu). Números em `app_config` (`referral_*`). Ensaio: `supabase/tests/referral_ensaio.sql`. App:
   `game/Referral.kt`, `AppState.redeemReferral/loadReferralStatus` e o `referral_settle` em `flushOnlineAwards`.
+- Desafio da semana (`supabase/weekly.sql`, #47): `weekly_status()` e `claim_weekly()` (`ok | already | not_done | no_wallet |
+  not_eligible`); a missão é `weekly_mission(segunda)` (rodízio fixo `ONLINE_PLAY_5`, `CHECKIN_5`, `RANKED_WIN_3`) e o progresso é
+  contado só no servidor (`weekly_progress_of`, interna). Paga por `dobroes_apply(uid, valor, 'weekly', <segunda>)`, fora do teto
+  `dobroes_online_daily_cap`. Locks `weekly:<uid>` antes de `dobroes:<uid>` antes do perfil. Tabela `weekly_claims` (RLS, só leitura
+  do que é seu). Números em `app_config` (`weekly_*`). Ensaio: `supabase/tests/weekly_ensaio.sql`. App: `game/WeeklyChallenge.kt`,
+  `AppState.weekly/loadWeekly/claimWeekly` (lido junto com o diário).
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.
 
 ### Versão, release e entrega

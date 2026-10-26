@@ -9,6 +9,35 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.40.0] — 2026-10-26 · Desafio da semana (#47)
+
+App 0.40.0 (versionCode 107). Refs #47. Banco: migração `weekly_challenge` (`supabase/weekly.sql`).
+
+### App
+- Diário de bordo ganha o bloco **Desafio da semana** abaixo do desafio do dia: missão, barra de progresso, prêmio fixo
+  (◆250 + 5 milhas) à vista, **Resgatar** e o tempo até a segunda-feira. O cartão do menu mostra o semanal quando o diário
+  do dia está todo feito, e o chip "prêmio esperando" também acende com a meta da semana batida.
+- O progresso é do servidor (o aparelho não informa nada): `weekly_status` é lido junto com o diário (ao abrir, ao voltar
+  do segundo plano e depois de partida). `game/WeeklyChallenge.kt` (texto da missão, fração, `canClaim`, desfecho),
+  contrato novo `weeklyStatus`/`claimWeekly` em `Cloud` (Android e iOS), textos nas três línguas, Novidades da 0.40.0.
+  Testes `WeeklyChallengeTest`.
+
+### Banco
+- Semana de segunda 00h a domingo 23h59 de Brasília (`brt_week_start()`). Missão em rodízio fixo pelo número da semana,
+  igual para todos e sem sorteio: `ONLINE_PLAY_5` (5 partidas online com combate dos dois lados, mesma prova do
+  `award_online_match`), `CHECKIN_5` (check-in em 5 dias da semana) e `RANKED_WIN_3` (3 ranqueadas vencidas).
+- `weekly_claims` (RLS, só leitura do que é seu), `weekly_status()` e `claim_weekly()` (`ok | already | not_done |
+  no_wallet | not_eligible`; grava o valor realmente pago, milhas até o `miles_cap`). Pago por
+  `dobroes_apply(..., 'weekly', <segunda>)`, **fora** do teto de 500/dia; conta `is_test` não recebe. Locks
+  `weekly:<uid>` -> `dobroes:<uid>` -> perfil. Índices novos `online_matches (host_id, created_at)` e `(guest_id, created_at)`.
+- `app_config`: `weekly_enabled`, `weekly_doubloons` (250), `weekly_miles` (5). Ensaio `supabase/tests/weekly_ensaio.sql`.
+  App antigo não vê o semanal; nada do diário muda.
+
+### Documentação
+- README (jogo e especificação), HISTORY, MEMORY, `docs/QA_TEST_PLAN.md` (WEK-01 a WEK-06), `docs/DESIGN_SYSTEM.md`.
+
+---
+
 ## [0.39.0] — 2026-10-26 · Pedido de avaliação na Play (#45)
 
 App 0.39.0 (versionCode 106). Refs #45. Sem banco.

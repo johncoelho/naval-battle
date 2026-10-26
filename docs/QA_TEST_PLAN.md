@@ -179,6 +179,19 @@ Ligar `referral_allow_qa = 'true'` só durante o teste e desligar no fim (REF-07
 | REF-06 | P1 | Ensaio `referral_ensaio.sql` | Limites diário (1) e total (10), conta antiga, `is_test`, QA, sem carteira e teto online conferem |
 | REF-07 | P0 | Fim do teste | `referral_allow_qa = 'false'` |
 
+### 6d. Desafio da semana (#47)
+
+Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem antes da migração.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| WEK-01 | P0 | Ensaio `weekly_ensaio.sql` no SQL Editor | Resultado igual ao cabeçalho do arquivo e nada gravado depois |
+| WEK-02 | P0 | Abrir o Diário de bordo (QA01) | Bloco "Desafio da semana" com a missão, barra, prêmio "◆250 + 5 milhas", Resgatar desligado e "Renova na segunda-feira, em ..." |
+| WEK-03 | P0 | Missão `ONLINE_PLAY_5`: 5 partidas online QA01 x QA02 com tiros dos dois lados | Barra sobe a cada partida até 5/5; Resgatar liga; ao resgatar, saldo do servidor +250 e +5 milhas |
+| WEK-04 | P0 | Tocar em Resgatar de novo (ou abrir o diário em outro aparelho) | Mostra "Prêmio da semana resgatado", nada novo creditado |
+| WEK-05 | P1 | Partida abandonada sem tiro | A barra não se move |
+| WEK-06 | P1 | Resgatar com 500 dobrões já pagos hoje por partidas online | Paga os ◆250 do mesmo jeito (não entra no teto) |
+
 ## 7. Dois jogadores no mesmo aparelho (só A)
 
 | ID | P | Passos | Esperado |

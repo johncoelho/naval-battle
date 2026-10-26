@@ -55,6 +55,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Desafio da semana (#47, 0.40.0):** migração `weekly_challenge` (`supabase/weekly.sql`) a aplicar só depois do APROVADO
+  do Tech Lead e antes de ligar o app novo na Play. QA: WEK-01 a WEK-06; `weekly_enabled` é o interruptor.
+
 - **Pedido de avaliação na Play (#45, 0.39.0):** Play In-App Review 2.0.2 (aprovada em 25/10). Sem banco. QA: REV-01 a
   REV-04 (build `-PreviewFake=true` para o fluxo falso; APK `-PqaSign` para a lib real).
 - **Convide um amigo (#44, 0.38.0):** migração `referral` (`supabase/referral.sql`) a aplicar só depois do APROVADO do

@@ -124,6 +124,14 @@ sombra: profundidade vem de superfície mais clara + borda.
   do presente de boas-vindas (véu `bg` a 86%, `navalSafeArea()`, `navalPanelWidth()`).
 - O artefato Claude Design ainda precisa receber o cartão (ver `docs/design-system/PENDENCIAS.md`).
 
+### Bloco Desafio da semana (#47)
+
+- No `DailyPopup`, abaixo do desafio do dia, o mesmo molde do cartão do desafio: painel `surface` com borda `lineSoft` (`amber` com
+  a meta batida), `HudLabel` do título, prêmio fixo em `CoinLabel` + milhas em `mono`/`amberStrong`, barra de 8dp
+  (`amber`, `greenBright` completa), `PrimaryButton` Resgatar e `HudLabel` com o tempo até a segunda. No cartão do menu, com o
+  diário do dia todo feito, o semanal ocupa o lugar de "Tudo feito hoje" (missão curta, barra de 4dp, progresso ou Resgatar).
+- Sem componente novo; o artefato Claude Design não muda.
+
 ## Largura máxima e área segura (#37)
 
 - **`Naval.contentMaxWidth` = 600 dp**: em tela grande (tablet, dobrável, Chromebook) o conteúdo das telas
