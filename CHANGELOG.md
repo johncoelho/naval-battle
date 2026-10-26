@@ -20,6 +20,20 @@ Sem versão do app (só `site/`, commit com `[skip ci]` e publicação com `gh w
   Digital), denúncias e bloqueio (a partir da 0.42.0), compras e push; revisão do Tech Lead aplicada (sem prazo fixo de 24 h, nome do Google vira nome de guerra público, tipos de push).
 - `site/terms.html` nova: regras da comunidade e termos de uso nas três línguas; rodapé do `site/index.html` linka as duas páginas.
 
+## [0.42.0] — 2026-10-26 · Pipeline do iPhone para a App Store (#56)
+
+App 0.42.0 (versionCode 109, provisória: sobe junto com a #58). Refs #56. Sem banco, sem mudança no jogo.
+
+### Infra
+- Workflow novo `.github/workflows/ios-release.yml` (autorizado pelo John na #56), **só com `xcodebuild`, sem fastlane**: archive Release
+  sem assinatura e exportação assinada pela assinatura em nuvem da Apple, com a chave da API do App Store Connect
+  (`-allowProvisioningUpdates` + `-authenticationKey*`). Envio ao TestFlight pelo próprio export (`destination = upload`). Build = número do run.
+- Ensaio em três níveis, job verde nos três: sem secrets só o archive; com secrets e `enviar=false` gera o `.ipa` assinado (artefato de 7 dias);
+  `enviar=true` sobe para o TestFlight. Disparo automático depois do `ios.yml` verde só com a variável `IOS_APPSTORE_LIVE=true`.
+- `Info.plist`: `ITSAppUsesNonExemptEncryption = false` e `CFBundleVersion = $(CURRENT_PROJECT_VERSION)`; scheme compartilhado `iosApp` e `iosApp/ExportOptions.plist`.
+- `ios.yml` e o `.ipa` do Sideloadly não mudam. A chave `.p8` vive só num arquivo temporário do runner (modo 600), apagado no fim.
+- Passo a passo e secrets do John em docs/BUILD.md, "iPhone na App Store".
+
 ## [0.41.0] — 2026-10-26 · Conquistas e placar do Google Play Games, desligados (#48)
 
 App 0.41.0 (versionCode 108). Refs #48. Sem banco.

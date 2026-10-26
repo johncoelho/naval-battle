@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Exportação do archive para a App Store Connect (ios-release.yml). O workflow troca
+	     "destination" (export = só gera o .ipa; upload = envia ao TestFlight) e acrescenta
+	     "teamID" numa cópia temporária; este arquivo não leva nenhum segredo. A assinatura é a
+	     gerenciada pela Apple (nuvem), via chave da API do App Store Connect. -->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>destination</key>
+	<string>export</string>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+</dict>
+</plist>

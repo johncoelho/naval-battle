@@ -141,9 +141,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Base de conhecimento e qualidade (10/10):** CLAUDE.md, HISTORY.md, MEMORY.md, especificação técnica
   no README, design system no Claude Design, skills; testes de unidade (`commonTest`) e trava de
   release no CI (`tools/release-check.sh`).
-- **iPhone na App Store:** aguardando a ativação da conta Apple Developer (paga em 08/10). Depois:
-  chave da API do App Store Connect como secret, app no App Store Connect, TestFlight **ao lado** do
-  `.ipa` do Sideloadly (que segue ativo até a versão da Apple ter tudo).
+- **iPhone na App Store (#56):** conta ativa, app criado no App Store Connect. Workflow `ios-release.yml` pronto
+  (sem fastlane; ensaio em 3 níveis em docs/BUILD.md). **Pendente do John:** chave da API (papel **Admin**) e os secrets
+  `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (`APPLE_TEAM_ID` já é variável do repositório). Depois do primeiro `enviar=true`
+  que der certo: `gh variable set IOS_APPSTORE_LIVE --body true`. O `.ipa` do Sideloadly segue até a versão da Apple ter tudo.
 - **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. **0.34.5 (#35)** em
   revisão (regra em §4). Aviso de lançamento (#36, ligar `launch_notice_enabled` quando a Play aprovar).
   CI publica só na Alpha; a promoção para a produção (#39) está pronta: `promote-production.yml` + `tools/play-rollout.sh`, 20% → 50% → 100% (docs/ESTEIRA.md). **Pendente do John:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do *Published* da 91 (hoje `false`; permissões e Reporting API já feitas). Ação `vitals` no script (#51): lê falha/ANR por versionCode; só `ALARME` pausa.

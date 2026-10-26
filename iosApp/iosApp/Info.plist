@@ -19,7 +19,10 @@
 	<key>CFBundleShortVersionString</key>
 	<string>0.41.0</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!-- Só HTTPS do sistema (URLSession): criptografia isenta, a App Store Connect não pergunta a cada envio. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchScreen</key>

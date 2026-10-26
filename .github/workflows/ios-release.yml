@@ -1,0 +1,210 @@
+name: iPhone na App Store
+
+# Envia o app para a App Store Connect (aba TestFlight) só com xcodebuild, sem fastlane
+# (#56). O archive sai sem assinatura; a exportação assina com o certificado de distribuição
+# gerenciado pela Apple (assinatura em nuvem) usando a chave da API do App Store Connect.
+# O ios.yml e o .ipa do Sideloadly NÃO mudam. Detalhes e ensaio: docs/BUILD.md, "iPhone na
+# App Store". Segredo nunca vai para o log: sem set -x, sem echo/cat da chave.
+#
+# Três níveis (o job fica verde nos três):
+#   1. sem os secrets/variável: só o archive Release sem assinatura;
+#   2. com tudo, enviar=false: archive + export assinado, .ipa como artefato (7 dias);
+#   3. com tudo, enviar=true: archive + export com destination=upload (TestFlight).
+# O disparo automático (depois do ios.yml verde na main) só roda com a variável de repositório
+# IOS_APPSTORE_LIVE=true e sempre envia.
+
+on:
+  workflow_dispatch:
+    inputs:
+      enviar:
+        description: "Enviar a build para o TestFlight (false = só gera o .ipa assinado)"
+        type: boolean
+        default: false
+  workflow_run:
+    workflows: ["Build iOS framework"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+# nunca cancela um envio em andamento
+concurrency:
+  group: ios-appstore
+  cancel-in-progress: false
+
+jobs:
+  appstore:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && vars.IOS_APPSTORE_LIVE == 'true')
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Confere o Xcode
+        run: |
+          xcodebuild -version
+          SDK_VERSION=$(xcrun --sdk iphoneos --show-sdk-version)
+          echo "SDK do iOS: $SDK_VERSION"
+          # a Apple só aceita envio feito com o SDK do iOS 26 ou mais novo
+          if [ "${SDK_VERSION%%.*}" -lt 26 ]; then
+            echo "::error::O Xcode do runner tem o SDK do iOS $SDK_VERSION, e a App Store Connect exige o 26 ou mais novo. Fixe um Xcode mais novo neste workflow (xcode-select)."
+            exit 1
+          fi
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # no disparo automático o ios.yml verde já é o pré-requisito
+      - name: Testes de unidade no simulador iOS (só disparo manual)
+        if: github.event_name == 'workflow_dispatch'
+        run: ./gradlew :composeApp:iosSimulatorArm64Test --console=plain
+
+      - name: Confere os secrets (sem imprimir)
+        id: keys
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          EVENT: ${{ github.event_name }}
+          ENVIAR: ${{ inputs.enviar }}
+        run: |
+          missing=""
+          [ -n "$ASC_KEY_ID" ] || missing="$missing ASC_KEY_ID"
+          [ -n "$ASC_ISSUER_ID" ] || missing="$missing ASC_ISSUER_ID"
+          [ -n "$ASC_KEY_P8" ] || missing="$missing ASC_KEY_P8"
+          [ -n "$APPLE_TEAM_ID" ] || missing="$missing APPLE_TEAM_ID(variável)"
+          if [ -z "$missing" ]; then
+            echo "has_keys=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_keys=false" >> "$GITHUB_OUTPUT"
+            echo "missing=${missing# }" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$EVENT" = "workflow_run" ] || [ "$ENVIAR" = "true" ]; then
+            echo "upload=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "upload=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Confere o ícone (a App Store recusa canal alfa)
+        run: |
+          ICON=iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+          if sips -g hasAlpha "$ICON" | grep -q "hasAlpha: yes"; then
+            echo "::error::$ICON tem canal alfa. A App Store Connect recusa o envio. Exporte o ícone sem transparência."
+            exit 1
+          fi
+
+      - name: Versão e número da build
+        id: ver
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" iosApp/iosApp/Info.plist)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # monotônico: a Apple só exige número maior dentro da mesma versão. Nunca renomear
+          # este workflow sem somar um deslocamento aqui (o run_number volta a 1).
+          echo "build=$RUN_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Archive Release sem assinatura
+        env:
+          BUILD_NUMBER: ${{ steps.ver.outputs.build }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: |
+          set -eo pipefail
+          xcodebuild archive \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/iosApp.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+
+      - name: Exporta assinado (assinatura em nuvem) e envia se pedido
+        id: export
+        if: steps.keys.outputs.has_keys == 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          UPLOAD: ${{ steps.keys.outputs.upload }}
+        run: |
+          set -eo pipefail
+          umask 077
+          KEY_PATH="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          printf '%s' "$ASC_KEY_P8" > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+
+          OPTS="$RUNNER_TEMP/ExportOptions.plist"
+          cp iosApp/ExportOptions.plist "$OPTS"
+          /usr/libexec/PlistBuddy -c "Add :teamID string $APPLE_TEAM_ID" "$OPTS"
+          if [ "$UPLOAD" = "true" ]; then
+            /usr/libexec/PlistBuddy -c "Set :destination upload" "$OPTS"
+          fi
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/iosApp.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$OPTS" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+          if [ "$UPLOAD" != "true" ] && ls "$RUNNER_TEMP"/export/*.ipa >/dev/null 2>&1; then
+            echo "ipa=$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apaga a chave .p8 do runner
+        if: always()
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: rm -f "$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8" "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Sobe o .ipa assinado como artefato (7 dias)
+        if: steps.export.outputs.ipa != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: NavalBattle-ipa-assinado
+          path: ${{ steps.export.outputs.ipa }}
+          retention-days: 7
+
+      - name: Resumo
+        if: always()
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          BUILD: ${{ steps.ver.outputs.build }}
+          HAS_KEYS: ${{ steps.keys.outputs.has_keys }}
+          MISSING: ${{ steps.keys.outputs.missing }}
+          UPLOAD: ${{ steps.keys.outputs.upload }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "## iPhone na App Store"
+            echo "- Versão: ${VERSION:-?} (build ${BUILD:-?})"
+            echo "- Estado do job: $JOB_STATUS"
+            if [ "$HAS_KEYS" = "true" ]; then
+              if [ "$UPLOAD" = "true" ]; then
+                echo "- Archive + export com envio (destination=upload): a build deve aparecer na aba TestFlight em alguns minutos."
+              else
+                echo "- Archive + export assinado, sem envio: o .ipa assinado está no artefato NavalBattle-ipa-assinado."
+              fi
+            else
+              echo "- Só o archive Release sem assinatura foi feito. Faltam: ${MISSING:-?}."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

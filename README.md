@@ -455,7 +455,7 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | UI | Compose Multiplatform (runtime, foundation, material3, resources) | 1.10.3 (material3 1.9.0); coordenadas explícitas no catálogo, sem os atalhos `compose.*` obsoletos. 1.10.3 é o último que ainda publica `iosX64`; do 1.11 em diante some o simulador Intel |
 | Build | Gradle + Android Gradle Plugin | 8.14.3 / AGP 8.13.2 (nada de AGP 9.x: quebra o plugin KMP) |
 | Android | compileSdk / targetSdk 36, minSdk 26, JVM target 17, activity-compose 1.10.1 | catálogo + `composeApp/build.gradle.kts` |
-| iOS | framework KMP + projeto Xcode (`iosApp/`), `.ipa` sem assinatura no CI | Xcode do runner `macos` |
+| iOS | framework KMP + projeto Xcode (`iosApp/`), `.ipa` sem assinatura no CI (Sideloadly) e envio à App Store Connect por `xcodebuild` com assinatura em nuvem (`ios-release.yml`, sem fastlane) | Xcode do runner `macos` (SDK do iOS 26+ para o envio) |
 | Login Google (Android) | Credential Manager (`androidx.credentials` 1.3.0 + `googleid` 1.1.1) | aprovado em 0.11 |
 | Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
 | Push (Android) | Firebase Cloud Messaging (`firebase-bom` 33.7.0, plugin `google-services` 4.4.2 só se houver `google-services.json`) | aprovado em 0.60 |
@@ -658,6 +658,10 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   20% → 50% → 100%, `halt`/`resume`, `vitals` (só leitura: falha e ANR percebidos por versionCode na Reporting API, veredito `ALARME`/`OK`/`POUCOS_USUARIOS`/`SEM_DADOS`; só `ALARME` pausa), travas e gatilhos em `docs/ESTEIRA.md`. Variável de repositório
   `PLAY_PRODUCTION_LIVE` (`false` até a produção 91 ser publicada); mesmo secret `PLAY_SERVICE_ACCOUNT_JSON`.
   Commit que só mexe em `.github/`, `tools/` e docs usa `[skip ci]` e não sobe versão.
+- **iPhone na App Store (#56):** `ios-release.yml` (manual, ou depois do `ios.yml` verde com a variável `IOS_APPSTORE_LIVE=true`):
+  `xcodebuild archive` Release sem assinatura e `-exportArchive` assinado em nuvem com a chave da API do App Store Connect
+  (secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`; variável `APPLE_TEAM_ID`); `destination = upload` envia ao TestFlight. `CFBundleVersion`
+  = número do run. Sem os secrets o job só faz o archive e fica verde. O `.ipa` sem assinatura do `ios.yml` segue. Ver docs/BUILD.md.
 - O passo a passo é a skill `dev-cycle` (pedido → publicação) e, para o Android, `play-store-release`.
 
 ### Android: R8, área segura e telas grandes

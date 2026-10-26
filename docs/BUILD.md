@@ -436,10 +436,44 @@ precisa gerar nada novo aqui).
 5. Depois de 7 dias, se o app parar de abrir, repetir o passo 3 com o mesmo `.ipa`
    (ou um mais novo, se tiver saído).
 
-Quando (e se) uma conta paga do Apple Developer Program entrar em cena, o
-`ios.yml` passa a assinar de verdade no CI (certificado + perfil de provisionamento
-como *secrets* do GitHub) e o `.ipa` já sai instalável sem Sideloadly — troca de
-método, não de projeto.
+Com a conta paga do Apple Developer Program ativa, o envio à App Store Connect é um workflow à parte, o `ios-release.yml` (seção
+"iPhone na App Store", logo abaixo); o `ios.yml` e este `.ipa` seguem como estão.
+
+## iPhone na App Store (`ios-release.yml`, #56)
+
+Workflow separado do `ios.yml` (que não muda e segue gerando o `.ipa` sem assinatura do Sideloadly). Só `xcodebuild`, sem fastlane:
+
+1. `xcodebuild archive` (scheme compartilhado `iosApp`, Release, `CODE_SIGNING_ALLOWED=NO`, `CURRENT_PROJECT_VERSION` = número do run).
+2. `xcodebuild -exportArchive -allowProvisioningUpdates -authenticationKeyPath/ID/IssuerID` com `iosApp/ExportOptions.plist`: a Apple assina
+   com o certificado de distribuição gerenciado (assinatura em nuvem) e cria o perfil App Store sozinha. Não há `.p12` nem perfil em secret.
+3. Com `enviar=true` o workflow troca `destination` para `upload` (por `PlistBuddy`, numa cópia temporária) e a build sobe para o TestFlight.
+   Plano B se o upload pelo export falhar: `xcrun altool --upload-app -t ios --apiKey --apiIssuer`. Plano B se a Apple recusar o export de
+   archive sem assinatura: arquivar com `-allowProvisioningUpdates` + chave e registrar 1 aparelho no portal.
+
+**O que o John cadastra** (Git Bash, um comando por vez; os dois primeiros pedem o valor na hora):
+
+| Onde | Nome | Valor |
+|---|---|---|
+| secret | `ASC_KEY_ID` | ID da chave (10 caracteres) |
+| secret | `ASC_ISSUER_ID` | Issuer ID (UUID, no alto da página de chaves) |
+| secret | `ASC_KEY_P8` | conteúdo inteiro do `AuthKey_<ID>.p8` (`gh secret set ASC_KEY_P8 --repo johncoelho/naval-battle < caminho.p8`) |
+| variável | `APPLE_TEAM_ID` | `G25AHMZJ7Y` (não é segredo; já cadastrada) |
+| variável | `IOS_APPSTORE_LIVE` | `true` só depois do primeiro `enviar=true` que der certo (liga o envio automático depois do `ios.yml` verde) |
+
+A chave é da equipe, papel **Admin** (App Manager não consegue criar o certificado de distribuição gerenciado). O `.p8` só baixa uma vez.
+
+**Ensaio** (o workflow só roda depois de estar na `main`; Actions > *iPhone na App Store* > Run workflow):
+
+| Situação | O que roda | Prova |
+|---|---|---|
+| Sem secrets | archive Release sem assinatura | framework Kotlin em Release, scheme, plist, ícone e Xcode; job **verde**; o resumo lista o que falta |
+| Com secrets, `enviar=false` | archive + export assinado | assinatura em nuvem funciona; `.ipa` assinado como artefato por 7 dias |
+| Com secrets, `enviar=true` | archive + export + upload | a build aparece na aba TestFlight |
+
+**Segurança:** o `.p8` é gravado em `$RUNNER_TEMP` com modo 600 e apagado num passo `if: always()`; nada de `set -x`, `echo` ou `cat` da
+chave. O número de build é o `run_number`: nunca renomear o workflow sem somar um deslocamento (a Apple recusa número repetido na mesma
+versão). O passo "Confere o Xcode" falha com mensagem clara se o SDK do iOS for menor que 26; o passo do ícone falha se o
+`AppIcon-1024.png` tiver canal alfa. O Release/QA só entram no processo (docs/ESTEIRA.md) depois do primeiro envio que der certo.
 
 ## Landing page
 

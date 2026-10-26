@@ -508,6 +508,13 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   migração roda, e a tabela é pequena). **Sem limite por adversário** (o `award_online_match` tem): o prêmio é de no máximo
   ◆250 por semana e a ONLINE_PLAY_5 já exige combate dos dois lados, então combinar contas rende pouco. **RANKED_WIN_3**
   exige a mesma prova de combate e `not result_conflict` (vitória sem jogada ou com resultado em conflito não conta).
+- **26/10 · Pipeline do iPhone para a App Store sem fastlane** (#56) — porquê: fastlane seria camada nova (Ruby, gems) e o
+  `xcodebuild` do runner basta. Archive sem assinatura (a assinatura automática no archive usa perfil de desenvolvimento,
+  que pede aparelho registrado) e **assinatura em nuvem só na exportação**, com a chave da API do App Store Connect (papel
+  Admin; App Manager não cria o certificado de distribuição gerenciado). O envio é o próprio export com `destination = upload`;
+  plano B `altool`. Número de build = `run_number` do workflow (nunca renomear sem somar deslocamento). Trava
+  `IOS_APPSTORE_LIVE` como a `PLAY_PRODUCTION_LIVE`. `APPLE_TEAM_ID` (`G25AHMZJ7Y`) é variável de repositório, não segredo. O `.ipa` do
+  Sideloadly (`ios.yml`) segue.
 
 ## Artefatos de referência (SPECs e designs aprovados)
 

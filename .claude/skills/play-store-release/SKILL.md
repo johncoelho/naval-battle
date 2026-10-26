@@ -232,6 +232,14 @@ re-guessing config:
   `CredentialManager`/`Auth.Api.Credentials`) show success/normal flow but the app visibly does
   nothing and no server request fires, suspect exactly this pattern before anything else.
 
+## 7b. iPhone / App Store (#56)
+
+Separado do pipeline da Play: `.github/workflows/ios-release.yml` (só `xcodebuild`, sem fastlane) envia o iPhone ao TestFlight com a
+chave da API do App Store Connect; o `ios.yml` e o `.ipa` do Sideloadly não mudam. Secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`
+(do John), variável `APPLE_TEAM_ID`, trava `IOS_APPSTORE_LIVE` (liga só depois do primeiro `enviar=true` que der certo). Passo a passo,
+ensaio e plano B em `docs/BUILD.md` ("iPhone na App Store"). Tocou em `iosApp/`: `CFBundleShortVersionString` segue o `versionName`.
+O Release sobe o iPhone na esteira só depois desse primeiro envio.
+
 ## 8. Docs
 
 Every build gets its README/CHANGELOG/`docs/` updated — see
