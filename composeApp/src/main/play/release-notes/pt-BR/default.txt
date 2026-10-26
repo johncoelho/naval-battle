@@ -1,1 +1,1 @@
-Correcao interna na versao para iPhone (compilacao do app no iOS). Sem mudancas para quem joga no Android. Inclui o saldo de dobroes guardado na conta (0.34.9).
+Segunda correcao interna na versao para iPhone (um nome do codigo colidia com o sistema do iOS na compilacao). Sem mudancas para quem joga no Android. Inclui o saldo de dobroes guardado na conta (0.34.9).

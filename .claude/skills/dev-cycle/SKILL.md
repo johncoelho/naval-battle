@@ -64,6 +64,11 @@ mesmo ciclo da implementação.
 ```bash
 ./gradlew :composeApp:compileCommonMainKotlinMetadata
 ```
+  Esse comando **não** pega colisão de nome com macro C/Darwin no `ComposeApp.h` (`CHILD_MAX` na 0.34.8, `OPEN_MAX`
+  na 0.34.10). Para isso o `tools/release-check.sh` reprova constante pública do `commonMain` (`val`/`const val` em
+  CAIXA_ALTA, sem `private`/`internal`) cujo nome esteja em `tools/c-macros.txt`, seja `MAX`/`MIN` ou termine em
+  `_MAX`/`_MIN`. Constante nova no `commonMain`: `private`/`internal` ou nome sem cara de macro; o iOS reclamou de
+  outro nome, acrescente em `tools/c-macros.txt`.
 
 ```bash
 bash "<scratchpad>/preview.sh" :composeApp:compileKotlinIosSimulatorArm64

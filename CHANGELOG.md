@@ -9,6 +9,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.34.11] — 2026-10-25 · Correção do build do iPhone: `OPEN_MAX` é macro do Darwin (#34)
+
+App 0.34.11 (versionCode 98). Refs #34. Só código/ferramenta, sem banco.
+
+### Corrigido
+- O CI do iOS da 0.34.10 falhou no `ComposeApp.h` (`@property (readonly) int32_t OPEN_MAX`): `OPEN_MAX` é macro do
+  `<limits.h>` do Darwin e o `Wallet` tinha uma constante pública com esse nome. Renomeada para `OPEN_LIMIT`; a
+  `OnlineAwardQueue.MAX` virou `MAX_PENDING` (`MAX` é macro do Foundation). Nenhuma mudança de comportamento. Terceira
+  falha de iOS do dia (`CHILD_MAX` na 0.34.8, `toSortedSet` na 0.34.9, `OPEN_MAX` aqui).
+
+### Processo
+- **Trava de colisão com macro C/Darwin no `tools/release-check.sh`**, quando o push mexe no `commonMain`/`iosMain`: reprova
+  `val`/`var`/`const val` público (com ou sem anotação) em CAIXA_ALTA cujo nome esteja em `tools/c-macros.txt` (728 nomes: `#define` de limits, errno,
+  signal, stdint, stdio, stdlib, unistd, math, float... do NDK Android 26.1 e clang 17, mais nomes Darwin acrescentados à
+  mão), seja `MAX`/`MIN` ou termine em `_MAX`/`_MIN`. Testada nos dois sentidos (falha com `OPEN_MAX` e `MAX`, passa
+  depois). Os metadados do `commonMain` (0.34.10) não pegam esse tipo de erro. Lição no MEMORY §6 e na skill `dev-cycle`.
+
+---
+
 ## [0.34.10] — 2026-10-25 · Correção do build do iPhone: `toSortedSet` (#34)
 
 App 0.34.10 (versionCode 97). Refs #34. Só código/ferramenta, sem banco.

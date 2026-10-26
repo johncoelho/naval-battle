@@ -15,7 +15,7 @@ class WalletTest {
     @Test
     fun aberturaLevaOSaldoDoAparelhoELimitaNoTeto() {
         assertEquals(800, Wallet.openPlan(800, emptySet()).local)
-        assertEquals(Wallet.OPEN_MAX, Wallet.openPlan(999_999, emptySet()).local)
+        assertEquals(Wallet.OPEN_LIMIT, Wallet.openPlan(999_999, emptySet()).local)
         assertEquals(0, Wallet.openPlan(-5, emptySet()).local)
     }
 
@@ -29,7 +29,7 @@ class WalletTest {
     fun saldoDeAberturaEOMaiorEntreServidorEAparelho() {
         assertEquals(1000, Wallet.openingBalance(server = 1000, local = 800))
         assertEquals(5000, Wallet.openingBalance(server = 300, local = 5000))
-        assertEquals(Wallet.OPEN_MAX, Wallet.openingBalance(server = 300, local = 999_999))
+        assertEquals(Wallet.OPEN_LIMIT, Wallet.openingBalance(server = 300, local = 999_999))
         // servidor acima do teto continua inteiro: nunca perde
         assertEquals(250_000, Wallet.openingBalance(server = 250_000, local = 10))
     }
@@ -82,9 +82,9 @@ class WalletTest {
         val q = OnlineAwardQueue.add(OnlineAwardQueue.add(emptyList(), a), again)
         assertEquals(listOf(again), q)
         var many = emptyList<PendingAward>()
-        repeat(OnlineAwardQueue.MAX + 5) { many = OnlineAwardQueue.add(many, a.copy(matchId = "s$it")) }
-        assertEquals(OnlineAwardQueue.MAX, many.size)
-        assertEquals("s${OnlineAwardQueue.MAX + 4}", many.last().matchId)
+        repeat(OnlineAwardQueue.MAX_PENDING + 5) { many = OnlineAwardQueue.add(many, a.copy(matchId = "s$it")) }
+        assertEquals(OnlineAwardQueue.MAX_PENDING, many.size)
+        assertEquals("s${OnlineAwardQueue.MAX_PENDING + 4}", many.last().matchId)
     }
 
     @Test

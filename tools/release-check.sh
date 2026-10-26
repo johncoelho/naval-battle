@@ -58,6 +58,32 @@ elif ! git show "$HEAD_REF:CHANGELOG.md" | grep "App $new_name" >/dev/null; then
   err "CHANGELOG.md não cita \"App $new_name\" na entrada nova."
 fi
 
+# Nome de constante pública do commonMain que colide com macro C/Darwin: o Kotlin/Native exporta `const val`/`val`
+# como @property no ComposeApp.h e o pré-processador troca o nome pela macro (0.34.8 CHILD_MAX, 0.34.10
+# OPEN_MAX). A compilação de metadados abaixo NÃO pega isso; só o ios.yml, depois do push. Regra: declaração
+# `val`/`var`/`const val` em CAIXA_ALTA (com ou sem anotação), sem private/internal/protected, em commonMain ou
+# iosMain, cujo nome esteja em tools/c-macros.txt, seja MAX/MIN ou termine em _MAX/_MIN (a família de limits.h;
+# pega os que a lista não trouxer). Sem a lista a trava falha fechada.
+if echo "$changed" | grep -E '^(composeApp/src/(commonMain|iosMain)/|tools/c-macros\.txt)' >/dev/null; then
+  macros=tools/c-macros.txt
+  [ -f "$macros" ] || err "$macros não existe: a trava de nomes que colidem com macros C/Darwin não tem lista."
+  decl='^[[:space:]]*(@[A-Za-z.]+(\([^)]*\))?[[:space:]]+)*([a-z]+[[:space:]]+)*(const[[:space:]]+)?(val|var)[[:space:]]+[A-Z][A-Z0-9_]*[[:space:]]*[:=]'
+  hits=$(grep -rnE "$decl" composeApp/src/commonMain composeApp/src/iosMain --include=*.kt 2>/dev/null || true)
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    content=${line#*:}; content=${content#*:}   # tira "arquivo:linha:"
+    # modificadores e anotações que vêm antes de val/var: private/internal/protected deixam de ser públicos
+    before=$(printf '%s' "$content" | sed -E 's/(val|var)[[:space:]]+[A-Z][A-Z0-9_]*.*$//')
+    if printf '%s' "$before" | grep -qE '(^|[[:space:]])(private|internal|protected)[[:space:]]'; then continue; fi
+    nm=$(printf '%s' "$content" | sed -E 's/^.*(val|var)[[:space:]]+([A-Z][A-Z0-9_]*).*$/\2/')
+    if { [ -f "$macros" ] && tr -d '\r' < "$macros" | grep -qxF "$nm"; } || printf '%s' "$nm" | grep -qE '(^|_)(MAX|MIN)$'; then
+      err "constante pública '$nm' colide com macro C/Darwin no ComposeApp.h do iOS (${line%%:*}): torne private/internal ou renomeie (lista: $macros)."
+    fi
+  done <<EOF_HITS
+$hits
+EOF_HITS
+fi
+
 # API só da JVM no commonMain (toSortedSet, String.format, java.*...) só quebrava no CI do iOS, depois
 # do push (0.34.9). A compilação de metadados do commonMain não precisa de Mac e pega esse erro.
 # Roda só quando o push mexe em código comum ou na configuração do build. Compila a árvore de trabalho

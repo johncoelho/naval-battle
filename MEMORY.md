@@ -167,7 +167,11 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 - **iOS: constante pública em `commonMain` vira propriedade no `ComposeApp.h`** e colide com macros C (`CHILD_MAX`, `PATH_MAX`, `NAME_MAX`…
   de `<limits.h>`). Só o `ios.yml` pega (o alvo iOS é pulado no Windows). Constante interna: `private`; nome de
-  `const val` público: evitar `*_MAX`/`*_MIN` genéricos (0.34.8).
+  `const val` público: evitar `*_MAX`/`*_MIN` genéricos (0.34.8). Voltou na 0.34.10 (`OPEN_MAX`, macro do Darwin): o
+  check de metadados (abaixo) **não pega colisão de nome com macro no `.h`**, só o `ios.yml`. Desde a 0.34.11 o
+  `tools/release-check.sh` reprova constante pública (`val`/`var`/`const val` em CAIXA_ALTA, sem private/internal, em commonMain ou iosMain) cujo nome
+  esteja em `tools/c-macros.txt`, seja `MAX`/`MIN` ou termine em `_MAX`/`_MIN`. A lista vem dos `#define` dos headers do
+  NDK (limits, errno, signal, stdint, stdio, math...) mais nomes Darwin à mão; o iOS reclamou de outro nome: acrescentar lá.
 - **API só da JVM no `commonMain` (`toSortedSet`, `String.format`, `java.*`, `synchronized`) só aparecia no CI do iOS**
   (0.34.9, `Wallet.kt`): o alvo iOS é pulado no Windows (`compileKotlinIosSimulatorArm64` = SKIPPED). Pega local:
   `./gradlew :composeApp:compileCommonMainKotlinMetadata` (TMP=D:\tmp). Conferido: com `toSortedSet` falha

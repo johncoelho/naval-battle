@@ -7,16 +7,16 @@ package br.com.navalbattle.game
  */
 object Wallet {
     /** Teto do saldo do aparelho na abertura (espelha `app_config.dobroes_open_max`). */
-    const val OPEN_MAX = 200_000
+    const val OPEN_LIMIT = 200_000
 
     /** O que mandar no `dobroes_open`: o saldo do aparelho (limitado) e os tokens que ele já somou. */
     data class OpenPlan(val local: Int, val delivered: List<String>)
 
     fun openPlan(localCredits: Int, deliveredTokens: Set<String>): OpenPlan =
-        OpenPlan(localCredits.coerceIn(0, OPEN_MAX), deliveredTokens.sorted())
+        OpenPlan(localCredits.coerceIn(0, OPEN_LIMIT), deliveredTokens.sorted())
 
-    /** Saldo da carteira ao abrir: o MAIOR entre servidor e aparelho (nunca perde), até [OPEN_MAX]. */
-    fun openingBalance(server: Int, local: Int): Int = maxOf(server, local.coerceIn(0, OPEN_MAX))
+    /** Saldo da carteira ao abrir: o MAIOR entre servidor e aparelho (nunca perde), até [OPEN_LIMIT]. */
+    fun openingBalance(server: Int, local: Int): Int = maxOf(server, local.coerceIn(0, OPEN_LIMIT))
 
     /**
      * Dobrões de uma partida contra a IA: zero em qualquer resultado (decisão do John, 25/10). A IA
@@ -62,7 +62,7 @@ data class PendingAward(
  * próxima abertura. É idempotente: o servidor paga uma vez por sala, então reenviar nunca duplica.
  */
 object OnlineAwardQueue {
-    const val MAX = 20
+    const val MAX_PENDING = 20
 
     fun encode(list: List<PendingAward>): String =
         list.joinToString(";") { "${it.matchId},${it.shots},${it.hits},${it.sunk},${it.turns},${if (it.victory) 1 else 0}" }
@@ -81,9 +81,9 @@ object OnlineAwardQueue {
             )
         }
 
-    /** Acrescenta (sem repetir a sala) e mantém só as [MAX] mais novas. */
+    /** Acrescenta (sem repetir a sala) e mantém só as [MAX_PENDING] mais novas. */
     fun add(list: List<PendingAward>, award: PendingAward): List<PendingAward> =
-        (list.filter { it.matchId != award.matchId } + award).takeLast(MAX)
+        (list.filter { it.matchId != award.matchId } + award).takeLast(MAX_PENDING)
 
     fun remove(list: List<PendingAward>, matchId: String): List<PendingAward> =
         list.filter { it.matchId != matchId }
