@@ -139,6 +139,19 @@ Telas grandes: AVD Pixel Tablet e Pixel 9 Pro Fold (API 36), mais o QA01 em retr
 | IA-06 | P1 | Cartucho avulso comprado (ver LOJA-03) | Libera um uso mesmo em recarga e some depois |
 | IA-07 | P2 | Sons e trilha | Tocam; respeitam os toggles de Ajustes |
 
+### 6b. Primeira partida guiada e presente (#43)
+
+Antes de cada rodada, `welcome_gift_reset` da conta QA (administrador) e carreira local zerada.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| WEL-01 | P0 | QA01 com reset e 0 partidas locais, abrir o app e chegar ao menu | Aparece "Primeira missão" com Começar e Pular |
+| WEL-02 | P0 | Começar e jogar a guiada até o fim | Dicas na ordem: posicionar, tocar numa casa, "Acertou! Quem acerta atira de novo", "Navio afundado"; popup "◆150 dobrões + 5 milhas"; saldo do servidor +150 |
+| WEL-03 | P1 | Ajustes → Rever partida guiada, jogar | Dicas aparecem; ao terminar ou pular, nenhum presente |
+| WEL-04 | P0 | Reset de novo, Pular no passo 1 | Presente igual ao do WEL-02 |
+| WEL-05 | P1 | Convidado faz a guiada e depois entra na conta | Popup pede para entrar; no primeiro login chega o presente |
+| WEL-06 | P0 | Conta antiga que não é QA (ensaio `welcome_ensaio.sql`) | `not_eligible`; nada creditado |
+
 ## 7. Dois jogadores no mesmo aparelho (só A)
 
 | ID | P | Passos | Esperado |

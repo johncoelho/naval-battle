@@ -55,6 +55,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Primeira partida guiada e presente (#43, 0.36.0):** migração `welcome_gift` (`supabase/welcome.sql`) a aplicar
+  só depois do APROVADO do Tech Lead; ela fixa `welcome_gift_since` na hora da aplicação (só conta criada depois
+  recebe). Aplicar antes de ligar o app novo na Play. QA: WEL-01 a WEL-06, com `welcome_gift_reset(uuid)` na conta QA.
+
 - **R8, edge-to-edge e telas grandes (#37, 0.34.12):** release minificado, `navalSafeArea`, conteúdo em até 600 dp
   e batalha lado a lado em tablet. R8 quebra só no release: antes de promover, bateria no app da Play (R8-01 a
   R8-06, BIG-01 a BIG-09, EDGE-01 no `QA_TEST_PLAN`) e conferir o mapping no App bundle explorer. O aviso do SDK

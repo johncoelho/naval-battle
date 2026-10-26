@@ -58,6 +58,19 @@ a uma água qualquer, então o próximo acerto de verdade num navio vizinho pare
 flutuar sozinho, sem nenhum casco por perto — lido como bug mesmo depois de avisado
 por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio.
 
+### Primeira partida guiada e presente de boas-vindas
+
+- Quem nunca jogou (0 partidas e sem a marca local `guided_done`) vê, ao chegar ao menu, o popup **Primeira missão**:
+  **Começar** ou **Pular**. A guiada é uma partida Clássica contra a IA no nível mais fácil (tiro em casa aleatória,
+  sem perseguir acerto nem sonar), com dicas em 4 passos: posicionar, tocar numa casa do alvo, "quem acerta atira de
+  novo" e navio afundado. **Pular** fica visível em todo passo. A dica nunca realça casa do alvo.
+- **Presente de boas-vindas:** ◆150 dobrões + 5 milhas (até o teto de 50), uma vez por conta, ao terminar **ou pular**
+  (o servidor não vê a partida contra a IA, então não exige vitória). Só conta criada depois da migração
+  (`welcome_gift_since`); conta de teste (`is_test`) não recebe; a partida em si continua dando zero dobrões contra a
+  IA. Convidado faz a guiada e o app guarda o pedido (`welcome_pending`) para o primeiro login. Ajustes → **Rever
+  partida guiada** não paga de novo. Servidor: `supabase/welcome.sql`, `claim_welcome_gift()` (não conta no teto de
+  500/dia online).
+
 ### Formas de jogar
 
 - **Partida rápida** — contra a IA, que caça em padrão de paridade e persegue contatos.
@@ -585,6 +598,13 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   segurança é a assinatura ECDSA sobre a query crua. Dobrões pelo mesmo `dobroes_pending`
   (`kind = 'ad'`); milha direto no perfil, até `miles_cap`. Interruptor `ads_enabled` (nasce
   `'false'`); números em `app_config` (`ads_*`); `ads_test_emails` só no banco.
+- Presente de boas-vindas (`supabase/welcome.sql`, #43): `claim_welcome_gift()` devolve `ok | already |
+  not_eligible | no_wallet`; paga por `dobroes_apply(uid, valor, 'welcome', 'welcome')` (o razão é a trava de uma vez só,
+  fora do teto `dobroes_online_daily_cap`), soma milhas até `miles_cap`, grava `welcome_gifts` (RLS, só leitura da própria
+  linha). Números em `app_config` (`welcome_gift_*`, `welcome_gift_since` = data da migração); `welcome_gift_reset(uuid)`
+  só administrador e só conta QA. Ordem de locks: `welcome:<uid>`, `dobroes:<uid>`, linha do perfil. Ensaio:
+  `supabase/tests/welcome_ensaio.sql`. App: `game/GuidedMatch.kt` (passos puros), `AppState.claimWelcomeGift` via
+  `runWelcomeClaim` (o aparelho nunca credita), `Cloud.claimWelcomeGift`.
 - Chave anônima é pública (protegida por RLS); `service_role` nunca entra no repositório.
 
 ### Versão, release e entrega

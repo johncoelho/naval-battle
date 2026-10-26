@@ -432,6 +432,14 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   A IA segue como "Inimigo", identificada só pela faixa; nome e arte próprios ficam fora do escopo.
   O "Depois" passou de booleano da sessão a versão dispensada (o aviso volta com versão maior) e a consulta no
   retorno ao app tem piso de 5 min, para folha de compra e login não martelarem o servidor nem a Play.
+- **26/10 · Primeira partida guiada e presente de boas-vindas** (#43, aprovado pelo John, 0.36.0) — porquê: quem
+  chega não sabe a regra "quem acerta atira de novo" e abandona cedo. Presente de ◆150 + 5 milhas (abaixo dos 200
+  sugeridos: a IA paga zero e uma vitória online rende cerca de 100), pago ao terminar **ou pular**, porque o servidor
+  não vê a partida contra a IA. Decidido e pago no servidor (`claim_welcome_gift`, `dobroes_apply` com `reason`
+  `welcome`, que é a trava de uma vez só), fora do teto de 500/dia (que protege só a partida online repetível). Só
+  conta criada depois da migração; QA ignora a data para poder testar; `is_test` não recebe. A IA fácil é o mesmo `Ai`
+  com tiro aleatório (sem camada nova). `welcome_gift_reset` não apaga a linha do razão: renomeia o `reason` para
+  `welcome_reset`, assim a soma do razão continua igual ao saldo.
 
 ## Artefatos de referência (SPECs e designs aprovados)
 

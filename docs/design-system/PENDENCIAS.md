@@ -6,3 +6,7 @@
   `project/components/` do cartão do Prêmio e do estado "Indisponível agora" da vitrine (com
   `preview.html`), atualizar `build.py` e publicar pela skill `design-system`, passo 3. Não foi feito
   no lote 0.33.0 porque o artefato precisa de leitura e publicação próprias.
+
+- **Dica da partida guiada (#43, 0.36.0).** Componente `GuidedTip` e os dois popups (Primeira missão e Presente de
+  boas-vindas) estão em `docs/DESIGN_SYSTEM.md` e em `project/components/GuidedTip/`, mas o artefato Claude Design
+  `Naval Battle Command HUD` ainda não foi republicado com eles (skill `design-system`, passo 3).

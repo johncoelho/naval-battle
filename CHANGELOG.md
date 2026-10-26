@@ -9,9 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.36.0] — 2026-10-26 · Primeira partida guiada e presente de boas-vindas (#43)
+
+App 0.36.0 (versionCode 103). Refs #43. Banco: migração `welcome_gift` (`supabase/welcome.sql`).
+
+### App
+- Popup "Primeira missão" no menu para quem tem 0 partidas e nunca fez nem pulou a guiada. Partida Clássica contra a
+  IA no nível fácil (`Ai(easy = true)`: tiro aleatório, sem perseguir acerto nem sonar), dicas em 4 passos
+  (`GuidedTip`) e "Pular" sempre visível. A dica não realça casa nem altera célula.
+- Presente de ◆150 + 5 milhas ao terminar ou pular, pago pelo servidor; o app só pede (`claimWelcomeGift`) e mostra o valor
+  devolvido. Convidado: o app guarda `welcome_pending` e resgata no primeiro login. Ajustes → "Rever partida guiada".
+- `game/GuidedMatch.kt` (passos puros), `ui/GuidedOverlay.kt`, `ui/WelcomeGiftPopup.kt`, textos nas três línguas,
+  Novidades da 0.36.0. Testes `GuidedMatchTest` e `WelcomeGiftTest`.
+
+### Banco
+- `welcome_gifts` (RLS, só leitura da própria linha), `claim_welcome_gift()` (`ok | already | not_eligible | no_wallet`,
+  `dobroes_apply` com `reason = 'welcome'`, fora do teto online) e `welcome_gift_reset(uuid)` (administrador, só QA).
+  `app_config`: `welcome_gift_enabled`, `welcome_gift_doubloons`, `welcome_gift_miles`, `welcome_gift_since`.
+- Ensaio `supabase/tests/welcome_ensaio.sql` (desfaz tudo).
+
 ## [0.35.0] — 2026-10-26 · Treino contra a IA na partida rápida e aviso de atualização (#41, #46)
 
-App 0.35.0 (versionCode 102). Refs #41, #46. Sem mudança de banco, de RPC nem de contrato de rede.
+App 0.35.0 (versionCode 103). Refs #41, #46. Sem mudança de banco, de RPC nem de contrato de rede.
 
 ### Adicionado
 - **Treino contra a IA enquanto a partida rápida procura (#41).** Aos 20 s em `SEARCHING`/`HOSTING` de partida

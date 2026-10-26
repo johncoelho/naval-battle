@@ -105,6 +105,17 @@ sombra: profundidade vem de superfície mais clara + borda.
 - Padrão novo, por isso entra aqui. O artefato do Claude Design ainda precisa receber este cartão
   (pendente, ver HISTORY 17/10).
 
+### Dica da partida guiada (#43)
+
+- `GuidedTip` (`ui/GuidedOverlay.kt`): painel `surface2` com borda `amber` de 1 dp, "Passo N de 4" em `HudLabel`, título
+  em `title`/`amberStrong`, instrução em `body`/`inkSoft`, **Pular** em `danger` sempre visível (último passo:
+  **Concluir**). No posicionamento fica no fluxo da coluna; na batalha, fixa embaixo com `navalSafeArea()` e
+  `navalPanelWidth()`, sobre a frota própria e nunca sobre o alvo. Não realça casa nenhuma nem mexe em célula.
+- Popups "Primeira missão" e "Presente de boas-vindas" (`ui/WelcomeGiftPopup.kt`): véu `bg` a 86%, painel `surface2` com
+  borda `amber`, `navalSafeArea()` e `navalPanelWidth()`, botão primário e secundário de sempre.
+- Componente em `docs/design-system/project/components/GuidedTip/`; o artefato Claude Design ainda precisa ser
+  republicado (ver `docs/design-system/PENDENCIAS.md`).
+
 ## Largura máxima e área segura (#37)
 
 - **`Naval.contentMaxWidth` = 600 dp**: em tela grande (tablet, dobrável, Chromebook) o conteúdo das telas
