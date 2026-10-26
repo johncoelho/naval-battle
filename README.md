@@ -515,6 +515,9 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 - Mudança de regra sensível é testada no próprio banco antes de anunciar: um bloco `do $$ … $$`
   que monta o cenário, chama a RPC como cada usuário (`request.jwt.claims`) e termina com
   `raise exception` para desfazer tudo.
+- Função só para quem está logado: `revoke all on function ... from public, anon;` + `grant execute ... to
+  authenticated`. O `from public` sozinho não tira o `anon` (privilégio padrão do Supabase no schema
+  `public`); revoke vem logo após cada `create`, pois `drop` + `create` devolve o grant (#52).
 - Números ajustáveis ficam em `app_config` e são lidos com `config_int(chave, padrão)`.
 - Contas `is_test` (testes automáticos da revisão do Google, `supabase/test_accounts.sql`) ficam fora
   de ranking, recompensa de temporada e partida rápida com jogador real; a marca só vem do servidor

@@ -9,6 +9,22 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Sem versão de app] — 2026-10-25 · Banco: anon sem EXECUTE em 6 RPCs antigas (#52)
+
+Só banco e docs, commit `[skip ci]` (nada publicado). Sem versão de app nem de `app_releases`.
+
+### Banco
+- `daily_checkin()`, `claim_daily_challenge(text, integer)`, `join_season(text)`, `claim_season_end()`,
+  `buy_miles(integer)` e `claim_feedback(uuid)` tinham só `revoke all ... from public`, o que não tira o
+  grant explícito que o Supabase dá a `anon`. Agora `from public, anon` no arquivo (`daily`, `season`,
+  `economy`, `feedback`), com o revoke logo depois do `create` do `buy_miles` (o arquivo faz `drop` + `create`).
+  Migração `revoke_anon_rpcs_antigas` com só as 6 linhas. `authenticated` e `service_role` mantêm o grant.
+- Sem efeito para o jogador: as 6 já recusavam `auth.uid()` nulo por dentro e o app só as chama com sessão.
+- Ensaio novo `supabase/tests/anon_grants_ensaio.sql` (desfaz tudo). Antes: `anon` executava as 6. Depois:
+  nenhuma, e a chamada REST com a chave anônima devolve 401 / `42501` nas 6.
+
+---
+
 ## [0.34.13] — 2026-10-25 · Kotlin 2.3 e SDK de anúncios 25.5 (#38)
 
 App 0.34.13 (versionCode 100). Refs #38. Sem mudança de banco, de RPC nem de contrato de rede. Sobe a

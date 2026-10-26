@@ -396,6 +396,7 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   iPhone fora até a App Store (Declared Age Range da Apple, issue própria).
 - **25/10 · Sem item aleatório pago, nunca (ECA Digital)** (#49) — pacotes, Prêmio, anúncio, diário e oferta
   do dia são determinísticos; recompensa ou compra de conteúdo aleatório fica proibida.
+- **25/10 · Revoke de `anon` explícito: o `from public` não basta no Supabase** (#52) — porquê: o schema `public` dá `EXECUTE` direto a `anon`, `authenticated` e `service_role` em toda função nova, e `revoke ... from public` não remove esse grant. As 6 RPCs antigas (check-in, desafio, temporada, milhas, feedback) ficaram executáveis por `anon`, sem vazamento (recusam `auth.uid()` nulo), mas como defesa extra passaram a `from public, anon`. As ~35 linhas `from public;` restantes viram auditoria à parte.
 - **25/10 · Produção com liberação gradual e promoção pelo Release** (#39, aprovado pelo John) — porquê: com
   a produção no ar, o push na `main` continua indo só para a Alpha; a versão que o QA aprovou vai para a
   produção em 20% → 50% → 100% (≥ 24 h cada, contadas do *Published*) sem passo manual dele. Workflow manual

@@ -141,7 +141,7 @@ begin
     bonus, cost, bal;
 end $$;
 
-revoke all on function public.join_season(text) from public;
+revoke all on function public.join_season(text) from public, anon;
 grant execute on function public.join_season(text) to authenticated;
 
 -- ------------------------------------------------------------------ fim de temporada
@@ -257,5 +257,5 @@ begin
                       st.points, st.matches, st.wins, d, mi;
 end $$;
 
-revoke all on function public.claim_season_end() from public;
+revoke all on function public.claim_season_end() from public, anon;
 grant execute on function public.claim_season_end() to authenticated;

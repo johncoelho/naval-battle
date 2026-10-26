@@ -306,5 +306,5 @@ begin
     return;
 end $$;
 
-revoke all on function public.buy_miles(integer) from public;
+revoke all on function public.buy_miles(integer) from public, anon;
 grant execute on function public.buy_miles(integer) to authenticated;

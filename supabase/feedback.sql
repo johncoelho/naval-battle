@@ -107,7 +107,7 @@ begin
   end if;
 end $$;
 
-revoke all on function public.claim_feedback(uuid) from public;
+revoke all on function public.claim_feedback(uuid) from public, anon;
 grant execute on function public.claim_feedback(uuid) to authenticated;
 
 -- Avaliação pelo administrador (só pelo SQL Editor — sem grant para o app).

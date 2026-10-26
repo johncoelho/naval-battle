@@ -182,8 +182,8 @@ begin
 end $$;
 
 revoke all on function public.daily_status() from public;
-revoke all on function public.daily_checkin() from public;
-revoke all on function public.claim_daily_challenge(text, integer) from public;
+revoke all on function public.daily_checkin() from public, anon;
+revoke all on function public.claim_daily_challenge(text, integer) from public, anon;
 grant execute on function public.daily_status() to authenticated;
 grant execute on function public.daily_checkin() to authenticated;
 grant execute on function public.claim_daily_challenge(text, integer) to authenticated;
