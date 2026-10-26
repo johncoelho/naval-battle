@@ -170,6 +170,25 @@ Telas grandes: AVD Pixel Tablet e Pixel 9 Pro Fold (API 36), mais o QA01 em retr
 | ON-18 | P2 | Depois da revisão do Google de cada versão, conferir (só leitura) as contas criadas na janela do upload | Robôs (e-mail `nome.00000@gmail.com` ou `firebase.test.lab`) com `is_test = true`, fora do Placar. Contas comuns, testadores da lista e contas de iPhone com `is_test = false` (0.34.5, #35: quem não é robô vale). Conta comum marcada como teste por engano: conferir o e-mail de login em `auth.users` e a regra `is_robot_account` (#35) |
 | ON-19 | P1 | Com `allowlist_enforced = 'true'`, conta nova da loja (e-mail comum, sem robô) | Nasce com `is_test = false`, aparece no Placar e na partida rápida, e ganha pontos normalmente (#35) |
 
+### 8a. Treino contra a IA enquanto procura (#41)
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| PRT-01 | P1 | QA01 sozinho na partida rápida | O botão "Treinar contra a IA enquanto procuramos" aparece aos ~20 s, não antes; sala de amigo não mostra |
+| PRT-02 | P1 | Treinar | Faixa "Treino contra a IA · procurando adversário" fixa em posicionamento, batalha e resultado; sem nome nem avatar de jogador |
+| PRT-03 | P1 | QA02 entra na rápida durante o treino | QA01 vê "Adversário encontrado" e cai no posicionamento online em ~3 s; 1 milha gasta só aí; partida online normal; treino sem XP nem estatística |
+| PRT-04 | P1 | "Parar de procurar" | QA02 não acha mais a sala; o treino termina com XP e zero dobrões |
+| PRT-05 | P2 | Terminar o treino antes de alguém entrar | Resultado contra a IA (XP, desafio do dia, zero dobrões); a busca segue |
+| PRT-06 | P2 | Ranqueada: mesmo fluxo | Resultado ranqueado só da online; sair do treino para o menu fecha a sala |
+
+### 8c. Aviso de atualização (#46)
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| UPD-10 | P1 | App aberto em segundo plano; sai versão nova (`app_releases` e Play); voltar | Popup aparece sem reabrir o app (consulta no máximo a cada 5 min) |
+| UPD-11 | P1 | "Depois", sair e voltar | Não reaparece para a mesma versão; com outra versão maior reaparece |
+| UPD-12 | P2 | Voltar durante uma partida | Só aparece ao voltar ao menu |
+
 ## 8b. Rede local (A × B)
 
 Dois emuladores ficam cada um atrás do próprio NAT (10.0.2.x) e não se enxergam por

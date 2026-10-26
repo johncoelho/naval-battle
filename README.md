@@ -90,6 +90,11 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   por novidades a cada 1-2 segundos, sem precisar dos dois na mesma rede.
   - Convidar um amigo ou procurar partida rápida abre um popup com radar de espera
     e botão de cancelar; quem é convidado vê um popup de aceitar/recusar.
+  - **Treino contra a IA enquanto procura** (partida rápida, após 20 s): a sala segue aberta e a IA é
+    sempre identificada por uma faixa fixa; quando alguém entra, aviso de 3 s e troca para a online (o
+    treino é descartado). Zero dobrões contra a IA. Regras em `game/QuickPractice.kt`.
+  - **Aviso de atualização**: "Depois" vale até sair versão maior; consulta ao voltar ao app no
+    máximo a cada 5 min (`game/UpdatePrompt.kt`).
   - Todo balão de partida (convite de amigo, partida rápida, adversário encontrado)
     mostra quem chama, um selo **Ranqueada** (âmbar) ou **Casual** e o modo
     (Clássico/Tático) — "Bina te convidou · Casual · Tático". Quem entra numa sala

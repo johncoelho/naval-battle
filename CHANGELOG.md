@@ -9,6 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.35.0] — 2026-10-26 · Treino contra a IA na partida rápida e aviso de atualização (#41, #46)
+
+App 0.35.0 (versionCode 102). Refs #41, #46. Sem mudança de banco, de RPC nem de contrato de rede.
+
+### Adicionado
+- **Treino contra a IA enquanto a partida rápida procura (#41).** Aos 20 s em `SEARCHING`/`HOSTING` de partida
+  rápida o diálogo de espera ganha "Treinar contra a IA enquanto procuramos". A sala segue aberta e abre-se uma
+  partida normal contra a IA, com a faixa fixa "Treino contra a IA · procurando adversário" (nunca nome, patente
+  ou avatar de jogador) e o botão "Parar de procurar" (fecha a sala; o treino vira partida comum). Quando alguém
+  entra: aviso "Adversário encontrado" por 3 s e troca para o posicionamento online; o treino é descartado (sem
+  XP, estatística ou desafio do dia) e as mensagens que chegam nos 3 s são repetidas na partida online. Milha só
+  gasta na online; contra a IA continua zero dobrões. Sair do treino para o menu fecha a sala. Regras puras em
+  `game/QuickPractice.kt` (`QuickPracticeTest`).
+
+### Corrigido
+- **Aviso de atualização (#46).** O "Depois" era um booleano da sessão: quem o tocava numa versão não via a
+  seguinte até matar o app. Agora `dismissedUpdateVersion` guarda a versão dispensada e o popup volta com versão
+  maior; a consulta no retorno ao app tem intervalo mínimo de 5 min. Regras em `game/UpdatePrompt.kt`
+  (`UpdatePromptTest`).
+
+---
+
 ## [0.34.14] — 2026-10-26 · API de idade do AdMob e hash do Gradle (#53, #54)
 
 App 0.34.14 (versionCode 101). Refs #53, #54. Sem mudança de banco, de RPC, de contrato de rede nem de regra de

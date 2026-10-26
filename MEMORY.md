@@ -28,6 +28,11 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 10. **Banco: o arquivo em `supabase/` é a fonte da verdade**; mudança vai no arquivo e é aplicada como
    migração com o mesmo conteúdo, testada com bloco `do $$ … raise exception` que desfaz tudo.
 
+## 2a. Esteira de engajamento (v1, 0.35.0)
+
+- **#41 treino contra a IA e #46 aviso de atualização** (0.35.0): QA PRT-01 a PRT-06 e UPD-10 a UPD-12 no
+  `QA_TEST_PLAN`. Próximas: #43 (v2), #42, #44, #47, #45, #48. Contra a IA segue zero dobrões.
+
 ## 2. Como o John quer trabalhar
 
 - **Autonomia total no release:** do pedido à Play sem pedir licença (skill `dev-cycle`); ele só

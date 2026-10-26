@@ -423,6 +423,14 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   máxima continuam (não obsoletos), e a marca do UMP deriva do tratamento para as duas nunca se contradizerem.
   `distributionSha256Sum` no wrapper porque o Gradle baixado sem hash é uma brecha pequena da cadeia de build.
 
+- **26/10 · Treino contra a IA na partida rápida (#41) e "Depois" do aviso de atualização por versão (#46), 0.35.0.**
+  O jogador sozinho na fila há 20 s treina contra a IA sem sair da busca: engajamento sem fila vazia. A IA é
+  sempre identificada como IA (faixa fixa) e o treino que é trocado pela online é descartado e nunca conta —
+  senão virava farm de XP. Contra a IA segue zero dobrões. As mensagens do adversário que chegam nos 3 s do
+  aviso são guardadas e repetidas na partida online, para não corromper a partida da IA nem perder a frota dele.
+  O "Depois" passou de booleano da sessão a versão dispensada (o aviso volta com versão maior) e a consulta no
+  retorno ao app tem piso de 5 min, para folha de compra e login não martelarem o servidor nem a Play.
+
 ## Artefatos de referência (SPECs e designs aprovados)
 
 | Data | Artefato |
