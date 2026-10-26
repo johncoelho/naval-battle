@@ -9,6 +9,16 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.41.0] — 2026-10-26 · Conquistas e placar do Google Play Games, desligados (#48)
+
+App 0.41.0 (versionCode 108). Refs #48. Sem banco.
+
+### App
+- Play Games Services v2 (`com.google.android.gms:play-services-games-v2` 21.0.0, aprovado pelo John em 25/10), só em `androidMain`. **Entra inerte**: com `pgsAppId` (gradle.properties) e `res/values/games-ids.xml` vazios o SDK nem inicia, sem login do Play Games e sem atalho no Perfil. Ativação numa versão seguinte, só com os IDs do Play Console (docs/BUILD.md).
+- 7 conquistas (Primeira vitória, Batismo de fogo, Frota intacta, Semana no convés, Caçador de cascos, Veterano da ranqueada, Capitão de Corveta) e o placar "Ranqueada: melhor pontuação" (espelho dos pontos da temporada; o placar real segue no Supabase). Quem já jogava recebe pela carreira (vitórias, navios afundados, patente, sequência do diário) ao autenticar.
+- `game/Achievements.kt` (regra pura, constantes `private const val`) com `AchievementsTest`; `expect object GameServices` (Android real, iPhone vazio); atalho "Conquistas" no Perfil só com `supported`. Novidades da 0.41.0 nas três línguas.
+- R8: `assembleRelease -PqaSign` sem regra faltando; o APK minificado abre e joga no emulador com os IDs vazios.
+
 ## [0.40.0] — 2026-10-26 · Desafio da semana (#47)
 
 App 0.40.0 (versionCode 107). Refs #47. Banco: migração `weekly_challenge` (`supabase/weekly.sql`).

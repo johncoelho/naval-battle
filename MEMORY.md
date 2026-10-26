@@ -32,6 +32,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 - **#41 treino contra a IA e #46 aviso de atualização** (0.35.0): QA PRT-01 a PRT-06 e UPD-10 a UPD-12 no
   `QA_TEST_PLAN`. Próximas: #43 (v2), #42, #44, #47, #45, #48. Contra a IA segue zero dobrões.
+- **#48 Play Games** (0.41.0) entrou **desligada**. Falta o John configurar o Play Console (passo a passo em
+  `docs/BUILD.md`) e colar o XML na #48; aí vem a versão de ativação (`pgsAppId` + `games-ids.xml`) e o QA PGS-02 a PGS-06.
 
 ## 2. Como o John quer trabalhar
 

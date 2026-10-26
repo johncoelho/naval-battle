@@ -468,6 +468,16 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   proíbe filtrar quem avalia) e sem pedir em Firebase Test Lab. iPhone: sem pedido (o .ipa não vem da App Store). O botão
   que abre a ficha (`openStoreListing`) segue em Ajustes → Sobre. Desvio do desenho: `is_test` não é conferido, só
   `isTestLabDevice()` (o app não conhece a marca da conta).
+- **26/10 · Conquistas e placar do Google Play Games, entrando desligados (#48, 0.41.0)** — dependência nova
+  aprovada pelo John em 25/10: `play-services-games-v2` 21.0.0 (o desenho citava `play-games-services-v2`, que não
+  existe no Maven do Google; o artefato certo é `play-services-games-v2`), só em `androidMain`; o iPhone fica com o
+  `expect/actual` vazio (Game Center depois da App Store). Porquê inerte: os IDs só existem depois do Play Console;
+  sem `pgsAppId` e `games-ids.xml` o SDK nem inicia (`GameServices.supported`), então a versão pode ir para a Play antes
+  da configuração. Conferido: APK minificado abre e joga com o `APP_ID` vazio e o R8 não pede regra nova. 7 conquistas e
+  1 placar (espelho do Supabase; conquista não vale moeda). Desvios do desenho: a recuperação usa `setSteps`
+  (idempotente, repetir não soma duas vezes) e roda a cada autenticação do Play Games, para também refazer o que se
+  perdeu offline; o app não guarda vitórias online, frota intacta nem vitórias ranqueadas da carreira, então essas três
+  começam a contar da ativação. A vitória ranqueada conta pelo servidor (`basePoints > 0` de `record_ranked_result`).
 
 - **26/10 · Desafio da semana** (#47, aprovado pelo John, 0.40.0) — porquê: o desafio do dia confia no progresso enviado
   pelo app, o que não serve para um prêmio maior (◆250 + 5 milhas, mais que o dobro do check-in diário e perto da semana

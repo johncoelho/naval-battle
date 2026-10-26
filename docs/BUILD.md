@@ -59,6 +59,42 @@ o fluxo abre sem a Play e sem depender da cota da Google. Só no debug e no `.pr
 o release fixa `false`. Para repetir o pedido no mesmo aparelho, limpe os dados do app (as marcas `review_last_ask`
 e `review_ask_count` ficam no `SharedPreferences`). No app da Play o pedido só aparece se a cota da Google deixar.
 
+## Conquistas e placar do Google Play Games (#48)
+
+O código já está no app, **desligado**. Para ligar: o John faz o Play Console (abaixo) e cola o XML na issue #48; a esteira
+então faz a versão de ativação, que só preenche os dois lugares abaixo.
+
+**O que colar onde**
+- `gradle.properties`: `pgsAppId=<app_id>` (o `app_id` do XML de "Obter recursos"). Vira a `meta-data
+  com.google.android.gms.games.APP_ID`. Não é segredo.
+- `composeApp/src/androidMain/res/values/games-ids.xml`: os 7 `achievement_*` e o `leaderboard_ranqueada` com os IDs do XML.
+  Os nomes dos recursos já estão no arquivo; o XML exportado traz os mesmos.
+- O app só liga quando o `app_id` e o ID de `achievement_primeira_vitoria` estão preenchidos (`GameServices.supported`).
+
+**Passo a passo do John no Play Console (uma vez)**
+1. Play Console → Naval Battle → **Expandir** (Grow users) → **Play Games Services** → Configuração e gerenciamento → **Configuração**. Responder "Não, meu jogo ainda não usa APIs do Google" **ou**, melhor, escolher o **projeto do Google Cloud que já tem o login do Google** do jogo. Criar.
+2. **Propriedades:** nome "Naval Battle", categoria Estratégia/Tabuleiro, ícone `assets/store/icon-512.png`.
+3. **Credenciais → Adicionar credencial → Android:** pacote `aigamesfactory.navalbattleclassic`, cliente OAuth Android com o **SHA-1 da chave de assinatura de apps** (Play Console → Testar e lançar → Configuração → Integridade do app → Assinatura de apps). Uma segunda credencial com o SHA-1 da chave de upload, para o APK de QA.
+4. **Conquistas:** criar as 7 abaixo (nome, descrição, pontos, tipo, ícone de `assets/store/pgs/`; todas visíveis).
+5. **Placares:** criar "Ranqueada: melhor pontuação" (maior é melhor, inteiro, 0 a 100 000).
+6. **Testadores:** incluir QA01, QA02 e a conta dele.
+7. Conquistas → **Obter recursos** → copiar o XML (Android) e colar como comentário na issue #48.
+8. Depois do QA da ativação: **Revisar e publicar** a configuração do Play Games.
+9. **Conteúdo do app → Segurança dos dados:** conferir se o formulário pede mudança por causa do Play Games (ID do jogador do Google) e ajustar se pedir.
+
+| Recurso | Nome (pt-BR) | Descrição | Tipo | Pontos |
+|---|---|---|---|---|
+| `achievement_primeira_vitoria` | Primeira vitória | Vença uma partida em qualquer modo | normal | 10 |
+| `achievement_primeira_online` | Batismo de fogo | Vença uma partida online | normal | 15 |
+| `achievement_frota_intacta` | Frota intacta | Vença sem perder nenhum navio | normal | 25 |
+| `achievement_diario_7` | Semana no convés | Faça 7 check-ins seguidos no diário | normal | 25 |
+| `achievement_cacador_100` | Caçador de cascos | Afunde 100 navios | incremental, 100 passos | 30 |
+| `achievement_ranqueada_10` | Veterano da ranqueada | Vença 10 partidas ranqueadas | incremental, 10 passos | 30 |
+| `achievement_capitao_corveta` | Capitão de Corveta | Chegue à patente Capitão de Corveta | normal | 40 |
+
+Os ícones 512 × 512 PNG saem de `design/MedalArt.kt` para `assets/store/pgs/` (nome novo a cada troca) e os textos em
+inglês e espanhol entram na issue de ativação. O login do Play Games é automático; se o jogador recusar, nada aparece.
+
 ## Integração contínua
 
 `.github/workflows/android.yml`, disparado a cada push na `main`:

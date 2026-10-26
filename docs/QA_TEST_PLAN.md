@@ -421,6 +421,17 @@ Rodar `select public.push_check_run();` (SQL) e depois `select * from public.tes
 | CHK-05 | P1 | **PENDENTE do passo 0 na skill `esteira`** (o John inclui). Depois, rodada num dia com conferência: 1ª rodada (depois das 8 h) dispara; 2ª rodada, ~30 min depois | 1ª devolve "Conferência de instalação disparada"; 2ª devolve o resumo com contagens e usuários, sem e-mail; a 3ª rodada do dia devolve nada |
 | CHK-06 | P1 | Token `unregistered` (QA02 desinstalado) e um envio real (ex.: FR-02 ou PUSH-01) | A `push` marca o token (não apaga a linha) e o envio seguinte pula esse token; reinstalar e registrar zera a marca |
 
+### 12e. Conquistas e placar do Google Play Games (#48)
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| PGS-01 | P0 | v0.40.0 da Play (IDs vazios), abrir e jogar uma partida contra a IA | App abre e joga; nenhuma tela do Play Games; Perfil sem o atalho "Conquistas"; logcat sem `FATAL EXCEPTION` |
+| PGS-02 | P1 | **Só na versão de ativação**, QA01 como testador do Play Games: abrir o app | Aparece o "Bem-vindo de volta" do Play Games (conferir o login automático já na primeira abertura, sem botão de entrar) |
+| PGS-03 | P1 | Ativação: vencer a 1ª partida contra a IA | Aviso de conquista "Primeira vitória" do Play Games |
+| PGS-04 | P1 | Ativação: Perfil → Conquistas | Abre a lista do Play Games com o progresso de navios afundados (até 100) e a recuperação da carreira feita |
+| PGS-05 | P1 | Ativação: ranqueada QA01 x QA02 | A pontuação da temporada aparece no placar "Ranqueada: melhor pontuação" |
+| PGS-06 | P0 | APK minificado (`assembleRelease -PqaSign`) com a lib real | Nada some pelo R8: login, conquista e placar funcionam |
+
 ## 13. Ajustes, notificações, feedback e idioma
 
 | ID | P | Passos | Esperado |
