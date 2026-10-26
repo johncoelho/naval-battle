@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recursos do Play Games Services (#48). Cole aqui o XML de "Obter recursos" do Play Console
+     (Conquistas > Obter recursos > Android): ele traz os mesmos nomes abaixo com os IDs. Vazio = desligado.
+     O app_id vai em gradle.properties (pgsAppId). Nada aqui e segredo. -->
+<resources>
+    <string name="achievement_primeira_vitoria" translatable="false"></string>
+    <string name="achievement_primeira_online" translatable="false"></string>
+    <string name="achievement_frota_intacta" translatable="false"></string>
+    <string name="achievement_diario_7" translatable="false"></string>
+    <string name="achievement_cacador_100" translatable="false"></string>
+    <string name="achievement_ranqueada_10" translatable="false"></string>
+    <string name="achievement_capitao_corveta" translatable="false"></string>
+    <string name="leaderboard_ranqueada" translatable="false"></string>
+</resources>

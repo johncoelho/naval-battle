@@ -55,6 +55,7 @@ import br.com.navalbattle.data.CommanderHit
 import br.com.navalbattle.data.FeedbackUpdate
 import br.com.navalbattle.data.FriendProfile
 import br.com.navalbattle.data.Friendship
+import br.com.navalbattle.data.GameServices
 import br.com.navalbattle.data.GoogleAuth
 import br.com.navalbattle.data.GoogleAuthResult
 import br.com.navalbattle.data.LanGame
@@ -93,7 +94,13 @@ import br.com.navalbattle.game.LaunchNoticeDecision
 import br.com.navalbattle.game.LaunchVariant
 import br.com.navalbattle.game.launchNoticeDecision
 import br.com.navalbattle.game.launchNoticeKey
+import br.com.navalbattle.data.send
+import br.com.navalbattle.game.AchievementCareer
+import br.com.navalbattle.game.AchievementEvent
 import br.com.navalbattle.game.AdPhase
+import br.com.navalbattle.game.achievementsFor
+import br.com.navalbattle.game.backfill
+import br.com.navalbattle.game.leaderboardScore
 import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.game.AdRules
 import br.com.navalbattle.game.AgeBand
@@ -108,6 +115,7 @@ import br.com.navalbattle.game.FleetCodec
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.GuidedEvent
 import br.com.navalbattle.game.GuidedStep
+import br.com.navalbattle.game.Rank
 import br.com.navalbattle.game.ReferralInvite
 import br.com.navalbattle.game.ReferralOutcome
 import br.com.navalbattle.game.isValidReferralCodeShape
@@ -1426,6 +1434,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val outcome = (r as? CloudResult.Ok)?.value
         rankedOutcome = outcome
         rankedReport = if (outcome != null) RankedReport.DONE else RankedReport.FAILED
+        // Play Games (#48): espelho do placar da temporada; vitória é a que o servidor decidiu
+        // (pontos-base de Elo positivos), não o que este aparelho achava
+        if (outcome != null && outcome.accepted) {
+            if (outcome.basePoints > 0) GameServices.send(achievementsFor(AchievementEvent.RankedWin))
+            if (GameServices.supported) GameServices.submitRanked(leaderboardScore(outcome.seasonPoints))
+        }
         loadMyRank(leaderboardSeasonMode)
     }
 
@@ -1577,6 +1591,24 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         dailyAutoDismissed = false
     }
 
+    // ---------------- Play Games (#48) ----------------
+
+    /** Liga o Play Games se estiver configurado (senão nada acontece); recupera a carreira ao autenticar. */
+    fun startGameServices() {
+        GameServices.start {
+            GameServices.send(
+                backfill(AchievementCareer(profile.wins, profile.sunk, profile.rank, daily?.streak ?: 0))
+            )
+        }
+    }
+
+    /** Conquistas do fim de uma partida que valeu carreira; [rankUp] vem do [Award]. */
+    fun reportMatchAchievements(victory: Boolean, online: Boolean, shipsLost: Int, shipsSunk: Int, rankUp: Rank?) {
+        if (!GameServices.supported) return
+        GameServices.send(achievementsFor(AchievementEvent.MatchEnd(victory, online, shipsLost, shipsSunk)))
+        rankUp?.let { GameServices.send(achievementsFor(AchievementEvent.RankUp(it))) }
+    }
+
     suspend fun dailyCheckin() {
         if (dailyBusy || daily?.checkedIn != false) return
         dailyBusy = true
@@ -1595,6 +1627,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
         refreshBalance()  // o servidor creditou
         daily = daily?.copy(checkedIn = true, streak = done.streak, returnReady = false)
+        GameServices.send(achievementsFor(AchievementEvent.CheckIn(if (done.weekCompleted) maxOf(done.streak, 7) else done.streak)))
         val checkinNotice = when {
             done.weekCompleted -> t(K.DAILY_WEEK_DONE, done.doubloons)
             done.doubloons > 0 -> t(K.DAILY_GOT, done.doubloons)
@@ -2918,6 +2951,8 @@ fun App() {
 
     // com conta conectada, a abertura já renova a sessão e busca o que há na nuvem
     LaunchedEffect(Unit) { state.resumeSession() }
+    // Play Games (#48): inerte sem app_id e IDs; nunca abre tela de login própria
+    LaunchedEffect(Unit) { state.startGameServices() }
 
     // daí em diante a carreira sobe sozinha a cada mudança — não existe botão de
     // sincronizar, o comandante nunca precisa lembrar de gravar nada

@@ -18,6 +18,7 @@ googleServices = "4.4.2"
 playServicesAds = "25.5.0"
 ump = "4.0.0"
 ageSignals = "0.0.4"
+playGames = "21.0.0"
 
 [libraries]
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "composeMultiplatform" }
@@ -39,6 +40,7 @@ play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref =
 play-billing = { module = "com.android.billingclient:billing", version.ref = "playBilling" }
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
 ump = { module = "com.google.android.ump:user-messaging-platform", version.ref = "ump" }
+play-games = { module = "com.google.android.gms:play-services-games-v2", version.ref = "playGames" }
 play-age-signals = { module = "com.google.android.play:age-signals", version.ref = "ageSignals" }
 
 [plugins]

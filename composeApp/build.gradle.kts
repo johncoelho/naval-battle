@@ -73,6 +73,9 @@ kotlin {
             // faixa etária da loja (#49; stack aprovada pelo John em 25/10): Play Age Signals,
             // beta, só para escolher o tipo de anúncio (ECA Digital). A idade não sai do aparelho
             implementation(libs.play.age.signals)
+            // conquistas e placar do Google Play Games (#48; stack aprovada pelo John em 25/10).
+            // Inerte enquanto pgsAppId e res/values/games-ids.xml estiverem vazios (GameServices.supported)
+            implementation(libs.play.games)
             // push de verdade (convites, amizade) pelo Firebase Cloud Messaging; a
             // configuração vem do google-services.json (ver PushMessaging.android.kt)
             implementation(project.dependencies.platform(libs.firebase.bom))
@@ -115,6 +118,9 @@ android {
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
         versionCode = 107
         versionName = "0.40.0"
+        // Play Games Services (#48): app_id do console (gradle.properties, vazio = recurso desligado).
+        // Não é segredo; vira a meta-data APP_ID do manifesto
+        resValue("string", "game_services_project_id", (findProperty("pgsAppId") as String?).orEmpty())
     }
 
     /**

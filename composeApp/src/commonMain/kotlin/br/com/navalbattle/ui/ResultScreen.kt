@@ -122,6 +122,16 @@ fun ResultScreen(state: AppState, match: Match) {
         }
         // avaliação na Play (#45): vitória já contada na carreira; o pedido sai ao voltar ao menu
         if (victory) award?.let { state.noteReviewCandidate(rankedUp = it.rankUp != null) }
+        // conquistas do Play Games (#48): só partida que valeu carreira (a mesma regra do registerMatch)
+        award?.let { a ->
+            state.reportMatchAchievements(
+                victory = victory,
+                online = online,
+                shipsLost = ShipClass.fleet.size - match.board(me).remainingShips().size,
+                shipsSunk = a.shipsSunk,
+                rankUp = a.rankUp
+            )
+        }
         // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
         if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
         // anúncio premiado (#29): só lê o servidor; o botão aparece se ele liberar

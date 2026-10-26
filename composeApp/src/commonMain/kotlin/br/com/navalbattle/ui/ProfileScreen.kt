@@ -52,6 +52,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
+import br.com.navalbattle.data.GameServices
 import br.com.navalbattle.data.GoogleAuthConfig
 import br.com.navalbattle.data.PasswordAction
 import br.com.navalbattle.data.passwordAction
@@ -180,6 +181,12 @@ fun ProfileScreen(state: AppState) {
                     ) {
                         state.badges.forEach { earned -> BadgeChip(earned) { openBadge = earned } }
                     }
+                }
+
+                // Play Games (#48): só aparece com o recurso configurado (Android)
+                if (GameServices.supported) {
+                    Gap(12)
+                    SecondaryButton(t(K.PROFILE_ACHIEVEMENTS)) { GameServices.showAchievements() }
                 }
 
                 if (profile.signedIn) {

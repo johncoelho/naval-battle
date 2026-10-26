@@ -567,6 +567,7 @@ enum class K(val pt: String, val en: String, val es: String) {
         "Couldn't send it right now — try again",
         "No pude enviarlo ahora — inténtalo de nuevo"
     ),
+    PROFILE_ACHIEVEMENTS("Conquistas", "Achievements", "Logros"),
     PROFILE_FEEDBACK_CTA("Achou um bug? Ganhe dobrões", "Found a bug? Earn doubloons", "¿Encontraste un error? Gana doblones"),
     FEEDBACK_FORM_NEEDS_ACCOUNT(
         "Entre com uma conta para enviar feedback",

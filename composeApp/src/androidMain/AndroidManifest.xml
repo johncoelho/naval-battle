@@ -52,6 +52,12 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-4691964664970287~5089211464" />
 
+        <!-- Play Games Services (#48): vazio enquanto o recurso está desligado; o SDK só inicia
+             com app_id e IDs preenchidos (GameServices.supported) -->
+        <meta-data
+            android:name="com.google.android.gms.games.APP_ID"
+            android:value="@string/game_services_project_id" />
+
         <receiver
             android:name=".data.DailyReminderReceiver"
             android:exported="false">
