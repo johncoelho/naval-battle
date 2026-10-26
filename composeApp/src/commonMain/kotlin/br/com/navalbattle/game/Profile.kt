@@ -254,6 +254,24 @@ class Profile(private val prefs: Prefs) {
     var welcomeDone: Boolean by mutableStateOf(prefs.getInt(K_WELCOME_DONE, 0) == 1)
         private set
 
+    /** Primeira partida guiada feita ou pulada (#43): nunca mais é oferecida sozinha. */
+    var guidedDone: Boolean by mutableStateOf(prefs.getInt(K_GUIDED_DONE, 0) == 1)
+        private set
+
+    fun markGuidedDone() {
+        guidedDone = true
+        prefs.putInt(K_GUIDED_DONE, 1)
+    }
+
+    /** Presente de boas-vindas à espera de uma conta (convidado fez a guiada, #43). */
+    var welcomePending: Boolean by mutableStateOf(prefs.getInt(K_WELCOME_PENDING, 0) == 1)
+        private set
+
+    fun savePendingWelcome(value: Boolean) {
+        welcomePending = value
+        prefs.putInt(K_WELCOME_PENDING, if (value) 1 else 0)
+    }
+
     fun markWelcomeDone() {
         welcomeDone = true
         prefs.putInt(K_WELCOME_DONE, 1)
@@ -792,6 +810,8 @@ class Profile(private val prefs: Prefs) {
         private const val K_LANG = "lang"
         private const val K_AVATAR = "avatar"
         private const val K_WELCOME_DONE = "welcome_done"
+        private const val K_GUIDED_DONE = "guided_done"
+        private const val K_WELCOME_PENDING = "welcome_pending"
         private const val K_THEME_TRACK = "theme_track"
         private const val K_SEASON_ACCEPTED = "season_accepted"
         private const val K_FEEDBACK_OPT_OUT = "feedback_opt_out"

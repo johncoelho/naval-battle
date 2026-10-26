@@ -49,6 +49,7 @@ import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.BOARD_SIZE
 import br.com.navalbattle.game.Board
 import br.com.navalbattle.game.Coord
+import br.com.navalbattle.game.GuidedEvent
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.isNetwork
@@ -221,6 +222,10 @@ fun PlacementScreen(state: AppState, match: Match) {
 
         // a frota em escala, um navio por linha (antes os cinco nomes dividiam uma linha
         // só e o último quebrava letra por letra); ocupa o espaço até os botões
+        state.guidedStep?.let { step ->
+            Gap(10)
+            GuidedTip(step, onSkip = { state.skipGuided() }, onFinish = { state.guidedEvent(GuidedEvent.FINISHED) })
+        }
         Gap(14)
         FleetLegend(state, Modifier.fillMaxWidth().weight(1f))
         Gap(14)
@@ -247,6 +252,7 @@ fun PlacementScreen(state: AppState, match: Match) {
             enabled = board.ships.size == ShipClass.fleet.size
         ) {
             match.confirmPlacement()
+            state.guidedEvent(GuidedEvent.PLACED)
             when {
                 // em rede: manda a frota e vai esperar a do adversário na tela de batalha
                 match.opponent.isNetwork() -> {

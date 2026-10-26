@@ -1,5 +1,6 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.WelcomeGift
 import br.com.navalbattle.game.LaunchNoticeStatus
 
 import kotlinx.cinterop.ExperimentalForeignApi
@@ -691,6 +692,19 @@ actual class CloudApi actual constructor() {
                 streak = o.intOr("streak", 0),
                 doubloons = o.intOr("doubloons", 0),
                 weekCompleted = (o["week_completed"] as? Boolean) ?: false
+            )
+        )
+    }
+
+    actual suspend fun claimWelcomeGift(session: Session): CloudResult<WelcomeGift> = call {
+        val json = post("/rest/v1/rpc/claim_welcome_gift", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = ((json as? List<*>)?.firstOrNull() as? Map<*, *>).orEmpty()
+        CloudResult.Ok(
+            WelcomeGift(
+                status = (o["status"] as? String).orEmpty(),
+                doubloons = o.intOr("doubloons", 0),
+                miles = o.intOr("miles", 0),
+                balance = o.intOr("balance", 0)
             )
         )
     }

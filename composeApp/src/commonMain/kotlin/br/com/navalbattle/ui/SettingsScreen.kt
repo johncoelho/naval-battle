@@ -171,6 +171,8 @@ fun SettingsScreen(state: AppState) {
             Gap(10)
             SecondaryButton(t(K.SETTINGS_RELEASE_NOTES)) { state.screen = Screen.RELEASE_NOTES }
             Gap(8)
+            SecondaryButton(t(K.GUIDED_REPLAY), t(K.GUIDED_REPLAY_SUB)) { state.startGuidedMatch(replay = true) }
+            Gap(8)
             SecondaryButton(t(K.SETTINGS_SHARE_STORE), t(K.SETTINGS_SHARE_STORE_SUB)) { shareStoreListing() }
             Gap(8)
             SecondaryButton(t(K.SETTINGS_FEEDBACK), t(K.SETTINGS_FEEDBACK_SUB)) { state.openFeedback(Screen.SETTINGS) }

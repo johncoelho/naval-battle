@@ -1,5 +1,6 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.WelcomeGift
 import br.com.navalbattle.game.LaunchNoticeStatus
 
 /**
@@ -633,6 +634,9 @@ expect class CloudApi() {
 
     /** Resgata o desafio do dia — devolve os dobrões (0 se já tinha resgatado). */
     suspend fun claimDailyChallenge(session: Session, mission: String, progress: Int): CloudResult<Int>
+
+    /** Presente de boas-vindas da conta nova (#43): o servidor decide e paga; status ok | already | not_eligible | no_wallet. */
+    suspend fun claimWelcomeGift(session: Session): CloudResult<WelcomeGift>
 
     /** Gasta 1 milha ao começar a partida online [matchId] — uma vez por sala. Devolve o saldo. */
     suspend fun spendMile(session: Session, matchId: String): CloudResult<Int>

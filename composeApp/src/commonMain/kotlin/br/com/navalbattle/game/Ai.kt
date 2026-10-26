@@ -5,14 +5,16 @@ import kotlin.random.Random
 /**
  * IA de caça: enquanto não tem contato, atira em padrão de tabuleiro de damas
  * (nenhum navio de 2 células escapa dessa malha). Com contato, persegue a linha
- * de acertos até afundar o alvo.
+ * de acertos até afundar o alvo. No nível fácil (partida guiada, #43) atira em casa
+ * aleatória, sem padrão nem perseguição, e nunca usa o sonar.
  */
-class Ai(private val random: Random = Random.Default) {
+class Ai(private val random: Random = Random.Default, private val easy: Boolean = false) {
 
     private val pendingTargets = ArrayDeque<Coord>()
     private val confirmedHits = mutableListOf<Coord>()
 
     fun nextShot(enemyBoard: Board): Coord {
+        if (easy) return randomShot(enemyBoard)
         while (pendingTargets.isNotEmpty()) {
             val candidate = pendingTargets.removeFirst()
             if (isOpen(enemyBoard, candidate)) return candidate
@@ -64,6 +66,16 @@ class Ai(private val random: Random = Random.Default) {
         candidates.filter { isOpen(enemyBoard, it) }.forEach { pendingTargets.addLast(it) }
     }
 
+    private fun randomShot(enemyBoard: Board): Coord {
+        val open = mutableListOf<Coord>()
+        for (y in 0 until BOARD_SIZE) for (x in 0 until BOARD_SIZE) {
+            val c = Coord(x, y)
+            if (isOpen(enemyBoard, c)) open += c
+        }
+        if (open.isEmpty()) return Coord(0, 0)
+        return open[random.nextInt(open.size)]
+    }
+
     private fun parityShot(enemyBoard: Board): Coord {
         val open = mutableListOf<Coord>()
         val openParity = mutableListOf<Coord>()
@@ -86,7 +98,7 @@ class Ai(private val random: Random = Random.Default) {
 
     /** No modo tático a IA usa o sonar quando está sem pista alguma. */
     fun shouldUseSonar(mode: GameMode, turn: Int): Boolean =
-        mode == GameMode.TACTICAL && pendingTargets.isEmpty() && turn % 4 == 3
+        !easy && mode == GameMode.TACTICAL && pendingTargets.isEmpty() && turn % 4 == 3
 
     fun sonarTarget(enemyBoard: Board): Coord {
         val unknown = mutableListOf<Coord>()

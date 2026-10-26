@@ -1,5 +1,6 @@
 package br.com.navalbattle.data
 
+import br.com.navalbattle.game.WelcomeGift
 import br.com.navalbattle.game.LaunchNoticeStatus
 
 import java.io.BufferedReader
@@ -748,6 +749,18 @@ actual class CloudApi actual constructor() {
                 streak = o.optInt("streak", 0),
                 doubloons = o.optInt("doubloons", 0),
                 weekCompleted = o.optBoolean("week_completed", false)
+            )
+        )
+    }
+
+    actual suspend fun claimWelcomeGift(session: Session): CloudResult<WelcomeGift> = call {
+        val o = JSONArray(post("/rest/v1/rpc/claim_welcome_gift", JSONObject(), token = session.accessToken)).getJSONObject(0)
+        CloudResult.Ok(
+            WelcomeGift(
+                status = o.optString("status"),
+                doubloons = o.optInt("doubloons", 0),
+                miles = o.optInt("miles", 0),
+                balance = o.optInt("balance", 0)
             )
         )
     }

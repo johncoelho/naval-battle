@@ -46,6 +46,7 @@ import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.GameMode
+import br.com.navalbattle.game.GuidedEvent
 import br.com.navalbattle.game.Impact
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
@@ -168,8 +169,20 @@ fun BattleScreen(state: AppState, match: Match) {
         if (dropLeft == 0) state.claimDropVictory()
     }
 
+    // partida guiada (#43): o resultado do tiro do jogador anda os passos; só lê o tom do impacto
+    LaunchedEffect(match.playerImpact?.id) {
+        val tone = match.playerImpact?.tone ?: return@LaunchedEffect
+        when (tone) {
+            Tone.SUNK -> state.guidedEvent(GuidedEvent.SUNK_SHIP)
+            Tone.HIT -> state.guidedEvent(GuidedEvent.HIT_SHIP)
+            Tone.MISS -> state.guidedEvent(GuidedEvent.MISSED)
+            else -> Unit
+        }
+    }
+
     LaunchedEffect(match.phase) {
         if (match.phase == Phase.RESULT) {
+            state.guidedEvent(GuidedEvent.FINISHED)
             // no mesmo aparelho o cartão "Vitória de…" fica um pouco mais na tela
             delay(if (local) 5200 else 3800)
             state.screen = Screen.RESULT
@@ -393,6 +406,20 @@ fun BattleScreen(state: AppState, match: Match) {
                     else -> OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1f))
                 }
             }
+        }
+
+        // dica da guiada (#43): fixa embaixo, sobre a frota própria (que não recebe toque); nunca sobre o alvo
+        state.guidedStep?.let { step ->
+            GuidedTip(
+                step,
+                onSkip = { state.skipGuided() },
+                onFinish = { state.guidedEvent(GuidedEvent.FINISHED) },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navalSafeArea()
+                    .navalPanelWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            )
         }
 
         if (lan) {

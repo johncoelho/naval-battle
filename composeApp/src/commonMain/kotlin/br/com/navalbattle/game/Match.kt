@@ -57,7 +57,9 @@ class Match(
      * partida, e a resolução do tiro é idêntica dos dois lados.
      */
     val mySide: Side = Side.PLAYER,
-    private val random: Random = Random.Default
+    private val random: Random = Random.Default,
+    /** IA no nível mais fácil: só a partida guiada da primeira vez usa (#43). */
+    easyAi: Boolean = false
 ) {
 
     val playerBoard = Board()
@@ -82,7 +84,7 @@ class Match(
                 (playerBoard.remainingShips().size == 1 || enemyBoard.remainingShips().size == 1)
         }
 
-    private val ai = Ai(random)
+    private val ai = Ai(random, easyAi)
 
     var phase by mutableStateOf(Phase.PLACEMENT)
         private set

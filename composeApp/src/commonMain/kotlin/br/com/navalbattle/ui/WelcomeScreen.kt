@@ -48,6 +48,7 @@ fun WelcomeScreen(state: AppState) {
                 SecondaryButton(t(K.WELCOME_GUEST), t(K.WELCOME_GUEST_SUB)) {
                     state.profile.markWelcomeDone()
                     state.screen = Screen.MENU
+                    state.maybeOfferGuided()
                 }
             }
         }

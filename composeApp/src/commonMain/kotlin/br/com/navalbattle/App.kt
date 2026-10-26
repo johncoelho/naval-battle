@@ -99,6 +99,14 @@ import br.com.navalbattle.game.EarnedBadge
 import br.com.navalbattle.game.Coord
 import br.com.navalbattle.game.FleetCodec
 import br.com.navalbattle.game.GameMode
+import br.com.navalbattle.game.GuidedEvent
+import br.com.navalbattle.game.GuidedStep
+import br.com.navalbattle.game.WelcomeGift
+import br.com.navalbattle.game.WelcomeOutcome
+import br.com.navalbattle.game.nextGuidedStep
+import br.com.navalbattle.game.shouldOfferGuided
+import br.com.navalbattle.game.welcomeOutcome
+import br.com.navalbattle.game.welcomeShouldRetry
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
@@ -134,6 +142,8 @@ import br.com.navalbattle.ui.DailyPopup
 import br.com.navalbattle.ui.ModePick
 import br.com.navalbattle.ui.ModePickerSheet
 import br.com.navalbattle.ui.FeedbackRewardPopup
+import br.com.navalbattle.ui.GuidedOfferPopup
+import br.com.navalbattle.ui.WelcomeGiftPopup
 import br.com.navalbattle.ui.FriendsScreen
 import br.com.navalbattle.ui.InviteBanner
 import br.com.navalbattle.ui.LaunchNoticePopup
@@ -310,6 +320,106 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      */
     fun afterSplash() {
         screen = if (profile.signedIn || profile.welcomeDone) Screen.MENU else Screen.WELCOME
+        maybeOfferGuided()
+    }
+
+    // ---------------- primeira partida guiada e presente de boas-vindas (#43) ----------------
+
+    /** Passo da guiada em curso; nulo fora dela (ou depois de pular/terminar). */
+    var guidedStep by mutableStateOf<GuidedStep?>(null)
+        private set
+
+    /** "Primeira missão" aberta no menu: começar ou pular. */
+    var guidedOffer by mutableStateOf(false)
+        private set
+
+    /** Presente pago agora: o popup mostra o valor devolvido pelo servidor. */
+    var welcomeGiftPaid by mutableStateOf<WelcomeGift?>(null)
+        private set
+
+    /** Convidado terminou a guiada: o popup diz para entrar na conta; o resgate fica guardado. */
+    var welcomeGuestNotice by mutableStateOf(false)
+        private set
+
+    private var guidedReplay = false
+
+    /** Chamado ao chegar ao menu: oferece a guiada a quem nunca jogou e ainda não a fez nem pulou. */
+    fun maybeOfferGuided() {
+        if (screen != Screen.MENU || match != null) return
+        if (shouldOfferGuided(profile.matches, profile.guidedDone)) guidedOffer = true
+    }
+
+    /** Começa a guiada: Clássico contra a IA no nível fácil, sem mexer no último modo escolhido. */
+    fun startGuidedMatch(replay: Boolean = false) {
+        guidedOffer = false
+        guidedReplay = replay
+        opponentProfile = null
+        mode = GameMode.CLASSIC
+        match = Match(GameMode.CLASSIC, Opponent.AI, easyAi = true)
+        guidedStep = GuidedStep.PLACE
+        screen = Screen.PLACEMENT
+    }
+
+    /** "Pular", na oferta ou em qualquer passo: encerra as dicas e entrega o presente. */
+    fun skipGuided() {
+        guidedOffer = false
+        if (guidedStep == null) {
+            // pulou na oferta, sem partida: só marca e resgata
+            finishGuided()
+        } else {
+            guidedEvent(GuidedEvent.SKIPPED)
+        }
+    }
+
+    fun guidedEvent(event: GuidedEvent) {
+        val current = guidedStep ?: return
+        val next = nextGuidedStep(current, event)
+        if (next == GuidedStep.DONE) finishGuided() else guidedStep = next
+    }
+
+    private fun finishGuided() {
+        guidedStep = null
+        if (guidedReplay) {
+            guidedReplay = false
+            return
+        }
+        profile.markGuidedDone()
+        uiScope?.launch { runWelcomeClaim() }
+    }
+
+    fun closeWelcomePopups() {
+        welcomeGiftPaid = null
+        welcomeGuestNotice = false
+    }
+
+    /** Pede o presente ao servidor. Convidado guarda o pedido para o primeiro login. */
+    suspend fun runWelcomeClaim() {
+        if (!profile.signedIn) {
+            profile.savePendingWelcome(true)
+            welcomeGuestNotice = true
+            return
+        }
+        if (!ensureWallet()) {
+            profile.savePendingWelcome(true)
+            return
+        }
+        val gift = (authed { session -> cloud.claimWelcomeGift(session) } as? CloudResult.Ok)?.value
+        val outcome = welcomeOutcome(gift)
+        if (welcomeShouldRetry(outcome)) {
+            profile.savePendingWelcome(true)
+            return
+        }
+        profile.savePendingWelcome(false)
+        if (outcome == WelcomeOutcome.PAID && gift != null) {
+            profile.setServerBalance(gift.balance)
+            loadMiles()
+            welcomeGiftPaid = gift
+        }
+    }
+
+    /** Depois de entrar ou abrir o app com conta: resgata o presente que ficou pendente. */
+    private suspend fun claimPendingWelcome() {
+        if (profile.welcomePending && profile.signedIn) runWelcomeClaim()
     }
 
     fun newMatch(opponent: Opponent) {
@@ -367,6 +477,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             }
         }
         match = null
+        guidedStep = null
+        guidedReplay = false
         screen = Screen.MENU
     }
 
@@ -889,6 +1001,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             if (updatePopupPending) return true
             if (seasonPopupShowing || seasonEnd != null || rankedLockedPrompt) return true
             if (feedbackReward != null) return true
+            if (guidedOffer || welcomeGiftPaid != null || welcomeGuestNotice) return true
             if (launchNoticeShowing) return true
             return feedbackPopupNeeded && !updateAvailable && !seasonPopupShowing
         }
@@ -2333,6 +2446,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 profile.rename(username)
                 cloud.saveProfile(r.value, profile.snapshot())
                 ensureWallet(local)
+                claimPendingWelcome()
                 true to t(K.AUTH_CREATED)
             }
 
@@ -2350,6 +2464,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 profile.rememberSession(r.value)
                 val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
                 ensureWallet(local)
+                claimPendingWelcome()
                 true to merged
             }
 
@@ -2373,6 +2488,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 profile.rememberSession(r.value)
                 val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
                 ensureWallet(local)
+                claimPendingWelcome()
                 true to merged
             }
 
@@ -2413,6 +2529,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val local = profile.credits
         mergeWithCloud()
         ensureWallet(local)
+        claimPendingWelcome()
         flushOnlineAwards()
         recoverPending()
     }
@@ -2741,6 +2858,8 @@ fun App() {
             RankedLockedPrompt(state)
             ModePickerSheet(state)
             DailyPopup(state)
+            GuidedOfferPopup(state)
+            WelcomeGiftPopup(state)
             FeedbackPopup(state)
             if (state.match == null) FeedbackRewardPopup(state)
             // aviso de lançamento: por cima da temporada; o convite dela aparece embaixo ao tocar "Entendi"
