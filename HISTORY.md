@@ -428,6 +428,7 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   sempre identificada como IA (faixa fixa) e o treino que é trocado pela online é descartado e nunca conta —
   senão virava farm de XP. Contra a IA segue zero dobrões. As mensagens do adversário que chegam nos 3 s do
   aviso são guardadas e repetidas na partida online, para não corromper a partida da IA nem perder a frota dele.
+  A IA segue como "Inimigo", identificada só pela faixa; nome e arte próprios ficam fora do escopo.
   O "Depois" passou de booleano da sessão a versão dispensada (o aviso volta com versão maior) e a consulta no
   retorno ao app tem piso de 5 min, para folha de compra e login não martelarem o servidor nem a Play.
 

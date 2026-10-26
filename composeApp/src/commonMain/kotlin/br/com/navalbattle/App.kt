@@ -566,6 +566,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     private fun onOnlineState(state: LinkState, side: Side) {
         onlineLinkState = state
+        if (state == LinkState.FAILED && practiceWhileSearching) {
+            // a busca caiu durante o treino: o treino vira partida comum contra a IA
+            closeOnline()
+            return
+        }
         if (state != LinkState.CONNECTED) return
         if (practiceWhileSearching) {
             // alguém entrou durante o treino contra a IA (#41): aviso de 3 s e troca para a online
