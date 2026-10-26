@@ -72,6 +72,7 @@ fun ResultScreen(state: AppState, match: Match) {
     // referência desta vitória para o "dobrar dobrões" (#29), fotografada antes de a sala fechar
     val adRef = remember(match) { state.adWinRef(match) }
     LaunchedEffect(match) {
+        state.clearReviewCandidate()
         state.clearAdNotice(AdPlace.WIN)
         state.resetOnlineAward()
         // números que o servidor confere para pagar a partida online (contra a IA não há dobrões)

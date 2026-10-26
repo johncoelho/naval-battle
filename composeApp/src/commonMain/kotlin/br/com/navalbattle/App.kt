@@ -573,6 +573,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Vitória que acabou de ser contada na carreira; o pedido só sai ao voltar ao menu. */
     private var reviewCandidate: Boolean? = null  // nulo = sem vitória pendente; valor = subiu de patente
 
+    /** Nova partida (resultado novo): descarta vitória pendente de antes, para derrota nunca herdar o pedido. */
+    fun clearReviewCandidate() {
+        reviewCandidate = null
+    }
+
     /** A tela de resultado avisa: a vitória já entrou na carreira (e se subiu de patente). */
     fun noteReviewCandidate(rankedUp: Boolean) {
         reviewCandidate = rankedUp
