@@ -59,6 +59,9 @@ kotlin {
             // avisa quando uma versão mais nova já está publicada na faixa de teste do
             // comandante — mesma API que a própria Play Store usa, sem precisar de push
             implementation(libs.play.app.update.ktx)
+            // pedido de avaliação dentro do jogo (#45; stack aprovada pelo John em 25/10): Play
+            // In-App Review, só no Android; a lib traz as próprias regras de R8
+            implementation(libs.play.review.ktx)
             // compra de dobrões pela Google Play (#15; stack aprovada pelo John em 17/10):
             // só a biblioteca oficial de billing
             implementation(libs.play.billing)
@@ -153,9 +156,13 @@ android {
             // ./gradlew assembleDebug -PageFake=teen (child, teen, adult, unknown). Só no debug e
             // na prévia .preview; o release abaixo fixa vazio.
             buildConfigField("String", "AGE_FAKE", "\"${(findProperty("ageFake") as String?).orEmpty()}\"")
+            // Avaliação falsa para o QA (#45): ./gradlew assembleDebug -PreviewFake=true usa o
+            // FakeReviewManager (abre o fluxo sem a Play). O release fixa false.
+            buildConfigField("boolean", "REVIEW_FAKE", "${(findProperty("reviewFake") as String?) == "true"}")
         }
         getByName("release") {
             buildConfigField("String", "AGE_FAKE", "\"\"")
+            buildConfigField("boolean", "REVIEW_FAKE", "false")
             // R8 (#37): encolhe e ofusca o código e remove recurso sem uso. As regras de keep
             // estão em proguard-rules.pro; o mapa de desofuscação vai dentro do .aab e a Play
             // o extrai sozinha no envio. R8 quebra só no release: testar sempre o APK minificado

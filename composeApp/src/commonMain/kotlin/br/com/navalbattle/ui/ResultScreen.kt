@@ -119,6 +119,8 @@ fun ResultScreen(state: AppState, match: Match) {
             // (o servidor também barra a milha sem tiro, para o app antigo)
             if (victory && !match.forfeitedBySelf && !noCombat) state.awardWinMiles()
         }
+        // avaliação na Play (#45): vitória já contada na carreira; o pedido sai ao voltar ao menu
+        if (victory) award?.let { state.noteReviewCandidate(rankedUp = it.rankUp != null) }
         // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
         if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
         // anúncio premiado (#29): só lê o servidor; o botão aparece se ele liberar

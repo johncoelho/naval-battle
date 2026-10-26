@@ -79,6 +79,7 @@ import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.data.checkUpdateAvailable
 import br.com.navalbattle.data.platformName
 import br.com.navalbattle.data.deviceCheckKey
+import br.com.navalbattle.data.StoreReview
 import br.com.navalbattle.data.isTestLabDevice
 import br.com.navalbattle.data.nowMillis
 import br.com.navalbattle.data.openStoreListing
@@ -97,6 +98,7 @@ import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.game.AdRules
 import br.com.navalbattle.game.AgeBand
 import br.com.navalbattle.game.AgeRules
+import br.com.navalbattle.game.ReviewPrompt
 import br.com.navalbattle.game.AdShowOutcome
 import br.com.navalbattle.game.DoubloonPack
 import br.com.navalbattle.game.Badge
@@ -207,6 +209,9 @@ enum class OnlineAwardUi { NONE, CHECKING, PAID, LIMIT, CAPPED, RETRY }
 /** Faixa etária guardada (ADULT, TEEN, CHILD, UNKNOWN) e a hora da leitura (#49). Nunca a idade. */
 private const val AGE_BAND_KEY = "age_band"
 private const val AGE_CHECKED_KEY = "age_checked_at"
+private const val REVIEW_LAST_KEY = "review_last_ask"
+private const val REVIEW_COUNT_KEY = "review_ask_count"
+private const val REVIEW_SETTLE_MS = 800L
 
 /** Espera da confirmação do Google depois do anúncio (#29): 10 consultas a cada 2 s, cerca de 20 s. */
 private const val AD_CONFIRM_TRIES = 10
@@ -558,6 +563,52 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         guidedStep = null
         guidedReplay = false
         screen = Screen.MENU
+        askReviewSoon()
+    }
+
+    // ---------------- avaliação na Play (#45) ----------------
+
+    private val reviewPrefs = Prefs()
+
+    /** Vitória que acabou de ser contada na carreira; o pedido só sai ao voltar ao menu. */
+    private var reviewCandidate: Boolean? = null  // nulo = sem vitória pendente; valor = subiu de patente
+
+    /** A tela de resultado avisa: a vitória já entrou na carreira (e se subiu de patente). */
+    fun noteReviewCandidate(rankedUp: Boolean) {
+        reviewCandidate = rankedUp
+    }
+
+    /**
+     * Ao voltar ao menu depois de uma vitória, avalia [ReviewPrompt.shouldAsk] e pede a avaliação
+     * da Play. Espera o menu assentar; com outro popup na tela, fora do menu ou com o app em
+     * segundo plano, desiste sem gravar nada (a próxima vitória tenta de novo). As marcas vão
+     * antes do pedido; nada bloqueia o jogo e a falta de retorno é normal.
+     */
+    private fun askReviewSoon() {
+        val rankedUp = reviewCandidate ?: return
+        reviewCandidate = null
+        if (!StoreReview.supported) return
+        uiScope?.launch {
+            delay(REVIEW_SETTLE_MS)
+            if (screen != Screen.MENU || match != null || !AppForeground.active) return@launch
+            if (otherPopupShowing || dailyPopupOpen) return@launch
+            val now = nowMillis()
+            val ask = ReviewPrompt.shouldAsk(
+                totalWins = profile.wins,
+                rankedUp = rankedUp,
+                wonLast = true,
+                lastAskMillis = reviewPrefs.getString(REVIEW_LAST_KEY, "").toLongOrNull() ?: 0L,
+                askCount = reviewPrefs.getInt(REVIEW_COUNT_KEY, 0),
+                now = now,
+                isTest = isTestLabDevice()
+            )
+            if (!ask) return@launch
+            reviewPrefs.putBatch(PrefsBatch().apply {
+                putString(REVIEW_LAST_KEY, now.toString())
+                putInt(REVIEW_COUNT_KEY, reviewPrefs.getInt(REVIEW_COUNT_KEY, 0) + 1)
+            })
+            StoreReview.request {}
+        }
     }
 
     // ---------------- partida na rede local ----------------
