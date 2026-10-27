@@ -187,9 +187,9 @@ jobs:
         env:
           IPA: ${{ steps.export.outputs.ipa }}
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
-          # entitlements obrigatórias, separadas por espaço. Vazia por ora; a #13 acrescenta
-          # com.apple.developer.applesignin (Entrar com a Apple) quando o recurso existir.
-          REQUIRED_ENTITLEMENTS: ""
+          # entitlements obrigatórias, separadas por espaço: Entrar com a Apple (#13) precisa
+          # sobreviver à assinatura, senão o botão falha com o erro 1000 no aparelho.
+          REQUIRED_ENTITLEMENTS: "com.apple.developer.applesignin"
         run: |
           set -eo pipefail
           CHECK_DIR="$RUNNER_TEMP/ipa-check"

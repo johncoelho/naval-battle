@@ -57,10 +57,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
-- **Denunciar, bloquear e filtro de nome (#58, 0.42.0):** migração `player_safety` (`supabase/safety.sql`) a aplicar só depois do APROVADO
-  do Tech Lead e antes de ligar o app novo na Play (o ensaio `supabase/tests/safety_ensaio.sql` roda antes). Rodada diária da esteira: `select * from
-  public.reports_pending();` (propor ao John; nada aplicado sem o OK dele, exceto a troca automática de nome com 3 denunciantes) e
-  `select * from public.purge_moderation();` (12 meses). QA: SAF-01 a SAF-14.
+- **Denunciar, bloquear e filtro de nome (#58, 0.42.0):** migração `player_safety` (`supabase/safety.sql`) **aplicada em 26/10** (ensaio
+  `supabase/tests/safety_ensaio.sql` verde antes; 0 nomes violavam, 166 perfis). Rodada diária da esteira: `select * from
+  public.purge_moderation();` (12 meses) e `select * from public.reports_pending();` (propor ao John; nada aplicado sem o OK dele, exceto a
+  troca automática de nome com 3 denunciantes). QA: SAF-01 a SAF-14. Falsos positivos a olhar depois do QA: `marica`, `pajero`, `niger`.
 
 - **Política de privacidade e regras da comunidade (#57):** `site/privacy.html` (pt/en/es em âncoras) e `site/terms.html`
   prontas; a página só vale depois de publicada (`gh workflow run pages.yml --ref main`, conferir pela URL). Mudança só em
@@ -159,7 +159,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   cwtslesnthbenxswdcbv` (`verify_jwt` ligado). **Sem os secrets, a exclusão de conta Apple não revoga o token na Apple**
   (a Edge responde `not_configured` e a conta apaga do mesmo jeito). QA no iPhone pelo TestFlight da #56: APL-01 a APL-11;
   no build do `ios-release.yml`, `codesign` deve listar `com.apple.developer.applesignin`; erro 1000 = entitlement perdida (plano B da #13).
-  **Do Dev, depois do rebase sobre a #56:** acrescentar `com.apple.developer.applesignin` à lista (hoje vazia) de entitlements obrigatórias do passo de conferência do `ios-release.yml`.
+  O `ios-release.yml` já exige `com.apple.developer.applesignin` no `.ipa` assinado (`REQUIRED_ENTITLEMENTS`).
 - **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. **0.34.5 (#35)** em
   revisão (regra em §4). Aviso de lançamento (#36, ligar `launch_notice_enabled` quando a Play aprovar).
   CI publica só na Alpha; a promoção para a produção (#39) está pronta: `promote-production.yml` + `tools/play-rollout.sh`, 20% → 50% → 100% (docs/ESTEIRA.md). **Pendente do John:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do *Published* da 91 (hoje `false`; permissões e Reporting API já feitas). Ação `vitals` no script (#51): lê falha/ANR por versionCode; só `ALARME` pausa.

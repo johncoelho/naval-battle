@@ -9,22 +9,6 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
-## [a publicar] — 2026-10-26 · Entrar com a Apple no iPhone (#13)
-
-Versão definida no lote (#56 → #58 → #13); a entrada entra no cabeçalho da versão do lote. Refs #13. Sem banco, sem migração.
-
-### App
-- iPhone: botão oficial **Entrar com a Apple** acima do Google (App Store 4.8), com a dica "Já tem carreira? Escolha COMPARTILHAR MEU E-MAIL". Mesmo e-mail verificado cai na mesma carreira; "ocultar meu e-mail" cria conta separada e a Conta mostra "E-mail oculto pela Apple".
-- Nome da Apple só se o convidado não tinha nome e a carreira da nuvem é nova (`appleInitialName`), aplicado depois da fusão; nome repetido ganha sufixo `nome-xxxx` e, se ainda assim o servidor recusar, a conta fica com o nome da nuvem. A sessão segue com o nome que já está na nuvem (não "Comandante", que repetido quebraria o `unique` de `profiles.username`). Android não muda (`AppleAuth.supported = false`, botão ausente).
-- Excluir conta com identidade Apple reautentica na Apple (cancelar cancela a exclusão) e chama a Edge `apple-revoke`; a conta é apagada mesmo se a revogação falhar.
-- `afterIdTokenLogin` compartilhado com o Google; `CloudApi.signInWithApple`, `authProviders`, `revokeApple`; `DeleteAccountResult`. 5 textos novos em pt/en/es. Testes: `AppleAccountTest`.
-- iOS: `iosApp.entitlements` com `com.apple.developer.applesignin` e `CODE_SIGN_ENTITLEMENTS` no target; sha256 e base64url movidos para `CryptoUtils.ios.kt`.
-
-### Servidor
-- Edge Function nova `apple-revoke` (`verify_jwt` ligado, WebCrypto, sem biblioteca). **Não implantada**: os secrets `APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID` e `APPLE_SIWA_KEY_P8` são do John. Sem eles a Edge responde `{revoked:false, reason:"not_configured"}`, registra no log e a exclusão de conta Apple não revoga o token na Apple.
-
----
-
 ## [Site] — 2026-10-26 · Política de privacidade e regras da comunidade (#57)
 
 Sem versão do app (só `site/`, commit com `[skip ci]` e publicação com `gh workflow run pages.yml --ref main`). Refs #57.
@@ -36,25 +20,16 @@ Sem versão do app (só `site/`, commit com `[skip ci]` e publicação com `gh w
   Digital), denúncias e bloqueio (a partir da 0.42.0), compras e push; revisão do Tech Lead aplicada (sem prazo fixo de 24 h, nome do Google vira nome de guerra público, tipos de push).
 - `site/terms.html` nova: regras da comunidade e termos de uso nas três línguas; rodapé do `site/index.html` linka as duas páginas.
 
-## [0.42.0] — 2026-10-26 · Pipeline do iPhone para a App Store (#56)
+## [0.42.0] — 2026-10-26 · Denunciar e bloquear jogadores, Entrar com a Apple e pipeline da App Store (#58, #13, #56)
 
-App 0.42.0 (versionCode 109, provisória: sobe junto com a #58). Refs #56. Sem banco, sem mudança no jogo.
+App 0.42.0 (versionCode 109). Lote de três itens, nesta ordem de integração: #56 (infra do iPhone), #58 (segurança entre jogadores, com a migração
+`player_safety` já aplicada no banco) e #13 (Entrar com a Apple). Refs #58, #13, #56.
 
-### Infra
-- Workflow novo `.github/workflows/ios-release.yml` (autorizado pelo John na #56), **só com `xcodebuild`, sem fastlane**: archive Release
-  com assinatura ad hoc local (plano A; entitlements do projeto) e exportação assinada pela assinatura em nuvem da Apple, com a chave da API do App Store Connect
-  (`-allowProvisioningUpdates` + `-authenticationKey*`). Envio ao TestFlight pelo próprio export (`destination = upload`). Build = número do run.
-- Ensaio em três níveis, job verde nos três: sem secrets só o archive; com secrets e `enviar=false` gera o `.ipa` assinado (artefato de 7 dias);
-  `enviar=true` sobe para o TestFlight. Disparo automático depois do `ios.yml` verde só com a variável `IOS_APPSTORE_LIVE=true`.
-- `Info.plist`: `ITSAppUsesNonExemptEncryption = false` e `CFBundleVersion = $(CURRENT_PROJECT_VERSION)`; scheme compartilhado `iosApp` e `iosApp/ExportOptions.plist`.
-- `ios.yml` e o `.ipa` do Sideloadly não mudam. A chave `.p8` vive só num arquivo temporário do runner (modo 600), apagado no fim.
-- Passo a passo e secrets do John em docs/BUILD.md, "iPhone na App Store".
-## [0.42.0] — 2026-10-26 · Denunciar, bloquear e filtro de nome de guerra (#58)
+### #58 · Denunciar, bloquear e filtro de nome de guerra
 
-App 0.42.0 (versionCode 109). Refs #58, #56, #13 (lote da versão; #56 e #13 têm commits e entradas próprias). Banco: migração
-`player_safety` (`supabase/safety.sql`), a aplicar só depois do APROVADO do Tech Lead e antes de ligar o app novo na Play.
+`player_safety` (`supabase/safety.sql`), aplicada no banco em 26/10, antes de ligar o app novo na Play.
 
-### Banco
+#### Banco
 - Tabelas `player_blocks`, `player_reports` (motivo `name|abuse|cheat|other`, contexto `ranking|search|friends|match|result`, sem texto livre),
   `name_terms` e `name_allow` (lista de termos pt/en/es com exceções), `name_resets` (`on delete cascade`) e `moderation_push_log`;
   `profiles.suspended_until`. RLS ligado; denúncias e listas sem política (ninguém lê pelo app).
@@ -75,7 +50,7 @@ App 0.42.0 (versionCode 109). Refs #58, #56, #13 (lote da versão; #56 e #13 tê
 - Nomes atuais que violam: 0 de 166 contas na conferência, então a troca em massa da migração não muda nada.
 - Ensaio que desfaz tudo: `supabase/tests/safety_ensaio.sql`.
 
-### App
+#### App
 - Popup compartilhado de Denunciar / Bloquear (`ui/PlayerSafetyPopup.kt`) no ranking, na busca, nos amigos, em "adversário encontrado" e no resultado
   da partida online; em Ajustes, lista de bloqueados com Desbloquear e links para a política de privacidade, as Regras da comunidade e o contato
   (abre a política do site, sem e-mail no app). Cadastro mostra "Ao criar a conta você aceita as Regras da comunidade".
@@ -85,6 +60,32 @@ App 0.42.0 (versionCode 109). Refs #58, #56, #13 (lote da versão; #56 e #13 tê
 - Provocação desconhecida deixa de aparecer (antes o código cru ia para a tela e um cliente alterado mandava texto livre).
 - Textos em pt, en e es; sem prazo de 24 h nos textos.
 - Testes: `NameFilterTest`, `PlayerSafetyTest`, `TauntTest` e `NameTermsParityTest` (JVM, compara com o `safety.sql`).
+
+### #13 · Entrar com a Apple no iPhone
+
+#### App
+- iPhone: botão oficial **Entrar com a Apple** acima do Google (App Store 4.8), com a dica "Já tem carreira? Escolha COMPARTILHAR MEU E-MAIL". Mesmo e-mail verificado cai na mesma carreira; "ocultar meu e-mail" cria conta separada e a Conta mostra "E-mail oculto pela Apple".
+- Nome da Apple só se o convidado não tinha nome e a carreira da nuvem é nova (`appleInitialName`), aplicado depois da fusão; nome repetido ganha sufixo `nome-xxxx` e, se ainda assim o servidor recusar, a conta fica com o nome da nuvem. A sessão segue com o nome que já está na nuvem (não "Comandante", que repetido quebraria o `unique` de `profiles.username`). Android não muda (`AppleAuth.supported = false`, botão ausente).
+- Excluir conta com identidade Apple reautentica na Apple (cancelar cancela a exclusão) e chama a Edge `apple-revoke`; a conta é apagada mesmo se a revogação falhar.
+- `afterIdTokenLogin` compartilhado com o Google; `CloudApi.signInWithApple`, `authProviders`, `revokeApple`; `DeleteAccountResult`. 5 textos novos em pt/en/es. Testes: `AppleAccountTest`.
+- iOS: `iosApp.entitlements` com `com.apple.developer.applesignin` e `CODE_SIGN_ENTITLEMENTS` no target; sha256 e base64url movidos para `CryptoUtils.ios.kt`.
+
+#### Servidor
+- Edge Function nova `apple-revoke` (`verify_jwt` ligado, WebCrypto, sem biblioteca). **Não implantada**: os secrets `APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID` e `APPLE_SIWA_KEY_P8` são do John. Sem eles a Edge responde `{revoked:false, reason:"not_configured"}`, registra no log e a exclusão de conta Apple não revoga o token na Apple.
+
+---
+
+### #56 · Pipeline do iPhone para a App Store
+
+#### Infra
+- Workflow novo `.github/workflows/ios-release.yml` (autorizado pelo John na #56), **só com `xcodebuild`, sem fastlane**: archive Release
+  com assinatura ad hoc local (plano A; entitlements do projeto) e exportação assinada pela assinatura em nuvem da Apple, com a chave da API do App Store Connect
+  (`-allowProvisioningUpdates` + `-authenticationKey*`). Envio ao TestFlight pelo próprio export (`destination = upload`). Build = número do run.
+- Ensaio em três níveis, job verde nos três: sem secrets só o archive; com secrets e `enviar=false` gera o `.ipa` assinado (artefato de 7 dias);
+  `enviar=true` sobe para o TestFlight. Disparo automático depois do `ios.yml` verde só com a variável `IOS_APPSTORE_LIVE=true`.
+- `Info.plist`: `ITSAppUsesNonExemptEncryption = false` e `CFBundleVersion = $(CURRENT_PROJECT_VERSION)`; scheme compartilhado `iosApp` e `iosApp/ExportOptions.plist`.
+- `ios.yml` e o `.ipa` do Sideloadly não mudam. A chave `.p8` vive só num arquivo temporário do runner (modo 600), apagado no fim.
+- Passo a passo e secrets do John em docs/BUILD.md, "iPhone na App Store".
 
 ## [0.41.0] — 2026-10-26 · Conquistas e placar do Google Play Games, desligados (#48)
 
