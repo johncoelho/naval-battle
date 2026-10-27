@@ -101,3 +101,11 @@ Play Console; este relatório só ajuda a acompanhar quem instalou.
 ## Responder ao John
 
 Quem entrou desde a última vez, quem está pendente, o total inscrito e o que falta para a produção.
+
+## iPhone: TestFlight (27/10)
+
+Todo jogador de iPhone registrado (`allowed_players` com a anotação "(iPhone)") entra no grupo **externo "iPhone"**
+do TestFlight (App Store Connect > Naval Battle Classic > TestFlight), por e-mail, com o e-mail lido do banco
+(`auth.users`); o e-mail nunca vai para o repositório. O John autorizou em 27/10 ("todos usuários atuais de iPhone
+devem ter permissão de testar"). O primeiro convite sai quando a Apple aprova o teste beta do build (até 1 dia).
+Testador novo de iPhone: adicionar ao grupo, no mesmo passo de liberar no `allowed_players`.

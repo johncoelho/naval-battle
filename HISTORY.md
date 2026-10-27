@@ -396,6 +396,9 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   pela chave da API, plano B do `ios-release.yml`; o plano A, ad hoc, o Xcode 26 recusa). Ficha com versão
   0.42.2, contato e notas da revisão, modo convidado sem login obrigatório. A Apple leva até 48 h. Pendente
   do John (não trava): chave do Entrar com a Apple e 3 segredos no Supabase (revogação ao excluir conta).
+- **27/10 · TestFlight para os jogadores de iPhone** (decisão do John): grupo externo "iPhone" com os 2
+  testadores atuais (Bina e gurizilla); build 0.42.2 (8) em revisão beta da Apple (até 1 dia), e os convites
+  saem depois dela. Vale para todo iPhone novo (skill `beta-testers`). QA do iPhone sem Mac próprio: #60.
 - **27/10 · Skill `cartographer` instalada no projeto** (pedido do John, para gastar menos tokens): gera
   `docs/CODEBASE_MAP.md` por subagentes Sonnet e evita releitura do código a cada sessão. Revisada antes
   (script local de contagem de tokens, ignora `.env`, sem rede). **`claude-mem` e `headroom` não foram
