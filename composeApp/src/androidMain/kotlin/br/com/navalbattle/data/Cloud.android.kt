@@ -1087,7 +1087,7 @@ actual class CloudApi actual constructor() {
                 if (e is SessionExpired) {
                     CloudResult.Fail(e.message.orEmpty(), expired = true)
                 } else {
-                    CloudResult.Fail(readable(e))
+                    CloudResult.Fail(readable(e), usernameTaken = isUsernameTaken(e.message))
                 }
             }
         }

@@ -59,8 +59,13 @@ sealed class CloudResult<out T> {
     /**
      * [expired] marca a falha por sessão vencida: é o sinal para renovar o token
      * com o refresh guardado e repetir a chamada, sem incomodar o comandante.
+     * [usernameTaken] marca a recusa por nome de guerra repetido (`profiles.username` é único, #59).
      */
-    data class Fail(val message: String, val expired: Boolean = false) : CloudResult<Nothing>()
+    data class Fail(
+        val message: String,
+        val expired: Boolean = false,
+        val usernameTaken: Boolean = false
+    ) : CloudResult<Nothing>()
 }
 
 /**

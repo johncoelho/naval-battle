@@ -1033,7 +1033,7 @@ actual class CloudApi actual constructor() {
         } catch (e: SessionExpired) {
             CloudResult.Fail(e.message.orEmpty(), expired = true)
         } catch (e: Exception) {
-            CloudResult.Fail(readable(e))
+            CloudResult.Fail(readable(e), usernameTaken = isUsernameTaken(e.message))
         }
     }
 

@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.42.2] — 2026-10-27 · Nome de guerra repetido não trava mais a sincronização da carreira (#59)
+
+App 0.42.2 (versionCode 111). Refs #59.
+
+### Corrigido
+- Um convidado que escolheu um nome já usado por outra conta e depois entrava (Google, e-mail ou Apple) numa conta de carreira virgem subia esse nome no merge e colidia no `unique` de `profiles.username`. A falha era ignorada, o app mostrava "carreira enviada" e toda sincronização seguinte repetia o mesmo upsert e falhava: XP e estatísticas ficavam só no aparelho.
+- O merge e a sincronização automática agora tratam a recusa por nome repetido (`duplicate key ... username`): tentam `nome-xxxx` (início do id, corte em 18) e por fim o nome que a conta já tem na nuvem, gravam o nome aceito no perfil local e a carreira sobe. Outras falhas (rede, sessão) nunca renomeiam.
+- "Carreira enviada" só aparece quando o servidor aceitou; senão o app mostra "Conectado. Não consegui sincronizar agora." O `lastPushed` só avança com o servidor aceitando (antes avançava mesmo na falha, e a sincronização não tentava de novo).
+
+### Técnico
+- `data/NameSync.kt` novo (`isUsernameTaken`, `nameSyncCandidates`, `saveProfileWithNameFallback`), reaproveitando `appleNameCandidates`; `CloudResult.Fail` ganha `usernameTaken`, preenchido nos dois `call` (Android e iOS). `NameSyncTest` com 10 testes. Sem banco: o servidor segue decidindo (filtro de nome e unicidade); o upsert do `safety.sql` não trata o conflito, só o nome ofensivo.
+
 ## [Infra] — 2026-10-27 · iPhone na App Store: plano B de assinatura do archive (#56)
 
 Sem versão do app (só `.github/workflows/ios-release.yml` e docs; commit com `[skip ci]`). Refs #56. O ensaio `enviar=false` (run 40451463779) falhou no archive:

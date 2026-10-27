@@ -57,6 +57,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Nome repetido no sync (#59, 0.42.2):** merge e sync automático tratam `duplicate key username` com `nome-xxxx`/nome da nuvem (`data/NameSync.kt`); AUTH_UPLOADED só com o servidor aceitando. QA: NOM-01.
+
 - **Denunciar, bloquear e filtro de nome (#58, 0.42.0):** migração `player_safety` (`supabase/safety.sql`) **aplicada em 26/10** (ensaio
   `supabase/tests/safety_ensaio.sql` verde antes; 0 nomes violavam, 166 perfis). Rodada diária da esteira: `select * from
   public.purge_moderation();` (12 meses) e `select * from public.reports_pending();` (propor ao John; nada aplicado sem o OK dele, exceto a

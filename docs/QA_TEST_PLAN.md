@@ -109,6 +109,7 @@ não bloqueia o release Android. No Android: botão da Apple ausente, login Goog
 | APL-09 | P0 | Conta Apple → Excluir conta → confirmar → cancelar a janela da Apple | Nada é apagado; aparece `AUTH_DELETE_APPLE_CONFIRM` |
 | APL-10 | P1 | Conta Apple de relay que já tem nome → sair e entrar de novo com a Apple | Entra e **não** é renomeada (o nome só vale em carreira nova) |
 | APL-11 | P0 | Segunda conta Apple (relay) sem `givenName`, ou com nome igual ao de outra conta → jogar uma partida | A carreira sincroniza: no banco `profiles.username` é único e `xp` subiu; nenhum "Comandante" repetido; convidado que já tinha nome o mantém |
+| NOM-01 | P1 | Conta A com o nome "X". Em outro aparelho, convidado escolhe "X" e joga partidas → entrar com Google/e-mail novo (carreira virgem) | Mostra "carreira enviada"; no banco a conta nova tem `username` `X-xxxx` (ou o nome da nuvem), `xp` e `matches` subiram; o aparelho passa a mostrar esse nome; a sincronização seguinte (nova partida) segue gravando |
 
 ## 5. Menu e navegação
 

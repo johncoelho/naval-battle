@@ -554,6 +554,7 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   (9) O console foi feito em 26/10 (App ID com Sign in with Apple, provedor Apple no Supabase só com o Client ID
   `br.com.navalbattle` e secret vazio); a chave `.p8` e os secrets da Edge ficam com o John, e a #13 sai sem eles.
 
+- **27/10 · Nome repetido no merge e no sync: fallback `nome-xxxx` no cliente, servidor intacto** (#59, 0.42.2) — porquê: o upsert de `profiles` não tem `on conflict (username)`, então um nome já usado dava `duplicate key` e, com o resultado ignorado, a carreira nunca mais sincronizava. Decisões: (1) o cliente só reconhece a recusa por nome repetido (`CloudResult.Fail.usernameTaken`) e tenta `nome-xxxx` e o nome da nuvem, a mesma ordem do login com a Apple (#13); rede ou sessão nunca renomeiam. (2) Nada de lógica nova no servidor: `set_username`, a regra dos 30 dias e o filtro de nome (#58) continuam sendo quem decide a troca deliberada; este é só o caminho do upsert automático. (3) AUTH_UPLOADED só com o servidor aceitando, e `lastPushed` só avança nesse caso.
 - **27/10 · iPhone: plano A recusado, plano B é o padrão** (#56) — porquê: o archive com assinatura ad hoc do Xcode (`CODE_SIGN_IDENTITY=-`) é proibido pelo SDK do iOS 26.5
   (`Ad Hoc code signing is not allowed`, Xcode 26.6 do runner), então o workflow passa a usar assinatura automática gerenciada pela chave da API, que exige 1 aparelho
   registrado no time; sem aparelho, cai para archive sem assinatura + `codesign` (ferramenta, que não tem essa trava) com as entitlements do projeto, e o export

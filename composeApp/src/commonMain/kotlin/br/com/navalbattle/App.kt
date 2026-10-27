@@ -61,7 +61,8 @@ import br.com.navalbattle.data.AppleAuth
 import br.com.navalbattle.data.AppleAuthResult
 import br.com.navalbattle.data.DeleteAccountResult
 import br.com.navalbattle.data.appleInitialName
-import br.com.navalbattle.data.appleNameCandidates
+import br.com.navalbattle.data.NameSaveOutcome
+import br.com.navalbattle.data.saveProfileWithNameFallback
 import br.com.navalbattle.data.shouldRevokeApple
 import br.com.navalbattle.data.GoogleAuth
 import br.com.navalbattle.data.GoogleAuthResult
@@ -3006,19 +3007,19 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /**
-     * Nome da Apple depois da fusão: tenta o nome puro; se o servidor recusar (nome já em uso),
-     * `nome-xxxx` com o início do id; se recusar de novo, volta ao nome da nuvem. A conta nunca
-     * fica com um nome que o servidor não aceita (a sincronização inteira dependeria dele).
+     * Nome da Apple depois da fusão: o mesmo fallback do sync ([saveProfileWithNameFallback]) com o nome puro,
+     * `nome-xxxx` e por fim o nome da nuvem. O perfil local só muda quando o servidor aceita; falha de rede
+     * não gasta o `givenName` (a Apple só o manda uma vez) nem renomeia. Nome ofensivo fica de fora (#58).
      */
     private suspend fun applyAppleName(session: Session, given: String, cloudName: String) {
-        for (candidate in appleNameCandidates(given, session.userId) + cloudName) {
-            if (candidate != cloudName && NameFilter.isOffensive(candidate)) continue  // filtro de nome (#58)
-            profile.rename(candidate)
-            val snap = profile.snapshot()
-            if (authed { s -> cloud.saveProfile(s, snap) } is CloudResult.Ok) {
-                lastPushed = snap
-                return
-            }
+        val wanted = given.trim().take(18)
+        if (wanted.isEmpty() || NameFilter.isOffensive(wanted)) return
+        val outcome = saveProfileWithNameFallback(profile.snapshot().copy(username = wanted), session.userId, cloudName) { a ->
+            authed { s -> cloud.saveProfile(s, a) }
+        }
+        if (outcome is NameSaveOutcome.Saved) {
+            profile.rename(outcome.profile.username)
+            lastPushed = outcome.profile
         }
     }
 
@@ -3038,10 +3039,24 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             .collectLatest { snap ->
                 delay(SYNC_DEBOUNCE_MS)
                 if (!profile.signedIn || snap == lastPushed) return@collectLatest
-                if (authed { session -> cloud.saveProfile(session, snap) } is CloudResult.Ok) {
-                    lastPushed = snap
-                }
+                pushCareer(snap, lastPushed?.username)
             }
+    }
+
+    /**
+     * Sobe a carreira e, se o servidor recusar o nome por já ser de outra conta (`profiles.username` é único,
+     * #59), tenta `nome-xxxx` e por fim o nome da nuvem, gravando o aceito no perfil local. Sem isso o
+     * upsert falhava para sempre com o mesmo nome. Só avança o [lastPushed] quando o servidor aceitou.
+     */
+    private suspend fun pushCareer(snap: CloudProfile, cloudName: String?): Boolean {
+        val userId = profile.currentSession()?.userId ?: return false
+        val outcome = saveProfileWithNameFallback(snap, userId, cloudName) { attempt ->
+            authed { session -> cloud.saveProfile(session, attempt) }
+        }
+        if (outcome !is NameSaveOutcome.Saved) return false
+        if (outcome.profile.username != snap.username) profile.rename(outcome.profile.username)
+        lastPushed = outcome.profile
+        return true
     }
 
     /**
@@ -3152,10 +3167,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                     lastPushed = cloudProfile.copy(credits = 0)  // o snapshot não leva dobrões
                     t(K.AUTH_RESTORED)
                 } else {
-                    val snap = profile.snapshot()
-                    authed { session -> cloud.saveProfile(session, snap) }
-                    lastPushed = snap
-                    t(K.AUTH_UPLOADED)
+                    // só diz "enviada" se o servidor aceitou (#59); nome repetido cai no fallback
+                    if (pushCareer(profile.snapshot(), cloudProfile?.username)) t(K.AUTH_UPLOADED) else null
                 }
             }
 

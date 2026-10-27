@@ -408,6 +408,10 @@ depois. Detalhe do schema em [supabase/online.sql](supabase/online.sql).
 
 A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
 
+- **Nome repetido na sincronização** (#59): `profiles.username` é único; se o upsert da carreira (merge do login ou sync automático) for recusado por
+  `duplicate key ... username`, o app tenta `nome-xxxx` e por fim o nome da nuvem (`data/NameSync.kt`), grava o aceito no perfil local e só então mostra
+  "carreira enviada". Falha de rede não renomeia nem marca como enviada.
+
 - Cadastro com e-mail, senha e nome de usuário; login abre sessão guardada localmente.
 - **Entrar com o Google**, sem senha nenhuma — cai na mesma carreira se o e-mail
   já tiver conta. O botão só aparece depois da configuração externa (ver
