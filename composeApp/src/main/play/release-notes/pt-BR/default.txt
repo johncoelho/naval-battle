@@ -1,1 +1,1 @@
-Novo: denunciar e bloquear jogadores no ranking, na busca, nos amigos e na partida online; nomes ofensivos sao recusados. Em Ajustes: bloqueados, privacidade, regras da comunidade e contato. No iPhone: entrar com a Apple e versao na App Store. Provocacao desconhecida nao aparece mais na partida.
+Correcao para o iPhone: o botao Entrar com a Apple e o envio para a App Store estavam travados por um erro de compilacao. No Android nada muda em relacao a 0.42.0: denunciar e bloquear jogadores, filtro de nomes ofensivos e links de privacidade e regras em Ajustes.

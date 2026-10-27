@@ -10,7 +10,7 @@ import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AuthenticationServices.ASAuthorizationAppleIDButton
 import platform.AuthenticationServices.ASAuthorizationAppleIDButtonStyle
-import platform.AuthenticationServices.ASAuthorizationAppleIDButtonType
+import platform.AuthenticationServices.ASAuthorizationAppleIDButtonTypeSignIn
 import platform.UIKit.UIControlEventTouchUpInside
 import platform.darwin.NSObject
 import platform.objc.sel_registerName
@@ -33,7 +33,7 @@ actual fun AppleSignInButton(modifier: Modifier, onClick: () -> Unit) {
     UIKitView(
         factory = {
             val button = ASAuthorizationAppleIDButton(
-                authorizationButtonType = ASAuthorizationAppleIDButtonType.ASAuthorizationAppleIDButtonTypeSignIn,
+                authorizationButtonType = ASAuthorizationAppleIDButtonTypeSignIn,
                 authorizationButtonStyle = ASAuthorizationAppleIDButtonStyle.ASAuthorizationAppleIDButtonStyleWhite
             )
             button.cornerRadius = 0.0

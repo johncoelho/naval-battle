@@ -64,6 +64,13 @@ mesmo ciclo da implementação.
 ```bash
 ./gradlew :composeApp:compileCommonMainKotlinMetadata
 ```
+  **O Kotlin/Native do iOS compila no Windows** (as klibs de plataforma vêm no `~/.konan`; só o link e os testes do simulador
+  precisam do Mac): `./gradlew :composeApp:compileKotlinIosSimulatorArm64` pega, antes do CI, nome de cinterop que não existe
+  (0.42.0: `ASAuthorizationAppleIDButtonTypeSignIn`). O `tools/release-check.sh` já o roda. Para conferir o nome real de uma API
+  da Apple: no Git Bash o caminho do perfil tem espaço e o comando direto falha; a forma que funciona é pelo `cmd`, com o nome curto:
+  `cmd //c "C:\Users\PCGAME~1\.konan\kotlin-native-prebuilt-windows-x86_64-2.3.21\bin\klib.bat dump-metadata C:\Users\PCGAME~1\.konan\kotlin-native-prebuilt-windows-x86_64-2.3.21\klib\platform\ios_simulator_arm64\org.jetbrains.kotlin.native.platform.<Framework>"`.
+  NS_ENUM é imprevisível: `ASAuthorizationAppleIDButtonType` virou `Long` com constantes de topo, mas `ASAuthorizationAppleIDButtonStyle`
+  virou `enum class` (`Style.ASAuthorizationAppleIDButtonStyleWhite`). Nunca presumir; conferir no dump.
   Esse comando **não** pega colisão de nome com macro C/Darwin no `ComposeApp.h` (`CHILD_MAX` na 0.34.8, `OPEN_MAX`
   na 0.34.10). Para isso o `tools/release-check.sh` reprova constante pública do `commonMain` (`val`/`const val` em
   CAIXA_ALTA, sem `private`/`internal`) cujo nome esteja em `tools/c-macros.txt`, seja `MAX`/`MIN` ou termine em

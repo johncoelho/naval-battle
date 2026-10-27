@@ -88,7 +88,7 @@ fi
 # do push (0.34.9). A compilação de metadados do commonMain não precisa de Mac e pega esse erro.
 # Roda só quando o push mexe em código comum ou na configuração do build. Compila a árvore de trabalho
 # (no CI ela é o próprio commit). RELEASE_CHECK_SKIP_METADATA=1 pula.
-if [ "${RELEASE_CHECK_SKIP_METADATA:-0}" != "1" ]    && echo "$changed" | grep -E '^(composeApp/src/commonMain/|gradle/|build\.gradle\.kts|settings\.gradle\.kts|gradle\.properties|composeApp/build\.gradle\.kts)' >/dev/null; then
+if [ "${RELEASE_CHECK_SKIP_METADATA:-0}" != "1" ]    && echo "$changed" | grep -E '^(composeApp/src/commonMain/|composeApp/src/iosMain/|gradle/|build\.gradle\.kts|settings\.gradle\.kts|gradle\.properties|composeApp/build\.gradle\.kts)' >/dev/null; then
   if [ "${OS:-}" = "Windows_NT" ]; then
     mkdir -p /d/tmp 2>/dev/null || true
     export TMP='D:\tmp' TEMP='D:\tmp'   # contorno do erro de loopback do Gradle (docs/BUILD.md)
@@ -100,6 +100,15 @@ if [ "${RELEASE_CHECK_SKIP_METADATA:-0}" != "1" ]    && echo "$changed" | grep -
     err "commonMain não compila como código comum (API só da JVM?). Veja os 'e:' acima; o iOS quebraria no CI."
   fi
   rm -f "$meta_log"
+  # o Kotlin/Native do iOS também compila aqui (as klibs de plataforma vêm no ~/.konan): pega nome de cinterop que não existe
+  # (0.42.0: ASAuthorizationAppleIDButtonTypeSignIn) antes de o CI do Mac quebrar. Só o link e os testes ficam para o Mac.
+  echo "release-check: compilando o Kotlin/Native do iOS (simulador)..."
+  ios_log=$(mktemp)
+  if ! bash ./gradlew :composeApp:compileKotlinIosSimulatorArm64 --console=plain > "$ios_log" 2>&1; then
+    grep -E '^e: ' "$ios_log" | head -20 || true
+    err "o iosMain não compila no Kotlin/Native (nome de API Apple/UIKit que não existe como escrito?). Veja os 'e:' acima."
+  fi
+  rm -f "$ios_log"
 fi
 
 if [ "$fail" -ne 0 ]; then

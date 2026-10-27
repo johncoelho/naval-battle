@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.42.1] — 2026-10-27 · Correção do build do iPhone: botão Entrar com a Apple (#13)
+
+App 0.42.1 (versionCode 110). Refs #13. Sem banco, sem mudança no jogo. A 0.42.0 saiu na Play, mas o `ios.yml` falhou no Mac.
+
+### Correção
+- `AppleSignInButton.ios.kt`: `ASAuthorizationAppleIDButtonType` é `Long` no Kotlin/Native, com constantes de topo, então
+  `ASAuthorizationAppleIDButtonType.ASAuthorizationAppleIDButtonTypeSignIn` não existia (`Unresolved reference`). Agora é a constante de topo
+  `ASAuthorizationAppleIDButtonTypeSignIn`. O estilo é `enum class` de verdade e segue `ASAuthorizationAppleIDButtonStyle.ASAuthorizationAppleIDButtonStyleWhite`.
+- Conferi todos os nomes Apple do `iosMain` do lote com o compilador: `compileKotlinIosSimulatorArm64`, `compileTestKotlinIosSimulatorArm64` e
+  `compileKotlinIosArm64` compilam no Windows (as klibs de plataforma estão no `~/.konan`). O `tools/release-check.sh` passa a rodar o do simulador, e a
+  skill `dev-cycle` e o MEMORY ganham a lição (NS_ENUM vira `Long` com constantes de topo ou `enum class`; conferir com `klib dump-metadata`).
+
 ## [Site] — 2026-10-26 · Política de privacidade e regras da comunidade (#57)
 
 Sem versão do app (só `site/`, commit com `[skip ci]` e publicação com `gh workflow run pages.yml --ref main`). Refs #57.

@@ -234,7 +234,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   esteja em `tools/c-macros.txt`, seja `MAX`/`MIN` ou termine em `_MAX`/`_MIN`. A lista vem dos `#define` dos headers do
   NDK (limits, errno, signal, stdint, stdio, math...) mais nomes Darwin à mão; o iOS reclamou de outro nome: acrescentar lá.
 - **API só da JVM no `commonMain` (`toSortedSet`, `String.format`, `java.*`, `synchronized`) só aparecia no CI do iOS**
-  (0.34.9, `Wallet.kt`): o alvo iOS é pulado no Windows (`compileKotlinIosSimulatorArm64` = SKIPPED). Pega local:
+  (0.34.9, `Wallet.kt`): antes se achava que o alvo iOS era pulado no Windows; na 0.42.1 se viu que `compileKotlinIosSimulatorArm64` compila
+  de verdade aqui (só o link e os testes do simulador precisam do Mac) e o `release-check` o roda. **Lição (0.42.0, #13): NS_ENUM do
+  Objective-C pode virar `Long` com constantes de topo (`ASAuthorizationAppleIDButtonTypeSignIn`) OU `enum class` (`ASAuthorizationAppleIDButtonStyle.…White`);
+  conferir no `klib dump-metadata` (docs na skill `dev-cycle`). Pega local:
   `./gradlew :composeApp:compileCommonMainKotlinMetadata` (TMP=D:\tmp). Conferido: com `toSortedSet` falha
   (`Unresolved reference`), sem ele passa. Está na skill `dev-cycle` (§3) e no `tools/release-check.sh` (0.34.10).
 - Backlog: [GitHub Issues](https://github.com/johncoelho/naval-battle/issues) — pendência nova vira issue, não linha aqui.
