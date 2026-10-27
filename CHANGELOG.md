@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Infra] — 2026-10-27 · iPhone na App Store: plano B de assinatura do archive (#56)
+
+Sem versão do app (só `.github/workflows/ios-release.yml` e docs; commit com `[skip ci]`). Refs #56. O ensaio `enviar=false` (run 40451463779) falhou no archive:
+`Ad Hoc code signing is not allowed with SDK 'iOS 26.5'` (Xcode 26.6). Autorizado pelo John mexer no workflow.
+
+### Infra
+- Archive com assinatura automática gerenciada pela chave da API (`CODE_SIGN_STYLE=Automatic`, `DEVELOPMENT_TEAM`, `-allowProvisioningUpdates` + `-authenticationKey*`), mantendo as
+  entitlements do projeto; sem aparelho registrado no time o Xcode não gera o perfil, e então cai para archive sem assinatura + `codesign` (ferramenta) com
+  `iosApp.entitlements`, que o export re-assina com o certificado de distribuição. Entrada nova `assinatura` (`automatica` | `sem-assinatura`) no disparo manual. A chave `.p8` é
+  gravada num passo próprio antes do archive e apagada no `always()`. Removidos `CODE_SIGN_IDENTITY=-`, `CODE_SIGN_STYLE=Manual` e o perfil vazio.
+- docs/BUILD.md, HISTORY e MEMORY com a decisão e com o que cada saída exige.
+
 ## [0.42.1] — 2026-10-27 · Correção do build do iPhone: botão Entrar com a Apple (#13)
 
 App 0.42.1 (versionCode 110). Refs #13. Sem banco, sem mudança no jogo. A 0.42.0 saiu na Play, mas o `ios.yml` falhou no Mac.

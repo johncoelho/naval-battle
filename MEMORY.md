@@ -146,8 +146,9 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Base de conhecimento e qualidade (10/10):** CLAUDE.md, HISTORY.md, MEMORY.md, especificação técnica
   no README, design system no Claude Design, skills; testes de unidade (`commonTest`) e trava de
   release no CI (`tools/release-check.sh`).
-- **iPhone na App Store (#56):** conta ativa, app criado no App Store Connect. Workflow `ios-release.yml` pronto
-  (sem fastlane; ensaio em 3 níveis em docs/BUILD.md). **Pendente do John:** chave da API (papel **Admin**) e os secrets
+- **iPhone na App Store (#56):** conta ativa, app criado no App Store Connect. Workflow `ios-release.yml` (sem fastlane; ensaio em 3 níveis em docs/BUILD.md).
+  **Plano A (ad hoc pelo Xcode) foi recusado pelo SDK 26.5; o plano B é o padrão:** assinatura automática pela chave da API (exige 1 aparelho registrado no time:
+  nome, plataforma iOS e UDID do iPhone) com queda para archive sem assinatura + `codesign` com as entitlements. Entrada `assinatura` do workflow escolhe. **Pendente do John:** chave da API (papel **Admin**) e os secrets
   `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (`APPLE_TEAM_ID` já é variável do repositório). Depois do primeiro `enviar=true`
   que der certo: `gh variable set IOS_APPSTORE_LIVE --body true`. O `.ipa` do Sideloadly segue até a versão da Apple ter tudo.
 - **Entrar com a Apple (#13, P0):** código pronto no iPhone; sai com a #56 e a #58. Console feito em 26/10 (App ID e

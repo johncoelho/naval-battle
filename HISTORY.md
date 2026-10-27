@@ -554,6 +554,11 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   (9) O console foi feito em 26/10 (App ID com Sign in with Apple, provedor Apple no Supabase só com o Client ID
   `br.com.navalbattle` e secret vazio); a chave `.p8` e os secrets da Edge ficam com o John, e a #13 sai sem eles.
 
+- **27/10 · iPhone: plano A recusado, plano B é o padrão** (#56) — porquê: o archive com assinatura ad hoc do Xcode (`CODE_SIGN_IDENTITY=-`) é proibido pelo SDK do iOS 26.5
+  (`Ad Hoc code signing is not allowed`, Xcode 26.6 do runner), então o workflow passa a usar assinatura automática gerenciada pela chave da API, que exige 1 aparelho
+  registrado no time; sem aparelho, cai para archive sem assinatura + `codesign` (ferramenta, que não tem essa trava) com as entitlements do projeto, e o export
+  re-assina com o certificado de distribuição da Apple. Entrada `assinatura` no `workflow_dispatch` para testar cada saída sem novo commit.
+
 ## Artefatos de referência (SPECs e designs aprovados)
 
 | Data | Artefato |
