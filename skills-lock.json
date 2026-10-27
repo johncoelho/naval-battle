@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "cartographer": {
+      "source": "kingbootoshi/cartographer",
+      "sourceType": "github",
+      "skillPath": "plugins/cartographer/skills/cartographer/SKILL.md",
+      "computedHash": "ed0931f1e2651a62092a632b7794ee2364b2b9ab382f951db39e5b74cf91c912"
+    }
+  }
+}

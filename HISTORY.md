@@ -392,6 +392,12 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
   pt-BR, 6 capturas, classificação +13 (12 no Brasil), preço grátis, 173 países (China continental e Vietnã
   fora: jogo online exige licença). Falta: chave da API (John), publicar a privacidade e o contato da
   revisão (John), pipeline #56, política #57, denunciar/bloquear #58 (App Store 1.2).
+- **27/10 · Skill `cartographer` instalada no projeto** (pedido do John, para gastar menos tokens): gera
+  `docs/CODEBASE_MAP.md` por subagentes Sonnet e evita releitura do código a cada sessão. Revisada antes
+  (script local de contagem de tokens, ignora `.env`, sem rede). **`claude-mem` e `headroom` não foram
+  instalados**: o primeiro é plugin com gancho que grava tudo (inclusive segredos) e gasta modelo para
+  comprimir; o segundo, como "skill", é uma cópia de 6 estrelas com scripts de autor desconhecido (o
+  Headroom de verdade é um proxy, outra camada de stack).
 - **25/10 · Play Age Signals 0.0.4 entra na stack: ECA Digital exige ler a faixa etária vinda da loja; a
   idade não sai do aparelho** (#49, aprovado pelo John; 0.34.7) — porquê: os termos da API proíbem usar o
   dado em publicidade, perfilamento ou analytics; desligar a personalização para menor é cumprimento da lei.
