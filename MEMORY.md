@@ -57,6 +57,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Lote 0.43.0 (#62, #14, #63), só código (sem push, sem deploy, sem Auth mexido):** aba Dobrões do iPhone chama as RPCs (era `Fail` no `Cloud.ios.kt`) e tem estado de falha (`doubloonAisleView`); push no iPhone pelo APNs (`AppDelegate`, `PushBridge`, Edge `push` com ramo `ios`); vincular Apple ID e Google (`Cloud.linkIdentity`, `data/AccountLinks.kt`, popup da 1ª autorização). **Pendente do John:** deploy da Edge `push` e teste (`push_outbox` para QA01 = `200`, iPhone = `ios:200`); "Allow manual linking" no Auth; decidir "Confirm email"; OK para o `ios-release.yml` exigir `aps-environment = production`. QA: DOBIOS-01 a DOBIOS-03, PSH-IOS-01 a 07, APL-12 a APL-17 (iPhone pelo TestFlight; `aps-environment` pode cair no `.ipa` do Sideloadly de conta gratuita).
+
 - **Lote 0.42.3 (#66, #61, #64):** frota no dobrável pela altura medida (`stackedTargetSideDp`), campo do nome acompanha o nome salvo (`followSaved`) e **sair da conta volta o aparelho a convidado** (`AppState.signOut(force)`, `Profile.resetToGuest`, `ProfileKeys.KEEP_ON_SIGN_OUT`: chave nova de carreira é apagada por padrão; só o que é do aparelho entra na lista). QA: NOM-02, SGN-01 a SGN-04, BIG-11 (medir `FLEET_HEADER_DP`=50 e `ABILITY_STRIP_MIN_DP`=340 no QA01, hoje somados do código). Pendente de decisão: "Zerar carreira" ainda apaga idioma e som.
 
 - **Nome repetido no sync (#59, 0.42.2):** merge e sync automático tratam `duplicate key username` com `nome-xxxx`/nome da nuvem (`data/NameSync.kt`); AUTH_UPLOADED só com o servidor aceitando. QA: NOM-01.

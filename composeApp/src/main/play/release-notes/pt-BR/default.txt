@@ -1,4 +1,4 @@
-Correcoes:
-- Sair da conta agora devolve o aparelho a convidado: nome, frota, progresso e dobroes ficam na sua conta e nao sobram para a proxima. Sem conexao, o app avisa antes de apagar.
-- O campo do nome de guerra mostra o nome da conta assim que voce entra, sem precisar reabrir o Perfil.
-- Dobraveis e tablets em janela media: sua frota (e as habilidades no Tatico) ganharam altura para aparecer inteiras.
+Novidades:
+- iPhone: a aba Dobroes abre normalmente, e o Premio Beta aparece para testadores. Se a conexao falhar, o jogo avisa e deixa tentar de novo.
+- iPhone: avisos de convite, amizade e partida chegam com o app fechado.
+- iPhone: vincule o Apple ID e o Google na mesma conta, pelo Perfil, e jogue com a mesma carreira nos dois.

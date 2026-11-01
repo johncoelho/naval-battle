@@ -109,6 +109,12 @@ não bloqueia o release Android. No Android: botão da Apple ausente, login Goog
 | APL-09 | P0 | Conta Apple → Excluir conta → confirmar → cancelar a janela da Apple | Nada é apagado; aparece `AUTH_DELETE_APPLE_CONFIRM` |
 | APL-10 | P1 | Conta Apple de relay que já tem nome → sair e entrar de novo com a Apple | Entra e **não** é renomeada (o nome só vale em carreira nova) |
 | APL-11 | P0 | Segunda conta Apple (relay) sem `givenName`, ou com nome igual ao de outra conta → jogar uma partida | A carreira sincroniza: no banco `profiles.username` é único e `xp` subiu; nenhum "Comandante" repetido; convidado que já tinha nome o mantém |
+| APL-12 | P0 | iPhone, conta Google com carreira → Perfil (Logins da conta: Google) → Vincular Apple ID → confirmar na Apple | Mensagem de vínculo feito; a linha passa a "Google · Apple"; no banco o mesmo `user_id` ganha identidade `apple`; o botão some |
+| APL-13 | P0 | iPhone, conta aberta pela Apple → Vincular Google | Linha "Apple · Google"; sair e entrar pelo Google abre a mesma carreira (e no Android também) |
+| APL-14 | P0 | iPhone sem conta, Apple ID que nunca autorizou o app (relay) → Entrar com a Apple | Antes de entrar aparece "Já joga Naval Battle com Google?"; **Sim** entra com o Google e vincula a Apple (mesma carreira); nenhuma conta nova vazia no banco |
+| APL-15 | P1 | Mesmo ponto do APL-14 → **Não, criar conta nova** (e, em outra tentativa, Cancelar) | Não: segue o login da Apple de sempre; Cancelar: nada acontece e nenhuma conta é criada |
+| APL-16 | P0 | Apple ID que já tem conta no jogo → em outra conta, Vincular Apple ID | Aparece a orientação de Apple ID já em outra conta; nada é alterado nas duas contas |
+| APL-17 | P1 | Auth com "Allow manual linking" desligado → Vincular | Mensagem "Vincular logins não está disponível agora"; nenhum dado muda. Conta com Apple vinculada → Excluir conta revoga na Apple |
 | NOM-01 | P1 | Conta A com o nome "X". Em outro aparelho, convidado escolhe "X" e joga partidas → entrar com Google/e-mail novo (carreira virgem) | Mostra "carreira enviada"; no banco a conta nova tem `username` `X-xxxx` (ou o nome da nuvem), `xp` e `matches` subiram; o aparelho passa a mostrar esse nome; a sincronização seguinte (nova partida) segue gravando |
 | NOM-02 | P1 | Convidado **sem nome** abre o Perfil e entra com Google (repetir com e-mail) sem sair da tela; depois digitar "Capita" no campo antes de uma nova sincronização (#61). No iPhone, quando houver build (não bloqueia) | O campo do nome de guerra mostra o nome da conta assim que o login termina, sem reabrir a tela; um nome já editado pelo jogador **não** é trocado sozinho |
 | SGN-01 | P0 | QA01 com carreira (nome, XP, frota e pintura comprada, dobrões) → Perfil → Sair da conta (#64) | A linha de privacidade aparece acima do botão. Depois de sair, o menu e o Perfil mostram "Convidado", avatar e insígnia padrão, 0 XP, frota padrão e **0 dobrões**; o campo do nome fica vazio sozinho. Idioma, som e música **não** mudam |
@@ -416,6 +422,9 @@ Desde 0.34.5 (#35), "testador" nos casos abaixo é conta com brinde: QA01, QA02 
 | DOB-21 | P1 | App 0.33.2 ou antes (sem `origem`), com a Edge atual: compra de teste de pacote | Compra de teste de pacote cai no legado (1× por dia pelo Tesouro); nada é cobrado; pacote de outro produto vira `premio_only` |
 | DOB-22 | P0 | Licença QA01 (conta de teste da lista "Licenca QA"), app 0.33.3 ou mais novo, `beta_store_enabled = 'true'`: comprar cada um dos 4 pacotes da vitrine (origem `vitrine`), 1 vez cada | Cada pacote credita uma vez (`credited`): o saldo sobe a quantidade do pacote; a Play consome a compra (não fica pendente); nenhuma cobrança |
 | DOB-23 | P0 | Reabrir a aba Dobrões com a compra presa da Bolsa de 18/10 (QA01, `dobroes_bolsa`, não consumida na Play). Depois, reabrir de novo | Credita 500 (`kind = test`) uma vez ao reabrir; reabrir de novo não soma. Se não entrar, conferir a Play antes de 3 dias (a Play devolve sozinha depois disso) |
+| DOBIOS-01 | P0 | iPhone (TestFlight) com conta que **não** é testador → Loja → aba Dobrões (#62) | Mostra "A compra de dobrões chega em breve."; nunca fica em "Abrindo o cofre…" |
+| DOBIOS-02 | P0 | iPhone com conta de testador e Prêmio ligado → aba Dobrões → pegar | Prêmio Beta aparece como no Android; ao pegar, aviso "+N" e saldo sobe; de novo no mesmo dia mostra o retorno à meia-noite |
+| DOBIOS-03 | P1 | Modo avião → abrir a aba Dobrões (iPhone e Android) | Aparece "Não consegui abrir o cofre..." com **Tentar de novo**; com a rede de volta, ao tocar a aba carrega |
 
 ### 12d. Anúncios premiados opcionais (#29)
 
@@ -477,6 +486,21 @@ Rodar `select public.push_check_run();` (SQL) e depois `select * from public.tes
 | PGS-04 | P1 | Ativação: Perfil → Conquistas | Abre a lista do Play Games com o progresso de navios afundados (até 100) e a recuperação da carreira feita |
 | PGS-05 | P1 | Ativação: ranqueada QA01 x QA02 | A pontuação da temporada aparece no placar "Ranqueada: melhor pontuação" |
 | PGS-06 | P0 | APK minificado (`assembleRelease -PqaSign`) com a lib real | Nada some pelo R8: login, conquista e placar funcionam |
+
+### 12f. Push no iPhone pelo APNs (#14)
+
+Só pelo **TestFlight/App Store** (produção do APNs); o `.ipa` do Sideloadly e o build local do Xcode não recebem. Pré-requisito do John: Edge `push`
+publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| PSH-IOS-01 | P0 | Abrir o app no iPhone com a permissão concedida | `push_tokens` ganha uma linha `platform = 'ios'` com o token (hex de 64+ caracteres) |
+| PSH-IOS-02 | P0 | Pedido de amizade ou convite de partida para o iPhone com o app fechado | Chega o aviso com o mesmo texto do Android; `push_outbox.result` traz `ios:200` (e `200` para o Android da conta) |
+| PSH-IOS-03 | P0 | "Receber convites" desligado nos Ajustes → chegar um convite | Nenhum aviso no iPhone, como no Android |
+| PSH-IOS-04 | P1 | Tocar no aviso "amigo online" (app fechado e em segundo plano) | O app abre na tela de Amigos; outros avisos só abrem o jogo |
+| PSH-IOS-05 | P1 | `daily_invite` (broadcast das 12h) com iPhone registrado | O iPhone recebe, dentro da janela 11h-15h e uma vez por dia |
+| PSH-IOS-06 | P1 | Negar a permissão de aviso → fechar e abrir o app várias vezes | Não pede de novo; segue sem erro; o token continua registrado |
+| PSH-IOS-07 | P1 | Linha de `push_outbox` com token iOS falso (`BadDeviceToken`) e outro aparelho na mesma conta | O token falso fica `check_status = 'unregistered'`; o outro aparelho recebe; `new_version` nunca vai ao iPhone |
 
 ## 13. Ajustes, notificações, feedback e idioma
 

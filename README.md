@@ -165,7 +165,7 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     um amigo ficar online** nos Ajustes (padrão ligado; inativa com os convites desligados).
     Anti-spam no servidor (`touch_presence`): 1 aviso por amigo a cada 3 h e até 5 por dia
     (`friend_online_pair_hours` e `friend_online_daily_cap` em `app_config`); nada para
-    quem está com o jogo aberto ou em partida. iPhone só depois do APNs. No teste fechado o convite pode ser **Casual ou
+    quem está com o jogo aberto ou em partida. No iPhone chega pelo APNs (0.43.0, #14). No teste fechado o convite pode ser **Casual ou
     Ranqueada** (chave `friend_ranked_enabled` em `app_config`; desligar no lançamento).
   - **Amigos** — tela própria (`ui/FriendsScreen.kt`): cartões com o avatar que cada
     comandante escolheu no perfil (`friend_avatars`; inicial do nome como reserva), nome e
@@ -245,13 +245,16 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   conexão"** com 60s de contagem; no fim, vitória por abandono, e a linha `DROP` fica na
   sala para o outro lado fechar a partida quando reconectar (`Match.lostByDisconnect`).
 
-- **Push (Android)** — a permissão é pedida ao chegar no menu e todo aparelho recebe os
+- **Push (Android e iPhone)** — a permissão é pedida ao chegar no menu e todo aparelho recebe os
   avisos gerais (versão nova, novidades), com ou sem conta; com conta, também convite de
   amigo para partida, pedido de amizade, pedido aceito e adversário encontrado na partida
   rápida — tudo como notificação mesmo com o jogo fechado
   (Firebase Cloud Messaging; envio pelo Supabase em `supabase/push.sql` e na Edge Function
-  `push`). Com o jogo aberto os balões do próprio jogo avisam. iPhone ainda sem push (APNs
-  exige conta paga da Apple). Configuração em [docs/BUILD.md](docs/BUILD.md#push-firebase).
+  `push`). Com o jogo aberto os balões do próprio jogo avisam. **iPhone (0.43.0, #14):** o app
+  registra o token do APNs (`UIApplicationDelegateAdaptor` + `PushBridge`, sem SDK) e a Edge `push` envia direto
+  ao APNs (HTTP/2, JWT ES256 com `APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID` e `APPLE_SIWA_KEY_P8`); mesmos tipos, textos
+  e anti-spam do Android, menos "versão nova" (a versão da Play não é a da App Store). Só produção: vale no
+  TestFlight e na App Store, não no `.ipa` do Sideloadly. Configuração em [docs/BUILD.md](docs/BUILD.md#push-firebase).
 
 ### Carreira
 
@@ -420,6 +423,11 @@ A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
 - **Entrar com o Google**, sem senha nenhuma — cai na mesma carreira se o e-mail
   já tiver conta. O botão só aparece depois da configuração externa (ver
   [docs/BUILD.md](docs/BUILD.md#login-com-google--configuração-do-lado-de-fora-do-código)).
+- **Vincular Apple ID e Google** (iPhone, 0.43.0, #63): o Perfil mostra "Logins da conta" e, no iPhone, os botões
+  "Vincular Apple ID" / "Vincular Google" para o que falta. O vínculo é **manual** (`Cloud.linkIdentity`, `id_token` +
+  sessão da conta, duas provas; exige "Allow manual linking" no Auth) e nunca junta duas contas com histórico. Na
+  1ª autorização da Apple sem conta aberta, o popup "Já joga Naval Battle com Google?" evita criar conta vazia.
+  Apple ID já em outra conta mostra a orientação (excluir a conta vazia e vincular). O Android só mostra a linha.
 - **Entrar com a Apple** (só no iPhone, App Store 4.8; #13): botão oficial da Apple acima do Google, com a dica
   "Já tem carreira? Escolha COMPARTILHAR MEU E-MAIL". E-mail verificado igual ao de uma conta existente
   **vincula** na mesma carreira (o Supabase liga as identidades sozinho). "Ocultar meu e-mail" (relay
@@ -531,7 +539,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `GoogleAuth` | login com Google | Credential Manager | fluxo OAuth com PKCE |
 | `AppleAuth` + `AppleSignInButton` | Entrar com a Apple (#13): `signIn()` devolve `AppleAuthResult` (token, nonce cru, código, nome); nunca lança | `supported = false`, botão vazio | `AuthenticationServices` (`ASAuthorizationController`), nonce sha256 hex; botão `ASAuthorizationAppleIDButton` via `UIKitView`; entitlement `iosApp.entitlements` |
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
-| `PushMessaging` | token de push | Firebase Messaging | sem push (APNs pendente) |
+| `PushMessaging` | token de push | Firebase Messaging | token do APNs via `PushBridge` (registro pelo `AppDelegate`, #14) |
 | `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes, a aba mostra só o Prêmio Beta (#30) |
 | `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque; recebe o `AdAudience` da faixa (`setAgeRestrictedTreatment` UNSPECIFIED/CHILD/TEEN, `npa`, classificação máxima; as marcas TFUA/TFCD são obsoletas e não se usam; a do UMP deriva do tratamento) (`supported = true`) | vazio (`supported = false`) |
 | `AgeSignals` | faixa etária da loja (#49): `read()` devolve `AgeBand`, nunca lança | Play Age Signals; `-PageFake` troca pelo `FakeAgeSignalsManager` no debug | sem leitura (`supported = false`, `UNKNOWN`) |
@@ -601,7 +609,8 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   consulta. Lógica pura em `game/LaunchNotice.kt`, marca local em `Prefs` (`launch_notice_seen_<id>` ou
   `_guest`), popup em `ui/LaunchNoticePopup.kt`. Ensaio: `supabase/tests/launch_notice_ensaio.sql`.
 - Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
-  FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase).
+  FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase) para Android e direto ao APNs
+  (`api.push.apple.com`, JWT ES256 com os segredos Apple) para iPhone; 410 e `BadDeviceToken` marcam o token.
 - Conferência de instalação (`supabase/push_check.sql`, #26): `push_check_run()` chama a Edge
   `push-check`, que pede ao FCM uma validação sem entrega (`validate_only`) para cada aparelho e grava
   `check_status`; pula os já `unregistered` e confere em lotes de 10. Relatório só da lista da Play:
