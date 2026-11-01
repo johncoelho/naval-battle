@@ -1,0 +1,7 @@
+# Vai na raiz do repo do jogo como factory.yaml. Configuracao, nao copia de dado.
+slug: naval-battle
+nome: Naval Battle
+repo: github.com/johncoelho/naval-battle
+quadro: { tipo: github-projects, owner: johncoelho, numero: 1 }
+squad: .claude/agents
+lojas: [google-play, app-store]
