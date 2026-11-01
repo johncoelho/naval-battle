@@ -408,6 +408,10 @@ depois. Detalhe do schema em [supabase/online.sql](supabase/online.sql).
 
 A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
 
+- **Sair da conta** (#64): `AppState.signOut(force)` sobe a carreira e a fila de prêmios; sem conseguir, o Perfil avisa (Tentar de novo / Sair mesmo assim / Cancelar). Ao sair, o aparelho volta a convidado
+  (`Profile.resetToGuest`): fica só o que é do aparelho (`ProfileKeys.KEEP_ON_SIGN_OUT`: idioma, som, avisos já vistos, compras entregues); nome, avatar, XP, itens, cartuchos, missões e dobrões vão a zero.
+  Chave nova de carreira nasce apagada ao sair; só a de aparelho entra na lista. "Excluir conta" usa a mesma limpeza do estado da conta (`clearAccountState`).
+- **Campo do nome** (#61): `followSaved` (`ui/NameDraft.kt`) faz o campo acompanhar o nome salvo enquanto o jogador não o editou.
 - **Nome repetido na sincronização** (#59): `profiles.username` é único; se o upsert da carreira (merge do login ou sync automático) for recusado por
   `duplicate key ... username`, o app tenta `nome-xxxx` e por fim o nome da nuvem (`data/NameSync.kt`), grava o aceito no perfil local e só então mostra
   "carreira enviada". Falha de rede não renomeia nem marca como enviada.
@@ -701,7 +705,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 - **Telas grandes:** sem `screenOrientation` no manifesto (o Android 16 ignora a trava a partir de 600 dp);
   a `MainActivity` trava retrato só abaixo de 600 dp. `ScreenFrame` (roteador) limita o conteúdo a
   `Naval.contentMaxWidth` (600 dp) e popups usam `navalPanelWidth()`; a batalha escolhe o arranjo dos
-  tabuleiros por `boardLayout(larguraDp, alturaDp)` e o do posicionamento por `placementBoardSideDp` (funções puras, `BoardLayoutTest`); empilhado, o alvo reserva o anúncio e uma altura mínima para a frota. Layout novo calcula
+  tabuleiros por `boardLayout(larguraDp, alturaDp)` e o do posicionamento por `placementBoardSideDp` (funções puras, `BoardLayoutTest`); empilhado, o alvo usa a altura **medida** da área abaixo do topo (`stackedTargetSideDp`, #66) e deixa à faixa de frota 200 dp de tabuleiro (e as habilidades inteiras no Tático). Layout novo calcula
   pelo tamanho da janela (`BoxWithConstraints`), nunca pelo modelo do aparelho. iPhone fica só em retrato.
 
 ### Qualidade

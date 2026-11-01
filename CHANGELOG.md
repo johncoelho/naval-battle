@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.42.3] — 2026-11-01 · Sair da conta volta a convidado, nome no Perfil e frota no dobrável (#64, #61, #66)
+
+App 0.42.3 (versionCode 112). Refs #64, #61, #66.
+
+### Corrigido
+- **Sair da conta (#64):** o aparelho volta a ser de um convidado novo. `AppState.signOut(force)` sobe antes a carreira e a fila de prêmios online; sem conseguir (sem rede), devolve `UNSAVED` e o Perfil mostra "Progresso não sincronizado" com **Tentar de novo**, **Sair mesmo assim** e **Cancelar**, sem apagar nada. Ao sair, `profile.signOut()` vem antes de `profile.resetToGuest()` (o `autoSync` não sobe a carreira zerada para a conta antiga) e só ficam as chaves do aparelho (`ProfileKeys.KEEP_ON_SIGN_OUT`: idioma, som, música, lembrete, avisos já vistos, compras já entregues, faixa etária e cota de avaliação); nome, avatar, insígnia, XP, estatísticas, itens, cartuchos, missões do dia e dobrões vão a zero ("Convidado", 0 dobrões, itens padrão). `clearAccountState()` zera amigos, badges, convite, passe, milhas, diário, desafio da semana, anúncios, vitrine e a fila de prêmios (também usado ao excluir a conta). O merge com a nuvem descarta a resposta se a conta mudou no meio do caminho. Texto novo nas três línguas (`SIGN_OUT_*`) e `AUTH_SIGNED_OUT` atualizado.
+- **Campo do nome de guerra (#61):** o campo copiava o nome só ao montar a tela; o login com Google dentro do Perfil mudava o nome salvo e o campo ficava vazio. `followSaved` (`ui/NameDraft.kt`) faz o campo acompanhar o nome salvo enquanto o jogador não o editou (o campo do nome da conta também). Ao sair da conta, o campo volta a vazio sozinho.
+- **Frota própria no dobrável (#66):** o alvo empilhado deixava ~157 dp para o tabuleiro da frota (e as habilidades do Tático rolavam) porque `boardLayout` usava constantes estimadas. `stackedTargetSideDp` usa a altura **medida** da área abaixo do topo (`BoxWithConstraints` na faixa empilhada): a frota mantém 200 dp de tabuleiro (cabeçalho de 50 dp à parte) e, no Tático, as habilidades inteiras quando a janela comporta; piso de 160 dp para o alvo. Celular e tablet lado a lado sem mudança.
+
+### Testes
+- `NameDraftTest`, `SignOutRulesTest` (inclui `GuestCareer.DEFAULT`), `ProfileKeysTest` e novos casos do `BoardLayoutTest`. QA: NOM-02, SGN-01 a SGN-04 e BIG-11 com medida objetiva.
+
 ## [0.42.2] — 2026-10-27 · Nome de guerra repetido não trava mais a sincronização da carreira (#59)
 
 App 0.42.2 (versionCode 111). Refs #59.

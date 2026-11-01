@@ -57,6 +57,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Lote 0.42.3 (#66, #61, #64):** frota no dobrável pela altura medida (`stackedTargetSideDp`), campo do nome acompanha o nome salvo (`followSaved`) e **sair da conta volta o aparelho a convidado** (`AppState.signOut(force)`, `Profile.resetToGuest`, `ProfileKeys.KEEP_ON_SIGN_OUT`: chave nova de carreira é apagada por padrão; só o que é do aparelho entra na lista). QA: NOM-02, SGN-01 a SGN-04, BIG-11 (medir `FLEET_HEADER_DP`=50 e `ABILITY_STRIP_MIN_DP`=340 no QA01, hoje somados do código). Pendente de decisão: "Zerar carreira" ainda apaga idioma e som.
+
 - **Nome repetido no sync (#59, 0.42.2):** merge e sync automático tratam `duplicate key username` com `nome-xxxx`/nome da nuvem (`data/NameSync.kt`); AUTH_UPLOADED só com o servidor aceitando. QA: NOM-01.
 
 - **Denunciar, bloquear e filtro de nome (#58, 0.42.0):** migração `player_safety` (`supabase/safety.sql`) **aplicada em 26/10** (ensaio

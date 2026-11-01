@@ -1,1 +1,4 @@
-Correcao: se voce escolhia um nome de guerra que outro comandante ja usa e depois entrava numa conta, a sua carreira (XP e estatisticas) parava de ir para a nuvem sem aviso. Agora o app usa nome-xxxx quando o nome ja existe e a carreira volta a sincronizar. A mensagem de carreira enviada so aparece quando o servidor aceitou de verdade.
+Correcoes:
+- Sair da conta agora devolve o aparelho a convidado: nome, frota, progresso e dobroes ficam na sua conta e nao sobram para a proxima. Sem conexao, o app avisa antes de apagar.
+- O campo do nome de guerra mostra o nome da conta assim que voce entra, sem precisar reabrir o Perfil.
+- Dobraveis e tablets em janela media: sua frota (e as habilidades no Tatico) ganharam altura para aparecer inteiras.
