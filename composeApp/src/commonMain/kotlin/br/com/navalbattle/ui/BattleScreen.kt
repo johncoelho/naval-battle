@@ -377,7 +377,7 @@ fun BattleScreen(state: AppState, match: Match) {
                     val targetSide = stackedTargetSideDp(
                         contentWidthDp = stackedContentWidthDp(windowWidthDp),
                         areaHeightDp = maxHeight.value,
-                        phone = windowWidthDp < 600f,
+                        phone = windowWidthDp < PHONE_MAX_WIDTH_DP,
                         tactical = match.mode == GameMode.TACTICAL
                     )
                     Column(Modifier.fillMaxSize()) {

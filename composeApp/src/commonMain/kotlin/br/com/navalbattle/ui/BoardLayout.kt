@@ -51,7 +51,7 @@ internal const val PLACEMENT_RESERVED_DP = 330f
 internal const val PLACEMENT_MIN_BOARD_DP = 160f
 
 /** Abaixo desta largura de janela (dp) é celular: os tabuleiros ocupam a largura útil, sem reservas. */
-private const val PHONE_MAX_WIDTH_DP = 600f
+internal const val PHONE_MAX_WIDTH_DP = 600f
 
 /** Margem horizontal do posicionamento (20 dp de cada lado), para comparar com a largura da janela. */
 private const val PLACEMENT_MARGIN_DP = 40f

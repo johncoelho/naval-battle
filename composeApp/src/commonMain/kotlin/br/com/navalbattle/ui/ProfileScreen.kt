@@ -95,6 +95,8 @@ fun ProfileScreen(state: AppState) {
     // sair da conta com progresso que a nuvem ainda não tem (#64): avisa antes de apagar
     var signOutUnsaved by remember { mutableStateOf(false) }
     var signOutBusy by remember { mutableStateOf(false) }
+    // sair pelo aviso fecha o overlay: a mensagem de sessão encerrada sobe para o AccountSection
+    var signedOutNotice by remember { mutableStateOf(false) }
     val signOutScope = rememberCoroutineScope()
     var openBadge by remember { mutableStateOf<EarnedBadge?>(null) }
     // a abertura do app já carrega, mas um badge pode ter chegado depois (feedback aprovado)
@@ -212,7 +214,7 @@ fun ProfileScreen(state: AppState) {
 
                 Gap(22)
                 Box(Modifier.onGloballyPositioned { accountTop = it.positionInParent().y.toInt() }) {
-                    AccountSection(state, onSignOutUnsaved = { signOutUnsaved = true })
+                    AccountSection(state, signedOutNotice, onSignOutUnsaved = { signOutUnsaved = true })
                 }
 
                 Gap(22)
@@ -423,7 +425,7 @@ fun ProfileScreen(state: AppState) {
                         signOutScope.launch {
                             val result = state.signOut()
                             signOutBusy = false
-                            if (result == SignOutResult.DONE) signOutUnsaved = false
+                            if (result == SignOutResult.DONE) { signOutUnsaved = false; signedOutNotice = true }
                         }
                     }
                     Gap(8)
@@ -433,6 +435,7 @@ fun ProfileScreen(state: AppState) {
                             state.signOut(force = true)
                             signOutBusy = false
                             signOutUnsaved = false
+                            signedOutNotice = true
                         }
                     }
                     Gap(8)
@@ -485,7 +488,7 @@ fun ProfileScreen(state: AppState) {
  * na tela separada AuthScreen; juntar as duas evita duas paradas para a mesma coisa.
  */
 @Composable
-private fun AccountSection(state: AppState, onSignOutUnsaved: () -> Unit) {
+private fun AccountSection(state: AppState, signedOutNotice: Boolean, onSignOutUnsaved: () -> Unit) {
     val profile = state.profile
     var creating by remember { mutableStateOf(!profile.signedIn) }
     var email by remember { mutableStateOf(profile.accountEmail) }
@@ -499,6 +502,10 @@ private fun AccountSection(state: AppState, onSignOutUnsaved: () -> Unit) {
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var failed by remember { mutableStateOf(false) }
+    // só liga quando o aviso de "não sincronizado" terminou em saída (não mexe no AUTH_DELETED do excluir conta)
+    LaunchedEffect(signedOutNotice) {
+        if (signedOutNotice) { failed = false; message = t(K.AUTH_SIGNED_OUT) }
+    }
     var showForgot by remember { mutableStateOf(false) }
     var showChangePassword by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
