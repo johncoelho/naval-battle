@@ -3,7 +3,12 @@ package br.com.navalbattle
 import br.com.navalbattle.ui.BATTLE_CHROME_DP
 import br.com.navalbattle.ui.BATTLE_CALLOUT_DP
 import br.com.navalbattle.ui.BoardArrangement
-import br.com.navalbattle.ui.MIN_FLEET_DP
+import br.com.navalbattle.ui.ABILITY_STRIP_MIN_DP
+import br.com.navalbattle.ui.FLEET_HEADER_DP
+import br.com.navalbattle.ui.MIN_FLEET_BOARD_DP
+import br.com.navalbattle.ui.STACKED_MIN_TARGET_DP
+import br.com.navalbattle.ui.stackedContentWidthDp
+import br.com.navalbattle.ui.stackedTargetSideDp
 import br.com.navalbattle.ui.PLACEMENT_MIN_BOARD_DP
 import br.com.navalbattle.ui.PLACEMENT_RESERVED_DP
 import br.com.navalbattle.ui.placementBoardSideDp
@@ -66,7 +71,7 @@ class BoardLayoutTest {
             val l = boardLayout(w, h)
             assertEquals(BoardArrangement.STACKED, l.arrangement, "${w}x$h")
             val sobra = h - BATTLE_CHROME_DP - BATTLE_CALLOUT_DP - l.boardSideDp
-            assertTrue(sobra >= MIN_FLEET_DP, "frota sem altura minima em ${w}x$h: $sobra")
+            assertTrue(sobra >= FLEET_HEADER_DP + MIN_FLEET_BOARD_DP, "frota sem altura minima em ${w}x$h: $sobra")
         }
     }
 
@@ -99,5 +104,72 @@ class BoardLayoutTest {
         val l = boardLayout(2560f, 1440f)
         assertEquals(BoardArrangement.SIDE_BY_SIDE, l.arrangement)
         assertTrue(l.boardSideDp <= (1100f - 32f - 16f) / 2f)
+    }
+
+    // ---- #66: alvo empilhado a partir da altura MEDIDA da area abaixo do topo ----
+
+    private val dobravelAreas = listOf(464f, 560f, 664f) // 820x700, intermediaria e 820x900 (menos insets e topo)
+
+    @Test
+    fun dobravelClassicoDeixaDuzentosDpDeTabuleiroNaFrota() {
+        val content = stackedContentWidthDp(820f)
+        dobravelAreas.forEach { area ->
+            val alvo = stackedTargetSideDp(content, area, phone = false, tactical = false)
+            val tabuleiroDaFrota = area - BATTLE_CALLOUT_DP - alvo - FLEET_HEADER_DP
+            if (alvo > STACKED_MIN_TARGET_DP) {
+                assertTrue(tabuleiroDaFrota >= MIN_FLEET_BOARD_DP, "frota com $tabuleiroDaFrota dp em area $area")
+            } else {
+                // preso no piso: a area e baixa demais, o alvo nao encolhe mais
+                assertEquals(STACKED_MIN_TARGET_DP, alvo)
+            }
+        }
+        // 664 dp (820x900) nao toca no piso: a frota tem 200 dp ou mais de tabuleiro
+        val alvo900 = stackedTargetSideDp(content, 664f, phone = false, tactical = false)
+        assertTrue(664f - BATTLE_CALLOUT_DP - alvo900 - FLEET_HEADER_DP >= MIN_FLEET_BOARD_DP)
+    }
+
+    @Test
+    fun dobravelTaticoDeixaAsHabilidadesInteirasQuandoCabe() {
+        val content = stackedContentWidthDp(820f)
+        dobravelAreas.forEach { area ->
+            val alvo = stackedTargetSideDp(content, area, phone = false, tactical = true)
+            val faixa = area - BATTLE_CALLOUT_DP - alvo
+            if (alvo > STACKED_MIN_TARGET_DP) {
+                assertTrue(faixa >= ABILITY_STRIP_MIN_DP, "faixa de $faixa dp em area $area")
+            } else {
+                assertEquals(STACKED_MIN_TARGET_DP, alvo)
+            }
+        }
+        // com 664 dp a faixa inteira cabe sem rolar
+        val alvo = stackedTargetSideDp(content, 664f, phone = false, tactical = true)
+        assertTrue(664f - BATTLE_CALLOUT_DP - alvo >= ABILITY_STRIP_MIN_DP)
+    }
+
+    @Test
+    fun celularFicaComALarguraUtilSemMudar() {
+        assertEquals(380f, stackedTargetSideDp(stackedContentWidthDp(412f), 300f, phone = true, tactical = true))
+        assertEquals(328f, stackedTargetSideDp(stackedContentWidthDp(360f), 500f, phone = true, tactical = false))
+    }
+
+    @Test
+    fun alvoEmpilhadoNuncaPassaDaLarguraNemFicaNegativo() {
+        listOf(0f, 50f, 300f, 464f, 900f, 4000f).forEach { area ->
+            listOf(true, false).forEach { tactical ->
+                val alvo = stackedTargetSideDp(568f, area, phone = false, tactical = tactical)
+                assertTrue(alvo <= 568f, "passou da largura em area $area")
+                assertTrue(alvo >= STACKED_MIN_TARGET_DP, "abaixo do piso em area $area")
+            }
+        }
+        assertEquals(0f, stackedTargetSideDp(0f, 0f, phone = false, tactical = false))
+        assertEquals(0f, stackedTargetSideDp(-5f, 100f, phone = true, tactical = false))
+        // largura menor que o piso: nao estica alem da largura
+        assertEquals(100f, stackedTargetSideDp(100f, 0f, phone = false, tactical = false))
+    }
+
+    @Test
+    fun arranjoNaoMudaNoDobravel() {
+        assertEquals(BoardArrangement.STACKED, boardLayout(820f, 700f).arrangement)
+        assertEquals(BoardArrangement.STACKED, boardLayout(820f, 900f).arrangement)
+        assertEquals(BoardArrangement.SIDE_BY_SIDE, boardLayout(1280f, 800f).arrangement)
     }
 }

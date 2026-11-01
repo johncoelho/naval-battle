@@ -217,6 +217,7 @@ fun BattleScreen(state: AppState, match: Match) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // tablet / dobrável em paisagem: os dois tabuleiros lado a lado (BoardLayout.kt)
         val layout = boardLayout(maxWidth.value, maxHeight.value)
+        val windowWidthDp = maxWidth.value
         val sideBySide = layout.sideBySide
         Column(
             Modifier
@@ -370,43 +371,54 @@ fun BattleScreen(state: AppState, match: Match) {
                     }
                 }
             } else {
-                // empilhado: o alvo respeita a altura, e a frota própria mantém o mínimo (boardLayout)
-                targetBoard(Modifier.size(layout.boardSideDp.dp).align(Alignment.CenterHorizontally))
+                // empilhado (#66): o alvo usa a altura REAL que sobra abaixo do topo (medida aqui) e a faixa de
+                // frota/habilidades mantém o mínimo; a conta antiga, com constantes estimadas, deixava ~157 dp
+                BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                    val targetSide = stackedTargetSideDp(
+                        contentWidthDp = stackedContentWidthDp(windowWidthDp),
+                        areaHeightDp = maxHeight.value,
+                        phone = windowWidthDp < 600f,
+                        tactical = match.mode == GameMode.TACTICAL
+                    )
+                    Column(Modifier.fillMaxSize()) {
+                        targetBoard(Modifier.size(targetSide.dp).align(Alignment.CenterHorizontally))
 
-                // mensagens ficam abaixo do tabuleiro para não cobrir a ação
-                Box(
-                    Modifier.fillMaxWidth().height(56.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CalloutBanner(match.callout)
-                }
-
-                // no modo local as habilidades ficam sozinhas, acima do placar — não há
-                // painel de frota própria ali para dividir a faixa com elas
-                if (match.mode == GameMode.TACTICAL && local) {
-                    AbilityColumn(state, match, Modifier.fillMaxWidth()) { ability, ignoreCooldown ->
-                        match.selectAbility(ability, ignoreCooldown)
-                    }
-                }
-
-                when {
-                    local -> {
-                        Spacer(Modifier.weight(1f))
-                        Scoreboard(match)
-                    }
-                    // tático contra a IA ou em rede: frota própria à esquerda, habilidades
-                    // à direita, lado a lado — as duas coisas cabem na mesma faixa
-                    match.mode == GameMode.TACTICAL -> {
-                        Row(
-                            Modifier.fillMaxWidth().weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        // mensagens ficam abaixo do tabuleiro para não cobrir a ação
+                        Box(
+                            Modifier.fillMaxWidth().height(56.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1.1f))
-                            AbilityColumn(state, match, Modifier.weight(1f), abilityUse)
+                            CalloutBanner(match.callout)
+                        }
+
+                        // no modo local as habilidades ficam sozinhas, acima do placar — não há
+                        // painel de frota própria ali para dividir a faixa com elas
+                        if (match.mode == GameMode.TACTICAL && local) {
+                            AbilityColumn(state, match, Modifier.fillMaxWidth()) { ability, ignoreCooldown ->
+                                match.selectAbility(ability, ignoreCooldown)
+                            }
+                        }
+
+                        when {
+                            local -> {
+                                Spacer(Modifier.weight(1f))
+                                Scoreboard(match)
+                            }
+                            // tático contra a IA ou em rede: frota própria à esquerda, habilidades
+                            // à direita, lado a lado — as duas coisas cabem na mesma faixa
+                            match.mode == GameMode.TACTICAL -> {
+                                Row(
+                                    Modifier.fillMaxWidth().weight(1f),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1.1f))
+                                    AbilityColumn(state, match, Modifier.weight(1f), abilityUse)
+                                }
+                            }
+                            // clássico contra a IA ou em rede: só a frota própria, tela cheia
+                            else -> OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1f))
                         }
                     }
-                    // clássico contra a IA ou em rede: só a frota própria, tela cheia
-                    else -> OwnFleetPanel(state, match, viewSide, incomingImpact, incomingScan, Modifier.weight(1f))
                 }
             }
         }

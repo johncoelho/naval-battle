@@ -26,8 +26,23 @@ internal const val BATTLE_CHROME_DP = 180f
 /** Altura do anúncio do último tiro, abaixo (ou acima) do alvo. */
 internal const val BATTLE_CALLOUT_DP = 56f
 
-/** Altura mínima que a frota própria e as habilidades mantêm quando os tabuleiros ficam empilhados. */
-internal const val MIN_FLEET_DP = 200f
+/** Altura mínima do TABULEIRO da frota própria quando os tabuleiros ficam empilhados (#66). */
+internal const val MIN_FLEET_BOARD_DP = 200f
+
+/**
+ * Altura do cabeçalho do `OwnFleetPanel` (gap, rótulo, contagem, gap, folga de baixo) antes do tabuleiro.
+ * Somado do código: 6 + 14 + 2 + 16 + 6 + 4 = 48, arredondado para 50. O QA confere a medida real no BIG-11.
+ */
+internal const val FLEET_HEADER_DP = 50f
+
+/**
+ * Altura da `AbilityColumn` sem rolar: título (14) + gap (8) + 4 linhas de 75 (botão 48 + 3 + rótulo 14 + 10 de folga)
+ * + dica (14), arredondado para 340. O QA confere a medida real no BIG-11.
+ */
+internal const val ABILITY_STRIP_MIN_DP = 340f
+
+/** Menor lado do alvo empilhado, mesmo em janela muito baixa. */
+internal const val STACKED_MIN_TARGET_DP = 160f
 
 /** Altura do posicionamento fora o tabuleiro: barra, dica, legenda mínima, dois botões e "encerrar". */
 internal const val PLACEMENT_RESERVED_DP = 330f
@@ -56,7 +71,7 @@ private const val STACKED_MAX_WIDTH_DP = 600f
 fun boardLayout(widthDp: Float, heightDp: Float): BoardLayout {
     val usableHeight = (heightDp - BATTLE_CHROME_DP).coerceAtLeast(0f)
     // empilhado: o anúncio e uma altura mínima da frota própria saem da conta do alvo
-    val stackedHeight = (usableHeight - BATTLE_CALLOUT_DP - MIN_FLEET_DP).coerceAtLeast(0f)
+    val stackedHeight = (usableHeight - BATTLE_CALLOUT_DP - FLEET_HEADER_DP - MIN_FLEET_BOARD_DP).coerceAtLeast(0f)
     val wide = widthDp >= SIDE_BY_SIDE_MIN_WIDTH_DP && widthDp >= heightDp * 1.2f
     return if (wide) {
         val content = minOf(widthDp, SIDE_BY_SIDE_MAX_WIDTH_DP) - SCREEN_PADDING_DP
@@ -67,6 +82,25 @@ fun boardLayout(widthDp: Float, heightDp: Float): BoardLayout {
         val side = if (widthDp < PHONE_MAX_WIDTH_DP) content else minOf(content, stackedHeight)
         BoardLayout(BoardArrangement.STACKED, side)
     }
+}
+
+/** Largura útil do conteúdo empilhado (janela limitada a 600 dp, menos a margem), como em [boardLayout]. */
+internal fun stackedContentWidthDp(widthDp: Float): Float = minOf(widthDp, STACKED_MAX_WIDTH_DP) - SCREEN_PADDING_DP
+
+/**
+ * Lado do alvo no arranjo empilhado, a partir da altura **medida** da área abaixo do topo da batalha (#66).
+ * Sobra para a faixa de frota/habilidades o que o alvo e o anúncio não tomam; o alvo encolhe até a faixa
+ * ter o mínimo (frota: cabeçalho + 200 dp de tabuleiro; tático: o maior entre isso e as habilidades inteiras).
+ * Celular (< 600 dp): a largura útil, sem mudança. Nunca passa de [contentWidthDp], nunca abaixo do piso
+ * (a não ser que a própria largura seja menor) e nunca negativo.
+ */
+fun stackedTargetSideDp(contentWidthDp: Float, areaHeightDp: Float, phone: Boolean, tactical: Boolean): Float {
+    val content = contentWidthDp.coerceAtLeast(0f)
+    if (phone) return content
+    val fleetMin = FLEET_HEADER_DP + MIN_FLEET_BOARD_DP
+    val stripMin = if (tactical) maxOf(fleetMin, ABILITY_STRIP_MIN_DP) else fleetMin
+    val fit = areaHeightDp.coerceAtLeast(0f) - BATTLE_CALLOUT_DP - stripMin
+    return minOf(content, maxOf(fit, STACKED_MIN_TARGET_DP))
 }
 
 /**
