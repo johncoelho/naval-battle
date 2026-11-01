@@ -6,6 +6,57 @@ import androidx.compose.runtime.setValue
 import br.com.navalbattle.data.CloudProfile
 import br.com.navalbattle.data.Prefs
 import br.com.navalbattle.data.Session
+import br.com.navalbattle.game.ProfileKeys.K_ABILITY_CHARGES
+import br.com.navalbattle.game.ProfileKeys.K_ACCEPT_INVITES
+import br.com.navalbattle.game.ProfileKeys.K_AVATAR
+import br.com.navalbattle.game.ProfileKeys.K_BEST_STREAK
+import br.com.navalbattle.game.ProfileKeys.K_CREDITS
+import br.com.navalbattle.game.ProfileKeys.K_CURRENCY_TIP
+import br.com.navalbattle.game.ProfileKeys.K_DAILY_ABILITIES
+import br.com.navalbattle.game.ProfileKeys.K_DAILY_BEST_ACCURACY
+import br.com.navalbattle.game.ProfileKeys.K_DAILY_DAY
+import br.com.navalbattle.game.ProfileKeys.K_DAILY_PLAYED
+import br.com.navalbattle.game.ProfileKeys.K_DAILY_SUNK
+import br.com.navalbattle.game.ProfileKeys.K_DAILY_WON
+import br.com.navalbattle.game.ProfileKeys.K_DEVICE_CHECK
+import br.com.navalbattle.game.ProfileKeys.K_EMAIL
+import br.com.navalbattle.game.ProfileKeys.K_EQUIPPED
+import br.com.navalbattle.game.ProfileKeys.K_FEEDBACK_NEXT_AT
+import br.com.navalbattle.game.ProfileKeys.K_FEEDBACK_OPT_OUT
+import br.com.navalbattle.game.ProfileKeys.K_FLEET
+import br.com.navalbattle.game.ProfileKeys.K_FLEETS
+import br.com.navalbattle.game.ProfileKeys.K_FRIEND_ONLINE_PUSH
+import br.com.navalbattle.game.ProfileKeys.K_GUIDED_DONE
+import br.com.navalbattle.game.ProfileKeys.K_HITS
+import br.com.navalbattle.game.ProfileKeys.K_INSIGNIA
+import br.com.navalbattle.game.ProfileKeys.K_LANG
+import br.com.navalbattle.game.ProfileKeys.K_LAST_MODE
+import br.com.navalbattle.game.ProfileKeys.K_LAST_OPEN_DAY
+import br.com.navalbattle.game.ProfileKeys.K_MATCHES
+import br.com.navalbattle.game.ProfileKeys.K_MUSIC
+import br.com.navalbattle.game.ProfileKeys.K_NAME
+import br.com.navalbattle.game.ProfileKeys.K_ONLINE_REWARDS
+import br.com.navalbattle.game.ProfileKeys.K_OWNED
+import br.com.navalbattle.game.ProfileKeys.K_QUICK_OFFER
+import br.com.navalbattle.game.ProfileKeys.K_QUICK_OFFER_KIND
+import br.com.navalbattle.game.ProfileKeys.K_REFRESH
+import br.com.navalbattle.game.ProfileKeys.K_REMINDER
+import br.com.navalbattle.game.ProfileKeys.K_RETURN_BONUS_DAY
+import br.com.navalbattle.game.ProfileKeys.K_RETURN_NOTICE_DAY
+import br.com.navalbattle.game.ProfileKeys.K_RETURN_PENDING_DAY
+import br.com.navalbattle.game.ProfileKeys.K_SEASON_ACCEPTED
+import br.com.navalbattle.game.ProfileKeys.K_SFX
+import br.com.navalbattle.game.ProfileKeys.K_SHOTS
+import br.com.navalbattle.game.ProfileKeys.K_STREAK
+import br.com.navalbattle.game.ProfileKeys.K_SUNK
+import br.com.navalbattle.game.ProfileKeys.K_THEME_TRACK
+import br.com.navalbattle.game.ProfileKeys.K_TOKEN
+import br.com.navalbattle.game.ProfileKeys.K_UID
+import br.com.navalbattle.game.ProfileKeys.K_WALLET
+import br.com.navalbattle.game.ProfileKeys.K_WELCOME_DONE
+import br.com.navalbattle.game.ProfileKeys.K_WELCOME_PENDING
+import br.com.navalbattle.game.ProfileKeys.K_WINS
+import br.com.navalbattle.game.ProfileKeys.K_XP
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 
@@ -535,6 +586,40 @@ class Profile(private val prefs: Prefs) {
     }
 
     /**
+     * Depois de [signOut]: o aparelho volta a ser de um convidado novo (#64). Só fica o que é do aparelho
+     * ([ProfileKeys.KEEP_ON_SIGN_OUT]: idioma, som, avisos já vistos); nome, avatar, insígnia, XP, estatísticas,
+     * itens, cartuchos, missões do dia e dobrões vão embora, para a próxima conta não herdar nada. A ordem
+     * `signOut()` e depois `resetToGuest()` impede o `autoSync` de subir a carreira zerada para a conta antiga
+     * (ele confere `signedIn` depois do debounce). Não é o [reset] (esse apaga tudo, inclusive idioma e som).
+     */
+    fun resetToGuest() {
+        val keep = ProfileKeys.keptOnSignOut(prefs::getString, prefs::getInt)
+        prefs.clear()
+        prefs.putBatch(keep)
+        val guest = GuestCareer.DEFAULT
+        name = guest.name
+        insignia = Insignia.of(guest.insigniaId)
+        avatar = Avatar.of(guest.avatarId)
+        xp = guest.xp
+        matches = 0; wins = 0; shots = 0; hits = 0; sunk = 0
+        streak = 0; bestStreak = 0
+        credits = guest.credits
+        owned = guest.owned
+        equipped = guest.equipped
+        ownedFleets = guest.ownedFleets
+        equippedFleet = guest.equippedFleet
+        abilityCharges = emptyMap()
+        walletFor = ""
+        welcomePending = false
+        acceptedSeasonKey = ""
+        dailyVersion++
+        // sem estas gravações os padrões de leitura voltariam a dar 500 dobrões a quem acabou de sair
+        prefs.putInt(K_CREDITS, guest.credits)
+        prefs.putString(K_OWNED, owned.joinToString(","))
+        prefs.putString(K_FLEETS, ownedFleets.joinToString(","))
+    }
+
+    /**
      * A carreira como ela vai para a nuvem. Os dobrões NÃO vão: com carteira o servidor ignora a
      * gravação e o campo só serve para ler (por isso fica em zero aqui e o upsert não o envia).
      */
@@ -790,57 +875,6 @@ class Profile(private val prefs: Prefs) {
         /** Partidas online recompensadas por dia contra o mesmo adversário (ver [claimOnlineReward]). */
         const val ONLINE_REWARDS_PER_OPPONENT = 3
 
-        private const val K_NAME = "name"
-        private const val K_INSIGNIA = "insignia"
-        private const val K_XP = "xp"
-        private const val K_CREDITS = "credits"
-        private const val K_WALLET = "wallet_for"
-        private const val K_MATCHES = "matches"
-        private const val K_WINS = "wins"
-        private const val K_SHOTS = "shots"
-        private const val K_HITS = "hits"
-        private const val K_SUNK = "sunk"
-        private const val K_STREAK = "streak"
-        private const val K_BEST_STREAK = "best_streak"
-        private const val K_OWNED = "owned"
-        private const val K_EQUIPPED = "equipped"
-        private const val K_FLEETS = "fleets"
-        private const val K_FLEET = "fleet"
-        private const val K_ABILITY_CHARGES = "ability_charges"
-        private const val K_UID = "uid"
-        private const val K_EMAIL = "email"
-        private const val K_TOKEN = "token"
-        private const val K_REFRESH = "refresh"
-        private const val K_MUSIC = "music"
-        private const val K_SFX = "sfx"
-        private const val K_CURRENCY_TIP = "currency_tip_seen"
-        private const val K_REMINDER = "daily_reminder"
-        private const val K_LAST_OPEN_DAY = "last_open_day"
-        private const val K_RETURN_NOTICE_DAY = "last_return_notice_day"
-        private const val K_RETURN_BONUS_DAY = "last_return_bonus_day"
-        private const val K_RETURN_PENDING_DAY = "return_pending_day"
-        private const val K_LAST_MODE = "last_mode"
-        private const val K_DAILY_DAY = "daily_day"
-        private const val K_DAILY_PLAYED = "daily_played"
-        private const val K_DAILY_WON = "daily_won"
-        private const val K_DAILY_SUNK = "daily_sunk"
-        private const val K_DAILY_ABILITIES = "daily_abilities"
-        private const val K_DAILY_BEST_ACCURACY = "daily_best_accuracy"
-        private const val K_LANG = "lang"
-        private const val K_AVATAR = "avatar"
-        private const val K_WELCOME_DONE = "welcome_done"
-        private const val K_GUIDED_DONE = "guided_done"
-        private const val K_WELCOME_PENDING = "welcome_pending"
-        private const val K_THEME_TRACK = "theme_track"
-        private const val K_SEASON_ACCEPTED = "season_accepted"
-        private const val K_FEEDBACK_OPT_OUT = "feedback_opt_out"
-        private const val K_FEEDBACK_NEXT_AT = "feedback_next_at"
-        private const val K_QUICK_OFFER = "quick_offer"
-        private const val K_ACCEPT_INVITES = "accept_invites"
-        private const val K_FRIEND_ONLINE_PUSH = "friend_online_push"
-        private const val K_QUICK_OFFER_KIND = "quick_offer_kind"
-        private const val K_ONLINE_REWARDS = "online_rewards"
-        private const val K_DEVICE_CHECK = "device_check_sent"
     }
 }
 

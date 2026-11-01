@@ -42,6 +42,10 @@ import br.com.navalbattle.data.isNewerVersion
 import br.com.navalbattle.data.DailyReminder
 import br.com.navalbattle.data.ReminderMessage
 import br.com.navalbattle.data.ReminderTexts
+import br.com.navalbattle.game.ProfileKeys
+import br.com.navalbattle.game.SignOutDecision
+import br.com.navalbattle.game.SignOutResult
+import br.com.navalbattle.game.SignOutRules
 import br.com.navalbattle.game.ReminderKind
 import br.com.navalbattle.game.ReturnReminder
 import br.com.navalbattle.game.epochDayOf
@@ -232,7 +236,7 @@ internal fun screenForPushKind(kind: String): Screen? = when (kind) {
 }
 
 /** Chave (no Prefs do aparelho) dos tokens de dobrões já somados (#15). */
-private const val DELIVERED_KEY = "dobroes_delivered"
+private const val DELIVERED_KEY = ProfileKeys.DOBROES_DELIVERED
 private const val AWARDS_KEY = "online_awards_pending"
 private const val CHARGE_REQUEST_KEY = "charge_request_pending"
 
@@ -240,10 +244,10 @@ private const val CHARGE_REQUEST_KEY = "charge_request_pending"
 enum class OnlineAwardUi { NONE, CHECKING, PAID, LIMIT, CAPPED, RETRY }
 
 /** Faixa etária guardada (ADULT, TEEN, CHILD, UNKNOWN) e a hora da leitura (#49). Nunca a idade. */
-private const val AGE_BAND_KEY = "age_band"
-private const val AGE_CHECKED_KEY = "age_checked_at"
-private const val REVIEW_LAST_KEY = "review_last_ask"
-private const val REVIEW_COUNT_KEY = "review_ask_count"
+private const val AGE_BAND_KEY = ProfileKeys.AGE_BAND
+private const val AGE_CHECKED_KEY = ProfileKeys.AGE_CHECKED_AT
+private const val REVIEW_LAST_KEY = ProfileKeys.REVIEW_LAST_ASK
+private const val REVIEW_COUNT_KEY = ProfileKeys.REVIEW_ASK_COUNT
 private const val REVIEW_SETTLE_MS = 800L
 
 /** Espera da confirmação do Google depois do anúncio (#29): 10 consultas a cada 2 s, cerca de 20 s. */
@@ -1292,22 +1296,71 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (r !is CloudResult.Ok) return DeleteAccountResult.FAILED
         pushRegistered = null
         pushRegisteredFor = null
-        friendships = emptyList()
         profile.signOut()
         profile.reset(keepWallet = false)
+        clearAccountState()
         return DeleteAccountResult.DONE
     }
 
-    /** Sai da conta e para de receber os avisos dela neste aparelho. */
-    fun signOut() {
-        val session = profile.currentSession()
+    /**
+     * Sai da conta e devolve o aparelho a convidado (#64): para de receber os avisos dela, apaga a carreira e o
+     * estado da conta do aparelho e só então vale a sessão de convidado. Antes sobe o que ainda não está na
+     * nuvem; se não der (sem rede, prêmio na fila) e [force] for falso, devolve [SignOutResult.UNSAVED] sem
+     * apagar nada, para o jogador tentar de novo ou confirmar "Sair mesmo assim".
+     */
+    suspend fun signOut(force: Boolean = false): SignOutResult {
+        val session = profile.currentSession() ?: return SignOutResult.DONE  // sem conta não há o que limpar
+        flushOnlineAwards()
+        val snap = profile.snapshot()
+        val careerSaved = snap == lastPushed || pushCareer(snap, lastPushed?.username)
+        if (SignOutRules.decide(careerSaved, awardQueue.isNotEmpty(), force) == SignOutDecision.WARN) {
+            return SignOutResult.UNSAVED
+        }
         val token = pushRegistered
         pushRegisteredFor = null
-        if (session != null && token != null) uiScope?.launch { cloud.unregisterPushToken(session, token) }
-        hasPassword = null
-        blockedPlayers = emptyList()
-        nameResetNotice = false
+        if (token != null) uiScope?.launch { cloud.unregisterPushToken(session, token) }
+        // a sessão cai ANTES de a carreira zerar: o autoSync confere signedIn depois do debounce e não sobe o
+        // convidado vazio para a conta que acabou de sair
         profile.signOut()
+        profile.resetToGuest()
+        clearAccountState()
+        return SignOutResult.DONE
+    }
+
+    /** Zera o que o [AppState] guarda da conta (amigos, passe, milhas, diário, fila de prêmios...): sair e excluir usam. */
+    private fun clearAccountState() {
+        lastPushed = null
+        awardQueue = emptyList()
+        pushRegistered = null
+        friendships = emptyList()
+        friendResults = emptyList()
+        friendPresence = emptyMap()
+        friendAvatars = emptyMap()
+        badges = emptyList()
+        blockedPlayers = emptyList()
+        pendingInvite = null
+        quickOffer = null
+        referralCode = null
+        referralInvites = emptyList()
+        referralPopup = null
+        seasonPass = null
+        miles = null
+        milesPopup = false
+        daily = null
+        dailyPopupOpen = false
+        weekly = null
+        adsStatus = null
+        adPhases = emptyMap()
+        adNotices = emptyMap()
+        adWinsDone = emptySet()
+        dobroesStatus = null
+        myRank = null
+        menuSeasonPosition = null
+        seasonTrophies = emptyList()
+        viewedFriendProfile = null
+        hasPassword = null
+        nameResetNotice = false
+        welcomeGiftPaid = null
     }
 
     fun declineInvite() {
@@ -3158,9 +3211,13 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
 
     /** Devolve a mensagem da fusão, ou nulo quando nem isso foi possível. */
-    private suspend fun mergeWithCloud(): String? =
-        when (val remote = authed { session -> cloud.loadProfile(session) }) {
+    private suspend fun mergeWithCloud(): String? {
+        // conta que pediu a carreira: se o jogador sair (ou trocar de conta) enquanto a resposta não chega, ela é
+        // descartada em vez de repor a carreira antiga no convidado (#64)
+        val requestedFor = profile.accountId
+        return when (val remote = authed { session -> cloud.loadProfile(session) }) {
             is CloudResult.Ok -> {
+                if (profile.accountId != requestedFor) return null
                 val cloudProfile = remote.value
                 if (cloudProfile != null && cloudProfile.xp > profile.xp) {
                     profile.adopt(cloudProfile)
@@ -3174,6 +3231,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
             is CloudResult.Fail -> null
         }
+    }
 
     private companion object {
         /** Espera depois da última mudança antes de gravar — junta rajadas numa só. */

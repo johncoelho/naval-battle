@@ -87,7 +87,7 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | AUTH-02 | P0 | Depois do login | Nome, avatar e patente no topo do menu; badge "Beta Tester" no Perfil |
 | AUTH-03 | P1 | Fechar e reabrir o app | Continua logado (sessão renovada sozinha) |
 | AUTH-04 | P1 | Trocar nome de guerra e insígnia no Perfil | Salva, aparece no menu e para o outro aparelho (busca de amigos) |
-| AUTH-05 | P1 | Sair da conta e entrar de novo | Volta como convidado ao sair; ao entrar recupera a carreira do servidor |
+| AUTH-05 | P1 | Sair da conta e entrar de novo | Volta como convidado ao sair (carreira apagada do aparelho, ver SGN-01 a SGN-04); ao entrar recupera a carreira do servidor |
 | AUTH-07 | P1 | Conta só Google (sem senha) → Perfil → Criar senha; nova senha 6+ e confirmação → Salvar | Botão mostra "Criar senha" (não "Trocar senha") e o cartão não pede senha atual; confirma "Senha criada"; o botão vira "Trocar senha"; sair e entrar por e-mail + essa senha cai na mesma carreira (senha digitada só pelo John) |
 | AUTH-08 | P1 | Conta criada por e-mail e senha → Perfil | Mostra "Trocar senha" pedindo a senha atual, como antes |
 
@@ -111,6 +111,10 @@ não bloqueia o release Android. No Android: botão da Apple ausente, login Goog
 | APL-11 | P0 | Segunda conta Apple (relay) sem `givenName`, ou com nome igual ao de outra conta → jogar uma partida | A carreira sincroniza: no banco `profiles.username` é único e `xp` subiu; nenhum "Comandante" repetido; convidado que já tinha nome o mantém |
 | NOM-01 | P1 | Conta A com o nome "X". Em outro aparelho, convidado escolhe "X" e joga partidas → entrar com Google/e-mail novo (carreira virgem) | Mostra "carreira enviada"; no banco a conta nova tem `username` `X-xxxx` (ou o nome da nuvem), `xp` e `matches` subiram; o aparelho passa a mostrar esse nome; a sincronização seguinte (nova partida) segue gravando |
 | NOM-02 | P1 | Convidado **sem nome** abre o Perfil e entra com Google (repetir com e-mail) sem sair da tela; depois digitar "Capita" no campo antes de uma nova sincronização (#61). No iPhone, quando houver build (não bloqueia) | O campo do nome de guerra mostra o nome da conta assim que o login termina, sem reabrir a tela; um nome já editado pelo jogador **não** é trocado sozinho |
+| SGN-01 | P0 | QA01 com carreira (nome, XP, frota e pintura comprada, dobrões) → Perfil → Sair da conta (#64) | A linha de privacidade aparece acima do botão. Depois de sair, o menu e o Perfil mostram "Convidado", avatar e insígnia padrão, 0 XP, frota padrão e **0 dobrões**; o campo do nome fica vazio sozinho. Idioma, som e música **não** mudam |
+| SGN-02 | P0 | Em modo avião (ou com a rede cortada), jogar uma partida contra a IA para mudar a carreira → Sair da conta | Aparece "Progresso não sincronizado" com Tentar de novo, Sair mesmo assim e Cancelar; nada foi apagado. "Tentar de novo" continua falhando sem rede; "Cancelar" volta ao Perfil ainda logado; "Sair mesmo assim" limpa como no SGN-01 |
+| SGN-03 | P0 | Depois do SGN-01, entrar de novo na QA01 | Volta a carreira inteira da nuvem (nome, XP, frota, pinturas, dobrões do servidor); nada de 500 dobrões extras |
+| SGN-04 | P0 | Sair da QA01 e entrar na QA02 (repetir com Google e com e-mail) | Só aparece a carreira da QA02; nada da QA01 (nome, amigos, passe, milhas, diário) sobra; a QA01 no banco não foi alterada pela saída |
 
 ## 5. Menu e navegação
 

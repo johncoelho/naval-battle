@@ -70,6 +70,7 @@ import br.com.navalbattle.game.Badge
 import br.com.navalbattle.game.EarnedBadge
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.game.Rank
+import br.com.navalbattle.game.SignOutResult
 import kotlinx.coroutines.launch
 
 /**
@@ -91,6 +92,10 @@ fun ProfileScreen(state: AppState) {
     var nameError by remember { mutableStateOf<String?>(null) }
     val nameScope = rememberCoroutineScope()
     var confirmReset by remember { mutableStateOf(false) }
+    // sair da conta com progresso que a nuvem ainda não tem (#64): avisa antes de apagar
+    var signOutUnsaved by remember { mutableStateOf(false) }
+    var signOutBusy by remember { mutableStateOf(false) }
+    val signOutScope = rememberCoroutineScope()
     var openBadge by remember { mutableStateOf<EarnedBadge?>(null) }
     // a abertura do app já carrega, mas um badge pode ter chegado depois (feedback aprovado)
     LaunchedEffect(Unit) { state.loadBadges() }
@@ -207,7 +212,7 @@ fun ProfileScreen(state: AppState) {
 
                 Gap(22)
                 Box(Modifier.onGloballyPositioned { accountTop = it.positionInParent().y.toInt() }) {
-                    AccountSection(state)
+                    AccountSection(state, onSignOutUnsaved = { signOutUnsaved = true })
                 }
 
                 Gap(22)
@@ -396,6 +401,46 @@ fun ProfileScreen(state: AppState) {
             }
         }
 
+        if (signOutUnsaved) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Naval.bg.copy(alpha = 0.94f))
+                    .clickable(enabled = false) {}
+                    .navalSafeArea()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(Modifier.fillMaxWidth()) {
+                    HudLabel(t(K.AUTH_SIGN_OUT), Naval.muted)
+                    Gap(8)
+                    Text(t(K.SIGN_OUT_UNSAVED_TITLE).uppercase(), style = NavalType.display, color = Naval.ink)
+                    Gap(6)
+                    HudLabel(t(K.SIGN_OUT_UNSAVED_WARN), Naval.muted)
+                    Gap(22)
+                    PrimaryButton(t(K.SIGN_OUT_RETRY), enabled = !signOutBusy) {
+                        signOutBusy = true
+                        signOutScope.launch {
+                            val result = state.signOut()
+                            signOutBusy = false
+                            if (result == SignOutResult.DONE) signOutUnsaved = false
+                        }
+                    }
+                    Gap(8)
+                    SecondaryButton(t(K.SIGN_OUT_FORCE), enabled = !signOutBusy) {
+                        signOutBusy = true
+                        signOutScope.launch {
+                            state.signOut(force = true)
+                            signOutBusy = false
+                            signOutUnsaved = false
+                        }
+                    }
+                    Gap(8)
+                    SecondaryButton(t(K.CANCEL), enabled = !signOutBusy) { signOutUnsaved = false }
+                }
+            }
+        }
+
         openBadge?.let { earned ->
             // tocar fora do cartão também fecha — é só informativo
             Box(
@@ -440,7 +485,7 @@ fun ProfileScreen(state: AppState) {
  * na tela separada AuthScreen; juntar as duas evita duas paradas para a mesma coisa.
  */
 @Composable
-private fun AccountSection(state: AppState) {
+private fun AccountSection(state: AppState, onSignOutUnsaved: () -> Unit) {
     val profile = state.profile
     var creating by remember { mutableStateOf(!profile.signedIn) }
     var email by remember { mutableStateOf(profile.accountEmail) }
@@ -517,9 +562,16 @@ private fun AccountSection(state: AppState) {
                 )
             }
             Gap(8)
-            SecondaryButton(t(K.AUTH_SIGN_OUT)) {
-                state.signOut()
-                message = t(K.AUTH_SIGNED_OUT)
+            HudLabel(t(K.SIGN_OUT_PRIVACY), Naval.muted)
+            Gap(8)
+            SecondaryButton(t(K.AUTH_SIGN_OUT), enabled = !busy) {
+                busy = true; failed = false; message = null
+                scope.launch {
+                    val result = state.signOut()
+                    busy = false
+                    if (result == SignOutResult.UNSAVED) onSignOutUnsaved()
+                    else message = t(K.AUTH_SIGNED_OUT)
+                }
             }
             Gap(14)
             // exclusão de conta pelo próprio app — exigência da App Store (5.1.1)
