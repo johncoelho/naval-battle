@@ -16,6 +16,29 @@ fun premioState(beta: Boolean, premioEnabled: Boolean, premioClaimed: Boolean): 
         else -> PremioState.PEGAR
     }
 
+/** O que a aba Dobrões mostra (#62), em ordem de prioridade. */
+enum class DoubloonAisleView { SIGN_IN, LOADING, FAILED, CLOSED, PREMIO, JA_PEGOU, VITRINE }
+
+/**
+ * Decide o estado da aba Dobrões, pura para testar. Sem a situação da conta ([statusLoaded] falso):
+ * carregando, ou falha de rede ([loadFailed]) com botão de tentar de novo; nunca tela vazia (#62).
+ * Sem Prêmio nem vitrine (iPhone de quem não é testador): "chega em breve".
+ */
+fun doubloonAisleView(
+    signedIn: Boolean,
+    statusLoaded: Boolean,
+    loadFailed: Boolean,
+    premio: PremioState,
+    vitrine: Boolean
+): DoubloonAisleView = when {
+    !signedIn -> DoubloonAisleView.SIGN_IN
+    !statusLoaded -> if (loadFailed) DoubloonAisleView.FAILED else DoubloonAisleView.LOADING
+    premio == PremioState.PEGAR -> DoubloonAisleView.PREMIO
+    premio == PremioState.JA_PEGOU -> DoubloonAisleView.JA_PEGOU
+    vitrine -> DoubloonAisleView.VITRINE
+    else -> DoubloonAisleView.CLOSED
+}
+
 /**
  * A vitrine paga aparece só onde a Play vende ([vendaPelaPlay], falso no iPhone), e então com a
  * venda real ligada (todos) ou com a vitrine beta ligada (`beta_store_enabled`, só para testador;

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -31,11 +32,14 @@ import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawCompassRose
 import br.com.navalbattle.design.drawDoubloon
 import br.com.navalbattle.design.drawDoubloonPack
+import br.com.navalbattle.game.DoubloonAisleView
 import br.com.navalbattle.game.DoubloonPack
+import br.com.navalbattle.game.doubloonAisleView
 import br.com.navalbattle.game.PremioState
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.i18n.tMilesBalance
+import kotlinx.coroutines.launch
 
 /**
  * Aba Dobrões da loja (#15, #28). Duas partes independentes: o Prêmio Beta (testador de
@@ -46,22 +50,36 @@ import br.com.navalbattle.i18n.tMilesBalance
  */
 @Composable
 fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -> Unit) {
-    if (!state.profile.signedIn) {
-        InfoCard {
-            Text(t(K.DOUBLOON_SIGN_IN), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
-            Gap(12)
-            PrimaryButton(t(K.DOUBLOON_SIGN_IN_CTA)) { state.openLogin(Screen.STORE) }
-        }
-        return
-    }
-    val status = state.dobroesStatus
-    if (status == null) {
-        HudLabel(t(K.DOUBLOON_LOADING), Naval.muted)
-        return
-    }
     val premio = state.premioView ?: PremioState.ESCONDIDO
     val vitrine = state.vitrineAberta
-    if (premio == PremioState.ESCONDIDO && !vitrine) {
+    val status = state.dobroesStatus
+    val view = doubloonAisleView(state.profile.signedIn, status != null, state.dobroesLoadFailed, premio, vitrine)
+    val scope = rememberCoroutineScope()
+    when (view) {
+        DoubloonAisleView.SIGN_IN -> {
+            InfoCard {
+                Text(t(K.DOUBLOON_SIGN_IN), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+                Gap(12)
+                PrimaryButton(t(K.DOUBLOON_SIGN_IN_CTA)) { state.openLogin(Screen.STORE) }
+            }
+            return
+        }
+        DoubloonAisleView.LOADING -> {
+            HudLabel(t(K.DOUBLOON_LOADING), Naval.muted)
+            return
+        }
+        DoubloonAisleView.FAILED -> {
+            InfoCard {
+                Text(t(K.DOUBLOON_LOAD_FAILED), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+                Gap(12)
+                SecondaryButton(t(K.SIGN_OUT_RETRY)) { scope.launch { state.loadDobroesStore() } }
+            }
+            return
+        }
+        else -> Unit
+    }
+    if (status == null) return
+    if (view == DoubloonAisleView.CLOSED) {
         InfoCard {
             Text(t(K.DOUBLOON_CLOSED), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
         }

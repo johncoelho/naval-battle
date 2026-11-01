@@ -1019,6 +1019,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     DOUBLOON_BUY_FAILED("Não foi possível concluir agora. Tente de novo.", "Couldn't complete it now. Try again.", "No se pudo completar ahora. Inténtalo de nuevo."),
     DOUBLOON_LOADING("Abrindo o cofre…", "Opening the vault…", "Abriendo el cofre…"),
     DOUBLOON_CLOSED("A compra de dobrões chega em breve.", "Doubloon purchases are coming soon.", "La compra de doblones llegará pronto."),
+    DOUBLOON_LOAD_FAILED("Não consegui abrir o cofre. Verifique a conexão e tente de novo.", "Couldn't open the vault. Check your connection and try again.", "No pude abrir el cofre. Revisa la conexión e inténtalo de nuevo."),
     DOUBLOON_UNAVAILABLE("Dobrões indisponíveis agora. Tente de novo mais tarde.", "Doubloons unavailable right now. Try again later.", "Doblones no disponibles ahora. Inténtalo más tarde."),
     DOUBLOON_PENDING("Compra pendente: a Play confirma quando o pagamento cair.", "Purchase pending: Google Play confirms when the payment clears.", "Compra pendiente: Google Play confirma cuando se acredite el pago."),
     PREMIO_TITLE("Prêmio Beta", "Beta prize", "Premio Beta"),

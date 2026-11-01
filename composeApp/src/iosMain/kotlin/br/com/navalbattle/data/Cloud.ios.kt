@@ -604,12 +604,29 @@ actual class CloudApi actual constructor() {
 
     // ------------------------------------------------------------------ economia
 
-    // dobrões pela Google Play não existem no iPhone ainda (#15, parte h): a aba fica fechada
-    actual suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus> =
-        CloudResult.Fail("loja indisponível no iPhone")
+    // Situação da aba Dobrões (#62): igual ao Android. O iPhone pergunta ao servidor para saber
+    // se há Prêmio Beta; a vitrine paga segue escondida porque `billing.available` é falso aqui (#30).
+    // Booleano lido com (x as? Boolean) ?: padrão, como em walletOf.
+    actual suspend fun dobroesStoreStatus(session: Session): CloudResult<DobroesStoreStatus> = call {
+        val json = post("/rest/v1/rpc/dobroes_store_status", emptyMap<String, Any?>(), token = session.accessToken)
+        val o = firstRow(json)
+        CloudResult.Ok(
+            DobroesStoreStatus(
+                beta = (o["beta"] as? Boolean) ?: false,
+                realEnabled = (o["real_enabled"] as? Boolean) ?: false,
+                premioEnabled = (o["premio_enabled"] as? Boolean) ?: false,
+                premioClaimed = (o["premio_claimed"] as? Boolean) ?: false,
+                premioResetsInSeconds = o.intOr("premio_resets_in_seconds", 0),
+                vitrineBeta = (o["vitrine_beta"] as? Boolean) ?: false
+            )
+        )
+    }
 
-    actual suspend fun dobroesClaimPremio(session: Session): CloudResult<String> =
-        CloudResult.Fail("loja indisponível no iPhone")
+    // Prêmio Beta (#28): RPC do servidor, sem a Play; devolve o texto do status
+    actual suspend fun dobroesClaimPremio(session: Session): CloudResult<String> = call {
+        val status = post("/rest/v1/rpc/claim_premio_beta", emptyMap<String, Any?>(), token = session.accessToken)
+        CloudResult.Ok((status as? String).orEmpty().trim().trim('"'))
+    }
 
     // aviso de lançamento (#36): só Android (decisão do John); no iPhone nem pergunta ao servidor
     actual suspend fun launchNoticeStatus(session: Session?, platform: String): CloudResult<LaunchNoticeStatus> =
@@ -624,11 +641,27 @@ actual class CloudApi actual constructor() {
         origem: String?
     ): CloudResult<DobroesVerifyResult> = CloudResult.Fail("loja indisponível no iPhone")
 
-    actual suspend fun dobroesPending(session: Session): CloudResult<List<DobroesPending>> =
-        CloudResult.Ok(emptyList())
+    // Avisos "+N" do Prêmio Beta (#62). O ack só marca o aviso como visto; o consumo da Play é no
+    // servidor (dobroes-verify), então confirmar aqui não mexe em compra da Play.
+    actual suspend fun dobroesPending(session: Session): CloudResult<List<DobroesPending>> = call {
+        val json = post("/rest/v1/rpc/dobroes_pending", emptyMap<String, Any?>(), token = session.accessToken)
+        val rows = (json as? List<*>).orEmpty().mapNotNull { it as? Map<*, *> }
+        CloudResult.Ok(
+            rows.mapNotNull { o ->
+                val token = o["purchase_token"] as? String ?: return@mapNotNull null
+                DobroesPending(
+                    purchaseToken = token,
+                    doubloons = o.intOr("doubloons", 0),
+                    premio = (o["premio"] as? Boolean) ?: false
+                )
+            }
+        )
+    }
 
-    actual suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit> =
+    actual suspend fun dobroesAck(session: Session, purchaseToken: String): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/dobroes_ack", mapOf("p_token" to purchaseToken), token = session.accessToken)
         CloudResult.Ok(Unit)
+    }
 
     // carteira de dobrões no servidor (#34); booleano lido com (x as? Boolean) ?: padrão
     private fun walletOf(o: Map<*, *>) = WalletState(

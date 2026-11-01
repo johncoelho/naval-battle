@@ -74,4 +74,41 @@ class StoreViewTest {
         assertEquals(K.PREMIO_UNAVAILABLE, avisoPremio("not_beta"))
         assertEquals(K.DOUBLOON_BUY_FAILED, avisoPremio("erro_qualquer"))
     }
+
+    // aba Dobrões nunca fica vazia (#62)
+    private fun aisle(
+        signedIn: Boolean = true, loaded: Boolean = true, failed: Boolean = false,
+        premio: PremioState = PremioState.ESCONDIDO, vitrine: Boolean = false
+    ) = doubloonAisleView(signedIn, loaded, failed, premio, vitrine)
+
+    @Test
+    fun iphoneDeQuemNaoETestadorVeChegaEmBreve() {
+        val premio = premioState(beta = false, premioEnabled = true, premioClaimed = false)
+        val vitrine = vitrineVisivel(vendaPelaPlay = false, realEnabled = true, vitrineBeta = false)
+        assertEquals(DoubloonAisleView.CLOSED, aisle(premio = premio, vitrine = vitrine))
+    }
+
+    @Test
+    fun iphoneDeTestadorVeOPremioEJaPegouNaSequencia() {
+        assertEquals(DoubloonAisleView.PREMIO, aisle(premio = PremioState.PEGAR))
+        assertEquals(DoubloonAisleView.JA_PEGOU, aisle(premio = PremioState.JA_PEGOU))
+    }
+
+    @Test
+    fun androidComVitrineVeAVitrine() {
+        assertEquals(DoubloonAisleView.VITRINE, aisle(vitrine = true))
+    }
+
+    @Test
+    fun semSituacaoCarregaDepoisFalhaENuncaFicaVazio() {
+        assertEquals(DoubloonAisleView.LOADING, aisle(loaded = false))
+        assertEquals(DoubloonAisleView.FAILED, aisle(loaded = false, failed = true))
+        // falha de uma releitura com a situação já na tela não derruba a aba
+        assertEquals(DoubloonAisleView.VITRINE, aisle(failed = true, vitrine = true))
+    }
+
+    @Test
+    fun semContaPedeParaEntrar() {
+        assertEquals(DoubloonAisleView.SIGN_IN, aisle(signedIn = false, loaded = false))
+    }
 }

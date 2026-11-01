@@ -2368,6 +2368,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var dobroesStatus by mutableStateOf<DobroesStoreStatus?>(null)
         private set
 
+    /** A situação da aba Dobrões não chegou (rede ou servidor): mostra "tentar de novo" em vez de carregar para sempre (#62). */
+    var dobroesLoadFailed by mutableStateOf(false)
+        private set
+
     var dobroesProducts by mutableStateOf<List<StoreProduct>>(emptyList())
         private set
 
@@ -2396,6 +2400,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * ficaram para trás. No iPhone a aba só mostra o Prêmio (#30).
      */
     suspend fun loadDobroesStore() {
+        dobroesLoadFailed = false
         if (profile.currentSession() == null) {
             dobroesStatus = null
             return
@@ -2406,7 +2411,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     private suspend fun refreshDobroesStatus() {
-        (authed { session -> cloud.dobroesStoreStatus(session) } as? CloudResult.Ok)?.value?.let { dobroesStatus = it }
+        when (val r = authed { session -> cloud.dobroesStoreStatus(session) }) {
+            is CloudResult.Ok -> { dobroesStatus = r.value; dobroesLoadFailed = false }
+            else -> dobroesLoadFailed = true
+        }
     }
 
     /**
