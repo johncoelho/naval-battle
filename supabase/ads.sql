@@ -113,12 +113,14 @@ revoke all on function public.ads_version_ok(uuid) from public, anon, authentica
 
 -- Anúncio ligado para esta conta. ads_enabled = 'true' liga para todos; 'test' liga só para as
 -- contas de anúncio de teste (QA e ads_test_emails), para o QA testar sem nenhum jogador real ver
--- botão (decisão do John, 19/10); qualquer outro valor desliga.
+-- botão (decisão do John, 19/10); qualquer outro valor desliga. Com 'true', conta is_test (os
+-- robôs do relatório de pré-lançamento da Play) fica de fora, exceto QA: clique de robô em bloco
+-- real é tráfego inválido no AdMob (#40).
 create or replace function public.ads_on_for(p_user uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select public.ads_version_ok(p_user)
          and case coalesce((select value from public.app_config where key = 'ads_enabled'), 'false')
-           when 'true' then true
+           when 'true' then (not public.is_test_user(p_user) or public.ads_test_account(p_user))
            when 'test' then p_user is not null and public.ads_test_account(p_user)
            else false
          end;

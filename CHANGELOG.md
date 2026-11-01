@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.43.1] — 2026-11-01 · Anúncios premiados prontos para todos: AD_ID de volta, robôs fora (#40)
+
+App 0.43.1 (versionCode 114). Refs #40. Refeita sobre a 0.43.0 (o commit da 0.36.1 foi reaplicado; nada do push APNs, do vínculo de conta nem dos Dobrões do iPhone muda).
+
+### Alterado
+- **Manifesto:** sai a remoção da `AD_ID` (`tools:node="remove"`), entra a permissão explícita `com.google.android.gms.permission.AD_ID`; as `ACCESS_ADSERVICES_*` continuam vindo do `play-services-ads`. A declaração "ID de publicidade = Sim" no Play Console fica para imediatamente antes do push.
+- **Robôs da Play sem anúncio:** `ads_on_for` (migração `ads_robot_off`, `supabase/ads.sql`, já aplicada e inerte com `ads_enabled = 'test'`) exclui contas `is_test` quando o interruptor é `'true'`, exceto QA. No app, `AdRules.offerAds(supported, enabled, testLab)` esconde o botão e "Privacidade dos anúncios" em aparelho do Test Lab, e `watchAd` barra o toque.
+- **Gate da virada:** `ads_min_app_version` passa a ser `0.43.1` (versionName da #40) na hora de ligar; `ads_enabled` e `ads_min_app_version` não mudam agora.
+
+### Testes
+- `AdRulesTest` (offerAds); `supabase/tests/ads_ensaio.sql` com os casos `teste_*`, `qa_is_test_on`, `robo_off`, `comum_true`, `gate_0430` e `gate_0431`. QA: ADS-22 a ADS-25.
+
 ## [0.43.0] — 2026-11-01 · iPhone: aba Dobrões, push pelo APNs e vínculo Apple ID + Google (#62, #14, #63)
 
 App 0.43.0 (versionCode 113). Refs #62, #14, #63. Linha nova na tela Novidades (`RN_V0430`).

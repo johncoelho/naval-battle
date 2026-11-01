@@ -2105,11 +2105,14 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         adNotices = adNotices - place
     }
 
+    /** Aparelho do Test Lab da Play (robo do pre-lancamento): nunca mostra anuncio (#40). */
+    private val testLabDevice: Boolean by lazy { isTestLabDevice() }
+
     /** O servidor libera este lugar agora (ou o fluxo dele já está andando). */
     fun adAvailable(place: AdPlace): Boolean {
         if (adPhase(place) != AdPhase.IDLE) return true
         val s = adsStatus ?: return false
-        if (!rewardedAds.supported || !s.enabled) return false
+        if (!AdRules.offerAds(rewardedAds.supported, s.enabled, testLabDevice)) return false
         return when (place) {
             AdPlace.WIN -> s.winCan
             AdPlace.CHECKIN -> s.checkinCan
@@ -2120,7 +2123,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Saldo zero e o limite de anúncio de milha de hoje já acabou: o aviso aparece no lugar do botão. */
     val adMileLimit: Boolean
-        get() = rewardedAds.supported && adsStatus?.enabled == true && adsStatus?.mileLimit == true &&
+        get() = AdRules.offerAds(rewardedAds.supported, adsStatus?.enabled == true, testLabDevice) &&
+            adsStatus?.mileLimit == true &&
             adPhase(AdPlace.MILE) == AdPhase.IDLE
 
     /** Referência desta vitória para o "dobrar dobrões": sala no online, id do aparelho contra a IA. */
@@ -2156,7 +2160,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * escopo do app: sair da tela não corta o fluxo nem prende o "Continuar".
      */
     fun watchAd(place: AdPlace, ref: String? = null, amount: Int? = null) {
-        if (adPhase(place) != AdPhase.IDLE) return
+        if (adPhase(place) != AdPhase.IDLE || testLabDevice) return
         val scope = uiScope ?: return
         adPhases = adPhases + (place to AdPhase.LOADING)
         adNotices = adNotices - place
@@ -2220,7 +2224,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Ajustes: "Privacidade dos anúncios" só aparece com anúncio ligado no servidor. */
     val adPrivacyShows: Boolean
-        get() = rewardedAds.supported && adsStatus?.enabled == true
+        get() = AdRules.offerAds(rewardedAds.supported, adsStatus?.enabled == true, testLabDevice)
 
     fun openAdPrivacy() {
         val scope = uiScope ?: return

@@ -1,7 +1,7 @@
 -- Ensaio que desfaz tudo (#29, 0.34.0): anúncios premiados (vale, SSV, limites).
 -- Rodar no SQL Editor do projeto cwtslesnthbenxswdcbv depois de supabase/ads.sql. O raise no fim
 -- cancela a transação: nada fica gravado. ads_enabled é ligado só dentro do bloco; o rollback
--- devolve o valor real ('false').
+-- devolve o valor real ('test').
 --
 -- Resultado esperado (cada item vira um trecho de "RESULTADO"):
 --   desligado=off                  ads_enabled 'false': nenhum vale                     (ADS-01)
@@ -34,6 +34,15 @@
 --   gate_0347=t                    min 0.34.7 e aparelho 0.34.7: libera                 (ADS-19)
 --   gate_sem_registro=f            min preenchida e conta sem device_checks: fora       (ADS-19)
 --   gate_ios=f                     registro só de iPhone não vale para o gate           (ADS-19)
+--   --- #40 (0.43.1): robos fora e gate na virada para 'true' (ADS-23, ADS-25) ---
+--   teste_qa=t/t                   'test': QA com is_test continua com anuncio de teste
+--   teste_robo=f                   'test': conta is_test fora do QA segue sem anuncio
+--   teste_comum=f                  'test': conta comum segue sem anuncio (inerte)
+--   qa_is_test_on=t/t              'true': QA com is_test -> on e test_ads
+--   robo_off=f/off                 'true': conta is_test fora do QA -> off
+--   comum_true=t/f                 'true': conta comum -> on e test_ads = false
+--   gate_0430=f/off                'true' com gate 0.43.1 (versao da #40) e ultimo aparelho 0.43.0 -> off
+--   gate_0431=t                    ultimo aparelho 0.43.1 -> on
 
 do $$
 declare
@@ -169,6 +178,47 @@ begin
     values (a, '0.34.7', 'ios', false);
   select * into s from public.ads_status('android');
   out := out || 'gate_ios=' || s.enabled;
+
+  -- #40: robos da Play sem anuncio. A QA02 vira "outra conta" dentro do bloco (sai do allowed_players
+  -- qa e do ranking de teste; tudo volta no rollback).
+  delete from public.device_checks where user_id in (a, b);
+  update public.app_config set value = '' where key = 'ads_min_app_version';
+  delete from public.allowed_players where source = 'qa' and (user_id = b or email = 'aigamesfactory.qa02@gmail.com');
+  update public.profiles set is_test = true where id in (a, b);
+  update public.app_config set value = 'test' where key = 'ads_enabled';
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  select * into s from public.ads_status('android');
+  out := out || ' | teste_qa=' || s.enabled || '/' || s.test_ads;
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+  select * into s from public.ads_status('android');
+  out := out || ' | teste_robo=' || s.enabled;
+  update public.profiles set is_test = false where id = b;
+  select * into s from public.ads_status('android');
+  out := out || ' | teste_comum=' || s.enabled;
+
+  update public.app_config set value = 'true' where key = 'ads_enabled';
+  perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+  select * into s from public.ads_status('android');
+  out := out || ' | qa_is_test_on=' || s.enabled || '/' || s.test_ads;
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+  update public.profiles set is_test = true where id = b;
+  select * into r from public.ad_reward_start('mile');
+  select * into s from public.ads_status('android');
+  out := out || ' | robo_off=' || s.enabled || '/' || r.status;
+  update public.profiles set is_test = false where id = b;
+  select * into s from public.ads_status('android');
+  out := out || ' | comum_true=' || s.enabled || '/' || s.test_ads;
+
+  update public.app_config set value = '0.43.1' where key = 'ads_min_app_version';
+  insert into public.device_checks (user_id, app_version, platform, test_lab, created_at)
+    values (b, '0.43.0', 'android', false, now() - interval '2 hours');
+  select * into r from public.ad_reward_start('mile');
+  select * into s from public.ads_status('android');
+  out := out || ' | gate_0430=' || s.enabled || '/' || r.status;
+  insert into public.device_checks (user_id, app_version, platform, test_lab, created_at)
+    values (b, '0.43.1', 'android', false, now());
+  select * into s from public.ads_status('android');
+  out := out || ' | gate_0431=' || s.enabled;
 
   raise exception 'RESULTADO (rollback): %', out;
 end $$;

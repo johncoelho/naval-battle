@@ -21,6 +21,14 @@ enum class AdPhase { IDLE, LOADING, CONFIRMING }
  * limites; aqui fica só o que o app precisa para mostrar ou esconder o botão e escolher o aviso.
  */
 object AdRules {
+    /**
+     * O app mostra anuncio (botao ou "Privacidade dos anuncios"): o aparelho suporta, o servidor
+     * liga e nao e aparelho do Test Lab da Play. Clique de robo em bloco real e trafego invalido
+     * no AdMob (#40).
+     */
+    fun offerAds(supported: Boolean, enabled: Boolean, testLab: Boolean): Boolean =
+        supported && enabled && !testLab
+
     /** Unidade de anúncio premiado de teste do Google (debug, `.preview`, QA e a conta do John). */
     const val TEST_REWARDED_UNIT = "ca-app-pub-3940256099942544/5224354917"
 

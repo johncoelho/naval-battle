@@ -151,4 +151,16 @@ class AdRulesTest {
         assertEquals(32, a.localId.length)
         assertTrue(a.localId != b.localId)
     }
+
+    @Test
+    fun aparelhoDoTestLabNuncaOfereceAnuncio() = assertFalse(AdRules.offerAds(supported = true, enabled = true, testLab = true))
+
+    @Test
+    fun semSuporteOuDesligadoNaoOferece() {
+        assertFalse(AdRules.offerAds(supported = false, enabled = true, testLab = false))
+        assertFalse(AdRules.offerAds(supported = true, enabled = false, testLab = false))
+    }
+
+    @Test
+    fun casoNormalOferece() = assertTrue(AdRules.offerAds(supported = true, enabled = true, testLab = false))
 }

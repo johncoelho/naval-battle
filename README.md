@@ -487,7 +487,7 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Login Google (Android) | Credential Manager (`androidx.credentials` 1.3.0 + `googleid` 1.1.1) | aprovado em 0.11 |
 | Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
 | Push (Android) | Firebase Cloud Messaging (`firebase-bom` 33.7.0, plugin `google-services` 4.4.2 só se houver `google-services.json`) | aprovado em 0.60 |
-| Anúncio premiado (Android) | Google Mobile Ads (`play-services-ads` 25.5.0, traz a dependência transitiva `com.google.android.play:hsdp` 2.0.1) e consentimento UMP (`user-messaging-platform` 4.0.0), só anúncio premiado opcional; SDK e UMP só depois do primeiro toque. A 25.5.0 tira a API obsoleta de edge-to-edge (`LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`) que a Play apontava na 25.2.0 | aprovado pelo John em 18/10 (#29) |
+| Anúncio premiado (Android) | Google Mobile Ads (`play-services-ads` 25.5.0, traz a dependência transitiva `com.google.android.play:hsdp` 2.0.1) e consentimento UMP (`user-messaging-platform` 4.0.0), só anúncio premiado opcional; SDK e UMP só depois do primeiro toque; `AD_ID` declarada no manifesto (#40). A 25.5.0 tira a API obsoleta de edge-to-edge (`LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES`) que a Play apontava na 25.2.0 | aprovado pelo John em 18/10 (#29) |
 | Faixa etária (Android) | Play Age Signals API (`com.google.android.play:age-signals` 0.0.4, beta; `requestAgeSignalsAccess` + `checkAgeSignals`), só para escolher o tipo de anúncio; a idade não sai do aparelho | aprovado pelo John em 25/10 (#49) |
 | Conquistas e placar (Android) | Play Games Services v2 (`com.google.android.gms:play-services-games-v2` 21.0.0): conquistas e placar da ranqueada, espelho do Supabase; só `androidMain`, inerte sem `pgsAppId` e `games-ids.xml` (docs/BUILD.md) | aprovado pelo John em 25/10 (#48) |
 | Avaliação (Android) | Play In-App Review (`com.google.android.play:review-ktx` 2.0.2): pede a nota da Play dentro do jogo; só `androidMain`, usa o mesmo `core-common` do App Update | aprovado pelo John em 25/10 (#45) |
@@ -654,7 +654,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   Edge `ads-reward`). A Edge tem `verify_jwt` desligado de propósito: quem chama é o Google, e a
   segurança é a assinatura ECDSA sobre a query crua. Dobrões pelo mesmo `dobroes_pending`
   (`kind = 'ad'`); milha direto no perfil, até `miles_cap`. Interruptor `ads_enabled` (nasce
-  `'false'`); números em `app_config` (`ads_*`); `ads_test_emails` só no banco.
+  `'false'`; `'true'` liga para todos com o gate `ads_min_app_version`, e conta `is_test` fora do QA, os robôs da Play, fica sem anúncio, #40); números em `app_config` (`ads_*`); `ads_test_emails` só no banco.
 - Presente de boas-vindas (`supabase/welcome.sql`, #43): `claim_welcome_gift()` devolve `ok | already |
   not_eligible | no_wallet`; paga por `dobroes_apply(uid, valor, 'welcome', 'welcome')` (o razão é a trava de uma vez só,
   fora do teto `dobroes_online_daily_cap`), soma milhas até `miles_cap`, grava `welcome_gifts` (RLS, só leitura da própria

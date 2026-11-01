@@ -1,4 +1,1 @@
-Novidades:
-- iPhone: a aba Dobroes abre normalmente, e o Premio Beta aparece para testadores. Se a conexao falhar, o jogo avisa e deixa tentar de novo.
-- iPhone: avisos de convite, amizade e partida chegam com o app fechado.
-- iPhone: vincule o Apple ID e o Google na mesma conta, pelo Perfil, e jogue com a mesma carreira nos dois.
+Anuncios premiados opcionais, no Android: toque em assistir para dobrar a vitoria, o check-in ou o desafio, ou ganhar uma milha com o saldo zerado. So aparece quando voce toca, nunca no meio da partida, e menores recebem anuncio nao personalizado. Em Ajustes, Privacidade dos anuncios reabre o consentimento. Aparelhos de teste automatico da Play ficam sem anuncio.
