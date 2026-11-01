@@ -1,4 +1,4 @@
--- Push de verdade (Android, via Firebase Cloud Messaging).
+-- Push de verdade (Android via Firebase Cloud Messaging; iPhone via APNs direto, #14).
 --
 -- Fluxo: um gatilho no banco grava a mensagem em push_outbox e chama a Edge
 -- Function `push` (pg_net) passando só o id da linha. A função lê a linha com a

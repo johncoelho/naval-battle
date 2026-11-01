@@ -37,8 +37,9 @@ object PushInbox {
 /**
  * Push de verdade: convites de amigo, pedidos de amizade e adversário encontrado
  * chegam com o app fechado. Android via Firebase Cloud Messaging; o envio sai do
- * Supabase (supabase/push.sql + Edge Function `push`). No iPhone ainda não existe
- * (precisa de conta paga da Apple para o APNs) e [token] devolve nulo.
+ * Supabase (supabase/push.sql + Edge Function `push`). iPhone via APNs (#14): o token vem do
+ * sistema (sem SDK), o envio é direto pela mesma Edge. Sem permissão ou sem assinatura do app,
+ * [token] devolve nulo.
  */
 expect object PushMessaging {
     /** "android" ou "ios" — vai junto com o token para o servidor. */
@@ -47,3 +48,10 @@ expect object PushMessaging {
     /** Token deste aparelho, ou nulo quando o push não está disponível. */
     suspend fun token(): String?
 }
+
+/**
+ * Token do APNs: hexadecimal minúsculo de 64 caracteres ou mais (32 bytes hoje; a Apple avisa que
+ * pode crescer). Vazio, curto, com espaço ou maiúscula não vale: nada é mandado ao servidor.
+ */
+fun isApnsToken(hex: String): Boolean =
+    hex.length >= 64 && hex.all { it in '0'..'9' || it in 'a'..'f' }

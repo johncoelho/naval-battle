@@ -15,6 +15,8 @@ class PushKindTest {
     fun outrosAvisosSoAbremOJogo() {
         assertNull(screenForPushKind("match_invite"))
         assertNull(screenForPushKind("friend_request"))
+        assertNull(screenForPushKind("daily_invite"))
+        assertNull(screenForPushKind("announcement"))
         assertNull(screenForPushKind(""))
     }
 }
