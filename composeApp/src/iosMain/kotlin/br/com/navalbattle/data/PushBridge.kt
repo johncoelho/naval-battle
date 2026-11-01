@@ -10,12 +10,6 @@ import kotlinx.coroutines.CompletableDeferred
 object PushBridge {
     private var waiting: CompletableDeferred<String?>? = null
 
-    /**
-     * Pede ao sistema o registro no APNs. Quem define é o `AppDelegate` (Swift): o cinterop do Kotlin
-     * não expõe `UIApplication.registerForRemoteNotifications`. Nulo = sem Swift por trás (testes).
-     */
-    var register: (() -> Unit)? = null
-
     /** Último token válido recebido (fica de reserva se o próximo pedido demorar). */
     var last: String? = null
         private set

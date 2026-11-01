@@ -3,6 +3,8 @@ package br.com.navalbattle.data
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import platform.UIKit.UIApplication
+import platform.UIKit.registerForRemoteNotifications
 
 /**
  * Push no iPhone (#14): token do APNs, sem SDK novo. O registro (`registerForRemoteNotifications`)
@@ -19,7 +21,7 @@ actual object PushMessaging {
 
     actual suspend fun token(): String? {
         val waiting = PushBridge.expect()
-        withContext(Dispatchers.Main) { PushBridge.register?.invoke() }
+        withContext(Dispatchers.Main) { UIApplication.sharedApplication.registerForRemoteNotifications() }
         val fresh = withTimeoutOrNull(TIMEOUT_MS) { waiting.await() }
         return (fresh ?: PushBridge.last)?.takeIf { isApnsToken(it) }
     }

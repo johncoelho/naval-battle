@@ -539,7 +539,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `GoogleAuth` | login com Google | Credential Manager | fluxo OAuth com PKCE |
 | `AppleAuth` + `AppleSignInButton` | Entrar com a Apple (#13): `signIn()` devolve `AppleAuthResult` (token, nonce cru, código, nome); nunca lança | `supported = false`, botão vazio | `AuthenticationServices` (`ASAuthorizationController`), nonce sha256 hex; botão `ASAuthorizationAppleIDButton` via `UIKitView`; entitlement `iosApp.entitlements` |
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
-| `PushMessaging` | token de push | Firebase Messaging | token do APNs via `PushBridge` (registro pelo `AppDelegate`, #14) |
+| `PushMessaging` | token de push | Firebase Messaging | token do APNs: o Kotlin pede o registro e o `AppDelegate` devolve o token via `PushBridge` (#14) |
 | `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes, a aba mostra só o Prêmio Beta (#30) |
 | `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque; recebe o `AdAudience` da faixa (`setAgeRestrictedTreatment` UNSPECIFIED/CHILD/TEEN, `npa`, classificação máxima; as marcas TFUA/TFCD são obsoletas e não se usam; a do UMP deriva do tratamento) (`supported = true`) | vazio (`supported = false`) |
 | `AgeSignals` | faixa etária da loja (#49): `read()` devolve `AgeBand`, nunca lança | Play Age Signals; `-PageFake` troca pelo `FakeAgeSignalsManager` no debug | sem leitura (`supported = false`, `UNKNOWN`) |

@@ -1,6 +1,7 @@
 package br.com.navalbattle.data
 
 import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.t
 
 /**
  * Vínculo de logins na mesma conta (#63): Apple ID e Google. Regras puras, para testar sem aparelho.
@@ -36,7 +37,7 @@ fun providerLabels(providers: List<String>): List<String> =
             when (it) {
                 "google" -> "Google"
                 "apple" -> "Apple"
-                "email" -> "E-mail"
+                "email" -> t(K.LINK_EMAIL)
                 else -> null
             }
         }

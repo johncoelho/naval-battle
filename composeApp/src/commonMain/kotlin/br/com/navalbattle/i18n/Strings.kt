@@ -966,6 +966,8 @@ enum class K(val pt: String, val en: String, val es: String) {
     AUTH_APPLE_RELAY_EMAIL("E-mail oculto pela Apple", "Email hidden by Apple", "Correo oculto por Apple"),
     AUTH_APPLE_UNAVAILABLE("Entrar com a Apple não está disponível nesta instalação. Use e-mail ou Google.", "Sign in with Apple isn't available in this install. Use email or Google.", "Iniciar sesión con Apple no está disponible en esta instalación. Usa correo o Google."),
     AUTH_APPLE_FAIL("Não consegui entrar com a Apple. Tente de novo.", "Couldn't sign in with Apple. Try again.", "No se pudo iniciar sesión con Apple. Inténtalo de nuevo."),
+    LINK_EMAIL("E-mail", "Email", "Correo"),
+    TRY_AGAIN("Tentar de novo", "Try again", "Intentar de nuevo"),
     LINK_LOGINS("Logins da conta", "Account logins", "Accesos de la cuenta"),
     LINK_APPLE("Vincular Apple ID", "Link Apple ID", "Vincular Apple ID"),
     LINK_APPLE_SUB("Entre também com a Apple nesta carreira", "Also sign in with Apple on this career", "Entra también con Apple en esta carrera"),

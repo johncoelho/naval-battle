@@ -72,7 +72,7 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -
             InfoCard {
                 Text(t(K.DOUBLOON_LOAD_FAILED), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
                 Gap(12)
-                SecondaryButton(t(K.SIGN_OUT_RETRY)) { scope.launch { state.loadDobroesStore() } }
+                SecondaryButton(t(K.TRY_AGAIN)) { scope.launch { state.loadDobroesStore() } }
             }
             return
         }
