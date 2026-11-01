@@ -81,6 +81,13 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(state: AppState) {
     val profile = state.profile
     var name by remember { mutableStateOf(profile.name) }
+    // o login com Google acontece nesta mesma tela e muda profile.name depois da montagem (#61): o campo
+    // acompanha o nome salvo enquanto o jogador não o editou
+    var savedSeen by remember { mutableStateOf(profile.name) }
+    LaunchedEffect(profile.name) {
+        name = followSaved(name, savedSeen, profile.name)
+        savedSeen = profile.name
+    }
     var nameError by remember { mutableStateOf<String?>(null) }
     val nameScope = rememberCoroutineScope()
     var confirmReset by remember { mutableStateOf(false) }
@@ -439,6 +446,11 @@ private fun AccountSection(state: AppState) {
     var email by remember { mutableStateOf(profile.accountEmail) }
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf(profile.name) }
+    var usernameSaved by remember { mutableStateOf(profile.name) }
+    LaunchedEffect(profile.name) {
+        username = followSaved(username, usernameSaved, profile.name).take(18)
+        usernameSaved = profile.name
+    }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var failed by remember { mutableStateOf(false) }

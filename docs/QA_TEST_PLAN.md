@@ -110,6 +110,7 @@ não bloqueia o release Android. No Android: botão da Apple ausente, login Goog
 | APL-10 | P1 | Conta Apple de relay que já tem nome → sair e entrar de novo com a Apple | Entra e **não** é renomeada (o nome só vale em carreira nova) |
 | APL-11 | P0 | Segunda conta Apple (relay) sem `givenName`, ou com nome igual ao de outra conta → jogar uma partida | A carreira sincroniza: no banco `profiles.username` é único e `xp` subiu; nenhum "Comandante" repetido; convidado que já tinha nome o mantém |
 | NOM-01 | P1 | Conta A com o nome "X". Em outro aparelho, convidado escolhe "X" e joga partidas → entrar com Google/e-mail novo (carreira virgem) | Mostra "carreira enviada"; no banco a conta nova tem `username` `X-xxxx` (ou o nome da nuvem), `xp` e `matches` subiram; o aparelho passa a mostrar esse nome; a sincronização seguinte (nova partida) segue gravando |
+| NOM-02 | P1 | Convidado **sem nome** abre o Perfil e entra com Google (repetir com e-mail) sem sair da tela; depois digitar "Capita" no campo antes de uma nova sincronização (#61). No iPhone, quando houver build (não bloqueia) | O campo do nome de guerra mostra o nome da conta assim que o login termina, sem reabrir a tela; um nome já editado pelo jogador **não** é trocado sozinho |
 
 ## 5. Menu e navegação
 
