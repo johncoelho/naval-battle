@@ -5,3 +5,14 @@ repo: github.com/johncoelho/naval-battle
 quadro: { tipo: github-projects, owner: johncoelho, numero: 1 }
 squad: .claude/agents
 lojas: [google-play, app-store]
+nome_squad: SQUAD BATALHA NAVAL
+# Nome de cada papel do squad (o portal mostra estes nomes; a chave e o nome do arquivo em .claude/agents).
+equipe:
+  principal: Imediato
+  suporte: Sentinela
+  po: Comandante
+  tech-lead: Almirante
+  dev: Timoneiro
+  qa: Vigia
+  release: Capitão do Porto
+  game-designer: Cartógrafo
