@@ -5,8 +5,9 @@
 //
 // Segredo necessário na função: FCM_SERVICE_ACCOUNT = JSON da conta de serviço do
 // projeto Firebase "Naval Battle" (Configurações do projeto → Contas de serviço).
-// Para o iPhone (os mesmos do apple-revoke): APPLE_TEAM_ID, APPLE_SIWA_KEY_ID (o mesmo .p8 serve
-// de chave APNs) e APPLE_SIWA_KEY_P8. Só APNs de produção: TestFlight e App Store usam produção.
+// Para o iPhone: APPLE_TEAM_ID (o mesmo do apple-revoke) e uma chave .p8 com o serviço APNs ligado:
+// APNS_KEY_ID e APNS_KEY_P8 (se faltarem, cai em APPLE_SIWA_KEY_ID/APPLE_SIWA_KEY_P8, que só servem
+// se essa chave tiver APNs). Só APNs de produção: TestFlight e App Store usam produção.
 // Sem esses segredos o iPhone fica de fora e o Android segue igual.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -164,10 +165,10 @@ Deno.serve(async (req) => {
   // ---- iPhone (APNs, #14)
   if (ios.length) {
     const teamId = Deno.env.get("APPLE_TEAM_ID");
-    const keyId = Deno.env.get("APPLE_SIWA_KEY_ID");
-    const p8 = Deno.env.get("APPLE_SIWA_KEY_P8");
+    const keyId = Deno.env.get("APNS_KEY_ID") ?? Deno.env.get("APPLE_SIWA_KEY_ID");
+    const p8 = Deno.env.get("APNS_KEY_P8") ?? Deno.env.get("APPLE_SIWA_KEY_P8");
     if (!teamId || !keyId || !p8) {
-      results.push("ios:no APPLE secrets");
+      results.push("ios:no APNs secrets");
     } else {
       try {
         const jwt = await apnsToken(teamId, keyId, p8);

@@ -252,7 +252,7 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   (Firebase Cloud Messaging; envio pelo Supabase em `supabase/push.sql` e na Edge Function
   `push`). Com o jogo aberto os balões do próprio jogo avisam. **iPhone (0.43.0, #14):** o app
   registra o token do APNs (`UIApplicationDelegateAdaptor` + `PushBridge`, sem SDK) e a Edge `push` envia direto
-  ao APNs (HTTP/2, JWT ES256 com `APPLE_TEAM_ID`, `APPLE_SIWA_KEY_ID` e `APPLE_SIWA_KEY_P8`); mesmos tipos, textos
+  ao APNs (HTTP/2, JWT ES256 com `APPLE_TEAM_ID`, `APNS_KEY_ID` e `APNS_KEY_P8`; reserva `APPLE_SIWA_*` só se a chave tiver APNs ligado); mesmos tipos, textos
   e anti-spam do Android, menos "versão nova" (a versão da Play não é a da App Store). Só produção: vale no
   TestFlight e na App Store, não no `.ipa` do Sideloadly. Configuração em [docs/BUILD.md](docs/BUILD.md#push-firebase).
 

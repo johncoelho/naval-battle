@@ -13,7 +13,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         // antes de a abertura terminar: senão o toque que abriu o app fechado se perde
         UNUserNotificationCenter.current().delegate = self
         // o Kotlin pede o registro quando precisa do token (registro vale com ou sem permissão de aviso)
-        PushBridge.shared.register = { UIApplication.shared.registerForRemoteNotifications() }
+        PushBridge.shared.register = { UIApplication.shared.registerForRemoteNotifications(); return KotlinUnit() }
         return true
     }
 
