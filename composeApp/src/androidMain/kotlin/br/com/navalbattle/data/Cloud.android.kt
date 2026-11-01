@@ -59,6 +59,10 @@ actual class CloudApi actual constructor() {
     actual suspend fun signInWithApple(idToken: String, nonce: String): CloudResult<Session> =
         CloudResult.Fail("Entrar com a Apple não está disponível neste aparelho.")
 
+    // vincular Apple/Google é do iPhone (#63); no Android a Apple não existe
+    actual suspend fun linkIdentity(session: Session, provider: String, idToken: String, nonce: String?): CloudResult<Session> =
+        CloudResult.Fail("Vincular contas não está disponível neste aparelho.")
+
     actual suspend fun authProviders(session: Session): CloudResult<List<String>> = call {
         val providers = JSONObject(get("/auth/v1/user", session.accessToken))
             .optJSONObject("app_metadata")?.optJSONArray("providers")

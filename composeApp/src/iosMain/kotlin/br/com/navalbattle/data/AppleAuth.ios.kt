@@ -109,7 +109,8 @@ private class AppleFlow(
                 idToken = idToken,
                 rawNonce = rawNonce,
                 authorizationCode = credential.authorizationCode?.asUtf8(),
-                givenName = credential.fullName?.givenName
+                givenName = credential.fullName?.givenName,
+                firstAuthorization = credential.email != null
             )
         )
     }

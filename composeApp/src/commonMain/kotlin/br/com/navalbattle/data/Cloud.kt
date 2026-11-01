@@ -60,11 +60,13 @@ sealed class CloudResult<out T> {
      * [expired] marca a falha por sessão vencida: é o sinal para renovar o token
      * com o refresh guardado e repetir a chamada, sem incomodar o comandante.
      * [usernameTaken] marca a recusa por nome de guerra repetido (`profiles.username` é único, #59).
+     * [code] é o `error_code` do GoTrue quando o Auth recusou (ex.: `identity_already_exists`, #63).
      */
     data class Fail(
         val message: String,
         val expired: Boolean = false,
-        val usernameTaken: Boolean = false
+        val usernameTaken: Boolean = false,
+        val code: String? = null
     ) : CloudResult<Nothing>()
 }
 
@@ -371,6 +373,13 @@ expect class CloudApi() {
      * confere o sha256 dele com o `nonce` do token. No Android fica inerte (só para compilar).
      */
     suspend fun signInWithApple(idToken: String, nonce: String): CloudResult<Session>
+
+    /**
+     * Vincula um login (Apple ou Google) à conta da [session] atual (#63): `POST /auth/v1/token?grant_type=id_token`
+     * com a sessão no cabeçalho e `link_identity: true`. Duas provas: a sessão e um token novo do provedor.
+     * Devolve a sessão (a mesma conta: usuário diferente é falha, `code = "different_user"`). Só o iPhone usa.
+     */
+    suspend fun linkIdentity(session: Session, provider: String, idToken: String, nonce: String?): CloudResult<Session>
 
     /** Provedores de login da conta (`app_metadata.providers` do `GET /auth/v1/user`). */
     suspend fun authProviders(session: Session): CloudResult<List<String>>

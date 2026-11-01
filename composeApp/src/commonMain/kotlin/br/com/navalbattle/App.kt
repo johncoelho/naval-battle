@@ -68,6 +68,8 @@ import br.com.navalbattle.data.appleInitialName
 import br.com.navalbattle.data.NameSaveOutcome
 import br.com.navalbattle.data.saveProfileWithNameFallback
 import br.com.navalbattle.data.shouldRevokeApple
+import br.com.navalbattle.data.linkFailureText
+import br.com.navalbattle.data.offerExistingAccount
 import br.com.navalbattle.data.GoogleAuth
 import br.com.navalbattle.data.GoogleAuthResult
 import br.com.navalbattle.data.LanGame
@@ -1359,6 +1361,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         seasonTrophies = emptyList()
         viewedFriendProfile = null
         hasPassword = null
+        loginProviders = emptyList()
+        appleOffer = null
         nameResetNotice = false
         welcomeGiftPaid = null
     }
@@ -3047,7 +3051,48 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     suspend fun signInWithApple(): Pair<Boolean, String> = when (val a = appleAuth.signIn()) {
         is AppleAuthResult.Cancelled -> false to ""
         is AppleAuthResult.Fail -> false to a.message
-        is AppleAuthResult.Ok -> when (val r = cloud.signInWithApple(a.idToken, a.rawNonce)) {
+        is AppleAuthResult.Ok -> if (offerExistingAccount(a.firstAuthorization, profile.signedIn)) {
+            // 1ª autorização: pergunta se já joga com o Google ANTES de trocar o token por sessão,
+            // para não criar uma conta vazia que ficaria órfã (#63). O popup chama as funções abaixo.
+            appleOffer = a
+            false to ""
+        } else {
+            finishAppleSignIn(a)
+        }
+    }
+
+    /** Autorização da Apple à espera da resposta do popup "Já joga com Google?" (#63). Nulo = sem pergunta. */
+    var appleOffer by mutableStateOf<AppleAuthResult.Ok?>(null)
+        private set
+
+    /** Fechou o popup sem escolher: nada acontece, a Apple pode ser pedida de novo. */
+    fun dismissAppleOffer() {
+        appleOffer = null
+    }
+
+    /** "Não, criar conta nova": segue o login da Apple de sempre com a autorização guardada. */
+    suspend fun appleOfferNew(): Pair<Boolean, String> {
+        val a = appleOffer ?: return false to ""
+        appleOffer = null
+        return finishAppleSignIn(a)
+    }
+
+    /**
+     * "Sim": entra com o Google (fusão do convidado como hoje) e vincula a Apple a essa conta com o MESMO
+     * token (vale 10 min). Se o vínculo falhar, o login do Google fica e a mensagem diz como vincular depois.
+     */
+    suspend fun appleOfferExisting(): Pair<Boolean, String> {
+        val a = appleOffer ?: return false to ""
+        appleOffer = null
+        val google = signInWithGoogle()
+        if (!google.first) return google  // cancelou ou falhou: nada foi vinculado
+        val link = linkLogin("apple", a.idToken, a.rawNonce)
+        loadLoginProviders()
+        return true to google.second + "\n" + (link ?: t(K.LINK_DONE))
+    }
+
+    private suspend fun finishAppleSignIn(a: AppleAuthResult.Ok): Pair<Boolean, String> =
+        when (val r = cloud.signInWithApple(a.idToken, a.rawNonce)) {
             is CloudResult.Ok -> {
                 val localName = profile.name  // antes do rememberSession, que preenche nome em branco
                 val cloudProfile = (cloud.loadProfile(r.value) as? CloudResult.Ok)?.value
@@ -3065,6 +3110,46 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             }
             is CloudResult.Fail -> false to r.message
         }
+
+    /** Logins da conta aberta (`app_metadata.providers`), para a linha e os botões de vincular do Perfil (#63). */
+    var loginProviders by mutableStateOf<List<String>>(emptyList())
+        private set
+
+    suspend fun loadLoginProviders() {
+        if (!profile.signedIn) { loginProviders = emptyList(); return }
+        (authed { session -> cloud.authProviders(session) } as? CloudResult.Ok)?.value?.let { loginProviders = it }
+    }
+
+    /**
+     * Vincula o login à conta aberta. Devolve nulo se deu certo, ou o texto da falha (pelo `error_code`
+     * do Auth). A sessão só é trocada se o servidor devolver uma da MESMA conta (ver [CloudApi.linkIdentity]).
+     */
+    private suspend fun linkLogin(provider: String, idToken: String, nonce: String?): String? =
+        when (val r = authed { session -> cloud.linkIdentity(session, provider, idToken, nonce) }) {
+            is CloudResult.Ok -> {
+                if (r.value.userId == profile.currentSession()?.userId) profile.rememberSession(r.value)
+                null
+            }
+            is CloudResult.Fail -> t(linkFailureText(r.code))
+        }
+
+    /** "Vincular Apple ID" (Perfil, iPhone): pede um token novo da Apple e vincula à conta aberta. */
+    suspend fun linkApple(): Pair<Boolean, String> = when (val a = appleAuth.signIn()) {
+        is AppleAuthResult.Cancelled -> false to ""
+        is AppleAuthResult.Fail -> false to a.message
+        is AppleAuthResult.Ok -> finishLink(linkLogin("apple", a.idToken, a.rawNonce))
+    }
+
+    /** "Vincular Google" (Perfil, iPhone): idem com o Google. */
+    suspend fun linkGoogle(): Pair<Boolean, String> = when (val g = googleAuth.signIn()) {
+        is GoogleAuthResult.Cancelled -> false to ""
+        is GoogleAuthResult.Fail -> false to g.message
+        is GoogleAuthResult.Ok -> finishLink(linkLogin("google", g.idToken, null))
+    }
+
+    private suspend fun finishLink(error: String?): Pair<Boolean, String> {
+        loadLoginProviders()
+        return if (error == null) true to t(K.LINK_DONE) else false to error
     }
 
     /**

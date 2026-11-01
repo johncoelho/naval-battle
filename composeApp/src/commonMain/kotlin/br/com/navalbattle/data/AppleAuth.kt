@@ -6,12 +6,15 @@ sealed class AppleAuthResult {
      * [idToken] e [rawNonce] vão ao Supabase (o `nonce` cru; a Apple recebeu o sha256 dele).
      * [authorizationCode] só serve na exclusão de conta (revogação, vale 5 min).
      * [givenName] a Apple manda só na primeira autorização do app.
+     * [firstAuthorization]: a Apple só devolve o e-mail na primeira vez que este Apple ID autoriza o app
+     * (inclusive no relay); é o sinal para perguntar se o jogador já tem conta com o Google (#63).
      */
     data class Ok(
         val idToken: String,
         val rawNonce: String,
         val authorizationCode: String?,
-        val givenName: String?
+        val givenName: String?,
+        val firstAuthorization: Boolean = false
     ) : AppleAuthResult()
 
     data class Fail(val message: String) : AppleAuthResult()

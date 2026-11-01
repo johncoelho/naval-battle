@@ -57,7 +57,10 @@ import br.com.navalbattle.data.GameServices
 import br.com.navalbattle.data.isAppleRelayEmail
 import br.com.navalbattle.data.GoogleAuthConfig
 import br.com.navalbattle.data.PasswordAction
+import br.com.navalbattle.data.LinkOption
+import br.com.navalbattle.data.linkOptions
 import br.com.navalbattle.data.passwordAction
+import br.com.navalbattle.data.providerLabels
 import br.com.navalbattle.data.SupabaseConfig
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.i18n.K
@@ -95,6 +98,9 @@ fun ProfileScreen(state: AppState) {
     // sair da conta com progresso que a nuvem ainda não tem (#64): avisa antes de apagar
     var signOutUnsaved by remember { mutableStateOf(false) }
     var signOutBusy by remember { mutableStateOf(false) }
+    // resposta do popup "Já joga com Google?" (#63): a mensagem sobe para o AccountSection
+    var offerBusy by remember { mutableStateOf(false) }
+    var offerResult by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
     // sair pelo aviso fecha o overlay: a mensagem de sessão encerrada sobe para o AccountSection
     var signedOutNotice by remember { mutableStateOf(false) }
     val signOutScope = rememberCoroutineScope()
@@ -214,7 +220,7 @@ fun ProfileScreen(state: AppState) {
 
                 Gap(22)
                 Box(Modifier.onGloballyPositioned { accountTop = it.positionInParent().y.toInt() }) {
-                    AccountSection(state, signedOutNotice, onSignOutUnsaved = { signOutUnsaved = true })
+                    AccountSection(state, signedOutNotice, offerResult, onSignOutUnsaved = { signOutUnsaved = true })
                 }
 
                 Gap(22)
@@ -444,6 +450,45 @@ fun ProfileScreen(state: AppState) {
             }
         }
 
+        state.appleOffer?.let {
+            // 1ª autorização da Apple (#63): "Já joga com Google?" antes de criar qualquer conta
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Naval.bg.copy(alpha = 0.94f))
+                    .clickable(enabled = false) {}
+                    .navalSafeArea()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(Modifier.fillMaxWidth()) {
+                    HudLabel(t(K.AUTH_APPLE_HINT_TITLE), Naval.muted)
+                    Gap(8)
+                    Text(t(K.LINK_OFFER_TITLE).uppercase(), style = NavalType.display, color = Naval.ink)
+                    Gap(6)
+                    HudLabel(t(K.LINK_OFFER_BODY), Naval.muted)
+                    Gap(22)
+                    PrimaryButton(t(K.LINK_OFFER_YES), enabled = !offerBusy) {
+                        offerBusy = true
+                        signOutScope.launch {
+                            offerResult = state.appleOfferExisting()
+                            offerBusy = false
+                        }
+                    }
+                    Gap(8)
+                    SecondaryButton(t(K.LINK_OFFER_NO), enabled = !offerBusy) {
+                        offerBusy = true
+                        signOutScope.launch {
+                            offerResult = state.appleOfferNew()
+                            offerBusy = false
+                        }
+                    }
+                    Gap(8)
+                    SecondaryButton(t(K.CANCEL), enabled = !offerBusy) { state.dismissAppleOffer() }
+                }
+            }
+        }
+
         openBadge?.let { earned ->
             // tocar fora do cartão também fecha — é só informativo
             Box(
@@ -488,7 +533,12 @@ fun ProfileScreen(state: AppState) {
  * na tela separada AuthScreen; juntar as duas evita duas paradas para a mesma coisa.
  */
 @Composable
-private fun AccountSection(state: AppState, signedOutNotice: Boolean, onSignOutUnsaved: () -> Unit) {
+private fun AccountSection(
+    state: AppState,
+    signedOutNotice: Boolean,
+    offerResult: Pair<Boolean, String>?,
+    onSignOutUnsaved: () -> Unit
+) {
     val profile = state.profile
     var creating by remember { mutableStateOf(!profile.signedIn) }
     var email by remember { mutableStateOf(profile.accountEmail) }
@@ -506,12 +556,16 @@ private fun AccountSection(state: AppState, signedOutNotice: Boolean, onSignOutU
     LaunchedEffect(signedOutNotice) {
         if (signedOutNotice) { failed = false; message = t(K.AUTH_SIGNED_OUT) }
     }
+    // resposta do popup da 1ª autorização da Apple (#63); vazio = o jogador cancelou a janela do Google
+    LaunchedEffect(offerResult) {
+        offerResult?.let { if (it.second.isNotBlank()) { failed = !it.first; message = it.second } }
+    }
     var showForgot by remember { mutableStateOf(false) }
     var showChangePassword by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     // conta só Google não tem senha: oferece "Criar senha" em vez de "Trocar senha" (#9)
-    LaunchedEffect(profile.signedIn) { state.loadHasPassword() }
+    LaunchedEffect(profile.signedIn) { state.loadHasPassword(); state.loadLoginProviders() }
     val creatingPassword = passwordAction(state.hasPassword) == PasswordAction.CREATE
 
     Column(
@@ -538,6 +592,32 @@ private fun AccountSection(state: AppState, signedOutNotice: Boolean, onSignOutU
         if (profile.signedIn) {
             Gap(6)
             HudLabel(t(K.AUTH_AUTO_SYNC), Naval.greenBright)
+            // logins da conta e vínculo Apple/Google (#63): o iPhone vincula o que falta; o Android só mostra a linha
+            val logins = providerLabels(state.loginProviders)
+            if (logins.isNotEmpty()) {
+                Gap(6)
+                HudLabel(t(K.LINK_LOGINS) + ": " + logins.joinToString(" · "), Naval.muted)
+            }
+            val options = linkOptions(state.loginProviders, state.appleAuth.supported)
+                .filter { it != LinkOption.GOOGLE || GoogleAuthConfig.isConfigured }
+            options.forEach { option ->
+                Gap(8)
+                SecondaryButton(
+                    if (option == LinkOption.APPLE) t(K.LINK_APPLE) else t(K.LINK_GOOGLE),
+                    subtitle = if (option == LinkOption.APPLE) t(K.LINK_APPLE_SUB) else t(K.LINK_GOOGLE_SUB),
+                    enabled = !busy
+                ) {
+                    busy = true; failed = false; message = null
+                    scope.launch {
+                        val result = if (option == LinkOption.APPLE) state.linkApple() else state.linkGoogle()
+                        busy = false
+                        // cancelou a janela do provedor: não é erro
+                        if (!result.first && result.second.isBlank()) return@launch
+                        failed = !result.first
+                        message = result.second
+                    }
+                }
+            }
             Gap(14)
             SecondaryButton(
                 if (creatingPassword) t(K.AUTH_CREATE_PASSWORD) else t(K.AUTH_CHANGE_PASSWORD),

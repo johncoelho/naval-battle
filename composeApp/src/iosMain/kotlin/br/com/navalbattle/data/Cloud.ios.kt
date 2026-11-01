@@ -56,6 +56,28 @@ actual class CloudApi actual constructor() {
             ?: CloudResult.Fail("Não consegui abrir a sessão com a Apple.")
     }
 
+    /**
+     * Vínculo manual por id_token (#63): sessão atual no cabeçalho e `link_identity: true`. O GoTrue
+     * v2.197 pode devolver uma sessão (access_token + user) ou só o usuário; aceita os dois formatos, desde
+     * que o `id` seja o da conta de destino. Qualquer outro usuário é falha e a sessão NÃO muda.
+     */
+    actual suspend fun linkIdentity(session: Session, provider: String, idToken: String, nonce: String?): CloudResult<Session> = call {
+        val body = mutableMapOf<String, Any?>("provider" to provider, "id_token" to idToken, "link_identity" to true)
+        if (nonce != null) body["nonce"] = nonce
+        val json = post("/auth/v1/token?grant_type=id_token", body, token = session.accessToken) as? Map<*, *>
+            ?: return@call CloudResult.Fail("Não consegui vincular.", code = "bad_response")
+        val user = (json["user"] as? Map<*, *>) ?: json
+        val userId = user["id"] as? String
+        if (userId != null && userId != session.userId) {
+            return@call CloudResult.Fail("Usuário diferente.", code = "different_user")
+        }
+        val fresh = sessionOf(json, fallbackName = session.username)
+        CloudResult.Ok(
+            if (fresh != null && fresh.userId == session.userId) fresh.copy(username = session.username, email = session.email)
+            else session
+        )
+    }
+
     actual suspend fun authProviders(session: Session): CloudResult<List<String>> = call {
         val meta = (get("/auth/v1/user", session.accessToken) as? Map<*, *>)?.get("app_metadata") as? Map<*, *>
         val providers = (meta?.get("providers") as? List<*>).orEmpty().mapNotNull { (it as? String)?.takeIf { p -> p.isNotBlank() } }
@@ -1057,6 +1079,9 @@ actual class CloudApi actual constructor() {
 
     private class SessionExpired : Exception("Sessão expirada.")
 
+    /** Recusa do servidor com o `error_code` do GoTrue (#63), para a tela escolher o texto. */
+    private class ApiError(message: String, val errorCode: String?) : Exception(message)
+
     private suspend fun <T> call(block: suspend () -> CloudResult<T>): CloudResult<T> {
         if (!SupabaseConfig.isConfigured) {
             return CloudResult.Fail("Servidor do jogo ainda não configurado.")
@@ -1066,7 +1091,7 @@ actual class CloudApi actual constructor() {
         } catch (e: SessionExpired) {
             CloudResult.Fail(e.message.orEmpty(), expired = true)
         } catch (e: Exception) {
-            CloudResult.Fail(readable(e), usernameTaken = isUsernameTaken(e.message))
+            CloudResult.Fail(readable(e), usernameTaken = isUsernameTaken(e.message), code = (e as? ApiError)?.errorCode)
         }
     }
 
@@ -1141,12 +1166,13 @@ actual class CloudApi actual constructor() {
                 return@dataTaskWithRequest
             }
             if (code !in 200..299) {
+                val parsed = runCatching { parseJson(text) as? Map<*, *> }.getOrNull()
                 val message = runCatching {
-                    val parsed = parseJson(text) as? Map<*, *>
                     (parsed?.get("msg") ?: parsed?.get("error_description")
                         ?: parsed?.get("message") ?: parsed?.get("error")) as? String
                 }.getOrNull().orEmpty()
-                cont.resumeWithException(Exception(message.ifBlank { "HTTP $code" }))
+                val errorCode = (parsed?.get("error_code") as? String)?.takeIf { it.isNotBlank() }
+                cont.resumeWithException(ApiError(message.ifBlank { "HTTP $code" }, errorCode))
                 return@dataTaskWithRequest
             }
             cont.resume(if (text.isBlank()) null else parseJson(text))
