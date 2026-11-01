@@ -25,7 +25,7 @@ App 0.43.0 (versionCode 113). Refs #62, #14, #63. Linha nova na tela Novidades (
 - `StoreViewTest` (estados da aba), `PushTokenTest`, `PushKindTest` (kinds que só abrem o jogo) e `AccountLinksTest`. QA: DOBIOS-01 a DOBIOS-03, PSH-IOS-01 a PSH-IOS-07 e APL-12 a APL-17 (iPhone, TestFlight).
 
 ### Pendente com o John (nada disto foi feito pela esteira)
-- Conferir em Certificates, IDs & Profiles > Keys se a chave do Sign in with Apple tem o serviço APNs; se não tiver (o serviço de uma chave não muda depois de criada), criar uma chave APNs e cadastrar os segredos `APNS_KEY_ID` e `APNS_KEY_P8` na Edge.
+- Criar uma chave APNs em Apple Developer > Certificates, IDs & Profiles > Keys e cadastrar os segredos `APNS_KEY_ID` e `APNS_KEY_P8` na Edge `push` (a chave atual foi criada só com Sign in with Apple e o serviço de uma chave não muda depois de criada; sem isso o teste do iPhone dá `ios:403:InvalidProviderToken`).
 - Deploy da Edge `push` (`verify_jwt = false`) e teste real: uma linha de `push_outbox` para a QA01 (Android, esperado `200`) e outra para o iPhone (`ios:200`).
 - Supabase > Authentication > "Allow manual linking" (sem isso o vínculo devolve `manual_linking_disabled`).
 - Decisão: ligar "Confirm email" no Auth (fecha a tomada de conta por pré-cadastro), em issue própria.
