@@ -78,6 +78,7 @@ import br.com.navalbattle.data.LeaderboardEntry
 import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.data.MyRank
 import br.com.navalbattle.data.OnlineLink
+import br.com.navalbattle.data.OnlineMessage
 import br.com.navalbattle.data.OnlineMatch
 import br.com.navalbattle.data.OpponentProfile
 import br.com.navalbattle.data.SeasonInfo
@@ -158,6 +159,9 @@ import br.com.navalbattle.game.shouldOfferGuided
 import br.com.navalbattle.game.welcomeOutcome
 import br.com.navalbattle.game.welcomeShouldRetry
 import br.com.navalbattle.game.Match
+import br.com.navalbattle.game.ReplayLine
+import br.com.navalbattle.game.replayNetworkMatch
+import br.com.navalbattle.game.shouldResync
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
 import br.com.navalbattle.game.PendingCredit
@@ -767,7 +771,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var friendships by mutableStateOf<List<Friendship>>(emptyList())
         private set
 
-    private val onlineLink: OnlineLink by lazy { OnlineLink(cloud, uiScope!!) { renew() } }
+    private val onlineLink: OnlineLink by lazy {
+        OnlineLink(cloud, uiScope!!) { renew() }.also { link ->
+            link.onResync = { log, stamp -> onMain { onResyncLog(log, stamp) } }
+        }
+    }
 
     /**
      * Cria uma sala de amigo — quem cria sempre joga primeiro. Com [invitedId], mira
@@ -947,6 +955,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (onlineMatchRanked) uiScope?.launch { loadRankBefore() }
         onlineLink.send(Protocol.hello(profile.displayName, mode.name))
         onlineLink.opponentId?.let { id -> uiScope?.launch { loadOpponentProfile(id) } }
+        startResyncWatch()
         screen = Screen.PLACEMENT
     }
 
@@ -2731,6 +2740,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     /** Uma linha chegou do outro aparelho — mesmo protocolo para LAN e online. */
     private fun onLine(line: String) {
+        lastOpponentLineAt = nowMillis()
         if (practiceSwitchSide != null) {
             // durante o aviso a partida ainda é a da IA: guarda e repete depois da troca
             practiceLines += line
@@ -2760,12 +2770,19 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
             Protocol.ABILITY -> parts.getOrNull(1)
                 ?.let { code -> Ability.entries.firstOrNull { it.code == code } }
-                ?.let { m.selectAbility(it, ignoreCooldown = parts.getOrNull(2) == "1", fromRemote = true) }
+                ?.let {
+                    // habilidade fora da vez: os aparelhos discordam de quem joga (#67)
+                    if (outOfTurnOnline(m)) return
+                    m.selectAbility(it, ignoreCooldown = parts.getOrNull(2) == "1", fromRemote = true)
+                }
 
             Protocol.ACT -> {
                 val x = parts.getOrNull(1)?.toIntOrNull() ?: return
                 val y = parts.getOrNull(2)?.toIntOrNull() ?: return
-                m.act(Coord(x, y))
+                // tiro fora da vez nunca é aplicado como se fosse do outro lado (#67); online
+                // pede o log da sala para os dois aparelhos voltarem a concordar
+                if (outOfTurnOnline(m)) return
+                m.act(Coord(x, y), by = m.mySide.other())
             }
 
             // só provocação conhecida: texto livre de cliente alterado é ignorado (#58)
@@ -2810,6 +2827,74 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     // ---------------- conexão instável (online) ----------------
+
+    /**
+     * Jogada do adversário que chegou fora da vez dele, numa partida online em batalha:
+     * pede a ressincronização pelo log da sala e devolve true (a jogada não é aplicada).
+     * Rede local não tem log, então só deixa o [Match.act] ignorar.
+     */
+    private fun outOfTurnOnline(m: Match): Boolean {
+        if (m.opponent != Opponent.ONLINE || m.phase != Phase.BATTLE) return false
+        if (m.turnOwner == m.mySide.other()) return false
+        onlineLink.requestResync()
+        return true
+    }
+
+    /** Instante da última linha do adversário (qualquer tipo) — o vigia só dispara com ele calado. */
+    private var lastOpponentLineAt = 0L
+    private var lastResyncAt: Long? = null
+    private var resyncWatchJob: Job? = null
+
+    /**
+     * Vigia dos dois em AGUARDE (#67): a cada segundo confere se, em batalha, este aparelho
+     * está sem a vez e sem notícia do adversário há tempo demais ([shouldResync]) e pede a
+     * ressincronização pelo log. Para sozinho quando a partida online acaba.
+     */
+    private fun startResyncWatch() {
+        resyncWatchJob?.cancel()
+        lastOpponentLineAt = nowMillis()
+        lastResyncAt = null
+        resyncWatchJob = uiScope?.launch {
+            var waitingSince: Long? = null
+            while (true) {
+                delay(1000)
+                val m = match
+                if (m == null || m.opponent != Opponent.ONLINE || m.phase == Phase.RESULT) break
+                if (m.phase != Phase.BATTLE || m.turnOwner == m.mySide) {
+                    waitingSince = null
+                    continue
+                }
+                val now = nowMillis()
+                if (waitingSince == null) waitingSince = now
+                if (shouldResync(
+                        now, waitingSince, lastOpponentLineAt, onlineLink.selfOffline,
+                        opponentPaused || selfPausedAtMillis != null, opponentDropSecondsLeft, lastResyncAt
+                    )
+                ) {
+                    lastResyncAt = now
+                    onlineLink.requestResync()
+                }
+            }
+        }
+    }
+
+    /**
+     * Chegou o log inteiro da sala: reconstrói a partida por ele e troca a atual. Se uma
+     * jogada nossa saiu depois de o log ser baixado, ela não está nele — descarta e pede de
+     * novo, em vez de apagar o próprio tiro.
+     */
+    private fun onResyncLog(log: List<OnlineMessage>, stamp: Int) {
+        val m = match ?: return
+        if (m.opponent != Opponent.ONLINE || m.phase != Phase.BATTLE) return
+        if (onlineLink.sentCount != stamp) {
+            onlineLink.requestResync()
+            return
+        }
+        val selfId = onlineLink.selfId ?: return
+        val lines = log.map { ReplayLine(it.id, if (it.senderId == selfId) m.mySide else m.mySide.other(), it.body) }
+        val rebuilt = replayNetworkMatch(m.mode, m.mySide, m.nameOne, m.nameTwo, lines, localId = m.localId) ?: return
+        match = rebuilt
+    }
 
     /** Este aparelho perdeu o servidor no meio da partida online — a tela avisa. */
     val onlineSelfOffline: Boolean
@@ -2902,13 +2987,23 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Dispara e conta ao adversário — os dois aparelhos resolvem o mesmo tiro. */
     fun fireShared(coord: Coord) {
         val m = match ?: return
-        if (m.opponent.isNetwork()) sendToOpponent(Protocol.act(coord.x, coord.y))
-        m.act(coord)
+        if (m.opponent.isNetwork()) {
+            // só sai pela rede a jogada válida agora (#67): fora da vez ou em casa já atirada
+            // o outro aparelho aplicaria algo que este não aplicou
+            if (!m.canAct(m.mySide, coord)) return
+            sendToOpponent(Protocol.act(coord.x, coord.y))
+            m.act(coord, by = m.mySide)
+        } else {
+            m.act(coord)
+        }
     }
 
     fun useAbilityShared(ability: Ability, ignoreCooldown: Boolean = false) {
         val m = match ?: return
-        if (m.opponent.isNetwork()) sendToOpponent(Protocol.ability(ability.code, ignoreCooldown))
+        if (m.opponent.isNetwork()) {
+            if (!m.abilityAvailable(ability, ignoreCooldown)) return
+            sendToOpponent(Protocol.ability(ability.code, ignoreCooldown))
+        }
         m.selectAbility(ability, ignoreCooldown)
     }
 

@@ -165,3 +165,80 @@ class MatchTest {
         assertFalse(m.wonWithoutCombat(Side.ENEMY))
     }
 }
+
+// ---- #67: validar quem joga ----
+
+class MatchByTest {
+
+    private fun fixedFleet(): List<Ship> = ShipClass.fleet.mapIndexed { i, type ->
+        Ship(type, Coord(0, i * 2), Orientation.HORIZONTAL)
+    }
+
+    private fun battle(mode: GameMode = GameMode.CLASSIC): Match {
+        val m = Match(mode, Opponent.ONLINE, Side.PLAYER)
+        m.applyFleetOf(Side.PLAYER, fixedFleet())
+        m.applyFleetOf(Side.ENEMY, fixedFleet())
+        assertEquals(Phase.BATTLE, m.phase)
+        return m
+    }
+
+    @Test
+    fun jogadaDeQuemNaoTemAVezNaoMudaNada() {
+        val m = battle()
+        assertNull(m.act(Coord(0, 0), by = Side.ENEMY))
+        assertEquals(Side.PLAYER, m.turnOwner)
+        assertEquals(1, m.turnCount)
+        assertEquals(0, m.playerShots)
+        assertEquals(0, m.enemyShots)
+        assertTrue(m.playerBoard.marks.isEmpty())
+        assertTrue(m.enemyBoard.marks.isEmpty())
+    }
+
+    @Test
+    fun jogadaDoDonoDaVezEAplicadaComBy() {
+        val m = battle()
+        assertEquals(ShotResult.HIT, m.act(Coord(0, 0), by = Side.PLAYER)?.result)
+        assertEquals(1, m.playerShots)
+        assertEquals(Mark.HIT, m.enemyBoard.marks[Coord(0, 0)])
+    }
+
+    @Test
+    fun canActSoNaVezECasaLivre() {
+        val m = battle()
+        assertTrue(m.canAct(Side.PLAYER, Coord(0, 0)))
+        assertFalse(m.canAct(Side.ENEMY, Coord(0, 0)), "fora da vez")
+        m.act(Coord(0, 0), by = Side.PLAYER)
+        assertFalse(m.canAct(Side.PLAYER, Coord(0, 0)), "casa já atirada")
+        assertTrue(m.canAct(Side.PLAYER, Coord(1, 0)))
+    }
+
+    @Test
+    fun canActFalsoForaDaBatalha() {
+        val m = Match(GameMode.CLASSIC, Opponent.ONLINE, Side.PLAYER)
+        assertFalse(m.canAct(Side.PLAYER, Coord(0, 0)))
+    }
+
+    @Test
+    fun canActComRadarOuSonarArmadoAceitaCasaJaAtirada() {
+        val m = battle(GameMode.TACTICAL)
+        m.act(Coord(9, 9), by = Side.PLAYER) // erro: passa a vez
+        m.act(Coord(9, 9), by = Side.ENEMY)
+        assertFalse(m.canAct(Side.PLAYER, Coord(9, 9)), "sem habilidade, casa atirada não vale")
+        m.selectAbility(Ability.SONAR_PING)
+        assertEquals(Ability.SONAR_PING, m.pendingAbility)
+        assertTrue(m.canAct(Side.PLAYER, Coord(9, 9)), "sonar armado vale em qualquer casa")
+        m.selectAbility(Ability.SONAR_PING)
+        m.selectAbility(Ability.AIR_RECON)
+        assertTrue(m.canAct(Side.PLAYER, Coord(9, 9)), "radar armado também")
+    }
+
+    @Test
+    fun actSemByContinuaComoAntesParaIaELocal() {
+        val m = Match(GameMode.CLASSIC, Opponent.LOCAL)
+        m.playerBoard.clear(); fixedFleet().forEach { m.playerBoard.place(it) }
+        m.confirmPlacement()
+        m.enemyBoard.clear(); fixedFleet().forEach { m.enemyBoard.place(it) }
+        m.confirmPlacement()
+        assertEquals(ShotResult.HIT, m.act(Coord(0, 0))?.result)
+    }
+}

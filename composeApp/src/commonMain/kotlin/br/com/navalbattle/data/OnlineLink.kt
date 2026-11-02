@@ -42,6 +42,35 @@ class OnlineLink(
     private var sendJob: Job? = null
     private var session: Session? = null
 
+    /** Consulta com sobreposição e descarte das linhas já entregues (#67). */
+    private val cursor = PollCursor()
+
+    /** O laço de consulta baixa o log inteiro na próxima volta (#67). */
+    private var resyncRequested = false
+
+    /** Quantas linhas este aparelho já pôs na fila — quem recebe o log confere que nada saiu no meio. */
+    var sentCount = 0
+        private set
+
+    /**
+     * Log inteiro da sala, em ordem de `id` (linhas dos dois lados), mais o [sentCount] de
+     * quando ele foi baixado. Quem recebe descarta se o contador mudou (uma jogada saiu no
+     * meio e não está no log).
+     */
+    var onResync: ((List<OnlineMessage>, Int) -> Unit)? = null
+
+    /** Id do usuário nesta sala, para separar as linhas próprias das do adversário no log. */
+    val selfId: String? get() = session?.userId
+
+    /**
+     * Pede a ressincronização (#67). O próprio laço de consulta atende, quando a fila de
+     * envio está vazia: assim uma linha que chega durante a ressincronização não é aplicada
+     * duas vezes nem some.
+     */
+    fun requestResync() {
+        resyncRequested = true
+    }
+
     /** Jogadas ainda não confirmadas pelo servidor, na ordem em que foram feitas. */
     private val outbox = ArrayDeque<Pair<Int, String>>()
     private var nextSeq = 0
@@ -70,6 +99,7 @@ class OnlineLink(
         private const val HEARTBEAT_INTERVAL_MS = 3000L
         const val OFFLINE_AFTER_MS = 6000L
         private const val RESEND_MAX_DELAY_MS = 4000L
+        private const val MAX_LOG_PAGES = 20
     }
 
     /**
@@ -139,6 +169,8 @@ class OnlineLink(
         sendJob = null
         outbox.clear()
         nextSeq = 0
+        cursor.clear()
+        resyncRequested = false
         opponentSeenAtMillis = null
         selfOffline = false
         opponentAwaySeconds = null
@@ -409,21 +441,46 @@ class OnlineLink(
     private fun startMessagePolling(session: Session, matchId: String, onLine: (String) -> Unit) {
         lastOkMillis = nowMillis()
         pollJob = scope.launch {
-            // lastId só avança com o que chegou: depois de uma queda, a primeira
+            // o piso do cursor só avança com o que chegou: depois de uma queda, a primeira
             // consulta que der certo traz tudo o que o adversário jogou nesse meio-tempo
-            var lastId = 0L
+            cursor.clear()
+            resyncRequested = false
             while (isActive) {
                 delay(1200)
-                val messages = (withSession { cloud.pollOnlineMessages(it, matchId, lastId) } as? CloudResult.Ok)
+                if (resyncRequested && outbox.isEmpty()) {
+                    val stamp = sentCount
+                    val all = downloadWholeLog(matchId)
+                    if (all != null && sentCount == stamp && outbox.isEmpty()) {
+                        resyncRequested = false
+                        cursor.resetTo(all)
+                        onResync?.invoke(all, stamp)
+                        continue
+                    }
+                    // falhou ou uma jogada saiu no meio: o pedido continua e tenta na próxima volta
+                }
+                val messages = (withSession { cloud.pollOnlineMessages(it, matchId, cursor.floor()) } as? CloudResult.Ok)
                     ?.value ?: continue
-                for (message in messages) {
-                    lastId = message.id
+                for (message in cursor.accept(messages)) {
                     if (message.senderId != session.userId) onLine(message.body)
                 }
             }
         }
         startHeartbeat(matchId)
         flushOutbox()
+    }
+
+    /** Baixa o log da sala desde o começo, página por página (o PostgREST corta em 1000 linhas). */
+    private suspend fun downloadWholeLog(matchId: String): List<OnlineMessage>? {
+        val all = ArrayList<OnlineMessage>()
+        var after = 0L
+        repeat(MAX_LOG_PAGES) {
+            val page = (withSession { cloud.pollOnlineMessages(it, matchId, after) } as? CloudResult.Ok)
+                ?.value ?: return null
+            if (page.isEmpty()) return all
+            all += page
+            after = page.maxOf { it.id }
+        }
+        return all
     }
 
     /**
@@ -467,6 +524,7 @@ class OnlineLink(
     fun send(line: String) {
         if (session == null || matchId == null) return
         outbox.addLast(nextSeq++ to line)
+        sentCount++
         flushOutbox()
     }
 

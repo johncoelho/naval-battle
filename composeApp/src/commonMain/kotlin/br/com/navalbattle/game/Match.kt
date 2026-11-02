@@ -59,7 +59,13 @@ class Match(
     val mySide: Side = Side.PLAYER,
     private val random: Random = Random.Default,
     /** IA no nível mais fácil: só a partida guiada da primeira vez usa (#43). */
-    easyAi: Boolean = false
+    easyAi: Boolean = false,
+    /**
+     * Id desta partida no aparelho: referência do "dobrar dobrões" contra a IA (cada vitória
+     * dobra uma vez). Usa o sorteio padrão, nunca o [random] da partida (não muda o jogo).
+     * A partida reconstruída pelo log da sala (#67) herda o id da que ela substitui.
+     */
+    val localId: String = buildString { repeat(32) { append("0123456789abcdef"[Random.Default.nextInt(16)]) } }
 ) {
 
     val playerBoard = Board()
@@ -224,6 +230,22 @@ class Match(
         markFleetReady()
     }
 
+    /**
+     * Põe a frota de [side] no tabuleiro dele (reconstrução da partida pelo log da sala, #67).
+     * Uma frota por lado e só antes da batalha; devolve se foi aplicada.
+     */
+    fun applyFleetOf(side: Side, ships: List<Ship>): Boolean {
+        if (!remote || phase != Phase.PLACEMENT || side in fleetsApplied) return false
+        fleetsApplied += side
+        val board = board(side)
+        board.clear()
+        ships.forEach { board.place(it) }
+        markFleetReady()
+        return true
+    }
+
+    private val fleetsApplied = mutableSetOf<Side>()
+
     /** Coordenada sorteada para o disparo automático — quem escolhe é o dono do turno. */
     fun pickTarget(): Coord? {
         val target = board(turnOwner.other())
@@ -256,12 +278,6 @@ class Match(
         if (winnerSide == mySide) wonByAbsence = true
         finish(winnerSide)
     }
-
-    /**
-     * Id desta partida no aparelho: referência do "dobrar dobrões" contra a IA (cada vitória
-     * dobra uma vez). Usa o sorteio padrão, nunca o [random] da partida (não muda o jogo).
-     */
-    val localId: String = buildString { repeat(32) { append("0123456789abcdef"[Random.Default.nextInt(16)]) } }
 
     /**
      * Marcado quando ESTE aparelho ficou 60s em segundo plano numa partida online
@@ -360,9 +376,27 @@ class Match(
 
     // ---------------- ação de turno ----------------
 
-    /** Dispara (ou usa a habilidade selecionada) contra o tabuleiro adversário de quem tem a vez. */
-    fun act(coord: Coord): ShotOutcome? {
+    /**
+     * [side] pode jogar [coord] agora? Fase de batalha, a vez é dele e, sem habilidade
+     * armada, a casa ainda não foi atirada. Em rede só a jogada que passa por aqui sai
+     * para o outro aparelho (#67).
+     */
+    fun canAct(side: Side, coord: Coord): Boolean {
+        if (phase != Phase.BATTLE || turnOwner != side) return false
+        if (pendingAbility != null) return true
+        val mark = board(side.other()).marks[coord]
+        return mark == null || mark == Mark.SCAN_HOT || mark == Mark.SCAN_COLD
+    }
+
+    /**
+     * Dispara (ou usa a habilidade selecionada) contra o tabuleiro adversário de quem tem a vez.
+     * [by] é quem mandou a jogada (em rede): se não for o dono da vez, a jogada é ignorada e
+     * nada muda. Antes ela era aplicada como tiro do outro lado, e os dois aparelhos passavam
+     * a discordar de quem jogava (#67). IA e modo local passam nulo.
+     */
+    fun act(coord: Coord, by: Side? = null): ShotOutcome? {
         if (phase != Phase.BATTLE) return null
+        if (by != null && by != turnOwner) return null
         dismissSticky()
         val attacker = turnOwner
         val target = board(attacker.other())

@@ -136,7 +136,12 @@ fun BattleScreen(state: AppState, match: Match) {
             // em vez de disparar uma jogada que não iria a lugar nenhum
             while (state.onlineSelfOffline) delay(500)
             // em rede, quem escolhe a coordenada é o dono do turno, e ela viaja
-            if (lan) match.pickTarget()?.let { state.fireShared(it) } else match.fireRandom()
+            // (#67) só dispara se a vez ainda é minha: um toque pode ter passado a vez nesse segundo
+            if (lan) {
+                if (match.phase == Phase.BATTLE && match.turnOwner == match.mySide) {
+                    match.pickTarget()?.let { state.fireShared(it) }
+                }
+            } else match.fireRandom()
         }
     }
 
