@@ -9,6 +9,16 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.43.3] — 2026-11-02 · Avisos de boas-vindas mostram dobrões e milhas (#43)
+
+App 0.43.3 (versionCode 116). Refs #43. Só cliente: sem mudança de banco, de protocolo nem de stack.
+
+### Corrigido
+- **"%s" literal nos popups de boas-vindas (#43, achado pelo QA na 0.43.2):** "Primeira missão" (`GUIDED_OFFER_BODY`), "Crie sua conta para receber…" (`GIFT_GUEST`) e o presente depois do login (`GIFT_GOT`) usavam `%s` duas vezes, mas `t(key, a, b)` só troca `%1` e `%2`; os textos agora usam `%1`/`%2` nos três idiomas. O servidor já creditava certo (+150 dobrões, +5 milhas). Nenhuma outra chave tinha o defeito.
+- **Teste de regressão:** `i18n/PlaceholderTest` renderiza todas as chaves nos três idiomas com argumentos de exemplo e reprova `%s`/`%N` sobrando, `%s` usado mais de uma vez e mistura de `%s` com `%1`/`%2`.
+
+---
+
 ## [0.43.2] — 2026-11-01 · Partida online não trava mais com os dois em AGUARDE (#67)
 
 App 0.43.2 (versionCode 115). Refs #67. Só cliente: sem mudança de banco, de protocolo nem de stack.

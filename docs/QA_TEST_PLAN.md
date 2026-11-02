@@ -189,11 +189,11 @@ Antes de cada rodada, `welcome_gift_reset` da conta QA (administrador) e carreir
 
 | ID | P | Passos | Esperado |
 |---|---|---|---|
-| WEL-01 | P0 | QA01 com reset e 0 partidas locais, abrir o app e chegar ao menu | Aparece "Primeira missão" com Começar e Pular |
+| WEL-01 | P0 | QA01 com reset e 0 partidas locais, abrir o app e chegar ao menu | Aparece "Primeira missão" com Começar e Pular; o texto mostra "◆150 dobrões + 5 milhas", sem "%s" (#43, 0.43.3) |
 | WEL-02 | P0 | Começar e jogar a guiada até o fim | Dicas na ordem: posicionar, tocar numa casa, "Acertou! Quem acerta atira de novo", "Navio afundado"; popup "◆150 dobrões + 5 milhas"; saldo do servidor +150 |
 | WEL-03 | P1 | Ajustes → Rever partida guiada, jogar | Dicas aparecem; ao terminar ou pular, nenhum presente |
-| WEL-04 | P0 | Reset de novo, Pular no passo 1 | Presente igual ao do WEL-02 |
-| WEL-05 | P1 | Convidado faz a guiada e depois entra na conta | Popup pede para entrar; no primeiro login chega o presente |
+| WEL-04 | P0 | Reset de novo, Pular no passo 1 | Presente igual ao do WEL-02, com os números (nunca "%s") |
+| WEL-05 | P1 | Convidado faz a guiada e depois entra na conta | Popup pede para entrar, com "◆150 + 5 milhas" sem "%s"; no primeiro login chega o presente e o popup mostra os valores |
 | WEL-06 | P0 | Conta antiga que não é QA (ensaio `welcome_ensaio.sql`) | `not_eligible`; nada creditado |
 
 ### 6c. Convide um amigo (#44)
