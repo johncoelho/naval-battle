@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.43.2] — 2026-11-01 · Partida online não trava mais com os dois em AGUARDE (#67)
+
+App 0.43.2 (versionCode 115). Refs #67. Só cliente: sem mudança de banco, de protocolo nem de stack.
+
+### Corrigido
+- **Os dois aparelhos discordavam de quem joga (#67):** quatro furos somados. (1) `Match.act` não sabia quem mandou a jogada e aplicava um `ACT` fora da vez como tiro do outro lado, no tabuleiro errado, trocando a vez (o 35 x 36 do relato). (2) `fireShared` e `useAbilityShared` enviavam antes de conferir a vez, e o disparo automático do relógio podia sair junto com um toque. (3) A consulta pedia só `id > último` e o `id` é `identity` (a ordem do número não é a ordem em que a linha fica visível), então uma linha de número menor que aparecia depois nunca era lida. (4) Sem saída quando os dois esperam.
+- **A. Quem joga é validado:** `Match.act(coord, by)` ignora a jogada de quem não tem a vez (IA e modo local seguem com `by = null`); `Match.canAct(side, coord)` diz se a jogada vale (batalha, vez, casa livre ou habilidade armada). A rede sempre passa `by`.
+- **B. Só sai jogada válida:** `fireShared` e `useAbilityShared` só enviam se `canAct`/`abilityAvailable`; o relógio confere a vez logo antes do disparo automático.
+- **C. Ressincronização pelo log da sala:** `replayNetworkMatch` (`game/NetworkReplay.kt`) reconstrói a partida repassando `FLEET`/`ABIL`/`ACT` em ordem de `id` com a mesma regra de A; os dois aparelhos chegam ao mesmo estado. `OnlineLink.requestResync()` é atendido pelo laço de consulta (baixa o log inteiro, paginado, com a fila de envio vazia) e a partida reconstruída troca a atual; se uma jogada nossa saiu depois do download, o log é descartado e pedido de novo. Dispara na hora ao receber `ACT`/`ABIL` fora da vez e pelo vigia (`shouldResync`): em batalha, sem a vez e sem linha do adversário há 30 s, fora de queda de rede, pausa e contagem de queda, no máximo a cada 15 s. Sem texto novo na tela.
+- **D. Consulta com sobreposição:** `PollCursor` consulta a partir de um piso duas consultas atrás (~2,4 s) e descarta os `id` já vistos, então a linha que aparece atrasada é entregue uma vez só.
+
+### Compatibilidade
+- Formato das linhas e banco inalterados. **Limitação aceita:** com o app antigo (0.42.2 em produção, 0.43.0/0.43.1) do outro lado, o aparelho novo descarta a jogada fora da vez e se ressincroniza, mas o antigo mantém o comportamento de hoje; se só o antigo estiver dessincronizado, o novo pode continuar esperando (o vigia repete a cada 15 s sem efeito) e a saída é "Encerrar", como antes.
+- Recompensa e ranqueada usam os números da partida reconstruída; nenhuma regra de pontos muda.
+
+### Testes
+- `MatchByTest` (act por lado, `canAct`), `NetworkReplayTest` (Clássico e Tático, os dois lados, fora da vez ignorado, cenário 35 x 36, vigia), `PollCursorTest`. QA: ON-20 a ON-22; refazer ON-06 e ON-08.
+
 ## [0.43.1] — 2026-11-01 · Anúncios premiados prontos para todos: AD_ID de volta, robôs fora (#40)
 
 App 0.43.1 (versionCode 114). Refs #40. Refeita sobre a 0.43.0 (o commit da 0.36.1 foi reaplicado; nada do push APNs, do vínculo de conta nem dos Dobrões do iPhone muda).

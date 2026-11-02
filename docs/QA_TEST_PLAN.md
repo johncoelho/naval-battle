@@ -254,6 +254,10 @@ Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem
 | ON-17 | P1 | Depois de abrir o app logado na versão nova, conferir no banco `device_checks` de A e B (e `profiles.is_test`) | Uma linha por conta e versão; com `allowlist_enforced = 'true'`, QA01/QA02 têm `is_test = true` (conta de teste, `source = 'qa'`), ficam fora do Placar e continuam se encontrando na partida rápida (teste com teste) (#23) |
 | ON-18 | P2 | Depois da revisão do Google de cada versão, conferir (só leitura) as contas criadas na janela do upload | Robôs (e-mail `nome.00000@gmail.com` ou `firebase.test.lab`) com `is_test = true`, fora do Placar. Contas comuns, testadores da lista e contas de iPhone com `is_test = false` (0.34.5, #35: quem não é robô vale). Conta comum marcada como teste por engano: conferir o e-mail de login em `auth.users` e a regra `is_robot_account` (#35) |
 | ON-19 | P1 | Com `allowlist_enforced = 'true'`, conta nova da loja (e-mail comum, sem robô) | Nasce com `is_test = false`, aparece no Placar e na partida rápida, e ganha pontos normalmente (#35) |
+| ON-20 | P0 | QA01 × QA02, Clássico e Tático, script de toques **simultâneos** nos dois a cada ~0,6 s, 3 partidas até o fim (#67) | Nenhum travamento; se os dois ficarem em AGUARDE, destrava sozinho em até ~35 s; o relatório dos dois lados bate (tiros e acertos) |
+| ON-21 | P1 | Depois do ON-20, conferir na sala (só leitura, `online_messages` em ordem de `id`) | Nenhum `ACT` gravado fora da vez e nenhum tiro repetido em casa já atirada (#67) |
+| ON-22 | P1 | Versões misturadas (0.43.2 × 0.43.1/0.42.2), partida inteira com toques alternados | Joga normal, sem travar. Limitação conhecida: se só o app antigo dessincronizar, a saída é "Encerrar" (#67) |
+| ON-06/ON-08 | P1 | **Refazer na 0.43.2** (pausa e queda de rede no meio do turno) | O vigia não dispara durante pausa nem queda, e a partida retoma como antes (#67) |
 
 ### 8a. Treino contra a IA enquanto procura (#41)
 

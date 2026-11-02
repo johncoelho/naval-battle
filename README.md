@@ -244,6 +244,13 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   adversário chegam. Se o **adversário** some por mais de 10s, aparece **"Adversário sem
   conexão"** com 60s de contagem; no fim, vitória por abandono, e a linha `DROP` fica na
   sala para o outro lado fechar a partida quando reconectar (`Match.lostByDisconnect`).
+  **Ressincronização pelo log (0.43.2, #67):** só sai pela rede a jogada válida na vez
+  (`Match.canAct`) e `Match.act(coord, by)` ignora a de quem não tem a vez. Se uma jogada
+  chega fora da vez, ou se os dois ficam sem a vez e sem notícia um do outro por 30 s (vigia
+  `shouldResync`, no máximo a cada 15 s, nunca em queda, pausa ou contagem de queda), o
+  `OnlineLink` baixa o log inteiro da sala e `replayNetworkMatch` reconstrói a partida em ordem
+  de `id`: os dois aparelhos chegam ao mesmo estado. A consulta usa piso duas consultas atrás
+  e `PollCursor` descarta os `id` já vistos.
 
 - **Push (Android e iPhone)** — a permissão é pedida ao chegar no menu e todo aparelho recebe os
   avisos gerais (versão nova, novidades), com ou sem conta; com conta, também convite de
