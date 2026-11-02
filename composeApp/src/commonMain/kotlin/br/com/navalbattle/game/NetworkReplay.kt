@@ -78,3 +78,19 @@ fun shouldResync(
     if (lastResync != null && now - lastResync < RESYNC_EVERY_MS) return false
     return true
 }
+
+/**
+ * As duas partidas têm o mesmo estado de batalha? Fase, vencedor, vez, turno, tiros e acertos,
+ * marcas dos dois tabuleiros, fumaça e habilidade armada. Só troca o `match` quando difere,
+ * senão a tela repete som e animação do último impacto sem motivo (#67).
+ */
+fun sameBattleState(a: Match, b: Match): Boolean =
+    a.phase == b.phase && a.winner == b.winner &&
+        a.turnOwner == b.turnOwner && a.turnCount == b.turnCount &&
+        a.playerShots == b.playerShots && a.playerHits == b.playerHits &&
+        a.enemyShots == b.enemyShots && a.enemyHits == b.enemyHits &&
+        a.playerBoard.marks.toMap() == b.playerBoard.marks.toMap() &&
+        a.enemyBoard.marks.toMap() == b.enemyBoard.marks.toMap() &&
+        a.playerBoard.smokeActive == b.playerBoard.smokeActive &&
+        a.enemyBoard.smokeActive == b.enemyBoard.smokeActive &&
+        a.pendingAbility == b.pendingAbility

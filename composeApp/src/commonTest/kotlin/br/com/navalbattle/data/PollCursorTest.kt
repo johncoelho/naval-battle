@@ -65,4 +65,16 @@ class PollCursorTest {
         assertEquals(emptyList(), ids(c.accept(all)))
         assertEquals(listOf(4L), ids(c.accept(all + msg(4))))
     }
+
+    @Test
+    fun unseenDevolveSoOQueNaoPassouPeloAcceptEmOrdemDeId() {
+        val c = PollCursor()
+        c.accept(listOf(msg(1), msg(2)))
+        val all = listOf(msg(1), msg(2), msg(4), msg(3))
+        assertEquals(listOf(3L, 4L), ids(c.unseen(all)))
+        // não altera o cursor: depois do resetTo nada mais é pendente
+        assertEquals(listOf(3L, 4L), ids(c.unseen(all)))
+        c.resetTo(all)
+        assertEquals(emptyList(), ids(c.unseen(all)))
+    }
 }

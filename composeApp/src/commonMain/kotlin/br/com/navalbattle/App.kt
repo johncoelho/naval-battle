@@ -161,6 +161,7 @@ import br.com.navalbattle.game.welcomeShouldRetry
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.ReplayLine
 import br.com.navalbattle.game.replayNetworkMatch
+import br.com.navalbattle.game.sameBattleState
 import br.com.navalbattle.game.shouldResync
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Phase
@@ -2893,6 +2894,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val selfId = onlineLink.selfId ?: return
         val lines = log.map { ReplayLine(it.id, if (it.senderId == selfId) m.mySide else m.mySide.other(), it.body) }
         val rebuilt = replayNetworkMatch(m.mode, m.mySide, m.nameOne, m.nameTwo, lines, localId = m.localId) ?: return
+        if (sameBattleState(m, rebuilt)) return
         match = rebuilt
     }
 

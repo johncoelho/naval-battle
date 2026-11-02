@@ -197,6 +197,18 @@ class NetworkReplayTest {
         assertEquals(Side.ENEMY, m.mySide)
     }
 
+    @Test
+    fun sameBattleStateIgualParaReconstrucaoSemMudancaEDiferenteDepoisDeUmTiro() {
+        for (mode in GameMode.entries) {
+            val p = play(mode, stopAfter = 12)
+            val rebuilt = replay(mode, Side.PLAYER, p.log)
+            assertTrue(sameBattleState(p.live, rebuilt), "$mode igual")
+            val more = play(mode, stopAfter = 13)
+            assertTrue(!sameBattleState(rebuilt, replay(mode, Side.PLAYER, more.log)), "$mode um passo à frente")
+            assertTrue(!sameBattleState(replay(mode, Side.PLAYER, p.log.dropLast(1)), rebuilt), "$mode sem a última linha")
+        }
+    }
+
     // ---------------- vigia ----------------
 
     private val t0 = 1_000_000L

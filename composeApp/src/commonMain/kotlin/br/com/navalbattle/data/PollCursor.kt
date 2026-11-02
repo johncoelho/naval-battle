@@ -24,6 +24,10 @@ class PollCursor(private val lookback: Int = 2) {
         return fresh
     }
 
+    /** Linhas de [all] que ainda não passaram por [accept], em ordem de `id` (use antes de [resetTo]). */
+    fun unseen(all: List<OnlineMessage>): List<OnlineMessage> =
+        all.filter { it.id !in seen }.distinctBy { it.id }.sortedBy { it.id }
+
     /** Depois de baixar o log inteiro (ressincronização): tudo o que veio conta como visto. */
     fun resetTo(all: List<OnlineMessage>) {
         seen.clear()

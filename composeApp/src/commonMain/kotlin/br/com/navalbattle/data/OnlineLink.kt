@@ -452,8 +452,15 @@ class OnlineLink(
                     val all = downloadWholeLog(matchId)
                     if (all != null && sentCount == stamp && outbox.isEmpty()) {
                         resyncRequested = false
+                        // o replay só reaproveita FLEET/ACT/ABIL: o resto (PAUSE, QUIT, TAUNT...) que o
+                        // adversário gravou e ainda não foi entregue segue para onLine, em ordem de id
+                        val pending = cursor.unseen(all).filter { it.senderId != session.userId }
                         cursor.resetTo(all)
                         onResync?.invoke(all, stamp)
+                        for (message in pending) {
+                            val kind = Protocol.parts(message.body).firstOrNull()
+                            if (kind != Protocol.FLEET && kind != Protocol.ACT && kind != Protocol.ABILITY) onLine(message.body)
+                        }
                         continue
                     }
                     // falhou ou uma jogada saiu no meio: o pedido continua e tenta na próxima volta
