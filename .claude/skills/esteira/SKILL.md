@@ -37,7 +37,7 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
    OK), halt automático se houver pico de falhas; comentário "Produção: N%" em cada issue. Ver
    `docs/ESTEIRA.md` → Produção e liberação gradual.
 6. **Relatório** (resposta final, curta): triagem feita, item publicado (versão), o que está
-   aguardando o John (melhorias para aprovar, decisões). Rodada sem nada novo: uma linha.
+   aguardando o John (melhorias para aprovar, decisões, e `promote`/`advance` pendente do OK do John: versionCode N, próxima fração, condições já cumpridas: QA, PO, 24 h, vitals). Rodada sem nada novo: uma linha.
 
 ## Limites
 
