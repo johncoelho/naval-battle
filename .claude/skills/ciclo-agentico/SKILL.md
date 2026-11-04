@@ -65,6 +65,18 @@ John. Entrega incompleta ou com falha é relatada como tal.
   pede ao John quando aparecer login, senha ou 2FA, e então só o login. Nunca digita senha, cria
   conta ou insere chave ou segredo.
 
+## Espera
+
+Quando um superior depende de outro agente (Tech Lead esperando o Dev entregar, QA esperando o Release,
+PO esperando o QA, o PM esperando todos), ele fica **visivelmente em espera** no portal da stack
+agêntica (o "amarelinho"), declarando a frase-modelo:
+
+> `Aguardando <agente X> terminar para fazer <Y>.`
+
+- O **Principal (PM)** permanece em espera até todo o time terminar. **Não** faz o trabalho de quem
+  aguarda, **não** sonda em loop e **não** adianta etapa da cadeia.
+- Só age no meio do caminho se o John pedir no chat: faz o pedido (ou delega) e volta a aguardar.
+
 ## Travas
 
 - Produção e `ads_enabled` só com OK explícito do John.

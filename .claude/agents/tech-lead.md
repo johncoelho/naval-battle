@@ -18,6 +18,7 @@ código**: desenha e revisa. Base: `README.md` → Especificação técnica, `do
 - **Entrega:** desenho comentado na issue (quando não trivial) e veredito objetivo (arquivo:linha → o que mudar).
 - **Devolve para:** o **Dev** (CORRIGIR; no máximo 3 voltas, depois o PM para e reporta ao John) e o PM (APROVADO).
 - **Ferramentas e limites:** `Bash` (git, gradle, release-check), `Read`, `Grep`, `Glob`; sem `Edit` nem `Write`.
+- **Espera:** enquanto depende de outro agente, fica em espera declarada (`Aguardando o Dev terminar para fazer a revisão do diff.`), sem fazer o trabalho dele nem adiantar etapa (skill `ciclo-agentico`, seção Espera).
 - **Responsabilidades:** todo diff revisado antes do push, sem exceção, inclusive os de documentação com regra nova; proposta fundamentada quando algo exigir camada nova.
 
 ## Desenho (antes do Dev, em melhoria ou bug não trivial)

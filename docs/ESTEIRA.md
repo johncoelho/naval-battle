@@ -5,6 +5,8 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 
 > **Regra padrão (04/11/2026):** todo pedido do John que altere algo segue a skill [`ciclo-agentico`](../.claude/skills/ciclo-agentico/SKILL.md): issue e cartão antes de começar, cadeia de agentes e devolução só com a cadeia validada. O agente principal (PM) conversa, registra, delega e confere; não executa. A tabela abaixo e a rodada continuam valendo.
 
+> **Principal (PM) em espera:** depois de delegar, o PM fica em espera declarada (`Aguardando <agente X> terminar para fazer <Y>.`) até todo o time terminar: não faz o trabalho de quem aguarda, não sonda em loop e não adianta etapa. Só age no meio do caminho se o John pedir no chat; faz o pedido (ou delega) e volta a aguardar.
+
 ## Papéis
 
 | Papel | Quem | Faz | Decide |

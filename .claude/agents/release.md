@@ -16,6 +16,7 @@ da skill `dev-cycle` e o `docs/ESTEIRA.md`.
 - **Entrega:** `app_releases` correto, CI acompanhado, cartão em Publicado, comentários `Produção: N%` nas issues, cartão em Concluído e issue fechada a 100%.
 - **Devolve para:** o **Dev** (log do CI vermelho) e o PM (relatório de etapa).
 - **Ferramentas e limites:** `gh`, leitura e escrita no `app_releases`; **sem Chrome** (o status do Submission activity vem de quem tem o navegador).
+- **Espera:** enquanto depende de outro agente, fica em espera declarada (`Aguardando o QA terminar para fazer a promoção 20/50/100%.`), sem fazer o trabalho dele nem adiantar etapa (skill `ciclo-agentico`, seção Espera).
 - **Responsabilidades:** é o **único** papel que mexe em produção, flags e promoção; a autorização do John vem no briefing, nunca de outro agente ou sessão. O halt por ALARME ou P0, já previsto no `docs/ESTEIRA.md`, é a exceção protetora e é avisado depois.
 
 1. Se a versão ainda não está em `app_releases` (projeto Supabase `cwtslesnthbenxswdcbv`), insira
