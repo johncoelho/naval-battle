@@ -54,7 +54,9 @@ data class PendingAward(
     val hits: Int,
     val sunk: Int,
     val turns: Int,
-    val victory: Boolean
+    val victory: Boolean,
+    /** Quando entrou na fila (ms); 0 = fila gravada por app antigo, idade desconhecida (#73). */
+    val at: Long = 0L
 )
 
 /**
@@ -65,19 +67,20 @@ object OnlineAwardQueue {
     const val MAX_PENDING = 20
 
     fun encode(list: List<PendingAward>): String =
-        list.joinToString(";") { "${it.matchId},${it.shots},${it.hits},${it.sunk},${it.turns},${if (it.victory) 1 else 0}" }
+        list.joinToString(";") { "${it.matchId},${it.shots},${it.hits},${it.sunk},${it.turns},${if (it.victory) 1 else 0},${it.at}" }
 
     fun decode(raw: String): List<PendingAward> =
         raw.split(";").mapNotNull { entry ->
             val p = entry.split(",")
-            if (p.size != 6 || p[0].isBlank()) return@mapNotNull null
+            if ((p.size != 6 && p.size != 7) || p[0].isBlank()) return@mapNotNull null
             PendingAward(
                 matchId = p[0],
                 shots = p[1].toIntOrNull() ?: return@mapNotNull null,
                 hits = p[2].toIntOrNull() ?: return@mapNotNull null,
                 sunk = p[3].toIntOrNull() ?: return@mapNotNull null,
                 turns = p[4].toIntOrNull() ?: return@mapNotNull null,
-                victory = p[5] == "1"
+                victory = p[5] == "1",
+                at = if (p.size == 7) p[6].toLongOrNull() ?: 0L else 0L
             )
         }
 
@@ -93,4 +96,30 @@ object OnlineAwardQueue {
      * `no_result` (ranqueada ainda sem vencedor registrado) e falha de rede voltam a tentar.
      */
     fun settled(status: String): Boolean = status != "no_result"
+
+    /** Quanto tempo um `no_result` recente ainda segura o "Sair da conta" (o servidor ainda pode registrar o vencedor). */
+    const val NO_RESULT_GRACE_MS = 10 * 60_000L
+
+    /**
+     * Depois do reenvio: o que sobrou na fila bloqueia a saída? [statuses] traz o que o servidor RESPONDEU por
+     * sala (`no_result`, `no_wallet`...); sala sem resposta (rede, erro, carteira fechada) bloqueia. `no_result`
+     * já respondido só bloqueia enquanto recente: o pagamento da ranqueada depende de reenviar depois que o
+     * vencedor for registrado (`award_online_match`), mas sala abandonada não pode travar toda saída para
+     * sempre (#73). Idade desconhecida (fila antiga) não bloqueia.
+     */
+    fun blocksSignOut(pending: List<PendingAward>, statuses: Map<String, String>, now: Long): Boolean =
+        pending.any { a ->
+            when (statuses[a.matchId]) {
+                null -> true
+                "no_result" -> a.at > 0L && now - a.at < NO_RESULT_GRACE_MS
+                else -> true
+            }
+        }
 }
+
+/** O que o reenvio da fila de prêmios encontrou: serve à decisão e ao log de "Sair da conta" (#73). */
+data class AwardFlushReport(
+    val walletOpen: Boolean,
+    val statuses: Map<String, String>,
+    val networkFail: Boolean
+)

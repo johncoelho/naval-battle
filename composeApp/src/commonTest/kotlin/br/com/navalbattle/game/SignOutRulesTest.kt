@@ -7,23 +7,38 @@ import kotlin.test.assertEquals
 class SignOutRulesTest {
     @Test
     fun salvoESemPendenciaSai() {
-        assertEquals(SignOutDecision.PROCEED, SignOutRules.decide(careerSaved = true, awardsPending = false, force = false))
+        assertEquals(SignOutDecision.PROCEED, SignOutRules.decide(careerSaved = true, awardsUnsent = false, force = false))
     }
 
     @Test
     fun carreiraNaoSalvaAvisa() {
-        assertEquals(SignOutDecision.WARN, SignOutRules.decide(careerSaved = false, awardsPending = false, force = false))
+        assertEquals(SignOutDecision.WARN, SignOutRules.decide(careerSaved = false, awardsUnsent = false, force = false))
     }
 
     @Test
     fun premioPendenteAvisa() {
-        assertEquals(SignOutDecision.WARN, SignOutRules.decide(careerSaved = true, awardsPending = true, force = false))
+        assertEquals(SignOutDecision.WARN, SignOutRules.decide(careerSaved = true, awardsUnsent = true, force = false))
     }
 
     @Test
     fun forcarSempreSai() {
-        assertEquals(SignOutDecision.PROCEED, SignOutRules.decide(careerSaved = false, awardsPending = true, force = true))
-        assertEquals(SignOutDecision.PROCEED, SignOutRules.decide(careerSaved = true, awardsPending = false, force = true))
+        assertEquals(SignOutDecision.PROCEED, SignOutRules.decide(careerSaved = false, awardsUnsent = true, force = true))
+        assertEquals(SignOutDecision.PROCEED, SignOutRules.decide(careerSaved = true, awardsUnsent = false, force = true))
+    }
+
+    @Test
+    fun soPremioSemRespostaOuRecenteBloqueia() {
+        // o servidor respondeu no_result (sala sem vencedor) e a sala é antiga: não bloqueia a saída (#73)
+        assertEquals(SignOutDecision.PROCEED, SignOutRules.decide(careerSaved = true, awardsUnsent = false, force = false))
+        assertEquals(SignOutDecision.WARN, SignOutRules.decide(careerSaved = true, awardsUnsent = true, force = false))
+    }
+
+    @Test
+    fun motivoDoAvisoSoDizRedeQuandoFoiRede() {
+        assertEquals(SignOutReason.OFFLINE, SignOutRules.reason(careerSaved = false, careerNetworkFail = true, awardsNetworkFail = false))
+        assertEquals(SignOutReason.OFFLINE, SignOutRules.reason(careerSaved = true, careerNetworkFail = false, awardsNetworkFail = true))
+        assertEquals(SignOutReason.SERVER, SignOutRules.reason(careerSaved = false, careerNetworkFail = false, awardsNetworkFail = false))
+        assertEquals(SignOutReason.SERVER, SignOutRules.reason(careerSaved = true, careerNetworkFail = true, awardsNetworkFail = false))
     }
 
     @Test

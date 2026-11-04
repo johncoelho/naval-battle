@@ -61,12 +61,14 @@ sealed class CloudResult<out T> {
      * com o refresh guardado e repetir a chamada, sem incomodar o comandante.
      * [usernameTaken] marca a recusa por nome de guerra repetido (`profiles.username` é único, #59).
      * [code] é o `error_code` do GoTrue quando o Auth recusou (ex.: `identity_already_exists`, #63).
+     * [network] marca a falha de transporte (sem rede, tempo esgotado): o servidor nem respondeu (#73).
      */
     data class Fail(
         val message: String,
         val expired: Boolean = false,
         val usernameTaken: Boolean = false,
-        val code: String? = null
+        val code: String? = null,
+        val network: Boolean = false
     ) : CloudResult<Nothing>()
 }
 

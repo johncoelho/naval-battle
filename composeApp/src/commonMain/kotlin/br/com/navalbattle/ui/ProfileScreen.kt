@@ -73,6 +73,7 @@ import br.com.navalbattle.game.Badge
 import br.com.navalbattle.game.EarnedBadge
 import br.com.navalbattle.game.Insignia
 import br.com.navalbattle.game.Rank
+import br.com.navalbattle.game.SignOutReason
 import br.com.navalbattle.game.SignOutResult
 import kotlinx.coroutines.launch
 
@@ -424,7 +425,7 @@ fun ProfileScreen(state: AppState) {
                     Gap(8)
                     Text(t(K.SIGN_OUT_UNSAVED_TITLE).uppercase(), style = NavalType.display, color = Naval.ink)
                     Gap(6)
-                    HudLabel(t(K.SIGN_OUT_UNSAVED_WARN), Naval.muted)
+                    HudLabel(t(if (state.signOutReason == SignOutReason.SERVER) K.SIGN_OUT_UNSAVED_SERVER else K.SIGN_OUT_UNSAVED_WARN), Naval.muted)
                     Gap(22)
                     PrimaryButton(t(K.SIGN_OUT_RETRY), enabled = !signOutBusy) {
                         signOutBusy = true

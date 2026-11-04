@@ -1082,6 +1082,9 @@ actual class CloudApi actual constructor() {
     /** Recusa do servidor com o `error_code` do GoTrue (#63), para a tela escolher o texto. */
     private class ApiError(message: String, val errorCode: String?) : Exception(message)
 
+    /** Falha de transporte do `NSURLSession` (sem resposta HTTP): vira `network = true` (#73). */
+    private class NetworkError(message: String) : Exception(message)
+
     private suspend fun <T> call(block: suspend () -> CloudResult<T>): CloudResult<T> {
         if (!SupabaseConfig.isConfigured) {
             return CloudResult.Fail("Servidor do jogo ainda não configurado.")
@@ -1091,7 +1094,12 @@ actual class CloudApi actual constructor() {
         } catch (e: SessionExpired) {
             CloudResult.Fail(e.message.orEmpty(), expired = true)
         } catch (e: Exception) {
-            CloudResult.Fail(readable(e), usernameTaken = isUsernameTaken(e.message), code = (e as? ApiError)?.errorCode)
+            CloudResult.Fail(
+                readable(e),
+                usernameTaken = isUsernameTaken(e.message),
+                code = (e as? ApiError)?.errorCode,
+                network = e is NetworkError
+            )
         }
     }
 
@@ -1154,7 +1162,7 @@ actual class CloudApi actual constructor() {
         // Kotlin/Native não preserva "completionHandler" como nome de parâmetro utilizável.
         val task = NSURLSession.sharedSession.dataTaskWithRequest(req) { data, response, error ->
             if (error != null) {
-                cont.resumeWithException(Exception(error.localizedDescription))
+                cont.resumeWithException(NetworkError(error.localizedDescription))
                 return@dataTaskWithRequest
             }
             val http = response as? NSHTTPURLResponse

@@ -683,6 +683,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     AUTH_SIGN_OUT("Sair da conta", "Sign out", "Cerrar sesión"),
     AUTH_SIGNED_OUT("Sessão encerrada. Este aparelho voltou a ser de convidado; a carreira está na sua conta.", "Signed out. This device is a guest again; your career stays in your account.", "Sesión cerrada. Este aparato vuelve a ser de invitado; la carrera queda en tu cuenta."),
     SIGN_OUT_UNSAVED_TITLE("Progresso não sincronizado", "Progress not synced", "Progreso sin sincronizar"),
+    SIGN_OUT_UNSAVED_SERVER("Não foi possível salvar o progresso agora. O que não subiu fica só neste aparelho e se perde ao sair; tente de novo em instantes.", "Your progress could not be saved right now. Whatever did not sync stays only on this device and is lost when you sign out; try again in a moment.", "No se pudo guardar el progreso ahora. Lo que no se sincronizó queda solo en este aparato y se pierde al salir; inténtalo de nuevo en un momento."),
     SIGN_OUT_UNSAVED_WARN("Sem conexão, o progresso desde a última sincronização fica só neste aparelho e se perde ao sair.", "Without a connection, progress since the last sync stays only on this device and is lost when you sign out.", "Sin conexión, el progreso desde la última sincronización queda solo en este aparato y se pierde al salir."),
     SIGN_OUT_RETRY("Tentar de novo", "Try again", "Intentar de nuevo"),
     SIGN_OUT_FORCE("Sair mesmo assim", "Sign out anyway", "Salir de todos modos"),

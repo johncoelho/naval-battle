@@ -45,7 +45,9 @@ import br.com.navalbattle.data.DailyReminder
 import br.com.navalbattle.data.ReminderMessage
 import br.com.navalbattle.data.ReminderTexts
 import br.com.navalbattle.game.ProfileKeys
+import br.com.navalbattle.game.AwardFlushReport
 import br.com.navalbattle.game.SignOutDecision
+import br.com.navalbattle.game.SignOutReason
 import br.com.navalbattle.game.SignOutResult
 import br.com.navalbattle.game.SignOutRules
 import br.com.navalbattle.game.ReminderKind
@@ -1361,6 +1363,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         return DeleteAccountResult.DONE
     }
 
+    /** Causa do último aviso de "Sair da conta" (#73): a tela escolhe o texto por ela. */
+    var signOutReason by mutableStateOf(SignOutReason.OFFLINE)
+        private set
+
     /**
      * Sai da conta e devolve o aparelho a convidado (#64): para de receber os avisos dela, apaga a carreira e o
      * estado da conta do aparelho e só então vale a sessão de convidado. Antes sobe o que ainda não está na
@@ -1369,10 +1375,22 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      */
     suspend fun signOut(force: Boolean = false): SignOutResult {
         val session = profile.currentSession() ?: return SignOutResult.DONE  // sem conta não há o que limpar
-        flushOnlineAwards()
+        val flush = flushOnlineAwards()
         val snap = profile.snapshot()
-        val careerSaved = snap == lastPushed || pushCareer(snap, lastPushed?.username)
-        if (SignOutRules.decide(careerSaved, awardQueue.isNotEmpty(), force) == SignOutDecision.WARN) {
+        val synced = snap == lastPushed
+        val careerSaved = synced || pushCareer(snap, lastPushed?.username)
+        val queue = awardQueue
+        val awardsUnsent = OnlineAwardQueue.blocksSignOut(queue, flush.statuses, nowMillis())
+        if (SignOutRules.decide(careerSaved, awardsUnsent, force) == SignOutDecision.WARN) {
+            val careerFail = lastPushError
+            signOutReason = SignOutRules.reason(careerSaved, careerFail?.network == true, flush.networkFail)
+            // motivo real do aviso (#73): sai no logcat para o QA colar na issue; sem e-mail, token nem id
+            println(
+                "NB-SIGNOUT career_saved=$careerSaved synced=$synced push_err=${careerFail?.code ?: careerFail?.message?.take(60)} " +
+                    "push_net=${careerFail?.network} queue=${queue.size} wallet_open=${flush.walletOpen} " +
+                    "award_status=${queue.map { flush.statuses[it.matchId] ?: "sem_resposta" }} award_net=${flush.networkFail} " +
+                    "reason=$signOutReason"
+            )
             return SignOutResult.UNSAVED
         }
         val token = pushRegistered
@@ -2407,19 +2425,30 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (!profile.signedIn) return
         onlineAward = OnlineAwardUi.CHECKING
         onlineAwardAmount = 0
-        awardQueue = OnlineAwardQueue.add(awardQueue, PendingAward(id, shots, hits, sunk, turns, victory))
+        awardQueue = OnlineAwardQueue.add(awardQueue, PendingAward(id, shots, hits, sunk, turns, victory, at = nowMillis()))
         flushOnlineAwards(current = id)
         if (onlineAward == OnlineAwardUi.CHECKING) onlineAward = OnlineAwardUi.RETRY
     }
 
     /** Reenvia as recompensas online que o servidor ainda não confirmou (abertura do app). */
-    suspend fun flushOnlineAwards(current: String? = null) {
-        if (awardQueue.isEmpty() || !ensureWallet()) return
+    suspend fun flushOnlineAwards(current: String? = null): AwardFlushReport {
+        if (awardQueue.isEmpty()) return AwardFlushReport(profile.walletOpen, emptyMap(), false)
+        if (!ensureWallet()) return AwardFlushReport(false, emptyMap(), false)
+        val statuses = mutableMapOf<String, String>()  // o que o servidor RESPONDEU e ficou na fila
+        var networkFail = false
         for (a in awardQueue) {
-            val r = (authed { s ->
+            val res = authed { s ->
                 cloud.awardOnlineMatch(s, a.matchId, a.shots, a.hits, a.sunk, a.turns, a.victory)
-            } as? CloudResult.Ok)?.value ?: continue
-            if (!OnlineAwardQueue.settled(r.status) || r.status == "no_wallet") continue
+            }
+            if (res !is CloudResult.Ok) {
+                if (res is CloudResult.Fail && res.network) networkFail = true
+                continue
+            }
+            val r = res.value
+            if (!OnlineAwardQueue.settled(r.status) || r.status == "no_wallet") {
+                statuses[a.matchId] = r.status
+                continue
+            }
             awardQueue = OnlineAwardQueue.remove(awardQueue, a.matchId)
             if (a.matchId == current) {
                 onlineAwardAmount = r.amount
@@ -2432,6 +2461,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             if (r.amount > 0) refreshBalance()
             settleReferral(a.matchId)
         }
+        return AwardFlushReport(true, statuses, networkFail)
     }
 
     var dobroesStatus by mutableStateOf<DobroesStoreStatus?>(null)
@@ -3347,15 +3377,20 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * upsert falhava para sempre com o mesmo nome. Só avança o [lastPushed] quando o servidor aceitou.
      */
     private suspend fun pushCareer(snap: CloudProfile, cloudName: String?): Boolean {
+        lastPushError = null
         val userId = profile.currentSession()?.userId ?: return false
         val outcome = saveProfileWithNameFallback(snap, userId, cloudName) { attempt ->
-            authed { session -> cloud.saveProfile(session, attempt) }
+            authed { session -> cloud.saveProfile(session, attempt) }.also { if (it is CloudResult.Fail) lastPushError = it }
         }
         if (outcome !is NameSaveOutcome.Saved) return false
+        lastPushError = null
         if (outcome.profile.username != snap.username) profile.rename(outcome.profile.username)
         lastPushed = outcome.profile
         return true
     }
+
+    /** Última falha do [pushCareer] (nulo quando subiu ou não chegou a pedir): alimenta o motivo e o log do "Sair" (#73). */
+    private var lastPushError: CloudResult.Fail? = null
 
     /**
      * Na abertura do app, com conta conectada: renova a sessão e traz o que estiver

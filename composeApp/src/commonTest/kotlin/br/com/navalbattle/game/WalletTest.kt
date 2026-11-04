@@ -96,4 +96,34 @@ class WalletTest {
         val a = PendingAward("sala-1", 1, 1, 1, 1, true)
         assertTrue(OnlineAwardQueue.remove(listOf(a), "sala-1").isEmpty())
     }
+
+    @Test
+    fun filaAntigaComSeisCamposAindaLe() {
+        val q = OnlineAwardQueue.decode("sala-1,1,2,3,4,1;sala-2,1,2,3,4,0,1700000000000")
+        assertEquals(2, q.size)
+        assertEquals(0L, q[0].at)
+        assertEquals(1_700_000_000_000L, q[1].at)
+        assertEquals(q, OnlineAwardQueue.decode(OnlineAwardQueue.encode(q)))
+    }
+
+    @Test
+    fun saidaSoFicaPresaPorPremioSemRespostaOuNoResultRecente() {
+        val now = 10_000_000L
+        val grace = OnlineAwardQueue.NO_RESULT_GRACE_MS
+        val recent = PendingAward("r", 1, 1, 1, 1, true, at = now - 1_000L)
+        val old = PendingAward("o", 1, 1, 1, 1, true, at = now - grace - 1L)
+        val unknownAge = PendingAward("u", 1, 1, 1, 1, true)  // fila gravada pelo app antigo
+        // fila vazia não bloqueia
+        assertFalse(OnlineAwardQueue.blocksSignOut(emptyList(), emptyMap(), now))
+        // só no_result respondido e antigo (ou de idade desconhecida): sai
+        assertFalse(OnlineAwardQueue.blocksSignOut(listOf(old, unknownAge), mapOf("o" to "no_result", "u" to "no_result"), now))
+        // no_result recente: segura
+        assertTrue(OnlineAwardQueue.blocksSignOut(listOf(recent), mapOf("r" to "no_result"), now))
+        // sem resposta do servidor (rede/erro): segura, mesmo antigo
+        assertTrue(OnlineAwardQueue.blocksSignOut(listOf(old), emptyMap(), now))
+        // carteira ainda sem abrir no servidor: segura
+        assertTrue(OnlineAwardQueue.blocksSignOut(listOf(old), mapOf("o" to "no_wallet"), now))
+        // um sem resposta no meio de outros antigos basta para segurar
+        assertTrue(OnlineAwardQueue.blocksSignOut(listOf(old, unknownAge), mapOf("o" to "no_result"), now))
+    }
 }

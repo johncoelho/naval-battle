@@ -3,17 +3,25 @@ package br.com.navalbattle.game
 /** Resultado de [br.com.navalbattle.AppState.signOut]: saiu, ou parou porque ainda há progresso só neste aparelho. */
 enum class SignOutResult { DONE, UNSAVED }
 
+/** Por que o "Sair da conta" avisou: falha de rede ou o servidor não aceitou (#73). */
+enum class SignOutReason { OFFLINE, SERVER }
+
 /** O que fazer ao pedir para sair da conta (#64). */
 enum class SignOutDecision { PROCEED, WARN }
 
 /** Regra pura de sair da conta: nada é apagado enquanto houver progresso que a nuvem ainda não tem. */
 object SignOutRules {
     /**
-     * [careerSaved]: a carreira atual já está na nuvem (ou subiu agora). [awardsPending]: ainda há prêmio online
-     * na fila do aparelho. [force]: o jogador confirmou "Sair mesmo assim".
+     * [careerSaved]: a carreira atual já está na nuvem (ou subiu agora). [awardsUnsent]: há prêmio online na fila
+     * que o servidor ainda não respondeu (rede, erro) ou que pode mudar em breve; prêmio que o servidor respondeu
+     * `no_result` há tempo não conta (#73). [force]: o jogador confirmou "Sair mesmo assim".
      */
-    fun decide(careerSaved: Boolean, awardsPending: Boolean, force: Boolean): SignOutDecision =
-        if (force || (careerSaved && !awardsPending)) SignOutDecision.PROCEED else SignOutDecision.WARN
+    fun decide(careerSaved: Boolean, awardsUnsent: Boolean, force: Boolean): SignOutDecision =
+        if (force || (careerSaved && !awardsUnsent)) SignOutDecision.PROCEED else SignOutDecision.WARN
+
+    /** Texto certo do aviso: rede só quando a falha foi de transporte; o resto é o servidor não aceitar. */
+    fun reason(careerSaved: Boolean, careerNetworkFail: Boolean, awardsNetworkFail: Boolean): SignOutReason =
+        if ((!careerSaved && careerNetworkFail) || awardsNetworkFail) SignOutReason.OFFLINE else SignOutReason.SERVER
 }
 
 /**
