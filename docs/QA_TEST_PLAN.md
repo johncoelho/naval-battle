@@ -195,7 +195,7 @@ Antes de cada rodada, `welcome_gift_reset` da conta QA (administrador) e carreir
 | WEL-02 | P0 | Começar e jogar a guiada até o fim | Dicas na ordem: posicionar, tocar numa casa, "Acertou! Quem acerta atira de novo", "Navio afundado"; popup "◆150 dobrões + 5 milhas"; saldo do servidor +150 |
 | WEL-03 | P1 | Ajustes → Rever partida guiada, jogar | Dicas aparecem; ao terminar ou pular, nenhum presente |
 | WEL-04 | P0 | Reset de novo, Pular no passo 1 | Presente igual ao do WEL-02, com os números (nunca "%s") |
-| WEL-05 | P1 | Convidado faz a guiada e depois entra na conta | Popup pede para entrar, com "◆150 + 5 milhas" sem "%s"; no primeiro login chega o presente e o popup mostra os valores |
+| WEL-05 | P1 | Dados limpos, convidado faz (ou pula) a guiada e depois entra na conta (Google, e-mail, Apple no iPhone) | Popup pede para entrar, com "◆150 + 5 milhas" sem "%s"; **no login** (sem reabrir o app; se o primeiro pedido falhar, em até ~45 s com o app aberto, #72) chega o presente, o saldo sobe +150, as milhas +5 e o popup mostra os valores; entrar de novo não credita outra vez (`already`). Atenção: `guidedDone` sobrevive ao Sair da conta, então o convidado só vê o popup de oferta de novo depois de limpar os dados do app |
 | WEL-06 | P0 | Conta antiga que não é QA (ensaio `welcome_ensaio.sql`) | `not_eligible`; nada creditado |
 
 ### 6c. Convide um amigo (#44)
@@ -208,7 +208,7 @@ Ligar `referral_allow_qa = 'true'` só durante o teste e desligar no fim (REF-07
 | REF-02 | P0 | QA02: Tenho um código de convite → digitar o código do QA01 | Popup "Convite aceito"; os dois aparecem como amigos na hora |
 | REF-03 | P0 | QA02 tenta de novo; QA01 digita o próprio código | "Você já usou um código" e "Este é o seu próprio código" |
 | REF-04 | P0 | Partida online QA01 x QA02 sem tiro, abandonada | Ninguém recebe |
-| REF-05 | P0 | Partida online com combate dos dois lados | QA02 recebe ◆100 no fim; QA01 recebe push "Seu convite rendeu" e o popup ao abrir o menu; saldos do servidor batem |
+| REF-05 | P0 | Precondição: rodar **antes** de gastar as 3 partidas premiadas do par no dia (`dobroes_online_per_opponent`; depois vem `limit` e ninguém recebe). Partida online com combate dos dois lados | QA02 recebe ◆100 no fim; QA01 recebe push "Seu convite rendeu" e o popup ao abrir o menu; saldos do servidor batem |
 | REF-06 | P1 | Ensaio `referral_ensaio.sql` | Limites diário (1) e total (10), conta antiga, `is_test`, QA, sem carteira e teto online conferem |
 | REF-07 | P0 | Fim do teste | `referral_allow_qa = 'false'` |
 
@@ -219,7 +219,7 @@ Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem
 | ID | P | Passos | Esperado |
 |---|---|---|---|
 | WEK-01 | P0 | Ensaio `weekly_ensaio.sql` no SQL Editor | Resultado igual ao cabeçalho do arquivo e nada gravado depois |
-| WEK-02 | P0 | Abrir o Diário de bordo (QA01) | Bloco "Desafio da semana" com a missão, barra, prêmio "◆250 + 5 milhas", Resgatar desligado e "Renova na segunda-feira, em ..." |
+| WEK-02 | P0 | Abrir o Diário de bordo (QA01); a missão semanal gira em 3 semanas (`ONLINE_PLAY_5`, `CHECKIN_5`, `RANKED_WIN_3`), então a missão e a meta (5, 5 ou 3) dependem da semana | Bloco "Desafio da semana" com a missão da semana, barra, prêmio "◆250 + 5 milhas", Resgatar desligado e "Renova na segunda-feira, em ..." |
 | WEK-03 | P0 | Missão `ONLINE_PLAY_5`: 5 partidas online QA01 x QA02 com tiros dos dois lados | Barra sobe a cada partida até 5/5; Resgatar liga; ao resgatar, saldo do servidor +250 e +5 milhas |
 | WEK-04 | P0 | Tocar em Resgatar de novo (ou abrir o diário em outro aparelho) | Mostra "Prêmio da semana resgatado", nada novo creditado |
 | WEK-05 | P1 | Partida abandonada sem tiro | A barra não se move |
@@ -329,7 +329,7 @@ O ensaio `supabase/tests/safety_ensaio.sql` roda antes da migração. Casos com 
 | ID | P | Passos | Esperado |
 |---|---|---|---|
 | SAF-01 | P0 | Perfil: renomear para um termo ofensivo (com acento e leet) | Recusado com a mensagem de nome não permitido; o nome antigo fica; nada gravado em `profiles` |
-| SAF-02 | P0 | Gravar por SQL um nome ofensivo em `profiles` da conta de teste e reabrir o app | O nome vira `Comandante-xxxxxx`, o aviso "Seu nome foi trocado" aparece uma vez e não volta |
+| SAF-02 | P0 | Trocar o nome da conta de teste à força com `select public.force_reset_name('<uid da conta>', 'review')` e reabrir o app | O nome vira `Comandante-xxxxxx`, o aviso "Seu nome foi trocado" aparece uma vez e não volta |
 | SAF-03 | P0 | QA01 toca numa linha do ranking e denuncia (Nome ofensivo) | Linha em `player_reports` (`context = ranking`); repetir o mesmo motivo no dia mostra "já denunciou" |
 | SAF-04 | P0 | Denunciar pela busca de amigos | Grava com `context = search` |
 | SAF-05 | P0 | Terminar partida online e denunciar pelo Resultado | Grava com `context = result` e `match_id` da sala |
@@ -443,9 +443,9 @@ inválido suspende a conta AdMob). Servidor: `supabase/tests/ads_ensaio.sql` (bl
 | ID | P | Passos | Esperado |
 |---|---|---|---|
 | ADS-01 | P0 | `ads_enabled = 'false'`: vencer, abrir o Diário, ficar sem milha | Nenhum botão de anúncio aparece |
-| ADS-02 | P0 | Ligado, vitória contra a IA que rendeu 130: tocar "DOBRAR DOBRÕES" e assistir até o fim | +130 uma vez ("130 dobrões entraram no seu cofre"); o botão some daquela tela |
-| ADS-03 | P0 | Vitória que rendeu 205: dobrar | +150 (`ads_win_double_cap`) |
-| ADS-04 | P0 | Duas vitórias já dobradas hoje; vencer a terceira | Sem botão de dobrar |
+| ADS-02 | P0 | Ligado, **vitória online** (`online:<sala>`; contra a IA o servidor devolve `not_eligible`, a IA não paga) que rendeu 130: tocar "DOBRAR DOBRÕES" e assistir até o fim | +130 uma vez ("130 dobrões entraram no seu cofre"); o botão some daquela tela |
+| ADS-03 | P0 | Vitória online que rendeu 205: dobrar | +150 (`ads_win_double_cap`) |
+| ADS-04 | P0 | Duas vitórias online já dobradas hoje; vencer a terceira online | Sem botão de dobrar |
 | ADS-05 | P0 | Derrota, 2 jogadores, rede local, vitória sem combate, vitória por ausência do outro, online acima de 3 por adversário | Sem botão de anúncio |
 | ADS-06 | P0 | Check-in feito: "DOBRAR CHECK-IN" e assistir; repetir no 7º dia | +25; no 7º dia continua +25 (o bônus de 300 não dobra) |
 | ADS-07 | P0 | Desafio resgatado: dobrar | +50; o botão não volta no mesmo dia |
@@ -468,7 +468,7 @@ inválido suspende a conta AdMob). Servidor: `supabase/tests/ads_ensaio.sql` (bl
 | ADS-24 | P0 | Com `ads_enabled = 'test'` no app da Play (QA01/QA02 em emulador): fazer um anúncio em cada um dos 4 lugares (vitória online, check-in, desafio, milha) | Um vale `applied` com `transaction_id` em cada um dos 4 lugares (prova o SSV nos 4 blocos reais) |
 | ADS-25 | P1 | Servidor: `'true'` com `ads_min_app_version = <versionName da #40>`; conta com último aparelho `0.43.0` (ensaio, casos `gate_0430`, `gate_0431`) e a produção antiga | 0.43.0 ou anterior (sem a AD_ID): `ads_status` e `ad_reward_start` `off`, sem botão; versão da #40: libera. Só virar `'true'` com o OK do John |
 | ADS-26 | P0 | Tratamento de idade do AdMob (#53): um build `.preview` por faixa (`-PageFake=child`, `teen`, `adult`, `unknown`) em QA01 e QA02; vencer e tocar no botão de anúncio | Em cada faixa o anúncio de teste carrega, fecha com prêmio e o crédito entra. Mapeamento esperado: adulto UNSPECIFIED, `teen` e `unknown` TEEN, `child` CHILD (provado no teste de unidade `cadaFaixaTemOTratamentoDoAdMob`); sem log da faixa (a idade não vai para log). Adulto depois de menor na mesma sessão não se reproduz com `-PageFake` (fixo no build); garantido pelo `Builder` novo com UNSPECIFIED explícito a cada pedido |
-Nota do QA (04/11, 0.43.3): com carteira (#34) a vitória contra a IA (`ai:`) devolve `not_eligible`, porque a IA não paga; ADS-02, 03 e 04 valem para vitória **online** (`online:<sala>`). O `ads_ensaio.sql` ainda usa `ai:` nesses casos (precisa de ajuste do Dev). Com o Release já em `ads_enabled = true` e `ads_min_app_version = 0.43.1`, o ensaio mostra `gate_vazio=false` sem ser defeito. No anúncio de teste do emulador não há botão de fechar antes do prêmio (o Voltar pula para o anúncio 2 e credita), então ADS-10 na tela é N/A; o servidor cobre (`fechou_nao_gasta=0`).
+Nota do QA (04/11, 0.43.3): com carteira (#34) a vitória contra a IA (`ai:`) devolve `not_eligible`, porque a IA não paga; ADS-02, 03 e 04 valem para vitória **online** (`online:<sala>`). O `ads_ensaio.sql` agora usa salas online de ensaio nesses casos (#74). O ensaio agora zera `ads_min_app_version` dentro do bloco antes do caso `gate_vazio`, então ele dá `true` mesmo com o gate real da #40 ligado. No anúncio de teste do emulador não há botão de fechar antes do prêmio (o Voltar pula para o anúncio 2 e credita), então ADS-10 na tela é N/A; o servidor cobre (`fechou_nao_gasta=0`).
 | REV-01 | P1 | Build debug `-PreviewFake=true` (dados limpos), carreira com 2 vitórias: vencer a 3ª partida contra a IA e voltar ao menu (#45) | O fluxo falso de avaliação roda uma vez ao voltar ao menu; nada aparece dentro da partida nem na tela de resultado |
 | REV-02 | P1 | Logo depois, vencer outra partida e voltar ao menu (mesmo dia) | Não pede de novo (30 dias); o jogo segue normal |
 | REV-03 | P1 | Dados limpos, 3 vitórias já feitas, perder a partida e voltar ao menu | Não pede depois de derrota |

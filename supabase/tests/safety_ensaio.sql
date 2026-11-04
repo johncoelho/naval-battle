@@ -27,7 +27,8 @@
 --   termos_ofensivos=26/26 termos_ok=19/19   variações (acento, leet, separador, repetição) e exceções
 --   denuncia=ok repetida=already propria=self invalida=invalid limite=limit
 --   terceiro_troca_nome=Comandante-xxxxxx denuncias_status=3 name_reset  reset_registrado=1
---   push_john=1 push_log=1       um único push, mesmo com 3 denúncias na hora
+--   push_john=1 push_log=1       um único push, mesmo com 3 denúncias na hora (o ensaio esvazia moderation_push_log
+--                                dentro do bloco; sem isso o push_log soma as linhas reais de produção, hoje 5)
 --   aviso_nome=1 aviso_de_novo=0 my_name_reset / name_reset_ack
 --   nome_velho_volta=nao set_username_velho=taken   o nome trocado à força não volta por 30 dias
 --   suspenso_no_ranking=0 normal_no_ranking=1 suspenso_na_busca=0 suspenso_cliente_grava=mantido
@@ -204,6 +205,9 @@ begin
   out := out || format('termos_ok=%s/%s | ', n, array_length(ok_names, 1));
 
   -- ------------------------------------------------------------ denúncias
+  -- o registro real de pushes (moderation_push_log) tem linhas de produção, e uma na última hora impede o push do
+  -- ensaio; começa vazio dentro do bloco (volta no rollback), senão push_log depende do que já existe (#74)
+  delete from public.moderation_push_log;
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
   out := out || format('denuncia=%s ', public.report_player(t, 'name', 'ranking'));
   out := out || format('repetida=%s ', public.report_player(t, 'name', 'ranking'));

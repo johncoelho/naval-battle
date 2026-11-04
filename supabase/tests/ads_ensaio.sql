@@ -2,12 +2,14 @@
 -- Rodar no SQL Editor do projeto cwtslesnthbenxswdcbv depois de supabase/ads.sql. O raise no fim
 -- cancela a transação: nada fica gravado. ads_enabled é ligado só dentro do bloco; o rollback
 -- devolve o valor real ('test').
+-- As vitórias dos casos ADS-02/03/04/12/13 usam salas ONLINE de ensaio (`online:<sala>`, tiro dos dois lados
+-- e crédito da sala no razão): com carteira (#34) a vitória contra a IA (`ai:`) devolve `not_eligible`, a IA não paga (#74).
 --
 -- Resultado esperado (cada item vira um trecho de "RESULTADO"):
 --   desligado=off                  ads_enabled 'false': nenhum vale                     (ADS-01)
 --   status_off=f                   ads_status com o interruptor desligado               (ADS-01)
 --   test_ads_qa=t                  conta QA usa a unidade de teste                      (ADS-15)
---   win_130=ok/130                 vitória de 130 dobrões                               (ADS-02)
+--   win_130=ok/130                 vitória online de 130 dobrões                               (ADS-02)
 --   aplica_1=applied/130                                                                (ADS-02)
 --   repetido=already/0             mesmo transaction_id de novo (Google repete)         (ADS-13)
 --   pendente_ad=1                  dobroes_pending mostra o crédito uma vez (token ad:) (ADS-13)
@@ -47,6 +49,7 @@
 do $$
 declare
   a uuid; b uuid; r record; s record; n int; vb uuid; out text := '';
+  m1 uuid; m2 uuid; m3 uuid; m9 uuid;
 begin
   select id into a from auth.users where email = 'aigamesfactory.qa01@gmail.com';
   select id into b from auth.users where email = 'aigamesfactory.qa02@gmail.com';
@@ -58,6 +61,16 @@ begin
   insert into public.app_config (key, value) values ('ads_enabled', 'false')
     on conflict (key) do update set value = excluded.value;
   update public.profiles set nautical_miles = 10, miles_day = public.brt_today() where id in (a, b);
+
+  -- salas online de ensaio entre a e b, com tiro dos dois lados e o crédito da sala no razão (valor que o anúncio dobra)
+  insert into public.online_matches (host_id, guest_id, host_name, guest_name, status) values (a, b, 'qa01', 'qa02', 'finished') returning id into m1;
+  insert into public.online_matches (host_id, guest_id, host_name, guest_name, status) values (a, b, 'qa01', 'qa02', 'finished') returning id into m2;
+  insert into public.online_matches (host_id, guest_id, host_name, guest_name, status) values (a, b, 'qa01', 'qa02', 'finished') returning id into m3;
+  insert into public.online_matches (host_id, guest_id, host_name, guest_name, status) values (b, a, 'qa02', 'qa01', 'finished') returning id into m9;
+  insert into public.online_messages (match_id, sender_id, body)
+    select m, u, 'ACT|1,1' from unnest(array[m1, m2, m3, m9]) m, unnest(array[a, b]) u;
+  insert into public.dobroes_ledger (user_id, delta, reason, ref, balance_after) values
+    (a, 130, 'online', m1::text, 0), (a, 205, 'online', m2::text, 0), (a, 100, 'online', m3::text, 0), (b, 100, 'online', m9::text, 0);
 
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
 
@@ -72,7 +85,7 @@ begin
   out := out || 'test_ads_qa=' || s.test_ads || ' | ';
 
   -- ADS-02 / ADS-13: vitória de 130, callback repetido, vale reaproveitado, mesma partida
-  select * into r from public.ad_reward_start('win', 'ai:ensaio0000000001', 130);
+  select * into r from public.ad_reward_start('win', 'online:' || m1::text, 130);
   out := out || 'win_130=' || r.status || '/' || r.amount || ' | ';
   select * into s from public.apply_ad_reward(r.vale, 'ensaio-tx-1', a::text);
   out := out || 'aplica_1=' || s.status || '/' || s.amount || ' | ';
@@ -82,21 +95,21 @@ begin
   out := out || 'pendente_ad=' || n || ' | ';
   select * into s from public.apply_ad_reward(r.vale, 'ensaio-tx-1b', a::text);
   out := out || 'vale_usado=' || s.status || '/' || s.amount || ' | ';
-  select * into r from public.ad_reward_start('win', 'ai:ensaio0000000001', 130);
+  select * into r from public.ad_reward_start('win', 'online:' || m1::text, 130);
   out := out || 'mesma_vitoria=' || r.status || ' | ';
 
   -- ADS-03: teto de 150
-  select * into r from public.ad_reward_start('win', 'ai:ensaio0000000002', 205);
+  select * into r from public.ad_reward_start('win', 'online:' || m2::text, 205);
   out := out || 'win_205=' || r.status || '/' || r.amount || ' | ';
   perform public.apply_ad_reward(r.vale, 'ensaio-tx-2', a::text);
 
   -- ADS-04: terceira vitória
-  select * into r from public.ad_reward_start('win', 'ai:ensaio0000000003', 100);
+  select * into r from public.ad_reward_start('win', 'online:' || m3::text, 100);
   out := out || 'win_3=' || r.status || ' | ';
 
   -- ADS-12: vale de outra conta, vencido, inventado
   perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
-  select * into r from public.ad_reward_start('win', 'ai:ensaio0000000009', 100);
+  select * into r from public.ad_reward_start('win', 'online:' || m9::text, 100);
   vb := r.vale;
   select * into s from public.apply_ad_reward(vb, 'ensaio-tx-b1', a::text);
   out := out || 'outra_conta=' || s.status || '/' || s.amount || ' | ';
@@ -158,6 +171,7 @@ begin
   -- ADS-19 (#49): gate de versão. Cenário de aparelhos próprio da QA01 (volta no rollback)
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
   delete from public.device_checks where user_id = a;
+  update public.app_config set value = '' where key = 'ads_min_app_version';  -- o valor real (gate da #40) não pode vazar para o caso
   select * into s from public.ads_status('android');
   out := out || 'gate_vazio=' || s.enabled || ' | ';
   insert into public.app_config (key, value) values ('ads_min_app_version', '0.34.7')
