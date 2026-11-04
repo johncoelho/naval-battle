@@ -1,1 +1,1 @@
-Ajuste: o aviso de atualizacao no iPhone agora manda atualizar pelo app TestFlight, e o site explica que o iPhone e instalado pelo TestFlight. Nada muda para quem joga no Android.
+Correcao: quem entra na conta pela primeira vez agora recebe o presente de boas-vindas na hora, sem precisar reabrir o app. Ao sair da conta, o aviso de progresso nao sincronizado so aparece quando algo realmente nao foi salvo e diz a causa certa (sem conexao ou servidor). Pequenos ajustes internos.

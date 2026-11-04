@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.43.5] — 2026-11-04 · Presente de boas-vindas no login e "Sair da conta" sem aviso falso
+
+App 0.43.5 (versionCode 118). Só cliente: sem mudança de banco, de protocolo nem de stack.
+
+### Corrigido
+- **Presente de boas-vindas só na reabertura (#72):** `ensureWallet` devolvia falso na hora quando outra chamada já abria a carteira (o login com o Google dispara `checkFeedbackRewards`/`checkSeasonEnd`, que pegavam a trava primeiro), e o pedido do presente ficava pendente sem tentar de novo. Agora a abertura usa `Mutex` (quem chega espera e reconfere), o pedido tenta mais 3 vezes com o app aberto (3 s, 10 s, 30 s, `welcomeRetryDelayMs`), o resgate também roda ao voltar do segundo plano e uma trava impede dois pedidos ao mesmo tempo (a resposta `already` não apaga o popup do primeiro). Sair no meio cancela a sequência.
+- **"Progresso não sincronizado / Sem conexão" com a rede ok (#73):** a mesma espera da carteira vale para o reenvio de prêmios na saída; prêmio online a que o servidor respondeu `no_result` há mais de 10 minutos (sala sem vencedor registrado) deixou de travar toda saída (o recente continua segurando, porque `award_online_match` só paga a ranqueada quando o reenvio acontece depois do vencedor); o aviso diz a causa certa: `SIGN_OUT_UNSAVED_WARN` só quando a falha foi de rede (`CloudResult.Fail.network`, `IOException` no Android e erro de transporte no iOS) e a nova `SIGN_OUT_UNSAVED_SERVER` (pt/en/es) quando o servidor não aceitou. A fila `online_awards_pending` ganhou um campo opcional de idade (lê 6 ou 7 campos). Antes de avisar, `signOut` escreve uma linha `NB-SIGNOUT` no logcat (carreira salva, erro do save, tamanho da fila, status por sala, carteira) para o QA reproduzir e colar na issue; a causa de fundo ainda precisa dessa confirmação.
+
+### Manutenção (sem mudança de app)
+- **#74:** plano de testes e ensaios do QA (ADS-02/03/04 e `supabase/tests/ads_ensaio.sql` com vitória online, WEL-05, REF-05, SAF-02, WEK-02, `safety_ensaio.sql` com `moderation_push_log` vazio no bloco).
+- **#76:** regra de modelo e esforço por demanda em `.claude/skills/esteira/SKILL.md` e `docs/ESTEIRA.md`; Tech Lead com `sonnet` como padrão.
+
 ## [0.43.4] — 2026-11-04 · iPhone só pelo TestFlight: `.ipa` e Sideloadly saem do pipeline
 
 App 0.43.4 (versionCode 117). Sem mudança de banco, de protocolo nem de stack.
