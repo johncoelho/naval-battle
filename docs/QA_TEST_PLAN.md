@@ -279,6 +279,7 @@ Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem
 | UPD-10 | P1 | App aberto em segundo plano; sai versão nova (`app_releases` e Play); voltar | Popup aparece sem reabrir o app (consulta no máximo a cada 5 min) |
 | UPD-11 | P1 | "Depois", sair e voltar | Não reaparece para a mesma versão; com outra versão maior reaparece |
 | UPD-12 | P2 | Voltar durante uma partida | Só aparece ao voltar ao menu |
+Nota do QA (04/11): no Android o aviso só aparece se a **Play** confirmar versão mais nova (`checkUpdateAvailable`); linha falsa em `app_releases` não basta. Os emuladores precisam estar numa versão **anterior** à última publicada: com a 0.43.4 (117) na Play, QA01 e QA02 em 0.43.3 (116) servem. No iPhone o aviso vem só de `app_releases` com `ios_live` e o botão leva ao site (seção do iPhone, link do TestFlight); ver [QA_IPHONE.md](QA_IPHONE.md), grupo H.
 
 ## 8b. Rede local (A × B)
 
@@ -467,6 +468,7 @@ inválido suspende a conta AdMob). Servidor: `supabase/tests/ads_ensaio.sql` (bl
 | ADS-24 | P0 | Com `ads_enabled = 'test'` no app da Play (QA01/QA02 em emulador): fazer um anúncio em cada um dos 4 lugares (vitória online, check-in, desafio, milha) | Um vale `applied` com `transaction_id` em cada um dos 4 lugares (prova o SSV nos 4 blocos reais) |
 | ADS-25 | P1 | Servidor: `'true'` com `ads_min_app_version = <versionName da #40>`; conta com último aparelho `0.43.0` (ensaio, casos `gate_0430`, `gate_0431`) e a produção antiga | 0.43.0 ou anterior (sem a AD_ID): `ads_status` e `ad_reward_start` `off`, sem botão; versão da #40: libera. Só virar `'true'` com o OK do John |
 | ADS-26 | P0 | Tratamento de idade do AdMob (#53): um build `.preview` por faixa (`-PageFake=child`, `teen`, `adult`, `unknown`) em QA01 e QA02; vencer e tocar no botão de anúncio | Em cada faixa o anúncio de teste carrega, fecha com prêmio e o crédito entra. Mapeamento esperado: adulto UNSPECIFIED, `teen` e `unknown` TEEN, `child` CHILD (provado no teste de unidade `cadaFaixaTemOTratamentoDoAdMob`); sem log da faixa (a idade não vai para log). Adulto depois de menor na mesma sessão não se reproduz com `-PageFake` (fixo no build); garantido pelo `Builder` novo com UNSPECIFIED explícito a cada pedido |
+Nota do QA (04/11, 0.43.3): com carteira (#34) a vitória contra a IA (`ai:`) devolve `not_eligible`, porque a IA não paga; ADS-02, 03 e 04 valem para vitória **online** (`online:<sala>`). O `ads_ensaio.sql` ainda usa `ai:` nesses casos (precisa de ajuste do Dev). Com o Release já em `ads_enabled = true` e `ads_min_app_version = 0.43.1`, o ensaio mostra `gate_vazio=false` sem ser defeito. No anúncio de teste do emulador não há botão de fechar antes do prêmio (o Voltar pula para o anúncio 2 e credita), então ADS-10 na tela é N/A; o servidor cobre (`fechou_nao_gasta=0`).
 | REV-01 | P1 | Build debug `-PreviewFake=true` (dados limpos), carreira com 2 vitórias: vencer a 3ª partida contra a IA e voltar ao menu (#45) | O fluxo falso de avaliação roda uma vez ao voltar ao menu; nada aparece dentro da partida nem na tela de resultado |
 | REV-02 | P1 | Logo depois, vencer outra partida e voltar ao menu (mesmo dia) | Não pede de novo (30 dias); o jogo segue normal |
 | REV-03 | P1 | Dados limpos, 3 vitórias já feitas, perder a partida e voltar ao menu | Não pede depois de derrota |
@@ -508,7 +510,7 @@ publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
 | PSH-IOS-02 | P0 | Pedido de amizade ou convite de partida para o iPhone com o app fechado | Chega o aviso com o mesmo texto do Android; `push_outbox.result` traz `ios:200` (e `200` para o Android da conta) |
 | PSH-IOS-03 | P0 | "Receber convites" desligado nos Ajustes → chegar um convite | Nenhum aviso no iPhone, como no Android |
 | PSH-IOS-04 | P1 | Tocar no aviso "amigo online" (app fechado e em segundo plano) | O app abre na tela de Amigos; outros avisos só abrem o jogo |
-| PSH-IOS-05 | P1 | `daily_invite` (broadcast das 12h) com iPhone registrado | O iPhone recebe, dentro da janela 11h-15h e uma vez por dia |
+| PSH-IOS-05 | P1 | `daily_invite` com iPhone registrado: o QA enfileira o aviso **só para uma conta** (nunca dispara o broadcast das 12h, que vai para todos); a janela 11h-15h e o limite de uma vez por dia são do remetente do broadcast | O iPhone recebe; tocar só abre o jogo |
 | PSH-IOS-06 | P1 | Negar a permissão de aviso → fechar e abrir o app várias vezes | Não pede de novo; segue sem erro; o token continua registrado |
 | PSH-IOS-07 | P1 | Linha de `push_outbox` com token iOS falso (`BadDeviceToken`) e outro aparelho na mesma conta | O token falso fica `check_status = 'unregistered'`; o outro aparelho recebe; `new_version` nunca vai ao iPhone |
 
@@ -534,7 +536,7 @@ publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
 | LAUNCH-04 | P1 | Conta nova (fora da lista, sem aparelho iPhone, sem medalha com corte) | Popup com a boas-vindas, não o agradecimento |
 | LAUNCH-05 | P1 | Convidado (sem login) | Boas-vindas; depois de "Entendi" não volta naquele aparelho |
 | LAUNCH-06 | P1 | Durante partida e com convite de amigo na tela | O aviso não abre por cima; abre no deque depois |
-| LAUNCH-07 | P1 | No iPhone (qualquer conta), interruptor ligado | Nenhum aviso, com nenhum texto; no banco `launch_notice_status('ios')` devolve `enabled = false` |
+| LAUNCH-07 | P1 | iPhone: conferido **só no servidor**, com o interruptor ligado dentro de um bloco que desfaz (ligar de verdade avisaria todo o Android) | `launch_notice_status` para ios devolve `enabled = false`; nenhum aviso no iPhone |
 | LAUNCH-08 | P2 | Aviso e popup de nova temporada juntos | Aviso por cima; ao tocar "Entendi" o convite da temporada aparece embaixo, sem piscar |
 
 ## 14. Limpeza (sempre ao fim)
