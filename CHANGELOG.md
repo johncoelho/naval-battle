@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.43.4] — 2026-11-04 · iPhone só pelo TestFlight: `.ipa` e Sideloadly saem do pipeline
+
+App 0.43.4 (versionCode 117). Sem mudança de banco, de protocolo nem de stack.
+
+### Alterado
+- **CI:** `ios.yml` só roda os testes no simulador e compila o app (sem assinatura); não empacota nem publica mais o `.ipa` (artefato e release `latest` removidos) e as permissões caíram para leitura. O verde dele **não** libera mais `ios_live`: só depois do `ios-release.yml` verde com envio ao TestFlight daquela versão (sem envio fica `false`, para o iPhone não receber aviso de atualização que não existe). O texto da release `latest` (`android.yml`) fala só do APK de teste do Android.
+- **Site:** a seção do iPhone em `index.html` agora tem o passo a passo do TestFlight e o botão "Abrir no TestFlight" para o link público https://testflight.apple.com/join/PvGjjszH (grupo externo "iPhone", sem cadastro nem convite), sem botão de `.ipa`, passo a passo do Sideloadly nem consulta à API da release; `beta.html` aponta para o mesmo link e deixa claro que o formulário é só do Android/Play.
+- **App:** aviso de atualização do iPhone (`UPDATE_POPUP_IOS_HINT`) diz "Atualize pelo app TestFlight" e o botão virou "Como atualizar" (abre a mesma página do jogo, que explica o TestFlight); comentários de código sem `.ipa`/Sideloadly.
+- **Documentação:** README, docs/BUILD.md, docs/ESTEIRA.md, docs/QA_TEST_PLAN.md (INST-07), CLAUDE.md, MEMORY.md, skills `dev-cycle` e `play-store-release`, comentários de `supabase/releases.sql` e `launch_notice.sql` (só comentário). Entradas antigas do CHANGELOG e do HISTORY ficam como história.
+
+---
+
 ## [0.43.3] — 2026-11-02 · Avisos de boas-vindas mostram dobrões e milhas (#43)
 
 App 0.43.3 (versionCode 116). Refs #43. Só cliente: sem mudança de banco, de protocolo nem de stack.

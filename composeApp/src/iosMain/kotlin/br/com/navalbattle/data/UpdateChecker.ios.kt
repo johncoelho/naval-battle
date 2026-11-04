@@ -4,8 +4,8 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 
-// O iPhone instala o .ipa pelo site (sem App Store ainda): não há loja para perguntar,
-// então a novidade vem só da tabela app_releases e o botão leva à página do jogo.
+// O iPhone é atualizado pelo TestFlight: não há loja para perguntar, então a novidade
+// vem só da tabela app_releases e o botão leva à página do jogo (seção do iPhone).
 private const val IOS_DOWNLOAD_URL = "https://johncoelho.github.io/naval-battle/#ios"
 
 actual suspend fun checkUpdateAvailable(): Boolean? = null

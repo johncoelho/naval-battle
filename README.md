@@ -11,7 +11,7 @@ comando naval noturno. Todo o jogo é desenhado em Canvas: não há uma única i
 | **Idiomas** | Português (BR), inglês, espanhol |
 | **Pacote** | `br.com.navalbattle` |
 | **Site** | [johncoelho.github.io/naval-battle](https://johncoelho.github.io/naval-battle/) |
-| **Instalar** | Android só pela Play Store (teste fechado, [página de beta tester](https://johncoelho.github.io/naval-battle/beta.html)) · iPhone pelo `.ipa` da [release `latest`](https://github.com/johncoelho/naval-battle/releases/download/latest/NavalBattle.ipa) com Sideloadly |
+| **Instalar** | Android só pela Play Store (teste fechado, [página de beta tester](https://johncoelho.github.io/naval-battle/beta.html)) · iPhone só pelo TestFlight, pelo [link público](https://testflight.apple.com/join/PvGjjszH) (sem cadastro) |
 
 Documentação complementar: [especificação técnica](#especificação-técnica) · [processo de build](docs/BUILD.md) ·
 [design system](docs/DESIGN_SYSTEM.md) · [roteiro de testes](docs/QA_TEST_PLAN.md) · [histórico e decisões](HISTORY.md) ·
@@ -219,7 +219,7 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   mostra "Versão X disponível" com as novidades de cada versão publicada depois dela.
   Android: só avisa quando a Play confirma a atualização para o aparelho (In-App Update
   API) e o botão abre a Play Store; iPhone: o botão abre a parte do iPhone na página do
-  jogo (`#ios`), onde está o .ipa novo. A faixa do menu reabre a janela.
+  jogo (`#ios`), que explica a atualização pelo TestFlight. A faixa do menu reabre a janela.
 - **Diário de bordo** (com conta) — balão que abre sozinho a cada entrada no app com
   prêmio esperando, e pelo chip do menu. **Check-in diário** +25 dobrões numa trilha de
   7 dias seguidos (pulou um dia, volta ao 1; o 7º dia paga +300 de bônus da semana) e
@@ -261,7 +261,7 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   registra o token do APNs (`UIApplicationDelegateAdaptor` + `PushBridge`, sem SDK) e a Edge `push` envia direto
   ao APNs (HTTP/2, JWT ES256 com `APPLE_TEAM_ID`, `APNS_KEY_ID` e `APNS_KEY_P8`; reserva `APPLE_SIWA_*` só se a chave tiver APNs ligado); mesmos tipos, textos
   e anti-spam do Android, menos "versão nova" (a versão da Play não é a da App Store). Só produção: vale no
-  TestFlight e na App Store, não no `.ipa` do Sideloadly. Configuração em [docs/BUILD.md](docs/BUILD.md#push-firebase).
+  TestFlight e na App Store, não em build local do Xcode. Configuração em [docs/BUILD.md](docs/BUILD.md#push-firebase).
 
 ### Carreira
 
@@ -490,7 +490,7 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | UI | Compose Multiplatform (runtime, foundation, material3, resources) | 1.10.3 (material3 1.9.0); coordenadas explícitas no catálogo, sem os atalhos `compose.*` obsoletos. 1.10.3 é o último que ainda publica `iosX64`; do 1.11 em diante some o simulador Intel |
 | Build | Gradle + Android Gradle Plugin | 8.14.3 / AGP 8.13.2 (nada de AGP 9.x: quebra o plugin KMP) |
 | Android | compileSdk / targetSdk 36, minSdk 26, JVM target 17, activity-compose 1.10.1 | catálogo + `composeApp/build.gradle.kts` |
-| iOS | framework KMP + projeto Xcode (`iosApp/`), `.ipa` sem assinatura no CI (Sideloadly) e envio à App Store Connect por `xcodebuild` com assinatura em nuvem (`ios-release.yml`, sem fastlane) | Xcode do runner `macos` (SDK do iOS 26+ para o envio) |
+| iOS | framework KMP + projeto Xcode (`iosApp/`), testes e compilação sem assinatura no CI (`ios.yml`, não publica nada) e envio ao TestFlight / App Store Connect por `xcodebuild` com assinatura em nuvem (`ios-release.yml`, sem fastlane) | Xcode do runner `macos` (SDK do iOS 26+ para o envio) |
 | Login Google (Android) | Credential Manager (`androidx.credentials` 1.3.0 + `googleid` 1.1.1) | aprovado em 0.11 |
 | Atualização (Android) | Play In-App Update (`app-update-ktx` 2.1.0) | aprovado em 0.49 |
 | Push (Android) | Firebase Cloud Messaging (`firebase-bom` 33.7.0, plugin `google-services` 4.4.2 só se houver `google-services.json`) | aprovado em 0.60 |
@@ -503,7 +503,7 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check`, `dobroes-verify`, `ads-reward` e `apple-revoke` (Deno) | `supabase/` |
 | Site | HTML estático no GitHub Pages | `site/`, `pages.yml` |
 | Testes | `kotlin.test` em `composeApp/src/commonTest` (JVM e simulador iOS) | aprovado em 10/10/2026 |
-| CI | GitHub Actions: `android.yml` (trava de release + testes + APK + `.aab` + Play), `ios.yml` (testes no simulador + framework + `.ipa`), `pages.yml` | JDK 21 Temurin |
+| CI | GitHub Actions: `android.yml` (trava de release + testes + APK + `.aab` + Play), `ios.yml` (testes no simulador + compilação do framework e do app, sem publicar), `pages.yml` | JDK 21 Temurin |
 
 **A regra das dependências é não ter.** Fora o que está na tabela, nada: sem biblioteca de imagem,
 de fonte, de rede, de serialização ou de injeção. Rede é `HttpURLConnection` + `org.json`
@@ -692,8 +692,8 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 
 ### Versão, release e entrega
 
-- Todo commit enviado à `main` publica: o CI gera APK, `.aab` (faixa Alpha da Play), framework e
-  `.ipa` (release `latest`). Por isso **todo push sobe `versionCode`/`versionName`** e o
+- Todo commit enviado à `main` publica: o CI gera APK, `.aab` (faixa Alpha da Play), framework
+  (o iPhone vai pelo TestFlight, `ios-release.yml`). Por isso **todo push sobe `versionCode`/`versionName`** e o
   `CFBundleShortVersionString` do iOS, e atualiza as notas da Play
   (`composeApp/src/main/play/release-notes/pt-BR/default.txt`, ≤ 500 caracteres, sem acento).
 - Cada versão ganha uma linha em `app_releases` (notas em pt/en/es) para a janela "Versão nova";
@@ -706,7 +706,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 - **iPhone na App Store (#56):** `ios-release.yml` (manual, ou depois do `ios.yml` verde com a variável `IOS_APPSTORE_LIVE=true`):
   `xcodebuild archive` Release com assinatura ad hoc local e `-exportArchive` assinado em nuvem com a chave da API do App Store Connect
   (secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`; variável `APPLE_TEAM_ID`); `destination = upload` envia ao TestFlight. `CFBundleVersion`
-  = número do run. Sem os secrets o job só faz o archive e fica verde. O `.ipa` sem assinatura do `ios.yml` segue. Ver docs/BUILD.md.
+  = número do run. Sem os secrets o job só faz o archive e fica verde. Ver docs/BUILD.md.
 - O passo a passo é a skill `dev-cycle` (pedido → publicação) e, para o Android, `play-store-release`.
 
 ### Android: R8, área segura e telas grandes
@@ -794,10 +794,9 @@ as duas faixas de combate precisam ter o mesmo andamento e duração para a troc
 - [~] Alvo iOS: preferências, nuvem, modo Online e áudio já têm `actual` de verdade;
       rede local e login com Google ainda são pendências (mudos/desativados por
       enquanto, para o resto do jogo compilar) — ver [docs/BUILD.md](docs/BUILD.md#ios--em-andamento).
-      Projeto Xcode criado — `.ipa` **sem assinatura** sai como artefato de todo build
-      (ver [docs/BUILD.md](docs/BUILD.md#o-projeto-xcode-e-o-ipa-sem-assinatura) para
-      instalar via Sideloadly sem pagar Apple Developer Program; assinatura de
-      verdade no CI fica para quando/se uma conta paga entrar em cena)
+      Projeto Xcode criado — o `ios.yml` testa e compila sem assinatura em todo build
+      (ver [docs/BUILD.md](docs/BUILD.md#o-projeto-xcode-no-ci-iosyml)); o iPhone é
+      instalado só pelo TestFlight (`ios-release.yml`)
 - [~] Publicação na Play Store: ficha da loja, classificação indicativa, público-alvo e
       segurança de dados já preenchidos na Play Console; `.aab` de release assinado sai
       do CI quando os secrets de keystore estão configurados (ver

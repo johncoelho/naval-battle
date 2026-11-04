@@ -388,7 +388,7 @@
   <div class="wrap">
     <div class="sechead">
       <h2>Baixar</h2>
-      <p>O Android está em teste fechado e é instalado só pela Play Store oficial. O iPhone tem um .ipa de beta para instalação manual, atualizado na release do GitHub.</p>
+      <p>O Android está em teste fechado e é instalado só pela Play Store oficial. O iPhone é instalado pelo TestFlight, da Apple, por um link público.</p>
     </div>
 
     <div class="grid">
@@ -411,29 +411,17 @@
 
       <div class="install" id="ios">
         <h3>iPhone (iOS)</h3>
-        <div class="cta" style="margin:14px 0">
-          <a class="btn btn-primary"
-             href="https://github.com/johncoelho/naval-battle/releases/download/latest/NavalBattle.ipa">
-            ↓ Baixar o .ipa
-          </a>
+        <div id="testador-ios" class="betastep">
+          <p class="step-k">Instale pelo TestFlight</p>
+          <ol>
+            <li>Instale o app <b style="color:var(--ink)">TestFlight</b>, da Apple, pela App Store.</li>
+            <li>Toque em "Abrir no TestFlight" abaixo, no iPhone.</li>
+            <li>Toque em <b style="color:var(--ink)">Instalar</b>. Sem cadastro nem e-mail.</li>
+          </ol>
+          <div class="cta" style="margin:10px 0 0">
+            <a class="btn btn-primary" href="https://testflight.apple.com/join/PvGjjszH" target="_blank" rel="noopener">Abrir no TestFlight</a>
+          </div>
         </div>
-        <p class="meta" id="release-meta-ios">Carregando dados da última versão…</p>
-        <ol>
-          <li>Baixe o <code>.ipa</code> num computador (Windows, Mac ou Linux — o iPhone
-              sozinho não instala esse arquivo).</li>
-          <li>Instale o <a href="https://sideloadly.io/" target="_blank" rel="noopener">Sideloadly</a>
-              (grátis) nesse computador.</li>
-          <li>Conecte o iPhone por cabo, abra o Sideloadly, arraste o <code>.ipa</code> nele
-              e entre com um Apple ID (grátis — não precisa de conta paga de desenvolvedor).</li>
-          <li>No iPhone: <b style="color:var(--ink)">Ajustes → Geral → VPN e Gerenciamento
-              de Dispositivo</b> → toque no seu Apple ID e confie no certificado.</li>
-        </ol>
-        <p style="margin:14px 0 0;font-size:13.5px;color:var(--muted)">
-          Versão de teste, sem assinatura oficial da Apple. O certificado grátis do
-          Sideloadly dura só <b style="color:var(--inkSoft)">7 dias</b> — depois disso o
-          app para de abrir; repita o passo 3 com o mesmo arquivo (ou um mais novo) para
-          renovar.
-        </p>
       </div>
     </div>
 
@@ -470,34 +458,5 @@
   </div>
 </footer>
 
-<script>
-  // mostra data e tamanho da última compilação do .ipa, direto da release rolante.
-  // O Android é só pela Play Store (#25), então o APK da release não aparece aqui.
-  (async () => {
-    const iosAlvos = [document.getElementById('release-meta-ios')];
-    try {
-      const r = await fetch('https://api.github.com/repos/johncoelho/naval-battle/releases/tags/latest');
-      if (!r.ok) throw new Error('sem resposta');
-      const data = await r.json();
-      // published_at é a criação da release (fixa desde o primeiro build) — como
-      // cada novo build só sobe um asset por cima (--clobber) sem recriar a
-      // release, essa data nunca muda. updated_at de CADA asset é que reflete o
-      // upload mais recente dele, e Android/iOS podem ter datas diferentes.
-      const formata = (iso) => new Date(iso).toLocaleDateString('pt-BR', {
-        day: '2-digit', month: 'long', year: 'numeric'
-      });
-      const ipa = (data.assets || []).find(a => a.name.endsWith('.ipa'));
-      const detalhe = (asset) => {
-        if (!asset) return '';
-        const mb = (asset.size / 1048576).toFixed(1) + ' MB';
-        const baixados = asset.download_count ? ' · ' + asset.download_count + ' downloads' : '';
-        return ' · <b>' + mb + '</b>' + baixados;
-      };
-      iosAlvos.forEach(el => { if (el && ipa) el.innerHTML = 'Última compilação: <b>' + formata(ipa.updated_at) + '</b>' + detalhe(ipa); });
-    } catch (e) {
-      iosAlvos.forEach(el => { if (el) el.textContent = 'Versão de teste · consulte a release para conferir o build'; });
-    }
-  })();
-</script>
 </body>
 </html>

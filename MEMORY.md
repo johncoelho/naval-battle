@@ -7,7 +7,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 ## 1. Regras de ouro (nunca quebrar)
 
 1. **Falar com o John em português do Brasil**, inclusive status e resumos.
-2. **Todo push na `main` publica** (Play faixa Alpha + `.ipa` + site): subir `versionCode`/
+2. **Todo push na `main` publica** (Play faixa Alpha + site; iPhone pelo TestFlight): subir `versionCode`/
    `versionName` e o `CFBundleShortVersionString` do iOS, e escrever as notas da Play
    (`composeApp/src/main/play/release-notes/pt-BR/default.txt`, ≤ 500, sem acento) **no mesmo commit**.
    Exceção: commit só de documentação/skills/`site/` leva `[skip ci]` na mensagem e não sobe versão (`site/`: depois `gh workflow run pages.yml --ref main`).
@@ -60,7 +60,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Lote 0.43.2 (#67), só código, publicado na 0.43.2; QA pendente ON-20 a ON-22 e refazer ON-06/ON-08:** partida online que travava com os dois em AGUARDE. `Match.act(coord, by)`/`canAct` validam quem joga, `fireShared` só envia jogada válida, e `replayNetworkMatch` (`game/NetworkReplay.kt`) reconstrói a partida pelo log da sala (ordem de `id`), chamado ao receber `ACT`/`ABIL` fora da vez e pelo vigia de 30 s (`shouldResync`); `PollCursor` consulta com piso e ids vistos. **Limitação aceita:** com app antigo do outro lado (0.42.2 em produção, 0.43.0/0.43.1) o novo se ressincroniza mas não corrige o antigo; a saída segue sendo "Encerrar". QA: ON-20 a ON-22 e refazer ON-06/ON-08.
 - **Correção 0.43.3 (#43), só código:** "%s" literal nos popups de boas-vindas (WEL-01/03/04 da 0.43.2); textos com dois valores usam `%1`/`%2`, `PlaceholderTest` varre todas as chaves. QA: refazer WEL-01, WEL-04 e WEL-05 vendo os números.
 
-- **Lote 0.43.0 (#62, #14, #63), só código (sem push, sem deploy, sem Auth mexido):** aba Dobrões do iPhone chama as RPCs (era `Fail` no `Cloud.ios.kt`) e tem estado de falha (`doubloonAisleView`); push no iPhone pelo APNs (`AppDelegate`, `PushBridge`, Edge `push` com ramo `ios`); vincular Apple ID e Google (`Cloud.linkIdentity`, `data/AccountLinks.kt`, popup da 1ª autorização). **Pendente do John:** deploy da Edge `push` e teste (`push_outbox` para QA01 = `200`, iPhone = `ios:200`); "Allow manual linking" no Auth; decidir "Confirm email"; OK para o `ios-release.yml` exigir `aps-environment = production`. **Também:** criar uma chave APNs em Apple Developer > Keys e cadastrar `APNS_KEY_ID`/`APNS_KEY_P8` na Edge `push` (a chave atual nasceu só com Sign in with Apple, e o serviço não muda depois de criada; sem isso o teste do iPhone dá `ios:403:InvalidProviderToken`). QA: DOBIOS-01 a DOBIOS-03, PSH-IOS-01 a 07, APL-12 a APL-17 (iPhone pelo TestFlight; `aps-environment` pode cair no `.ipa` do Sideloadly de conta gratuita).
+- **Lote 0.43.0 (#62, #14, #63), só código (sem push, sem deploy, sem Auth mexido):** aba Dobrões do iPhone chama as RPCs (era `Fail` no `Cloud.ios.kt`) e tem estado de falha (`doubloonAisleView`); push no iPhone pelo APNs (`AppDelegate`, `PushBridge`, Edge `push` com ramo `ios`); vincular Apple ID e Google (`Cloud.linkIdentity`, `data/AccountLinks.kt`, popup da 1ª autorização). **Pendente do John:** deploy da Edge `push` e teste (`push_outbox` para QA01 = `200`, iPhone = `ios:200`); "Allow manual linking" no Auth; decidir "Confirm email"; OK para o `ios-release.yml` exigir `aps-environment = production`. **Também:** criar uma chave APNs em Apple Developer > Keys e cadastrar `APNS_KEY_ID`/`APNS_KEY_P8` na Edge `push` (a chave atual nasceu só com Sign in with Apple, e o serviço não muda depois de criada; sem isso o teste do iPhone dá `ios:403:InvalidProviderToken`). QA: DOBIOS-01 a DOBIOS-03, PSH-IOS-01 a 07, APL-12 a APL-17 (iPhone pelo TestFlight).
 
 - **Lote 0.42.3 (#66, #61, #64):** frota no dobrável pela altura medida (`stackedTargetSideDp`), campo do nome acompanha o nome salvo (`followSaved`) e **sair da conta volta o aparelho a convidado** (`AppState.signOut(force)`, `Profile.resetToGuest`, `ProfileKeys.KEEP_ON_SIGN_OUT`: chave nova de carreira é apagada por padrão; só o que é do aparelho entra na lista). QA: NOM-02, SGN-01 a SGN-04, BIG-11 (medir `FLEET_HEADER_DP`=50 e `ABILITY_STRIP_MIN_DP`=340 no QA01, hoje somados do código). Pendente de decisão: "Zerar carreira" ainda apaga idioma e som.
 
@@ -105,7 +105,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   em QA01/QA02 (anúncio de teste carrega e paga). Versão 0.34.14 (101).
 
 - **Kotlin 2.3 e SDK de anúncios (#38, 0.34.13):** Kotlin 2.3.21, CMP 1.10.3, AGP 8.13.2, Gradle 8.14.3,
-  `play-services-ads` 25.5.0. Só o `ios.yml` pega o Kotlin/Native: `iosSimulatorArm64Test` e o `.ipa` verdes antes de
+  `play-services-ads` 25.5.0. Só o `ios.yml` pega o Kotlin/Native: `iosSimulatorArm64Test` e a compilação do app verdes antes de
   promover; se o Xcode do runner quebrar o link, fixar o Xcode no `ios.yml` precisa do OK do John. Bateria completa
   no app da Play (anúncio premiado, compras, online no QA01/QA02) e a ação de edge-to-edge sumir do Release dashboard.
 
@@ -163,7 +163,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   **Plano A (ad hoc pelo Xcode) foi recusado pelo SDK 26.5; o plano B é o padrão:** assinatura automática pela chave da API (exige 1 aparelho registrado no time:
   nome, plataforma iOS e UDID do iPhone) com queda para archive sem assinatura + `codesign` com as entitlements. Entrada `assinatura` do workflow escolhe. **Pendente do John:** chave da API (papel **Admin**) e os secrets
   `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (`APPLE_TEAM_ID` já é variável do repositório). Depois do primeiro `enviar=true`
-  que der certo: `gh variable set IOS_APPSTORE_LIVE --body true`. O `.ipa` do Sideloadly segue até a versão da Apple ter tudo.
+  que der certo: `gh variable set IOS_APPSTORE_LIVE --body true`. O iPhone é só TestFlight (o `.ipa` sem assinatura saiu do pipeline em 04/11).
 - **Entrar com a Apple (#13, P0):** código pronto no iPhone; sai com a #56 e a #58. Console feito em 26/10 (App ID e
   provedor Apple no Supabase com Client ID `br.com.navalbattle`, secret vazio). **Pendência do John:** (1) Apple Developer >
   Keys > "+" > nome `Naval Battle Sign in with Apple`, só Sign in with Apple, Primary App ID `br.com.navalbattle`; anotar o
@@ -173,7 +173,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   cwtslesnthbenxswdcbv` (`verify_jwt` ligado). **Sem os secrets, a exclusão de conta Apple não revoga o token na Apple**
   (a Edge responde `not_configured` e a conta apaga do mesmo jeito). QA no iPhone pelo TestFlight da #56: APL-01 a APL-11;
   no build do `ios-release.yml`, `codesign` deve listar `com.apple.developer.applesignin`; erro 1000 = entitlement perdida (plano B da #13).
-  O `ios-release.yml` já exige `com.apple.developer.applesignin` no `.ipa` assinado (`REQUIRED_ENTITLEMENTS`).
+  O `ios-release.yml` já exige `com.apple.developer.applesignin` no build assinado (`REQUIRED_ENTITLEMENTS`).
 - **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. **0.34.5 (#35)** em
   revisão (regra em §4). Aviso de lançamento (#36, ligar `launch_notice_enabled` quando a Play aprovar).
   CI publica só na Alpha; a promoção para a produção (#39) está pronta: `promote-production.yml` + `tools/play-rollout.sh`, 20% → 50% → 100% (docs/ESTEIRA.md). **Pendente do John:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do *Published* da 91 (hoje `false`; permissões e Reporting API já feitas). Ação `vitals` no script (#51): lê falha/ANR por versionCode; só `ALARME` pausa.
@@ -210,7 +210,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - 10/10 · Camada nova na stack só com aprovação do John.
 - 09–10/10 · Ranqueada soma zero, força do adversário antes da partida, 3/dia contra o mesmo
   adversário; revanche online em sala nova.
-- 08/10 · iPhone: Google login mantido (Apple depois), loja simulada mantida, `.ipa` segue ativo.
+- 08/10 · iPhone: Google login mantido (Apple depois), loja simulada mantida.
+- 04/11 · iPhone só por TestFlight; `.ipa` sem assinatura removido do pipeline e do site.
 
 ## 5. Pendências com o John
 

@@ -11,7 +11,7 @@ import platform.UIKit.registerForRemoteNotifications
  * vale com ou sem permissão de aviso; sem permissão o token chega igual e só o aviso não aparece.
  * O pedido de permissão continua sendo o do lembrete do Diário ([DailyReminder.requestPermission]),
  * que só pergunta enquanto a pessoa não respondeu: negou, não pergunta de novo a cada abertura.
- * O token volta pelo `AppDelegate` (Swift) via [PushBridge]. Sem assinatura (.ipa do Sideloadly) ou no
+ * O token volta pelo `AppDelegate` (Swift) via [PushBridge]. Sem assinatura (build sem assinatura) ou no
  * simulador o sistema recusa e o token é nulo.
  */
 actual object PushMessaging {

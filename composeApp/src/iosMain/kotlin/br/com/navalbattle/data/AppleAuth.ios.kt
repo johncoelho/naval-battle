@@ -34,7 +34,7 @@ private const val APPLE_ERROR_CANCELED = 1001L
 /**
  * Entrar com a Apple no iPhone: `AuthenticationServices` (framework do sistema, sem SDK).
  * O pedido leva `nonce = sha256Hex(nonceCru)`; o Supabase recebe o nonce cru e confere.
- * Sem entitlement (o `.ipa` do Sideloadly vem sem) o sistema devolve erro 1000.
+ * Sem entitlement (build sem assinatura, como a do CI ou do Xcode local) o sistema devolve erro 1000.
  */
 @OptIn(ExperimentalForeignApi::class)
 actual class AppleAuth actual constructor() {
@@ -122,7 +122,7 @@ private class AppleFlow(
         onResult(
             when (didCompleteWithError.code) {
                 APPLE_ERROR_CANCELED -> AppleAuthResult.Cancelled
-                // 1000: sem a entitlement (.ipa do Sideloadly)
+                // 1000: sem a entitlement (build sem assinatura)
                 APPLE_ERROR_UNKNOWN -> AppleAuthResult.Fail(t(K.AUTH_APPLE_UNAVAILABLE))
                 else -> AppleAuthResult.Fail(t(K.AUTH_APPLE_FAIL))
             }

@@ -1,6 +1,6 @@
 # Naval Battle — guia para a IA
 
-Jogo de batalha naval em Kotlin Multiplatform + Compose (Android na Play, iOS por `.ipa`), back-end
+Jogo de batalha naval em Kotlin Multiplatform + Compose (Android na Play, iOS pelo TestFlight), back-end
 Supabase. Dono: **John Coelho** (GitHub `johncoelho`). **Fale com ele em português do Brasil.**
 
 ## Ler antes de trabalhar

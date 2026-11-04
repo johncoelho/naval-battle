@@ -1,11 +1,9 @@
 name: Build iOS framework
 
-# Compila o app iOS de ponta a ponta: o framework Kotlin/Native e o projeto Xcode
-# (iosApp/) que o embala, produzindo um .ipa sem assinatura como artefato do run —
-# ainda sem conta de desenvolvedor paga, o .ipa é assinado na hora da instalação pelo
-# Sideloadly (ou AltStore), com Apple ID grátis (certificado válido por 7 dias). Ver
-# docs/BUILD.md, seção iOS, para o que falta para virar um app com paridade total
-# (login com Google e rede local no iOS ainda dependem de configuração fora do CI).
+# Confere o app iOS de ponta a ponta: testes de unidade no simulador, framework
+# Kotlin/Native e projeto Xcode (iosApp/) compilados sem assinatura. Não publica nada: o
+# iPhone é distribuído só pelo TestFlight (ios-release.yml). O ios_live em app_releases só
+# liga depois do envio ao TestFlight (ios-release.yml), não por este verde. Ver docs/BUILD.md, seção iOS.
 
 on:
   push:
@@ -13,7 +11,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -47,41 +45,3 @@ jobs:
             CODE_SIGN_ENTITLEMENTS="" \
             BUILD_DIR="$(pwd)/build/Products" \
             build
-
-      - name: Empacota o .ipa (Payload/iosApp.app)
-        run: |
-          set -e
-          # caminho absoluto no BUILD_DIR acima devia bastar, mas um caminho relativo
-          # de BUILD_DIR já se mostrou resolvido pelo xcodebuild relativo ao próprio
-          # .xcodeproj em vez do diretório de onde foi chamado — o find aqui é rede de
-          # segurança para não gastar outra rodada inteira de CI só por causa disso
-          APP_PATH=$(find . -name "iosApp.app" -type d | head -1)
-          if [ -z "$APP_PATH" ]; then
-            echo "iosApp.app não encontrado — build de fora deste diretório:"
-            find . -iname "*.app" -maxdepth 6
-            exit 1
-          fi
-          echo "Encontrado em: $APP_PATH"
-          mkdir -p build/Payload
-          cp -r "$APP_PATH" build/Payload/
-          cd build && zip -qr ../NavalBattle.ipa Payload
-
-      - name: Sobe o .ipa como artefato do run
-        uses: actions/upload-artifact@v4
-        with:
-          name: NavalBattle-ipa-sem-assinatura
-          path: NavalBattle.ipa
-          retention-days: 30
-
-      - name: Publica o .ipa na release rolante "latest"
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # mesma release "latest" do APK (android.yml) — cria só se não existir, nunca
-          # apaga, porque os dois workflows disparam em paralelo no mesmo push; "upload
-          # --clobber" troca só o nosso arquivo, sem mexer no asset do outro
-          gh release view latest >/dev/null 2>&1 || gh release create latest \
-            --title "Naval Battle — build de teste" \
-            --notes "Builds de teste para Android (APK, debug) e iOS (.ipa, sem assinatura). Ver docs/BUILD.md para instalar cada um." \
-            --prerelease
-          gh release upload latest NavalBattle.ipa --clobber

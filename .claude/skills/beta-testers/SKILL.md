@@ -104,8 +104,9 @@ Quem entrou desde a última vez, quem está pendente, o total inscrito e o que f
 
 ## iPhone: TestFlight (27/10)
 
-Todo jogador de iPhone registrado (`allowed_players` com a anotação "(iPhone)") entra no grupo **externo "iPhone"**
-do TestFlight (App Store Connect > Naval Battle Classic > TestFlight), por e-mail, com o e-mail lido do banco
-(`auth.users`); o e-mail nunca vai para o repositório. O John autorizou em 27/10 ("todos usuários atuais de iPhone
-devem ter permissão de testar"). O primeiro convite sai quando a Apple aprova o teste beta do build (até 1 dia).
-Testador novo de iPhone: adicionar ao grupo, no mesmo passo de liberar no `allowed_players`.
+O iPhone entra pelo **link público** do grupo externo "iPhone" do TestFlight (App Store Connect > Naval Battle Classic >
+TestFlight): https://testflight.apple.com/join/PvGjjszH. Sem limite de testadores; a pessoa instala o app TestFlight, abre o link e toca em Instalar,
+sozinha, sem convite por e-mail e sem cadastro. O link está em `site/index.html` (botão "Abrir no TestFlight") e em
+`site/beta.html`. **Cadastro de iPhone não entra como `play`** (a lista "Testadores fechados" da Play é só Android): quem
+pedir ajuda no iPhone recebe o link. O e-mail nunca vai para o repositório. Só existe build no TestFlight se o John
+enviou uma (conferir a versão da build no App Store Connect antes de prometer a versão atual).

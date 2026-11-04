@@ -20,7 +20,7 @@ revoke all on public.launch_notice_seen from anon, authenticated;
 
 -- A conta participou do teste fechado? NÃO usa beta_eligible() (desde a 0.34.5 vale só para QA e
 -- John). Critérios: lista de testadores (play/manual/qa) pelo e-mail de login (auth.users, nunca
--- profiles.email) ou pelo user_id; aparelho iPhone registrado (testadores do .ipa); ou medalha
+-- profiles.email) ou pelo user_id; aparelho iPhone registrado (testadores do iPhone); ou medalha
 -- Beta Tester de conta criada antes de app_config.beta_ends_at. Com beta_ends_at vazio a medalha
 -- NÃO conta: in_beta() é verdadeiro e toda conta nova da produção ganha a medalha.
 create or replace function public.launch_was_beta_tester(p_user uuid)

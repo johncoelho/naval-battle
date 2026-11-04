@@ -1,11 +1,11 @@
 ---
 name: dev-cycle
-description: Ciclo completo de desenvolvimento do Naval Battle, do pedido do John até a publicação (Play faixa Alpha, .ipa na release latest, site, app_releases e documentação). Use em TODA mudança de código, banco ou site que vá para a main — feature, correção, ajuste visual ou de texto.
+description: Ciclo completo de desenvolvimento do Naval Battle, do pedido do John até a publicação (Play faixa Alpha, iPhone pelo TestFlight, site, app_releases e documentação). Use em TODA mudança de código, banco ou site que vá para a main — feature, correção, ajuste visual ou de texto.
 ---
 
 # Ciclo de desenvolvimento: pedido → publicação
 
-Todo push na `main` publica (Play, `.ipa`, site). Por isso este ciclo é obrigatório e completo,
+Todo push na `main` publica (Play, site). Por isso este ciclo é obrigatório e completo,
 mesmo para uma linha de código. A autonomia é total: siga até o fim sem pedir licença; pare só
 para decisões que são do John (stack nova, regra de produto ambígua, aprovação de feedback).
 
@@ -139,12 +139,12 @@ Notas com acento nas três línguas. `notify = true` só quando o John quiser pu
 
 ## 8. Acompanhar o CI e liberar o iPhone
 
-- CI: `android.yml` (APK + `.aab` + Play), `ios.yml` (framework + `.ipa`), `pages.yml`. Com o `gh`:
+- CI: `android.yml` (APK + `.aab` + Play), `ios.yml` (testes + compilação, não publica), `pages.yml`. Com o `gh`:
   `gh run list -c <sha-completo>` (abreviado não acha) e `gh run watch <id> --exit-status` (em segundo plano). Sem `gh`, pela API pública:
   `curl -s https://api.github.com/repos/johncoelho/naval-battle/actions/runs?per_page=6`
   (laço em segundo plano até os runs do commit terminarem).
 - Falhou: ler o log, corrigir, nova versão. Nunca dizer "no ar" sem o CI verde.
-- `ios.yml` verde → `update app_releases set ios_live = true where version_code = N`.
+- `ios_live` só depois do `ios-release.yml` verde **com envio ao TestFlight** daquela versão (build visível no TestFlight); o `ios.yml` verde só prova testes e compilação. Sem envio, `ios_live` fica `false`.
 - Site: se mudou, abrir a página publicada e conferir.
 
 ## 9. Depois da revisão da Play
@@ -155,7 +155,7 @@ Notas com acento nas três línguas. `notify = true` só quando o John quiser pu
 
 ## 10. Checklist de fechamento (toda entrega)
 
-- [ ] CI verde (Android e iOS) e `ios_live` marcado.
+- [ ] CI verde (Android e iOS) e, se a versão foi ao TestFlight, `ios_live` marcado.
 - [ ] `HISTORY.md` tem as decisões tomadas nesta entrega, com o porquê.
 - [ ] `MEMORY.md` reflete os assuntos em andamento, decisões recentes e pendências (e não tem nada
       que deixou de valer).

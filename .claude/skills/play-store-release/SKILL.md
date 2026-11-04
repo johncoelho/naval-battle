@@ -16,7 +16,7 @@ wastes a full CI cycle and/or a Play Console review cycle, so follow the checkli
 ## 0. Before touching anything: is this a release-bound change?
 
 If the change needs to be tested on a real device via Play Console (not just `assembleDebug`
-sideloaded locally), it needs steps 1–5 below. If it's local-only iteration, skip this skill.
+installed locally), it needs steps 1–5 below. If it's local-only iteration, skip this skill.
 
 ## 1. Bump the version in the SAME commit as the code change
 
@@ -113,9 +113,9 @@ values ('<versionName>', <versionCode>, '<pt>', '<en>', '<es>', true);
 ```
 - `android_live = true` right away: the app still asks the Play In-App Update API whether
   the update reached that device, so the window waits for Google's review by itself.
-- After the **iOS CI is green** (the new `.ipa` is on release `latest`):
+- Only after `ios-release.yml` is green **with the upload to TestFlight** of that version (build visible in TestFlight; `ios.yml` green is not enough):
   `update public.app_releases set ios_live = true where version_name = '<versionName>';`
-  — on iPhone the table alone decides, and the button opens the site's `#ios` section.
+  — without the upload `ios_live` stays false (no update notice for a build that does not exist). On iPhone the table alone decides, and the button opens the site's `#ios` section.
 - Notes: user-facing, 1–3 short sentences per language (accents allowed here, unlike the
   Play release notes file).
 - **Minor nova (0.X.0)**: also add the screen's line, in the same push. Key `RN_V0X00` with
@@ -235,7 +235,7 @@ re-guessing config:
 ## 7b. iPhone / App Store (#56)
 
 Separado do pipeline da Play: `.github/workflows/ios-release.yml` (só `xcodebuild`, sem fastlane) envia o iPhone ao TestFlight com a
-chave da API do App Store Connect; o `ios.yml` e o `.ipa` do Sideloadly não mudam. Secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`
+chave da API do App Store Connect; o `ios.yml` só testa e compila. Secrets `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8`
 (do John), variável `APPLE_TEAM_ID`, trava `IOS_APPSTORE_LIVE` (liga só depois do primeiro `enviar=true` que der certo). Passo a passo,
 ensaio e plano B em `docs/BUILD.md` ("iPhone na App Store"). Tocou em `iosApp/`: `CFBundleShortVersionString` segue o `versionName`.
 O Release sobe o iPhone na esteira só depois desse primeiro envio.

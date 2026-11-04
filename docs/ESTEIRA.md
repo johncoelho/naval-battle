@@ -145,7 +145,7 @@ O histórico de runs (`gh run list -w promote-production.yml`) é o registro das
 - **Permissões prontas (John, 25/10):** `play-publisher-ci` com produção e relatórios no Play Console e a
   Reporting API ativada. **Única pendência:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do
   *Published* da produção 91 (até lá `promote` real é barrado; `status`, `dry_run`, `advance`, `halt` funcionam).
-- iOS fica fora: o `.ipa` do Sideloadly segue na release `latest`.
+- iOS fica fora: o iPhone é distribuído só pelo TestFlight (`ios-release.yml`).
 
 ## Comandos do quadro
 

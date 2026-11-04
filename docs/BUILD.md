@@ -407,7 +407,7 @@ compila para iOS.
 > aconteceu antes com `Cloud.ios.kt`, é esperado precisar de algumas rodadas guiadas só
 > pelo erro do compilador no CI antes de fechar.
 
-### O projeto Xcode e o `.ipa` sem assinatura
+### O projeto Xcode no CI (`ios.yml`)
 
 `iosApp/iosApp.xcodeproj` existe e é escrito à mão — sem Mac para gerar pelo assistente
 do Xcode, o `project.pbxproj` foi montado seguindo o padrão do template oficial do
@@ -415,33 +415,17 @@ Kotlin Multiplatform (mesmos nomes de configuração, mesma fase de script que r
 `./gradlew :composeApp:embedAndSignAppleFrameworkForXcode` para compilar e embutir o
 framework Kotlin antes de compilar o Swift).
 
-`.github/workflows/ios.yml` compila com `xcodebuild -sdk iphoneos ... CODE_SIGNING_ALLOWED=NO`
-e empacota `Payload/iosApp.app` num `.ipa` **sem assinatura nenhuma**, subido como
-artefato do run. Isso é proposital: sem conta paga no Apple Developer Program, não dá
-para assinar no CI. Quem assina de verdade é o **Sideloadly** (ou AltStore), na hora de
-instalar — os dois rodam no Windows, usam um Apple ID grátis (com senha de app
-específica, por causa do 2FA) e geram um certificado de desenvolvimento na hora. A
-única ressalva desse caminho: o certificado grátis dura **7 dias** — depois disso o
-app para de abrir e precisa reinstalar o `.ipa` pelo Sideloadly de novo (rápido, não
-precisa gerar nada novo aqui).
-
-**Passo a passo para instalar no iPhone (sem custo):**
-1. Baixar o `.ipa` mais recente: aba **Actions** do repositório → último run de
-   *Build iOS framework* → artefato `NavalBattle-ipa-sem-assinatura`.
-2. Instalar o [Sideloadly](https://sideloadly.io/) no Windows.
-3. Conectar o iPhone por cabo, abrir o Sideloadly, arrastar o `.ipa`, entrar com o
-   Apple ID (grátis) quando pedir.
-4. No iPhone: **Ajustes → Geral → VPN e Gerenciamento de Dispositivo** → confiar no
-   certificado do desenvolvedor (o próprio Apple ID usado).
-5. Depois de 7 dias, se o app parar de abrir, repetir o passo 3 com o mesmo `.ipa`
-   (ou um mais novo, se tiver saído).
-
-Com a conta paga do Apple Developer Program ativa, o envio à App Store Connect é um workflow à parte, o `ios-release.yml` (seção
-"iPhone na App Store", logo abaixo); o `ios.yml` e este `.ipa` seguem como estão.
+`.github/workflows/ios.yml` roda os testes de unidade no simulador e compila com
+`xcodebuild -sdk iphoneos ... CODE_SIGNING_ALLOWED=NO`. Ele **não gera nem publica nenhum
+arquivo**: só prova que o app iOS compila e passa nos testes (o verde dele **não** libera
+`ios_live` em `app_releases`: isso só depois do `ios-release.yml` verde com envio ao TestFlight daquela versão). O iPhone é instalado **só pelo TestFlight**
+(decisão de 04/11/2026; o `.ipa` sem assinatura saiu do pipeline). O envio
+à App Store Connect é o workflow à parte `ios-release.yml` (seção "iPhone na App Store",
+logo abaixo).
 
 ## iPhone na App Store (`ios-release.yml`, #56)
 
-Workflow separado do `ios.yml` (que não muda e segue gerando o `.ipa` sem assinatura do Sideloadly). Só `xcodebuild`, sem fastlane:
+Workflow separado do `ios.yml` (que só testa e compila, sem publicar nada). Só `xcodebuild`, sem fastlane:
 
 1. `xcodebuild archive` (scheme compartilhado `iosApp`, Release, `CURRENT_PROJECT_VERSION` = número do run), **plano B** (o plano A, assinatura ad hoc
    `CODE_SIGN_IDENTITY=-` pelo Xcode, a Apple recusou com o SDK do iOS 26.5: `Ad Hoc code signing is not allowed with SDK 'iOS 26.5'`, run 40451463779).
@@ -502,17 +486,11 @@ que roda a cada mudança em `site/` (e sob demanda). A origem do Pages está con
 Endereço: **https://johncoelho.github.io/naval-battle/**
 
 O Android no site leva só à Play Store (página de beta tester, `site/beta.html`); o APK da
-release não tem mais link na página (#25, 13/10). O botão do iPhone aponta para a release
-rolante: `releases/download/latest/NavalBattle.ipa`. Como o CI sobe o arquivo de novo a cada
-push na `main`, **o endereço do link nunca precisa ser editado** — o arquivo por trás dele é
-que troca sozinho. A seção do iPhone também busca data e tamanho do `.ipa` atual na API do
-GitHub ao carregar, então esse texto também se atualiza sozinho.
+release não tem mais link na página (#25, 13/10). A seção do iPhone (botão "Abrir no TestFlight") leva ao
+link público do TestFlight, https://testflight.apple.com/join/PvGjjszH (grupo externo "iPhone", sem cadastro nem convite por e-mail); não há download de arquivo.
 
-Mesmo assim, **a cada APK novo o site é aberto e conferido de verdade** (passo 6 do
-[caminho curto](#o-caminho-curto)) — a API do GitHub pode estar com limite de chamadas
-esgotado no momento em que alguém abre a página, e nesse caso ela cai no texto genérico de
-reserva em vez da data real. Uma checagem rápida evita entregar um APK sem saber se a
-vitrine dele está mostrando a informação certa.
+**A cada versão nova o site é aberto e conferido de verdade** (passo 6 do
+[caminho curto](#o-caminho-curto)) quando a mudança mexe nele.
 
 ## Regra dos artefatos
 

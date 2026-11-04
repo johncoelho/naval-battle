@@ -5,8 +5,8 @@ name: iPhone na App Store
 # pela chave da API; se o time não tiver aparelho registrado (o Xcode não gera o perfil de desenvolvimento), cai para o archive sem assinatura,
 # assinado ad hoc com o `codesign` só para levar as entitlements do projeto. A exportação assina com o certificado de distribuição
 # gerenciado pela Apple (assinatura em nuvem) usando a chave da API do App Store Connect.
-# O ios.yml e o .ipa do Sideloadly NÃO mudam. Detalhes e ensaio: docs/BUILD.md, "iPhone na
-# App Store". Segredo nunca vai para o log: sem set -x, sem echo/cat da chave.
+# O ios.yml (testes e compilação, sem publicar nada) não muda. Detalhes e ensaio: docs/BUILD.md,
+# "iPhone na App Store". Segredo nunca vai para o log: sem set -x, sem echo/cat da chave.
 #
 # Três níveis (o job fica verde nos três):
 #   1. sem os secrets/variável: só o archive Release sem assinatura;

@@ -10,7 +10,7 @@ expect suspend fun checkUpdateAvailable(): Boolean?
 
 /**
  * Leva à atualização: no Android, a ficha do jogo na Play Store; no iPhone, a parte
- * do iPhone na página do jogo, onde fica o .ipa novo.
+ * do iPhone na página do jogo, que explica a atualização pelo TestFlight.
  */
 expect fun openStoreListing()
 

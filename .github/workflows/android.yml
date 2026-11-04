@@ -63,12 +63,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # cria a release só se não existir — nunca apaga: o workflow do iOS publica o
-          # .ipa na mesma release "latest", em paralelo, e um "delete" aqui destruiria
-          # esse asset se terminasse depois. "upload --clobber" troca só o nosso arquivo.
+          # cria a release só se não existir; "upload --clobber" troca só o nosso arquivo.
           gh release view latest >/dev/null 2>&1 || gh release create latest \
             --title "Naval Battle — build de teste" \
-            --notes "Builds de teste para Android (APK, debug) e iOS (.ipa, sem assinatura). Ver docs/BUILD.md para instalar cada um." \
+            --notes "Build de teste para Android (APK, debug). O iPhone é instalado pelo TestFlight." \
             --prerelease
           gh release upload latest naval-battle-debug.apk --clobber
 
@@ -83,7 +81,7 @@ jobs:
 
       # Gera o .aab assinado com a chave de release, para envio manual à Play
       # Console — não é publicado na release pública "latest" (essa é só para
-      # instalação direta de teste via APK/IPA, não para o pacote da loja).
+      # instalação direta de teste via APK, não para o pacote da loja).
       - name: Compila o Android App Bundle assinado
         if: steps.release_keystore.outputs.has_keystore == 'true'
         env:

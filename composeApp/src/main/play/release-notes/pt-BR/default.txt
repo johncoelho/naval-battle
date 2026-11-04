@@ -1,1 +1,1 @@
-Corrigido: nos avisos de boas-vindas (primeira missao, criar conta e presente depois do login) aparecia "%s" no lugar dos dobroes e das milhas. Agora o texto mostra os valores certos (150 dobroes e 5 milhas) em portugues, ingles e espanhol. O premio em si ja era creditado certo.
+Ajuste: o aviso de atualizacao no iPhone agora manda atualizar pelo app TestFlight, e o site explica que o iPhone e instalado pelo TestFlight. Nada muda para quem joga no Android.

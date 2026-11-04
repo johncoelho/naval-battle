@@ -77,7 +77,7 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | INST-04 | P1 | Permissão de notificação | Pedida ao chegar no menu (Android 13+), uma vez só |
 | INST-05 | P1 | Janela de versão nova | Não aparece com a versão mais recente instalada |
 | INST-06 | P2 | Girar/voltar no meio da abertura | Nada quebra; voltar no menu fecha o app |
-| INST-07 | P1 | Site (`johncoelho.github.io/naval-battle`), seção Baixar e botão do topo | Nenhum link ou instrução de APK; todo caminho de Android leva à página de beta tester / Play Store; seção do iPhone com o `.ipa` e a data da última compilação |
+| INST-07 | P1 | Site (`johncoelho.github.io/naval-battle`), seção Baixar e botão do topo | Nenhum link ou instrução de APK; todo caminho de Android leva à página de beta tester / Play Store; seção do iPhone tem o passo a passo do TestFlight e o botão "Abrir no TestFlight" (link público, sem cadastro), sem link de `.ipa` nem passo a passo de instalação manual |
 
 ## 4. Conta e login (A e B)
 
@@ -93,7 +93,7 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 
 ### 4b. Entrar com a Apple (iPhone, #13)
 
-Só no iPhone, pelo **TestFlight** (build assinado com a entitlement; o `.ipa` do Sideloadly dá `AUTH_APPLE_UNAVAILABLE`). O iPhone
+Só no iPhone, pelo **TestFlight** (build assinado com a entitlement; build sem assinatura dá `AUTH_APPLE_UNAVAILABLE`). O iPhone
 não bloqueia o release Android. No Android: botão da Apple ausente, login Google e e-mail iguais, Excluir conta sem reautenticação.
 
 | ID | P | Passos | Esperado |
@@ -497,7 +497,7 @@ Rodar `select public.push_check_run();` (SQL) e depois `select * from public.tes
 
 ### 12f. Push no iPhone pelo APNs (#14)
 
-Só pelo **TestFlight/App Store** (produção do APNs); o `.ipa` do Sideloadly e o build local do Xcode não recebem. Pré-requisito do John: Edge `push`
+Só pelo **TestFlight/App Store** (produção do APNs); o build sem assinatura e o build local do Xcode não recebem. Pré-requisito do John: Edge `push`
 publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
 
 | ID | P | Passos | Esperado |
