@@ -5,6 +5,8 @@ Play Store** e duas contas Google reais de teste. É o roteiro usado sempre que 
 "uma bateria de testes completa" — rodar inteiro, na ordem, e entregar o relatório no
 formato do fim deste documento.
 
+**iPhone (TestFlight):** os casos que só o aparelho real permite ficam em [QA_IPHONE.md](QA_IPHONE.md), plano para o John executar e devolver preenchido.
+
 Não substitui teste de unidade: aqui o alvo é o fluxo real que o jogador vê (loja, login,
 servidor, push, partida online entre dois aparelhos).
 
