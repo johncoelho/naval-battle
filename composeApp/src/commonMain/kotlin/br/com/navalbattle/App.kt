@@ -23,6 +23,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import br.com.navalbattle.audio.AppForeground
 import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
@@ -157,6 +159,7 @@ import br.com.navalbattle.game.WelcomeOutcome
 import br.com.navalbattle.game.nextGuidedStep
 import br.com.navalbattle.game.shouldOfferGuided
 import br.com.navalbattle.game.welcomeOutcome
+import br.com.navalbattle.game.welcomeRetryDelayMs
 import br.com.navalbattle.game.welcomeShouldRetry
 import br.com.navalbattle.game.Match
 import br.com.navalbattle.game.ReplayLine
@@ -458,6 +461,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         welcomeGuestNotice = false
     }
 
+    /** Há um pedido do presente em andamento: o login e o retry não pedem duas vezes ao mesmo tempo (#72). */
+    private var welcomeClaiming = false
+
+    /** Há uma sequência de novas tentativas rodando; uma por vez (#72). */
+    private var welcomeRetryRunning = false
+
     /** Pede o presente ao servidor. Convidado guarda o pedido para o primeiro login. */
     suspend fun runWelcomeClaim() {
         if (!profile.signedIn) {
@@ -465,14 +474,26 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             welcomeGuestNotice = true
             return
         }
+        if (welcomeClaiming) return  // a segunda resposta (already) não pode apagar o pendente/popup da primeira
+        welcomeClaiming = true
+        try {
+            claimWelcomeOnce()
+        } finally {
+            welcomeClaiming = false
+        }
+    }
+
+    private suspend fun claimWelcomeOnce() {
         if (!ensureWallet()) {
             profile.savePendingWelcome(true)
+            scheduleWelcomeRetry()
             return
         }
         val gift = (authed { session -> cloud.claimWelcomeGift(session) } as? CloudResult.Ok)?.value
         val outcome = welcomeOutcome(gift)
         if (welcomeShouldRetry(outcome)) {
             profile.savePendingWelcome(true)
+            scheduleWelcomeRetry()
             return
         }
         profile.savePendingWelcome(false)
@@ -483,8 +504,34 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
     }
 
-    /** Depois de entrar ou abrir o app com conta: resgata o presente que ficou pendente. */
-    private suspend fun claimPendingWelcome() {
+    /**
+     * Com o app aberto, tenta pagar de novo o presente que ficou pendente (até 3 vezes, 3s, 10s e 30s) em vez de
+     * esperar a reabertura (#72). Reconfere a conta antes de cada pedido: sair no meio cancela a sequência.
+     */
+    private fun scheduleWelcomeRetry() {
+        if (welcomeRetryRunning) return
+        val scope = uiScope ?: return
+        welcomeRetryRunning = true
+        val account = profile.accountId
+        scope.launch {
+            try {
+                var attempt = 0
+                while (true) {
+                    val wait = welcomeRetryDelayMs(attempt) ?: break
+                    delay(wait)
+                    if (!profile.signedIn || profile.accountId != account || !profile.welcomePending) break
+                    runWelcomeClaim()
+                    if (!profile.welcomePending) break
+                    attempt++
+                }
+            } finally {
+                welcomeRetryRunning = false
+            }
+        }
+    }
+
+    /** Depois de entrar, abrir o app ou voltar do segundo plano com conta: resgata o presente que ficou pendente. */
+    suspend fun claimPendingWelcome() {
         if (profile.welcomePending && profile.signedIn) runWelcomeClaim()
     }
 
@@ -2252,7 +2299,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     // ---------------- carteira de dobrões no servidor (#34) ----------------
 
-    private var walletOpening = false
+    /**
+     * Quem chega com a carteira abrindo espera a abertura terminar (antes devolvia falso na hora e o login, o
+     * flush de prêmios e o presente de boas-vindas desistiam, #72/#73). Não reentrante: nada dentro de
+     * [ensureWallet] pode chamar [ensureWallet].
+     */
+    private val walletMutex = Mutex()
 
     /** Compra da loja em andamento (o botão fica ocupado até o servidor responder). */
     var storeBusy by mutableStateOf(false)
@@ -2266,18 +2318,17 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      */
     suspend fun ensureWallet(local: Int? = null): Boolean {
         if (profile.walletOpen) return true
-        if (!profile.signedIn || walletOpening) return false
-        walletOpening = true
-        try {
+        if (!profile.signedIn) return false
+        return walletMutex.withLock {
+            if (profile.walletOpen) return@withLock true  // outra chamada abriu enquanto esta esperava
+            if (!profile.signedIn) return@withLock false
             val plan = Wallet.openPlan(local ?: profile.credits, deliveredTokens())
             val state = (authed { s -> cloud.dobroesOpen(s, plan.local, plan.delivered) } as? CloudResult.Ok)?.value
-                ?: return false
+                ?: return@withLock false
             profile.markWalletOpen(profile.accountId)
             profile.setServerBalance(state.balance)
             profile.adoptServerItems(state.owned, state.fleets)
-            return true
-        } finally {
-            walletOpening = false
+            true
         }
     }
 
@@ -3509,6 +3560,8 @@ fun App() {
         if (AppForeground.active) {
             state.loadBadges()
             state.checkFeedbackRewards()
+            // voltar do segundo plano também resgata o presente de boas-vindas que ficou pendente (#72)
+            state.claimPendingWelcome()
             state.checkLaunchNotice()
             // a temporada pode virar com o app aberto: relê o passe e o fechamento
             state.loadSeason()

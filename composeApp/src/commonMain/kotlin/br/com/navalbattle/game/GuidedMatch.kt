@@ -38,6 +38,17 @@ fun welcomeOutcome(gift: WelcomeGift?): WelcomeOutcome = when (gift?.status) {
 fun welcomeShouldRetry(outcome: WelcomeOutcome): Boolean =
     outcome == WelcomeOutcome.OFFLINE || outcome == WelcomeOutcome.NO_WALLET
 
+/**
+ * Espera antes da nova tentativa do presente com o app aberto (#72): 3s, 10s e 30s; depois disso só na
+ * reabertura. [attempt] conta de 0; nulo = acabaram as tentativas.
+ */
+fun welcomeRetryDelayMs(attempt: Int): Long? = when (attempt) {
+    0 -> 3_000L
+    1 -> 10_000L
+    2 -> 30_000L
+    else -> null
+}
+
 /** Valores do presente só para MOSTRAR antes do resgate; quem decide e paga é o servidor (`welcome.sql`). */
 internal const val WELCOME_SHOWN_DOUBLOONS = 150
 internal const val WELCOME_SHOWN_MILES = 5

@@ -30,6 +30,15 @@ class WelcomeGiftTest {
     }
 
     @Test
+    fun novasTentativasComOAppAbertoSaoTresEDepoisParam() {
+        assertEquals(3_000L, welcomeRetryDelayMs(0))
+        assertEquals(10_000L, welcomeRetryDelayMs(1))
+        assertEquals(30_000L, welcomeRetryDelayMs(2))
+        assertEquals(null, welcomeRetryDelayMs(3))
+        assertEquals(null, welcomeRetryDelayMs(-1))
+    }
+
+    @Test
     fun valoresMostradosBatemComOSemeDoServidor() {
         assertEquals(150, WELCOME_SHOWN_DOUBLOONS)
         assertEquals(5, WELCOME_SHOWN_MILES)
