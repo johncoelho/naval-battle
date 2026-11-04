@@ -39,6 +39,19 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
 6. **Relatório** (resposta final, curta): triagem feita, item publicado (versão), o que está
    aguardando o John (melhorias para aprovar, decisões, e `promote`/`advance` pendente do OK do John: versionCode N, próxima fração, condições já cumpridas: QA, PO, 24 h, vitals). Rodada sem nada novo: uma linha.
 
+## Modelo e esforço por demanda (#76)
+
+O `model` do cabeçalho do agente é só o padrão: **em toda delegação o PM escolhe `model` e `effort` pela
+complexidade** (parâmetros da ferramenta Agent) e os informa no briefing. Detalhes e exemplos em
+`docs/ESTEIRA.md` → Modelo e esforço por demanda.
+
+- Trivial com conferência objetiva (texto, curl/grep/SQL, abrir issue por modelo, triagem simples): `haiku`, esforço baixo.
+- Rotina (funcionalidade em código conhecido, revisão de diff pequeno, QA visual): `sonnet`, esforço médio (padrão).
+- Complexa ou arriscada (desenho técnico novo, segurança, bug de causa desconhecida, multiarquivo): `opus`, esforço alto,
+  só `tech-lead` e `dev` quando necessário.
+- Haiku só onde o resultado se confere por teste; falhou, sobe um degrau. Revisão de diff do Tech Lead em `sonnet`;
+  `opus` só para desenho e segurança. A edição vai ao `dev`, com revisão do `tech-lead`.
+
 ## Limites
 
 - Um lote por rodada (uma versão). Nunca dois ao mesmo tempo.

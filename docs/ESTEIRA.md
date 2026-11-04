@@ -24,6 +24,7 @@ Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 cada agente fixa o próprio modelo no cabeçalho: Tech Lead no Opus (desenho e revisão, poucos tokens e
 decisões caras), Dev, PO, Game Designer, Suporte, Release e QA no Sonnet. Sem isso os agentes herdavam o
 Haiku do orquestrador e a revisão entrava em loop (#35 voltou três vezes em 25/10).
+Desde a #76 o Tech Lead tem `sonnet` como padrão e o `opus` entra por delegação (desenho e segurança); ver a seção abaixo.
 
 ## Quadro
 
@@ -66,6 +67,24 @@ Haiku do orquestrador e a revisão entrava em loop (#35 voltou três vezes em 25
 - **Só se promove para a produção com todos os cartões da versão aprovados no QA, cada história atestada pelo PO e o OK explícito do John** (#39). O Release usa o
   versionCode que o QA testou no aparelho, nunca "a última da Alpha".
 - Item em **Em andamento** há mais de 3 horas sem commit: a rodada seguinte retoma ou devolve à Fila.
+
+## Modelo e esforço por demanda (#76)
+
+O `model` do cabeçalho de cada agente é só o **padrão**. O PM escolhe `model` e `effort` **de cada delegação** pela
+complexidade, usando os parâmetros da ferramenta Agent/Task, e **informa os dois no briefing** de cada agente
+(ex.: "model: sonnet, effort: medium"). Objetivo: economizar tokens sem perder qualidade.
+
+| Demanda | model | effort | Exemplos |
+|---|---|---|---|
+| Trivial, com conferência objetiva (teste, curl, grep ou SQL confere o resultado) | `haiku` | baixo | trocar um texto, conferir publicação por curl/grep/SQL, abrir issue por modelo, triagem simples |
+| Rotina (padrão) | `sonnet` | médio | funcionalidade em código conhecido, revisão de diff pequeno, QA visual |
+| Complexa ou arriscada | `opus` | alto | desenho técnico novo, segurança, bug de causa desconhecida, mudança multiarquivo; só `tech-lead` e `dev`, quando necessário |
+
+- **Haiku só onde o resultado se confere por teste**; se falhar, sobe um degrau (sonnet, depois opus).
+- **Tech Lead:** revisão de diff em `sonnet` por padrão (o cabeçalho do agente é `sonnet`); `opus` só para **desenho** e
+  **segurança**, pedido pelo PM na delegação. Sem override, o desenho sairia em sonnet: o PM lembra de subir.
+- **Dev:** `sonnet` por padrão; `opus` com esforço alto em causa desconhecida ou mudança multiarquivo.
+- A edição de arquivos vai ao perfil certo (`dev`), com revisão do `tech-lead`; o PM não edita.
 
 ## Rodada (skill `esteira`, agendada)
 
