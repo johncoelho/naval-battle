@@ -27,12 +27,13 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
    - item que travar (precisa do John, permissão negada): volta para a Fila com comentário e sai do
      lote; o resto segue;
    - **Tech Lead** revisa o diff; CORRIGIR volta ao Dev (até 3 voltas; depois disso, pare e reporte);
-   - APROVADO: Dev publica; **Release** acompanha o CI e move **todos os cartões do lote** para **Publicado**.
+   - APROVADO: Dev faz o push; **Release** acompanha o CI e move **todos os cartões do lote** para **Publicado**.
    - Item **Em andamento** há mais de 3 h sem commit: retome do worktree se existir, senão devolva
      à Fila com comentário.
 5. **QA**: não é chamado aqui. Tem tarefa agendada própria (`esteira-qa-naval-battle`, às 7h, 12h e 18h) e é o
-   único que liga os emuladores. **A rodada do QA termina chamando o Release** (`release`): promote em 20% quando
-   todos os cartões da versão estão em **Em produção**, advance para 50% e 100% (≥ 24 h do *Published*, vitals
+   único que liga os emuladores. **A rodada do QA chama o PO (`po`) para atestar cada história** a partir do relatório
+   e depois o Release (`release`): promote em 20% quando todos os cartões da versão estão em **Em produção**, o PO
+   atestou e o **John autorizou no chat** (o PM passa a autorização no briefing), advance para 50% e 100% (≥ 24 h do *Published*, vitals
    OK), halt automático se houver pico de falhas; comentário "Produção: N%" em cada issue. Ver
    `docs/ESTEIRA.md` → Produção e liberação gradual.
 6. **Relatório** (resposta final, curta): triagem feita, item publicado (versão), o que está
@@ -42,7 +43,8 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
 
 - Um lote por rodada (uma versão). Nunca dois ao mesmo tempo.
 - Nunca: aprovar feedback, mover melhoria para a Fila sem aprovação do John, mexer em
-  `.github/workflows`, adicionar dependência, digitar senha ou mudar secrets. O Release pode disparar
-  `promote-production.yml` e mudar a variável `PLAY_PRODUCTION_LIVE`.
+  `.github/workflows`, adicionar dependência, digitar senha ou mudar secrets. O Release só dispara
+  `promote`/`advance` e mexe em flags de produção com o OK explícito do John; `halt` por ALARME/P0 é exceção protetora
+  (faz e avisa depois).
 - Algo que precisa do John (decisão, permissão negada, CI quebrado 3 vezes): pare o item, comente na
   issue e diga no relatório.

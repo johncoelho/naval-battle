@@ -18,8 +18,9 @@ skills `dev-cycle`, `esteira`, `qa-full-test` e `play-store-release`.
   testa.
 - **Suporte**: triagem. **PO**: dono da história, SPEC, critérios de aceite, ordena a Fila e atesta
   que a história foi atendida. **Tech Lead**: desenho e revisão de todo diff antes do push.
-  **Dev**: implementa em worktree próprio, entrega o diff, sem push. **Release**: publica, CI,
-  promoção e flags de produção. **QA**: valida nos emuladores e atesta com evidência. **Game
+  **Dev**: implementa em worktree próprio, entrega o diff ao Tech Lead e só faz o push depois do
+  APROVADO. **Release**: depois do push, registra a versão (`app_releases`), acompanha o CI, comenta a
+  versão e move o cartão para Publicado; cuida da promoção e das flags de produção. **QA**: valida nos emuladores e atesta com evidência. **Game
   Designer**: balanceamento, economia, propõe melhorias.
 
 ## Entrada
@@ -38,19 +39,24 @@ skills `dev-cycle`, `esteira`, `qa-full-test` e `play-store-release`.
 1. **PM** entende e aciona Suporte/PO para abrir ou ajustar a issue.
 2. **PO** escreve a história e os critérios de aceite (viram casos no `QA_TEST_PLAN`).
 3. **Tech Lead** desenha, se não for trivial.
-4. **Dev** implementa (um commit por item, `dev-cycle`) e entrega o diff, sem push.
+4. **Dev** implementa (um commit por item, `dev-cycle`) e entrega o diff ao Tech Lead, sem push.
 5. **Tech Lead** revisa. CORRIGIR volta ao Dev, até 3 voltas; depois o PM para e reporta ao John.
-6. **Release** publica, acompanha o CI e move para Publicado.
+   Só com APROVADO o **Dev** faz o push.
+6. **Release**, depois do push, registra a versão em `app_releases`, acompanha o CI (vermelho volta
+   ao Dev), comenta a versão na issue e move para Publicado.
 7. **QA** valida na versão liberada pela Play, com evidência: aprovado → Em produção; falha → Fila
    como bug.
 8. **PO** atesta, com base no relatório do QA, que a história foi atendida.
-9. **Release** promove 20/50/100% (a issue fecha em 100%).
-10. **PM** devolve ao John.
+9. **Release** promove 20/50/100% (a issue fecha em 100%), **só com o OK explícito do John no chat**
+   (o PM passa a autorização no briefing), com QA aprovado e PO atestado. A regra #39 do
+   `docs/ESTEIRA.md` segue definindo etapas, intervalos de 24 h, vitals e halt.
+10. **PM** devolve ao John quando o PO atestar; a liberação 20/50/100% segue e é relatada como
+    pendente.
 
 ## Devolução
 
 O PM só diz "pronto" com a cadeia fechada: Tech Lead aprovou, CI verde, QA aprovou com evidência, PO
-atestou. O relatório diz o que foi feito, quem validou, o que ficou pendente e o que depende do
+atestou (a liberação gradual na produção, que depende do OK do John, é relatada como pendente). O relatório diz o que foi feito, quem validou, o que ficou pendente e o que depende do
 John. Entrega incompleta ou com falha é relatada como tal.
 
 ## Delegação
@@ -63,7 +69,10 @@ John. Entrega incompleta ou com falha é relatada como tal.
 - Tarefa que depende de navegador (consoles Play, AdMob, App Store Connect etc.): o time faz sozinho
   no Chrome do John (claude-in-chrome; nunca o navegador embutido para sites com login dele). Só
   pede ao John quando aparecer login, senha ou 2FA, e então só o login. Nunca digita senha, cria
-  conta ou insere chave ou segredo.
+  conta ou insere chave ou segredo. Quem opera o Chrome é um **agente delegado com ferramenta de
+  Chrome** (`general-purpose`, pois QA e Release não têm a ferramenta), **nunca o PM**. Leitura de
+  console é consulta: o resultado vai ao agente da etapa. Ação que muda estado em console segue a
+  cadeia (issue antes).
 
 ## Espera
 
@@ -79,7 +88,7 @@ agêntica (o "amarelinho"), declarando a frase-modelo:
 
 ## Travas
 
-- Produção e `ads_enabled` só com OK explícito do John.
+- Produção (`promote`/`advance`) e flags (`ads_enabled` e afins) só com o OK explícito do John, dado no chat (o PM passa a autorização no briefing do Release). Exceção protetora: halt por ALARME do vitals ou P0 (e desligar antes a chave em `app_config`) o Release faz e avisa depois.
 - Melhoria e feedback de jogador só aprovados por ele. Camada nova na stack só com ele.
 - Nunca segredo no repositório.
 - Todo push na `main` publica (versão, notas da Play, CHANGELOG); commit só de docs leva `[skip ci]`.

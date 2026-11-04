@@ -63,7 +63,7 @@ Haiku do orquestrador e a revisão entrava em loop (#35 voltou três vezes em 25
 - **iPhone não bloqueia** (decisão do John, 19/10): o iOS só é compilado para adiantar; o teste no
   iPhone fica para depois. Item que passou no QA do **Android** sai da fila (Concluído), mesmo sem
   teste em iPhone (vai para **Em produção**).
-- **Só se promove para a produção com todos os cartões da versão aprovados no QA** (#39). O Release usa o
+- **Só se promove para a produção com todos os cartões da versão aprovados no QA, cada história atestada pelo PO e o OK explícito do John** (#39). O Release usa o
   versionCode que o QA testou no aparelho, nunca "a última da Alpha".
 - Item em **Em andamento** há mais de 3 horas sem commit: a rodada seguinte retoma ou devolve à Fila.
 
@@ -98,8 +98,8 @@ lista cada envio com o status (*In review* / *Published*); o detalhe do envio mo
    falhou (`tools/qa-evidencia.sh` → branch `qa-evidencias`). Desliga os emuladores e **desativa as
    contas QA** (`is_test = true`), sempre, mesmo se o teste falhar.
 4. **Release, no fim da tarefa do QA** (produção, #39): com cartões em **Em produção**, a tarefa abre o
-   Submission activity no Chrome (só ela tem o Chrome; o agente `release` não tem), lê o status e a data do
-   *Published* do envio de produção e passa os dois ao `release`, que roda `status`, `promote` ou `advance`.
+   Submission activity no Chrome (quem opera o Chrome é um agente delegado com ferramenta de Chrome, `general-purpose`, nunca o PM; QA e `release` não têm a ferramenta), lê o status e a data do
+   *Published* do envio de produção e passa os dois ao `release`, que roda `status` e, **só com o OK do John e o PO tendo atestado** (a rodada chama o `po` para atestar antes), `promote` ou `advance`. Leitura de console é consulta; ação que muda estado em console segue a cadeia (issue antes).
    Ver a seção abaixo.
 
 ## Produção e liberação gradual (#39)
@@ -112,9 +112,11 @@ O histórico de runs (`gh run list -w promote-production.yml`) é o registro das
 
 | Etapa | Fração | Quando | Quem |
 |---|---|---|---|
-| `promote` | 20% | QA aprovou **todos** os cartões da versão | Release |
-| `advance` | 50% | ≥ 24 h em 20% (contadas do *Published* da produção), sem `ALARME` no vitals, nenhuma P0 aberta contra a versão | Release |
-| `advance` | 100% (concluída) | ≥ 24 h em 50%, mesmas condições | Release |
+| `promote` | 20% | QA aprovou **todos** os cartões da versão, o PO atestou cada história **e o John autorizou no chat** | Release |
+| `advance` | 50% | ≥ 24 h em 20% (contadas do *Published* da produção), sem `ALARME` no vitals, nenhuma P0 aberta contra a versão, **OK do John** | Release |
+| `advance` | 100% (concluída) | ≥ 24 h em 50%, mesmas condições (incluindo o **OK do John**) | Release |
+
+**Autorização do John (04/11, regra permanente):** `promote`, `advance` e flags de produção (`ads_enabled` e afins) só com o OK explícito dele no chat; o PM passa a autorização no briefing do Release. A regra #39 acima continua definindo etapas, intervalos de 24 h, vitals e halt. **Exceção protetora:** `halt` por `ALARME`/P0 (e desligar antes a chave em `app_config`) o Release faz sem esperar e avisa depois.
 
 - **Travas do `promote`** (erro em pt-BR, sem commit): (1) variável de repositório `PLAY_PRODUCTION_LIVE`
   = `true` (nasce `false`; vira `true` depois do *Published* da produção 91); (2) o versionCode está num
