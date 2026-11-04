@@ -25,6 +25,7 @@ Supabase. Dono: **John Coelho** (GitHub `johncoelho`). **Fale com ele em portugu
 | "Temos bugs?" / feedback de jogador | `feedback-triage` |
 | Testadores novos, liberar na Play, contagem para produção | `beta-testers` |
 | "Roda a esteira" / tarefa agendada da fila | `esteira` |
+| **Todo pedido do John que altere algo (regra padrão)**: issue + cadeia de agentes, o principal não executa | `ciclo-agentico` |
 
 Padrão que se repete e ainda não tem skill: proponha criar uma.
 
@@ -36,6 +37,8 @@ tech-lead, dev, release, qa, game-designer), quadro no GitHub Projects, backlog 
 
 ## Inegociável
 
+- **Todo pedido que altere algo segue a skill `ciclo-agentico`**: issue e cartão antes de começar, o agente
+  principal (PM) delega e confere, não executa, e só devolve ao John com a cadeia validada (Tech Lead, CI, QA, PO).
 - Todo push na `main` publica: subir versão (Android e iOS) e escrever as notas da Play no mesmo commit.
 - Documentação (CHANGELOG sempre; HISTORY, MEMORY, README, docs, design system quando couber)
   no mesmo commit do código.

@@ -53,6 +53,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - Esteira agêntica (`docs/ESTEIRA.md`): **bug vai direto para a Fila e é resolvido logo**; melhoria
   só entra na Fila com aprovação dele (arrasta o cartão ou comenta "aprovado"). **Mudar regra que já
   está valendo é melhoria, nunca bug** — sempre com a aprovação dele.
+- **Todo pedido que altere algo segue a skill `ciclo-agentico`** (04/11): issue + cartão antes, o principal (PM) delega e confere sem executar, e só devolve com Tech Lead, CI, QA e PO fechados.
 - Antes de fechar uma SPEC de melhoria, avisar se há bugs de jogador pendentes para incluir.
 
 ## 3. Assuntos em andamento

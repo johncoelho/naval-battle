@@ -3,6 +3,8 @@
 Como o trabalho do Naval Battle anda sozinho, do relato à loja, com o John decidindo só o que é dele.
 Os agentes ficam em `.claude/agents/`; a rodada recorrente é a skill `esteira`.
 
+> **Regra padrão (04/11/2026):** todo pedido do John que altere algo segue a skill [`ciclo-agentico`](../.claude/skills/ciclo-agentico/SKILL.md): issue e cartão antes de começar, cadeia de agentes e devolução só com a cadeia validada. O agente principal (PM) conversa, registra, delega e confere; não executa. A tabela abaixo e a rodada continuam valendo.
+
 ## Papéis
 
 | Papel | Quem | Faz | Decide |
