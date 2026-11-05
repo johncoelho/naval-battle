@@ -661,7 +661,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   Edge `ads-reward`). A Edge tem `verify_jwt` desligado de propósito: quem chama é o Google, e a
   segurança é a assinatura ECDSA sobre a query crua. Dobrões pelo mesmo `dobroes_pending`
   (`kind = 'ad'`); milha direto no perfil, até `miles_cap`. Interruptor `ads_enabled` (nasce
-  `'false'`; `'true'` liga para todos com o gate `ads_min_app_version`, e conta `is_test` fora do QA, os robôs da Play, fica sem anúncio, #40); números em `app_config` (`ads_*`); `ads_test_emails` só no banco.
+  `'false'`; `'true'` liga para todos com o gate `ads_min_app_version`, e conta `is_test` fora do QA, os robôs da Play, fica sem anúncio, #40); números em `app_config` (`ads_*`); `ads_test_emails` só no banco e **vazia por padrão** (04/11): a conta de teste vem de `profiles.is_test`, não de e-mail.
 - Presente de boas-vindas (`supabase/welcome.sql`, #43): `claim_welcome_gift()` devolve `ok | already |
   not_eligible | no_wallet`; paga por `dobroes_apply(uid, valor, 'welcome', 'welcome')` (o razão é a trava de uma vez só,
   fora do teto `dobroes_online_daily_cap`), soma milhas até `miles_cap`, grava `welcome_gifts` (RLS, só leitura da própria

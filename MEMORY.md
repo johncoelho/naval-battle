@@ -120,10 +120,10 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Anúncio de teste no emulador (#32, 0.34.3):** conta de teste (`'test'`) recebe o bloco real só em emulador,
   para o SSV creditar no QA. Pré-requisito: colar o SSV nos 4 blocos (ver #29).
 - **Anúncios premiados (#29, 0.34.0):** servidor (`supabase/ads.sql`, migração `ads_rewarded_ssv`),
-  Edge `ads-reward` (versão 1, `verify_jwt` desligado) e app prontos, **desligados**
-  (`ads_enabled = 'false'`). Falta: colar a URL `https://cwtslesnthbenxswdcbv.supabase.co/functions/v1/ads-reward`
-  no SSV dos 4 blocos do AdMob; mensagem GDPR do UMP; e-mail do John em `app_config.ads_test_emails`
-  (só no banco); QA com anúncio de teste (ADS-01 a ADS-18); Play Console ("Contém anúncios", ID de
+  Edge `ads-reward` (versão 1, `verify_jwt` desligado) e app prontos. **Estado atual (04/11): anúncios reais ligados**
+  (`ads_enabled = 'true'`, `ads_min_app_version = '0.43.1'`), `ads_test_emails` **vazia**: o John vê anúncio real
+  (**não clicar no próprio anúncio**: clique inválido); contas QA seguem de teste por `is_test = true`. Falta (se ainda não feito): colar a URL `https://cwtslesnthbenxswdcbv.supabase.co/functions/v1/ads-reward`
+  no SSV dos 4 blocos do AdMob; mensagem GDPR do UMP; QA com anúncio de teste (ADS-01 a ADS-18); Play Console ("Contém anúncios", ID de
   publicidade, Segurança dos dados) longe do pedido de produção; ligar só com o OK do John. SDK
   25.5.0 (Kotlin 2.3.21 desde a 0.34.13, #38). **Anúncios: E0 a E3 da #40** (0.43.1 publicada com `AD_ID` explícita e robôs fora; migração `ads_robot_off` aplicada, inerte com
   `'test'`; em E1: QA ADS-01 a ADS-25 com `'test'`, aguardando a revisão do AdMob para virar `'true'`). **E0 (John, console, antes do push):** "Contém anúncios"
