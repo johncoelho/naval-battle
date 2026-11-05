@@ -57,11 +57,11 @@ Por isso o grupo D é feito **com o QA conectado**: ele diz "pode seguir" a cada
 
 | Item | Estado |
 |---|---|
-| Edge `push` com ramo iPhone (APNs) implantada | Sim (versão 12). Os segredos `APNS_KEY_ID`, `APNS_KEY_P8` e `APPLE_TEAM_ID` existem. **O grupo E depende da chave APNs cadastrada e válida**: o QA roda uma sonda com token falso antes (resposta `ios:400:BadDeviceToken` = o APNs aceitou a chave; `ios:403` = chave errada) |
+| Edge `push` com ramo iPhone (APNs) implantada | Sim (versão 12), com a **chave APNs atual** (decisão do John, 04/11: não será criada chave nova). A Apple já a aceitou: a sonda do QA com token falso devolveu `ios:400:BadDeviceToken` (se um dia vier `ios:403`, o grupo E para e o QA avisa). O grupo E **não depende mais de chave nova** |
 | `ios_live` da 0.43.4 em `app_releases` | **Não**: está `false` (certo: o Release só liga depois que a build estiver no TestFlight). Só o grupo H usa |
 | `launch_notice_enabled` | `false`. **Não será ligado** (ligaria o aviso para todos os jogadores do Android). O LAUNCH-07 é conferido só no servidor (bloco que desfaz), sem ligar nada |
 | Anúncios (`ads_enabled`, `ads_min_app_version`) | Não mexidos por este plano |
-| Edge `apple-revoke` | **Não implantada** (os segredos da Apple existem; falta o deploy). Sem ela, o **APL-07** apaga a conta, mas o app **continua** na lista "Entrar com a Apple" do iPhone |
+| Edge `apple-revoke` | **Autorizada pelo John a implantar (04/11); o Release implanta.** Até o QA confirmar a implantação (`supabase functions list`), o **APL-07** apaga a conta mas o app continua na lista "Entrar com a Apple" do iPhone (não é falha). Com a Edge implantada, o app deve sumir da lista |
 | Auth "Allow manual linking" | **O QA não consegue ler esse interruptor** (só pelo painel do Supabase). O APL-12 prova: se aparecer "Vincular logins não está disponível agora", está desligado (é do Release ou do John ligar) |
 | Tokens iPhone em `push_tokens` | Nenhum hoje (0 linhas `ios`) |
 
@@ -74,8 +74,7 @@ Por isso o grupo D é feito **com o QA conectado**: ele diz "pode seguir" a cada
   fazer.
 - **Conta Google "principal"** (a sua, com carreira). Casos que só *entram* nela: AUTH-IOS, NOM-02. Não é
   usada para excluir conta.
-- **Conta Google QA03** (virgem, **criada por você**; o QA ainda não a conhece). Ela serve para: vincular,
-  boas-vindas, nome repetido e **excluir conta** (APL-07 e APL-09). **Nunca** exclua conta real.
+- **Conta Google QA03: `aigamesfactory.qa03@gmail.com`** (já existe; criada em 01/11 para a gravação). O QA conferiu em 04/11: **não há mais** `auth.users`, `profiles` nem identidade dela no jogo (conta do jogo apagada), então o primeiro login gera conta virgem. Ela já está em `allowed_players` com `source = 'qa'` (conta de teste, anúncio de teste, presente de boas-vindas mesmo com a regra de data). Serve para: vincular, boas-vindas, nome repetido e **excluir conta** (APL-07 e APL-09). **Você** entra nela no iPhone (digita a senha do Google); o QA nunca entra. **Nunca** exclua conta real.
 - Senha: você digita a sua, nas janelas do Google e da Apple. Ninguém mais digita senha.
 - Um segundo aparelho para push e convite: o QA usa o emulador QA01 (Android). Para o QA mandar pedidos para a sua
   conta, ele precisa ser seu amigo no jogo: o primeiro caso do grupo E faz isso (o QA apaga a amizade no fim).
@@ -85,14 +84,12 @@ Por isso o grupo D é feito **com o QA conectado**: ele diz "pode seguir" a cada
 Entrar com a Apple (janela da Apple), push pelo APNs (produção, só TestFlight/App Store), permissão de
 notificação, volta do segundo plano, teclado e área segura do iPhone. Nada disso vale em simulador.
 
-### Quando o e-mail da QA03 chegar (checklist do QA, não do John)
+### Regras da QA03 para o QA (não do John)
 
-1. O QA grava a linha em `allowed_players` com o e-mail, `source = 'qa'` e a nota "QA03 iPhone" (pelo e-mail, então
-   vale mesmo se a conta for apagada e recriada) e confere que `is_test = false` na conta logo depois do primeiro
-   login (conta com `is_test = true` não recebe o presente de boas-vindas).
-2. A cada "zerar a QA03", o QA apaga a conta (`delete from auth.users` da QA03) e a próxima entrada pelo Google cria
-   uma conta virgem de novo; confere `is_test`, `created_at` e `welcome_gifts` vazio.
-3. Depois do teste, `is_test = true` na QA03 e as sobras (amizade, token) apagadas.
+1. Já feito em 04/11: linha em `allowed_players` (`aigamesfactory.qa03@gmail.com`, `source = 'qa'`, nota "QA03 iPhone"). Vale pelo e-mail, então continua valendo se a conta do jogo for apagada e recriada.
+2. A conta nasce com `is_test = false` (o gatilho de criação não marca teste e a passada `refresh_all_is_test` não mexe em conta QA). O QA confere isso logo depois do primeiro login e **antes** do WEL-05: conta `is_test = true` não recebe o presente de boas-vindas.
+3. A cada "zerar a QA03", o QA apaga a conta (`delete from auth.users` da QA03; o `profiles` e o resto saem em cascata) e confere `auth.users`, `profiles`, `welcome_gifts` e `auth.identities` vazios. A próxima entrada pelo Google cria conta virgem.
+4. **Limpeza ao fim:** `is_test = true` na conta da QA03 (se ainda existir), sobras apagadas (amizade, `push_tokens`, `device_checks`), e `allowed_players` da QA03 **fica** (como QA01/QA02). Nenhum ajuste em `ads_enabled` nem `ads_min_app_version`.
 
 ---
 
@@ -158,7 +155,7 @@ Agora esta conta (Apple por relay, só Apple) fica como está: é a "conta com A
 
 ### D3. Apple que já tem conta, vinculada em outra (APL-16)
 
-Preparar: o QA apaga a QA03 antes (conta virgem). Convidado.
+Preparar: o QA confirma a QA03 sem conta (já está assim em 04/11) e o app como convidado.
 
 | ID | Passos (você) | Esperado | QA confere | Resultado |
 |---|---|---|---|---|
@@ -166,7 +163,7 @@ Preparar: o QA apaga a QA03 antes (conta virgem). Convidado.
 
 ### D4. Vincular o Google à conta aberta pela Apple (APL-13) e a pergunta com "Sim" (APL-14)
 
-Preparar: o QA apaga a QA03 de novo (para o Google dela ficar livre). Perfil → Sair da conta.
+Preparar: o QA apaga a QA03 de novo, se ela já tiver sido criada (para o Google dela ficar livre). Perfil → Sair da conta.
 
 | ID | Passos (você) | Esperado | QA confere | Resultado |
 |---|---|---|---|---|
@@ -208,12 +205,9 @@ guiada voltar a aparecer.
 | WEL-05 | 1. Menu → **Primeira missão** → **Pular**. 2. Leia o popup. 3. **Entrar com o Google** na **QA03 nova**. 4. Se o presente não chegar, feche e abra o app | O popup do convidado diz "Crie sua conta para receber ◆150 + 5 milhas (conta nova)" (sem `%s` nem `%1`). Ao entrar, o presente de **150 dobrões + 5 milhas** chega (pode chegar só ao reabrir o app: foi o que se viu no Android, **bug P2 #72**; anote qual dos dois ocorreu) | uma linha em `welcome_gifts`; saldo +150; milhas +5 | |
 | NOM-01 | Perfil de convidado: escolha o **nome repetido** do QA, jogue 2 partidas contra a IA, **depois** entre com a QA03 (o QA zera a QA03 entre o WEL-05 e este) e jogue mais 1 partida; espere 1 min | Aparece "carreira enviada" (ou equivalente); o nome vira `nome-xxxx` ou o da conta; o jogo **não** mostra erro | `profiles.username` único; `xp` e `matches` subiram | |
 
-## E. Push no iPhone (APNs) · issue #14 · **depende da chave APNs cadastrada**
+## E. Push no iPhone (APNs) · issue #14
 
-Só vale pelo TestFlight, com a chave APNs cadastrada no Supabase (a que o John cadastra) e a sonda do QA
-devolvendo `BadDeviceToken` (a chave é aceita). Se a sonda disser `ios:403`, o grupo **não começa**: espere a
-chave. **O token do iPhone é registrado com ou sem permissão de aviso** (a permissão só decide se o aviso aparece).
-A permissão é pedida **ao chegar ao menu**, a mesma do "Lembrete diário".
+Só vale pelo TestFlight, com a **chave APNs atual** (a Apple já a aceitou; ver tabela da seção 0). **O token do iPhone é registrado com ou sem permissão de aviso** (a permissão só decide se o aviso aparece). A permissão é pedida **ao chegar ao menu**, a mesma do "Lembrete diário".
 
 Preparar: iPhone logado na conta **principal**. O QA usa o emulador QA01 (o primeiro caso, 02a, já deixa vocês amigos).
 
@@ -275,7 +269,7 @@ instale a 0.43.4; o grupo H fica para a **próxima** versão.
 ## Ordem e tempo
 
 1. Seção 0 e A: 10 min. 2. B e C: 15 min. 3. **D: 45 a 60 min com o QA conectado** (a parte mais longa).
-4. E (push): 20 min, depende da chave APNs. 5. F e G: 15 min. 6. H: fica para a próxima versão.
+4. E (push): 20 min. 5. F e G: 15 min. 6. H: fica para a próxima versão.
 
 ## Quando tudo passar, estes cartões mudam
 
@@ -287,7 +281,7 @@ instale a 0.43.4; o grupo H fica para a **próxima** versão.
 | #61 Nome de guerra após login Google | NOM-02 (e AUTH-IOS-01 e 02) | Liberado para testes | **Em produção** |
 | #59 Nome repetido na fusão | NOM-01 | Liberado para testes | **Em produção** |
 | #43 Boas-vindas | WEL-05 | Em produção | Fica; "validado no iPhone" |
-| #14 Push no iPhone | PSH-IOS-01 a 06 (07 e LAUNCH-07: QA) | Em produção | Fica; "validado no iPhone" (depende da chave APNs) |
+| #14 Push no iPhone | PSH-IOS-01 a 06 (07 e LAUNCH-07: QA) | Em produção | Fica; "validado no iPhone" |
 | #62 Aba Dobrões no iPhone | DOBIOS-01 a 03 | Liberado para testes | **Em produção** |
 | #40 Anúncios para todos | ADS-18 (iPhone); o resto no Android | Liberado para testes | Só o lado do iPhone fecha aqui; o cartão espera o QA do Android |
 | #46 Atualização ao voltar | UPD-10 a 12 (Android pela Play e iPhone) | Liberado para testes | **Em produção** (o Android pode ir antes: a 0.43.4 já está na Play) |
