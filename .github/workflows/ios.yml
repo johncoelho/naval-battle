@@ -1,9 +1,9 @@
 name: Build iOS framework
 
 # Confere o app iOS de ponta a ponta: testes de unidade no simulador, framework
-# Kotlin/Native e projeto Xcode (iosApp/) compilados sem assinatura. Não publica nada: o
-# iPhone é distribuído só pelo TestFlight (ios-release.yml). O ios_live em app_releases só
-# liga depois do envio ao TestFlight (ios-release.yml), não por este verde. Ver docs/BUILD.md, seção iOS.
+# Kotlin/Native e projeto Xcode (iosApp/) compilados sem assinatura. Não publica nada: o envio
+# à App Store Connect é o ios-release.yml. O ios_live em app_releases só liga quando a App Store
+# já oferece a versão (lookup do iTunes), não por este verde. Ver docs/BUILD.md, seção iOS.
 
 on:
   push:

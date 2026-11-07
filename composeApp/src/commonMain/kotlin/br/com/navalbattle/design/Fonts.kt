@@ -28,6 +28,10 @@ val LocalNavalFonts = staticCompositionLocalOf { NavalFonts(FontFamily.SansSerif
  * Roboto 400/700/800/900 e Roboto Mono 400/500/700, TTF estáticos em `composeResources/font`
  * (licenças em `files/licenses`). Iguais no Android e no iPhone: antes cada plataforma resolvia
  * `SansSerif`/`Monospace` para uma fonte de métricas diferentes e o HUD saía "achatado" no iPhone.
+ *
+ * Subset Latin (acentos, pontuação, símbolos usados no app). Setas (U+2190 a U+21FF, como o → de
+ * "120 → 140" e o ⇄) **não existem** em Roboto nem em Roboto Mono, nem na fonte de origem: o Compose
+ * cai na fonte do sistema só para esse glifo (igual nas duas plataformas, sem ficar em branco).
  */
 @Composable
 fun rememberNavalFonts(): NavalFonts {
