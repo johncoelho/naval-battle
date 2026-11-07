@@ -113,9 +113,10 @@ values ('<versionName>', <versionCode>, '<pt>', '<en>', '<es>', true);
 ```
 - `android_live = true` right away: the app still asks the Play In-App Update API whether
   the update reached that device, so the window waits for Google's review by itself.
-- Only after `ios-release.yml` is green **with the upload to TestFlight** of that version (build visible in TestFlight; `ios.yml` green is not enough):
-  `update public.app_releases set ios_live = true where version_name = '<versionName>';`
-  — without the upload `ios_live` stays false (no update notice for a build that does not exist). On iPhone the table alone decides, and the button opens the site's `#ios` section.
+- Only when the **App Store already offers** that version (it shows as "Ready for Distribution" and the public lookup
+  `curl -s "https://itunes.apple.com/lookup?id=6827258132&country=br"` returns `"version":"<versionName>"`; a TestFlight upload or a green `ios.yml` is not enough):
+  `update public.app_releases set ios_live = true where version_code <= <versionCode> and ios_live = false;`
+  — until then `ios_live` stays false (no update notice for a version the store does not have). On iPhone the table alone decides, and the button opens the game's App Store page.
 - Notes: user-facing, 1–3 short sentences per language (accents allowed here, unlike the
   Play release notes file).
 - **Minor nova (0.X.0)**: also add the screen's line, in the same push. Key `RN_V0X00` with

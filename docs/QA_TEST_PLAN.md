@@ -280,7 +280,7 @@ Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem
 | UPD-10 | P1 | App aberto em segundo plano; sai versão nova (`app_releases` e Play); voltar | Popup aparece sem reabrir o app (consulta no máximo a cada 5 min) |
 | UPD-11 | P1 | "Depois", sair e voltar | Não reaparece para a mesma versão; com outra versão maior reaparece |
 | UPD-12 | P2 | Voltar durante uma partida | Só aparece ao voltar ao menu |
-Nota do QA (04/11): no Android o aviso só aparece se a **Play** confirmar versão mais nova (`checkUpdateAvailable`); linha falsa em `app_releases` não basta. Os emuladores precisam estar numa versão **anterior** à última publicada: com a 0.43.4 (117) na Play, QA01 e QA02 em 0.43.3 (116) servem. No iPhone o aviso vem só de `app_releases` com `ios_live` e o botão leva ao site (seção do iPhone, link do TestFlight); ver [QA_IPHONE.md](QA_IPHONE.md), grupo H.
+Nota do QA (04/11): no Android o aviso só aparece se a **Play** confirmar versão mais nova (`checkUpdateAvailable`); linha falsa em `app_releases` não basta. Os emuladores precisam estar numa versão **anterior** à última publicada: com a 0.43.4 (117) na Play, QA01 e QA02 em 0.43.3 (116) servem. No iPhone o aviso vem só de `app_releases` com `ios_live` `ios_live` só é marcado quando a App Store já oferece a versão, e o botão leva à página do jogo na App Store ("Atualizar na loja", dica "Atualize pela App Store."); ver [QA_IPHONE.md](QA_IPHONE.md), grupo H.
 
 ## 8b. Rede local (A × B)
 

@@ -56,7 +56,7 @@ para identificar um jogador.
 | `monoSmall` | mono | Normal 10 · +1 sp | rótulos de HUD |
 | `timer` | mono | Bold 26 · +2 sp | cronômetro de turno |
 
-Famílias do sistema, de propósito: sem fonte externa o APK fica leve e nada depende de rede.
+Fontes **embarcadas** (`design/Fonts.kt`, `LocalNavalFonts` fornecido pelo `NavalTheme`): sans = Roboto 400/700/800/900, mono = Roboto Mono 400/500/700, as mesmas do `bundle.css` do design system, iguais no Android e no iPhone, por um caminho de código só no `commonMain`. Motivo (#80, 07/11): `SansSerif`/`Monospace` do sistema resolvem para fontes de métricas diferentes em cada plataforma (San Francisco e um mono largo no iPhone) e o HUD saía "achatado". Peso ~0,38 MB (teto de 1 MB, subset Latin), licença OFL 1.1 em `composeResources/files/licenses/`; nada depende de rede. Fonte nova: só OFL ou Apache, TTF estático.
 Rótulos passam por `HudLabel`, que aplica caixa alta — não escreva `.uppercase()` à mão.
 
 ## Componentes (`ui/Components.kt`)

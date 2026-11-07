@@ -58,7 +58,7 @@ Por isso o grupo D é feito **com o QA conectado**: ele diz "pode seguir" a cada
 | Item | Estado |
 |---|---|
 | Edge `push` com ramo iPhone (APNs) implantada | Sim (versão 12), com a **chave APNs atual** (decisão do John, 04/11: não será criada chave nova). A Apple já a aceitou: a sonda do QA com token falso devolveu `ios:400:BadDeviceToken` (se um dia vier `ios:403`, o grupo E para e o QA avisa). O grupo E **não depende mais de chave nova** |
-| `ios_live` da 0.43.4 em `app_releases` | **Não**: está `false` (certo: o Release só liga depois que a build estiver no TestFlight). Só o grupo H usa |
+| `ios_live` da 0.43.4 em `app_releases` | **Não**: está `false` (certo: o Release só liga quando a App Store já oferece a versão, conferido pelo `lookup`; o TestFlight não conta). Só o grupo H usa |
 | `launch_notice_enabled` | `false`. **Não será ligado** (ligaria o aviso para todos os jogadores do Android). O LAUNCH-07 é conferido só no servidor (bloco que desfaz), sem ligar nada |
 | Anúncios (`ads_enabled`, `ads_min_app_version`) | Não mexidos por este plano |
 | Edge `apple-revoke` | **Autorizada pelo John a implantar (04/11); o Release implanta.** Até o QA confirmar a implantação (`supabase functions list`), o **APL-07** apaga a conta mas o app continua na lista "Entrar com a Apple" do iPhone (não é falha). Com a Edge implantada, o app deve sumir da lista |
@@ -252,8 +252,8 @@ O restante da #40 (ADS-02 a ADS-26) é só Android e fica com o QA nos emuladore
 ## H. Aviso de atualização · issue #46
 
 O iPhone não consulta loja (a função devolve nulo): o aviso vem só de `app_releases` com `ios_live = true`, versão
-**maior** que a instalada. Só há como testar quando o Release publicar uma versão **depois da 0.43.4** e ela estiver
-no TestFlight. **Não** dá para forçar com linha falsa (todos os testadores do iPhone veriam o popup). Esta rodada:
+**maior** que a instalada. `ios_live` só é marcado quando a **App Store** já oferece a versão (não o TestFlight). Só há como
+testar quando o Release publicar uma versão **depois da instalada** e ela estiver na App Store. **Não** dá para forçar com linha falsa (todos os testadores do iPhone veriam o popup). Esta rodada:
 instale a 0.43.4; o grupo H fica para a **próxima** versão.
 
 | ID | Preparar | Passos | Esperado | Resultado |
@@ -262,7 +262,7 @@ instale a 0.43.4; o grupo H fica para a **próxima** versão.
 | UPD-10 | 0.43.4 ou maior instalada. O Release publica a versão seguinte e marca `ios_live` | 1. Deixe o jogo aberto no menu e vá à tela inicial do iPhone. 2. Espere o aviso do QA de que a nova versão saiu. 3. Volte ao jogo. | O popup de atualização aparece **sem reabrir o app** (consulta no máximo a cada 5 min; espere se não aparecer) | |
 | UPD-11 | Depois do UPD-10 | 1. Toque **Depois**. 2. Vá à tela inicial e volte. | Não reaparece para a mesma versão; só com outra versão maior | |
 | UPD-12 | Versão nova disponível | 1. Comece uma partida contra a IA. 2. Vá à tela inicial e volte. | O aviso **não** abre durante a partida; só ao voltar ao menu | |
-| UPD-IOS-13 | Popup aberto | Leia a dica e toque o botão principal ("Como atualizar") | A dica diz **"Atualize pelo app TestFlight."** (sem ".ipa"). O botão abre o site do jogo na seção do iPhone (`#ios`), com o botão "Baixar na App Store" e o TestFlight como linha secundária (beta testers). Anote para onde levou | |
+| UPD-IOS-13 | Popup aberto | Leia a dica e toque o botão principal ("Atualizar na loja") | A dica diz **"Atualize pela App Store."** (sem ".ipa", TestFlight nem site). No iPhone real o botão abre a página do jogo na App Store; no simulador (sem loja) abre `https://apps.apple.com/app/id6827258132` no Safari. Anote para onde levou | |
 
 ---
 

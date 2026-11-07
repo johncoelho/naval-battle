@@ -4,13 +4,15 @@
 --
 -- android_live: liga no push da versão — o app ainda confere com a Play (In-App
 -- Update API) se a atualização já chegou para aquele aparelho antes de avisar, então
--- a janela não aparece enquanto o Google revisa. ios_live: liga só depois do
--- ios-release.yml verde com envio ao TestFlight daquela versão (sem envio fica false) — o botão leva ao site, que explica o TestFlight.
+-- a janela não aparece enquanto o Google revisa. ios_live: liga só quando a App Store
+-- já oferece aquela versão (ou uma mais nova), conferido pela leitura pública
+--   curl -s "https://itunes.apple.com/lookup?id=6827258132&country=br" | grep -o '"version":"[^"]*"'
+-- Upload ao TestFlight não conta (fica false); o botão do app leva à página do jogo na App Store.
 --
 -- A cada release (ver .claude/skills/play-store-release/SKILL.md):
 --   insert into public.app_releases (version_name, version_code, notes_pt, notes_en, notes_es, android_live)
 --   values ('0.18.0', 47, '...', '...', '...', true);
---   update public.app_releases set ios_live = true where version_name = '0.18.0';  -- após o envio ao TestFlight
+--   update public.app_releases set ios_live = true where version_code <= 47 and ios_live = false;  -- só com o lookup mostrando a versão
 
 create table if not exists public.app_releases (
   version_name text primary key,

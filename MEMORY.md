@@ -59,6 +59,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 ## 3. Assuntos em andamento
 
 - **Lote 0.43.2 (#67), só código, publicado na 0.43.2; QA pendente ON-20 a ON-22 e refazer ON-06/ON-08:** partida online que travava com os dois em AGUARDE. `Match.act(coord, by)`/`canAct` validam quem joga, `fireShared` só envia jogada válida, e `replayNetworkMatch` (`game/NetworkReplay.kt`) reconstrói a partida pelo log da sala (ordem de `id`), chamado ao receber `ACT`/`ABIL` fora da vez e pelo vigia de 30 s (`shouldResync`); `PollCursor` consulta com piso e ids vistos. **Limitação aceita:** com app antigo do outro lado (0.42.2 em produção, 0.43.0/0.43.1) o novo se ressincroniza mas não corrige o antigo; a saída segue sendo "Encerrar". QA: ON-20 a ON-22 e refazer ON-06/ON-08.
+- **Lote 0.43.6 (#80 fontes, #81 aviso pela App Store), só cliente, no worktree `nb-wt/lote-0.43.6` (sem push até o Tech Lead aprovar):** ver CHANGELOG. O Release só marca `ios_live` da 0.43.6 quando o `lookup` mostrar 0.43.6; o QA compara o Android antes (0.43.5) e depois (0.43.6) e confere o iPhone pela 0.43.6.
 - **Lote 0.43.5 (#72, #73; #74 e #76 manutenção), só código no cliente:** carteira com `Mutex` + retry do presente de boas-vindas (3 s/10 s/30 s) e "Sair da conta" que só avisa por prêmio sem resposta ou `no_result` recente (10 min), com texto por causa (`SIGN_OUT_UNSAVED_SERVER`) e linha `NB-SIGNOUT` no logcat. QA: refazer WEL-05 (Google, e-mail), SGN-02 e **reproduzir o "Sem conexão" com rede ok colando a linha `NB-SIGNOUT` na #73** (causa de fundo não confirmada).
 - **Correção 0.43.3 (#43), só código:** "%s" literal nos popups de boas-vindas (WEL-01/03/04 da 0.43.2); textos com dois valores usam `%1`/`%2`, `PlaceholderTest` varre todas as chaves. QA: refazer WEL-01, WEL-04 e WEL-05 vendo os números.
 
@@ -215,6 +216,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - 08/10 · iPhone: Google login mantido (Apple depois), loja simulada mantida.
 - 04/11 · iPhone só por TestFlight; `.ipa` sem assinatura removido do pipeline e do site.
 - 07/11 · iPhone público na App Store (0.42.2); TestFlight só para beta testers; site aponta para a loja (#81).
+- 07/11 · Fontes Roboto/Roboto Mono embarcadas nas duas plataformas, um caminho só no `commonMain`, por manutenção (#80). `ios_live` = versão já na App Store (`lookup` do iTunes), não TestFlight (#81).
 
 ## 5. Pendências com o John
 

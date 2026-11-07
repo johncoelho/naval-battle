@@ -11,7 +11,7 @@ comando naval noturno. Todo o jogo é desenhado em Canvas: não há uma única i
 | **Idiomas** | Português (BR), inglês, espanhol |
 | **Pacote** | `br.com.navalbattle` |
 | **Site** | [johncoelho.github.io/naval-battle](https://johncoelho.github.io/naval-battle/) |
-| **Instalar** | Android só pela Play Store (teste fechado, [página de beta tester](https://johncoelho.github.io/naval-battle/beta.html)) · iPhone só pelo TestFlight, pelo [link público](https://testflight.apple.com/join/PvGjjszH) (sem cadastro) |
+| **Instalar** | Android só pela Play Store (teste fechado, [página de beta tester](https://johncoelho.github.io/naval-battle/beta.html)) · iPhone pela [App Store](https://apps.apple.com/br/app/naval-battle-classic/id6827258132) (TestFlight só para beta testers, [link público](https://testflight.apple.com/join/PvGjjszH)) |
 
 Documentação complementar: [especificação técnica](#especificação-técnica) · [processo de build](docs/BUILD.md) ·
 [design system](docs/DESIGN_SYSTEM.md) · [roteiro de testes](docs/QA_TEST_PLAN.md) · [histórico e decisões](HISTORY.md) ·
@@ -219,7 +219,8 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   mostra "Versão X disponível" com as novidades de cada versão publicada depois dela.
   Android: só avisa quando a Play confirma a atualização para o aparelho (In-App Update
   API) e o botão abre a Play Store; iPhone: o botão abre a parte do iPhone na página do
-  jogo (`#ios`), que explica a atualização pelo TestFlight. A faixa do menu reabre a janela.
+  jogo na App Store (`StoreLinks.kt`: `itms-apps://`, com o endereço web de reserva), e a dica diz
+  "Atualize pela App Store.". A faixa do menu reabre a janela.
 - **Diário de bordo** (com conta) — balão que abre sozinho a cada entrada no app com
   prêmio esperando, e pelo chip do menu. **Check-in diário** +25 dobrões numa trilha de
   7 dias seguidos (pulou um dia, volta ao 1; o 7º dia paga +300 de bônus da semana) e
@@ -517,11 +518,14 @@ composeApp/src/
   commonMain/kotlin/br/com/navalbattle/
     App.kt          AppState: estado global, roteador de telas, conta, online, presença, push
     game/           motor: Board, Match, AI, Profile/carreira, habilidades, modos; NameFilter e PlayerSafety (#58)
-    design/         Theme.kt (tokens Naval/NavalType), Paint, FleetLine, *Art.kt (arte vetorial)
+    design/         Theme.kt (tokens Naval/NavalType), Fonts.kt (Roboto e Roboto Mono embarcadas), Paint, FleetLine, *Art.kt (arte vetorial)
     i18n/           Strings.kt: cada chave com pt-BR, en e es na mesma linha
     ui/             telas (*Screen.kt), popups e Components.kt (componentes compartilhados)
     data/           Cloud.kt (contrato), OnlineLink, LanLink, Prefs, push, lembrete, versões
-    composeResources/files/   áudio lido pelos dois lados via Res.readBytes
+    composeResources/files/   áudio lido pelos dois lados via Res.readBytes; files/licenses/ = licenças das fontes
+    composeResources/font/    Roboto 400/700/800/900 e Roboto Mono 400/500/700 (TTF estáticos, `Res.font.*`, lidas em
+                              design/Fonts.kt, mesmas nas duas plataformas). Fonte nova: só OFL ou Apache, TTF estático,
+                              e conta no teto de 1 MB somando todas (hoje ~0,38 MB: só Latin, sem emoji nem CJK)
   androidMain/      MainActivity, manifesto, res/raw, e os actual Android
   iosMain/          os actual iOS
 iosApp/             projeto Xcode (Info.plist com a versão)
@@ -697,7 +701,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   `CFBundleShortVersionString` do iOS, e atualiza as notas da Play
   (`composeApp/src/main/play/release-notes/pt-BR/default.txt`, ≤ 500 caracteres, sem acento).
 - Cada versão ganha uma linha em `app_releases` (notas em pt/en/es) para a janela "Versão nova";
-  `ios_live` só depois do build do iOS passar.
+  `ios_live` só quando a App Store já oferece a versão (conferido pelo `lookup` do iTunes), não pelo TestFlight.
 - **Produção:** o CI não promove. Depois do QA, o Release dispara o workflow manual `promote-production.yml`
   (`tools/play-rollout.sh`: openssl, curl e jq sobre a Play Developer API v3) com o versionCode explícito:
   20% → 50% → 100%, `halt`/`resume`, `vitals` (só leitura: falha e ANR percebidos por versionCode na Reporting API, veredito `ALARME`/`OK`/`POUCOS_USUARIOS`/`SEM_DADOS`; só `ALARME` pausa), travas e gatilhos em `docs/ESTEIRA.md`. Variável de repositório

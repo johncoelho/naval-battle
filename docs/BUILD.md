@@ -418,7 +418,7 @@ framework Kotlin antes de compilar o Swift).
 `.github/workflows/ios.yml` roda os testes de unidade no simulador e compila com
 `xcodebuild -sdk iphoneos ... CODE_SIGNING_ALLOWED=NO`. Ele **não gera nem publica nenhum
 arquivo**: só prova que o app iOS compila e passa nos testes (o verde dele **não** libera
-`ios_live` em `app_releases`: isso só depois do `ios-release.yml` verde com envio ao TestFlight daquela versão). O iPhone é instalado **só pelo TestFlight**
+`ios_live` em `app_releases`: isso só quando a App Store já oferece aquela versão, conferido pelo `lookup` do iTunes). O iPhone se baixa e se atualiza **pela App Store**; o TestFlight é só para beta testers
 (decisão de 04/11/2026; o `.ipa` sem assinatura saiu do pipeline). O envio
 à App Store Connect é o workflow à parte `ios-release.yml` (seção "iPhone na App Store",
 logo abaixo).

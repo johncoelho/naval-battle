@@ -1,1 +1,1 @@
-Correcao: quem entra na conta pela primeira vez agora recebe o presente de boas-vindas na hora, sem precisar reabrir o app. Ao sair da conta, o aviso de progresso nao sincronizado so aparece quando algo realmente nao foi salvo e diz a causa certa (sem conexao ou servidor). Pequenos ajustes internos.
+Melhoria: o texto do jogo passa a usar as fontes Roboto e Roboto Mono embarcadas, iguais no Android e no iPhone, para os paineis terem as mesmas proporcoes nas duas plataformas. No iPhone, o aviso de atualizacao agora leva a App Store. Pequenos ajustes internos.

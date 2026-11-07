@@ -144,7 +144,7 @@ Notas com acento nas três línguas. `notify = true` só quando o John quiser pu
   `curl -s https://api.github.com/repos/johncoelho/naval-battle/actions/runs?per_page=6`
   (laço em segundo plano até os runs do commit terminarem).
 - Falhou: ler o log, corrigir, nova versão. Nunca dizer "no ar" sem o CI verde.
-- `ios_live` só depois do `ios-release.yml` verde **com envio ao TestFlight** daquela versão (build visível no TestFlight); o `ios.yml` verde só prova testes e compilação. Sem envio, `ios_live` fica `false`.
+- `ios_live = true` só quando a **App Store já oferece** aquela versão (confirmado pelo `lookup` do iTunes: `https://itunes.apple.com/lookup?id=6827258132&country=br`); upload ao TestFlight e `ios.yml` verde não contam. Enquanto a loja não tem, `ios_live` fica `false`. Quem marca é o Release.
 - Site: se mudou, abrir a página publicada e conferir.
 
 ## 9. Depois da revisão da Play
@@ -155,7 +155,7 @@ Notas com acento nas três línguas. `notify = true` só quando o John quiser pu
 
 ## 10. Checklist de fechamento (toda entrega)
 
-- [ ] CI verde (Android e iOS) e, se a versão foi ao TestFlight, `ios_live` marcado.
+- [ ] CI verde (Android e iOS) e `ios_live` só marcado quando a App Store já oferece a versão (Release).
 - [ ] `HISTORY.md` tem as decisões tomadas nesta entrega, com o porquê.
 - [ ] `MEMORY.md` reflete os assuntos em andamento, decisões recentes e pendências (e não tem nada
       que deixou de valer).

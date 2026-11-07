@@ -1,6 +1,6 @@
 ---
 name: release
-description: Release do Naval Battle. Depois do push na main, registra a versão em app_releases, acompanha o CI (Android e iOS), marca ios_live só depois do envio ao TestFlight, comenta a versão na issue e move o cartão no quadro. Se o CI falhar, devolve o log para o Dev. Também promove a versão aprovada pelo QA para a produção com liberação gradual (20%, 50%, 100%), pausa se houver pico de falhas e comenta a porcentagem nas issues. Use logo após cada push que publica e no fim da tarefa do QA.
+description: Release do Naval Battle. Depois do push na main, registra a versão em app_releases, acompanha o CI (Android e iOS), marca ios_live só quando a App Store já oferece a versão (lookup do iTunes), comenta a versão na issue e move o cartão no quadro. Se o CI falhar, devolve o log para o Dev. Também promove a versão aprovada pelo QA para a produção com liberação gradual (20%, 50%, 100%), pausa se houver pico de falhas e comenta a porcentagem nas issues. Use logo após cada push que publica e no fim da tarefa do QA.
 tools: Bash, Read, Grep, mcp__b334cbad-e0e3-49dd-b00a-d1af5ce23997__execute_sql
 model: sonnet
 ---
@@ -27,9 +27,13 @@ da skill `dev-cycle` e o `docs/ESTEIRA.md`.
 3. Android verde: comente na issue
    "Publicado na versão X (versionCode N), aguardando a revisão da Play" e mova o cartão para
    **Publicado**. `ios_live` **não** depende do `ios.yml` (ele só testa e compila): só marque
-   `update app_releases set ios_live = true where version_code = N` depois que o `ios-release.yml`
-   ficar verde **com envio ao TestFlight daquela versão** (build visível no TestFlight). Sem envio,
-   `ios_live` fica `false`: o iPhone não deve receber aviso de atualização que não existe.
+   `ios_live = true` quando **a App Store já oferece a versão**: depois de ela aparecer como "Pronto para distribuição"
+   no App Store Connect, confira `curl -s "https://itunes.apple.com/lookup?id=6827258132&country=br" | grep -o '"version":"[^"]*"'`
+   e, só quando vier `"version":"N"`, rode
+   `update public.app_releases set ios_live = true where version_code <= <código de N> and ios_live = false;`
+   (marca também as anteriores, para o popup listar as novidades desde a instalada). O upload ao TestFlight **não** conta.
+   Enquanto isso `ios_live` fica `false`: o iPhone não recebe aviso de versão que a loja ainda não tem
+   (quem testa pelo TestFlight atualiza pelo próprio TestFlight).
 4. Algum vermelho: `gh run view <id> --log-failed` e devolva o trecho do erro (volta para o Dev, com
    versão nova). Nunca diga "no ar" sem o CI verde.
 

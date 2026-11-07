@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.43.6] — 2026-11-07 · Fontes embarcadas e aviso de atualização pela App Store
+
+App 0.43.6 (versionCode 119). Só cliente: sem mudança de banco (só o comentário de `supabase/releases.sql`), de protocolo nem de stack (nenhuma biblioteca nova).
+
+### Alterado
+- **Fontes embarcadas (#80):** Roboto (400, 700, 800, 900) e Roboto Mono (400, 500, 700), TTF estáticos com subset Latin (~0,38 MB), em `composeResources/font`, lidas por `design/Fonts.kt` (`LocalNavalFonts`, fornecido pelo `NavalTheme`). `NavalType` deixa de usar `FontFamily.SansSerif`/`Monospace` e lê as famílias do tema; o `Text` sem estilo (`bodyLarge`) também. Antes o iPhone resolvia as famílias do sistema para outras métricas e o HUD ficava achatado. No Android a sans quase não muda (já era Roboto); o mono passa do mono do sistema para o Roboto Mono. Licenças (OFL 1.1) em `composeResources/files/licenses/`.
+- **Atualização no iPhone pela App Store (#81):** `data/StoreLinks.kt` (`itms-apps://apps.apple.com/app/id6827258132`, reserva `https://apps.apple.com/app/id6827258132` quando não há App Store, como no simulador). O botão do popup passa a ser "Atualizar na loja" nas duas plataformas, a dica do iPhone diz "Atualize pela App Store." (pt/en/es) e `UPDATE_POPUP_SITE` saiu. `ios_live` passa a valer "essa versão já está na App Store" (conferido pelo `lookup` do iTunes), não "foi ao TestFlight".
+- Documentação alinhada: DESIGN_SYSTEM (tipografia), README (recursos e `ios_live`), BUILD, QA_IPHONE (grupo H), QA_TEST_PLAN, ESTEIRA, skills `dev-cycle` e `play-store-release`, agente `release`, comentário de `supabase/releases.sql`.
+
+### Testes
+- `StoreLinksTest` e `UpdateTextTest` (`commonTest`).
+
 ## [Site] — 2026-11-07 · Site do iPhone aponta para a App Store (#81)
 
 Só site: sem mudança de app, de banco nem de stack (commit `[skip ci]` + `pages.yml`).
