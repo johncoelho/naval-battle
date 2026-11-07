@@ -540,6 +540,27 @@ publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
 | LAUNCH-07 | P1 | iPhone: conferido **só no servidor**, com o interruptor ligado dentro de um bloco que desfaz (ligar de verdade avisaria todo o Android) | `launch_notice_status` para ios devolve `enabled = false`; nenhum aviso no iPhone |
 | LAUNCH-08 | P2 | Aviso e popup de nova temporada juntos | Aviso por cima; ao tocar "Entendi" o convite da temporada aparece embaixo, sem piscar |
 
+## 13b. Smoke de regressão antes de promover (regra do John, 07/11)
+
+"Antes de liberar pra Android, testa os fluxos básicos do app no emulador, para evitar quebrar a experiência." Vale para toda versão que mexe em **tema, fonte ou fluxo comum** (e foi exigido, de forma bloqueante, para a 0.43.6: #80 e #81). O QA roda no **Android, QA01/QA02, na versão da Alpha**, e só com o smoke atestado o Release pode promover (e ainda com o OK do John).
+
+| # | Fluxo | Casos do plano | Esperado |
+|---|---|---|---|
+| 1 | Abrir e entrar | INST-03, AUTH-01, AUTH-03 | Abre, entra e continua logado |
+| 2 | Menu | NAV-01, NAV-02 | Tudo visível e navegável |
+| 3 | Vs IA completa: posicionar, atirar, terminar, resultado | IA-01 a IA-04 | Partida fecha e o relatório aparece |
+| 4 | Dois jogadores no mesmo aparelho | LOC-01, LOC-02 | Tela de passagem e batalha funcionam |
+| 5 | Partida online QA01 × QA02 por sala de amigo | ROOM-01, ROOM-02 e a partida até o fim | Pareia, joga e termina |
+| 6 | Loja e aba Dobrões | LOJA-01, LOJA-04 ou LOJA-06 | Abas abrem; Dobrões não fica em branco nem carregando |
+| 7 | Check-in diário | RET-02 | Prêmio do dia é creditado |
+| 8 | Ajustes | SET-01, SET-02 | Toggles e idioma funcionam; versão visível |
+| 9 | Amigos | FR-01 | Busca e lista funcionam |
+| 10 | Placar | RANK-01 | Abas e posição própria aparecem |
+| 11 | Aviso de atualização, sem regressão | UPD-10 a UPD-12 | Mesmo comportamento de antes |
+| 12 | **Comparação visual antes/depois** (menu, batalha, loja, ajustes) | NAV-01, IA-03, LOJA-01, SET-01 | Por causa da troca de fontes: **sem texto cortado nem sobreposto**; prints lado a lado como evidência |
+
+Evidência por fluxo (print), como nas demais aprovações. Falhou algum: nada é promovido; abre bug na Fila. Atestado: comentário `Smoke de regressão aprovado (versionCode N)` em cada issue da versão.
+
 ## 14. Limpeza (sempre ao fim)
 
 | ID | Passos | Esperado |

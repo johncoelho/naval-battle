@@ -64,6 +64,7 @@ Desde a #76 o Tech Lead tem `sonnet` como padrão e o `opus` entra por delegaç�
 - **iPhone não bloqueia** (decisão do John, 19/10): o iOS só é compilado para adiantar; o teste no
   iPhone fica para depois. Item que passou no QA do **Android** sai da fila (Concluído), mesmo sem
   teste em iPhone (vai para **Em produção**).
+- Versão que mexe em **tema, fonte ou fluxo comum** exige o **smoke de regressão do QA atestado** (`docs/QA_TEST_PLAN.md` → Smoke de regressão antes de promover) antes do `promote`.
 - **Só se promove para a produção com todos os cartões da versão aprovados no QA, cada história atestada pelo PO e o OK explícito do John** (#39). O Release usa o
   versionCode que o QA testou no aparelho, nunca "a última da Alpha".
 - Item em **Em andamento** há mais de 3 horas sem commit: a rodada seguinte retoma ou devolve à Fila.

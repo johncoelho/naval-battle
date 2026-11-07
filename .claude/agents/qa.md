@@ -41,6 +41,7 @@ Por issue, antes de mover o cartão:
   `bash tools/qa-evidencia.sh <issue> <arquivo.png> <versão>-<aparelho>-<caso>.png`, que guarda no
   branch `qa-evidencias` e devolve o Markdown da imagem, e ponha a imagem no comentário de
   fechamento junto com o que foi verificado e o versionCode. Só deixe sem print se o teste não tiver tela (diga por quê).
+- **Smoke de regressão (07/11):** Versão que mexe em **tema, fonte ou fluxo comum** exige o **smoke de regressão do QA atestado** (`docs/QA_TEST_PLAN.md` → Smoke de regressão antes de promover) antes do `promote`. Você roda o smoke no Android (QA01/QA02, versão da Alpha), com print por fluxo, e atesta no relatório; sem isso o Release não promove.
 - **iPhone não bloqueia:** passou no Android, siga para Em produção. Caso só de iPhone fica anotado como "não testado (sem iPhone)", sem segurar o cartão.
 - Quando **todos** os cartões da versão estiverem aprovados, diga isso no relatório: é o gatilho do `promote` pelo Release (vai para a produção a versão que você testou).
 - Caso de teste novo descoberto vai no relatório final para o orquestrador registrar no plano.

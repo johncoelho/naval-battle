@@ -43,7 +43,7 @@ e acompanhe com `gh run list -w promote-production.yml` / `gh run watch <id> --e
 1. `action=status` primeiro (só leitura): mostra Alpha e produção. Você **não tem o Chrome**: o status e a data
    do *Published* do envio de produção no Submission activity vêm da tarefa do QA, que os passa no prompt. Sem
    essa informação, não avance nem promova. Envio de produção em *In review* bloqueia o promote.
-2. **promote** (20%): só com **todos** os cartões da versão aprovados pelo QA (em **Em produção**), **cada história atestada pelo PO** e o **OK explícito do John no briefing** (sem ele, comente e aguarde). As travas do
+2. **promote** (20%): Versão que mexe em **tema, fonte ou fluxo comum** exige o **smoke de regressão do QA atestado** (`docs/QA_TEST_PLAN.md` → Smoke de regressão antes de promover) antes do `promote`. Sem o atestado, não promova. Além disso: só com **todos** os cartões da versão aprovados pelo QA (em **Em produção**), **cada história atestada pelo PO** e o **OK explícito do John no briefing** (sem ele, comente e aguarde). As travas do
    script barram (`PLAY_PRODUCTION_LIVE`, versionCode fora da Alpha ou não maior que o da produção). Já há release
    em 50% ou mais: conclua-o antes (`advance` `fraction=1`). Comente em cada issue da versão
    `Produção: 20% (versionCode N)`.
