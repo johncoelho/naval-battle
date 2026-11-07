@@ -586,9 +586,9 @@ apagada: ganha uma linha nova dizendo o que mudou e por quê.
 - **04/11 · "Sair da conta": prêmio `no_result` antigo não bloqueia, e o aviso diz a causa** (#73, 0.43.5) — porquê: `award_online_match` só paga a ranqueada quando o cliente reenvia depois de o vencedor ser registrado, então `no_result` não pode ser descartado na hora; vale a regra de 10 min (idade em campo opcional da fila; fila antiga sem idade não bloqueia). `CloudResult.Fail.network` separa rede de recusa do servidor, com texto próprio. A causa de fundo ainda depende do log `NB-SIGNOUT` do QA.
 - **04/11 · Modelo e esforço escolhidos por demanda; Tech Lead com `sonnet` de padrão** (#76, 0.43.5) — porquê: economizar tokens sem perder qualidade; o `model` do cabeçalho é só o padrão e o PM sobe para `opus` (desenho, segurança) ou desce para `haiku` (conferência objetiva) em cada delegação. A #74 é só manutenção de plano de testes e ensaios SQL.
 
-- **07/11 · Site do iPhone aponta para a App Store** (#81) — porquê: a 0.42.2 foi liberada na loja e o site (desde a 0.43.4) mandava o jogador comum ao TestFlight; o app antigo abre `site/#ios` ao ver atualização. O TestFlight ficou só como linha discreta para beta testers.
-
 - **04/11 · `app_config.ads_test_emails` esvaziada a pedido do John** (#40) — porquê: validar o anúncio real no aparelho dele (agora com `ads_enabled = 'true'` e gate `0.43.1`, ele passa a ver anúncio real); contas QA continuam de teste por `is_test = true`. Risco avisado: clicar no próprio anúncio é clique inválido e pode gerar penalidade no AdMob.
+
+- **07/11 · Site do iPhone aponta para a App Store** (#81) — porquê: a 0.42.2 foi liberada na loja e o site (desde a 0.43.4) mandava o jogador comum ao TestFlight; o app antigo abre `site/#ios` ao ver atualização. O TestFlight ficou só como linha discreta para beta testers.
 
 ## Artefatos de referência (SPECs e designs aprovados)
 

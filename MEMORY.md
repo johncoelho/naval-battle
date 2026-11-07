@@ -214,6 +214,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   adversário; revanche online em sala nova.
 - 08/10 · iPhone: Google login mantido (Apple depois), loja simulada mantida.
 - 04/11 · iPhone só por TestFlight; `.ipa` sem assinatura removido do pipeline e do site.
+- 07/11 · iPhone público na App Store (0.42.2); TestFlight só para beta testers; site aponta para a loja (#81).
 
 ## 5. Pendências com o John
 

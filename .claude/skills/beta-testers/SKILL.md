@@ -106,7 +106,7 @@ Quem entrou desde a última vez, quem está pendente, o total inscrito e o que f
 
 O iPhone entra pelo **link público** do grupo externo "iPhone" do TestFlight (App Store Connect > Naval Battle Classic >
 TestFlight): https://testflight.apple.com/join/PvGjjszH. Sem limite de testadores; a pessoa instala o app TestFlight, abre o link e toca em Instalar,
-sozinha, sem convite por e-mail e sem cadastro. O link está em `site/index.html` (botão "Abrir no TestFlight") e em
+sozinha, sem convite por e-mail e sem cadastro. O público vai pela App Store; o link do TestFlight fica numa linha para beta testers na seção `#ios` de `site/index.html` e no FAQ de
 `site/beta.html`. **Cadastro de iPhone não entra como `play`** (a lista "Testadores fechados" da Play é só Android): quem
 pedir ajuda no iPhone recebe o link. O e-mail nunca vai para o repositório. Só existe build no TestFlight se o John
 enviou uma (conferir a versão da build no App Store Connect antes de prometer a versão atual).

@@ -262,7 +262,7 @@ instale a 0.43.4; o grupo H fica para a **próxima** versão.
 | UPD-10 | 0.43.4 ou maior instalada. O Release publica a versão seguinte e marca `ios_live` | 1. Deixe o jogo aberto no menu e vá à tela inicial do iPhone. 2. Espere o aviso do QA de que a nova versão saiu. 3. Volte ao jogo. | O popup de atualização aparece **sem reabrir o app** (consulta no máximo a cada 5 min; espere se não aparecer) | |
 | UPD-11 | Depois do UPD-10 | 1. Toque **Depois**. 2. Vá à tela inicial e volte. | Não reaparece para a mesma versão; só com outra versão maior | |
 | UPD-12 | Versão nova disponível | 1. Comece uma partida contra a IA. 2. Vá à tela inicial e volte. | O aviso **não** abre durante a partida; só ao voltar ao menu | |
-| UPD-IOS-13 | Popup aberto | Leia a dica e toque o botão principal ("Como atualizar") | A dica diz **"Atualize pelo app TestFlight."** (sem ".ipa"). O botão abre o site do jogo na seção do iPhone, que tem o link do TestFlight. Anote para onde levou | |
+| UPD-IOS-13 | Popup aberto | Leia a dica e toque o botão principal ("Como atualizar") | A dica diz **"Atualize pelo app TestFlight."** (sem ".ipa"). O botão abre o site do jogo na seção do iPhone (`#ios`), com o botão "Baixar na App Store" e o TestFlight como linha secundária (beta testers). Anote para onde levou | |
 
 ---
 
