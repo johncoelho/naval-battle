@@ -347,7 +347,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * Junta a tabela de novidades do servidor com a loja. Android: avisa quando a Play
      * confirma a atualização para este aparelho (a janela não aparece enquanto o
      * Google revisa) — ou, instalado fora da Play, quando a tabela tem versão nova.
-     * iPhone: a tabela decide (a versão só é marcada lá depois do envio ao TestFlight).
+     * iPhone: a tabela decide (ios_live só é marcado quando a App Store já oferece a versão,
+     * conferido pelo lookup do iTunes: itunes.apple.com/lookup?id=6827258132&country=br).
      */
     suspend fun checkForUpdate() {
         // no retorno ao app vale no máximo uma consulta a cada 5 min (UpdatePrompt)

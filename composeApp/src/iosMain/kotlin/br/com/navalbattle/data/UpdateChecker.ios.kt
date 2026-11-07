@@ -4,15 +4,24 @@ import platform.Foundation.NSURL
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 
-// O iPhone é atualizado pelo TestFlight: não há loja para perguntar, então a novidade
-// vem só da tabela app_releases e o botão leva à página do jogo (seção do iPhone).
-private const val IOS_DOWNLOAD_URL = "https://johncoelho.github.io/naval-battle/#ios"
+// A novidade do iPhone vem só da tabela app_releases (ios_live = a versão já está na App Store);
+// consultar a Apple de dentro do app seria um serviço novo. O botão abre a página do jogo na loja.
 
 actual suspend fun checkUpdateAvailable(): Boolean? = null
 
 actual fun openStoreListing() {
-    val url = NSURL.URLWithString(IOS_DOWNLOAD_URL) ?: return
-    UIApplication.sharedApplication.openURL(url, options = emptyMap<Any?, Any>(), completionHandler = null)
+    val (app, web) = appStoreUrls()
+    val appUrl = NSURL.URLWithString(app)
+    val webUrl = NSURL.URLWithString(web)
+    val ui = UIApplication.sharedApplication
+    if (appUrl == null) {
+        webUrl?.let { ui.openURL(it, options = emptyMap<Any?, Any>(), completionHandler = null) }
+        return
+    }
+    // sem App Store (simulador), cai no endereço web, que abre no Safari
+    ui.openURL(appUrl, options = emptyMap<Any?, Any>()) { ok ->
+        if (!ok && webUrl != null) ui.openURL(webUrl, options = emptyMap<Any?, Any>(), completionHandler = null)
+    }
 }
 
 actual fun shareStoreListing() {}

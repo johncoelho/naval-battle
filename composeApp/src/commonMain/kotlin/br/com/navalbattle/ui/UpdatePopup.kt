@@ -43,7 +43,7 @@ private fun AppRelease.localizedNotes(): String = when (I18n.lang) {
  * responder. "Depois" só adia pra esta sessão — reaparece na próxima abertura
  * enquanto a versão instalada continuar desatualizada. Lista as novidades de cada
  * versão publicada depois da instalada (tabela `app_releases`); o botão leva à Play
- * Store no Android e à parte do iPhone na página do jogo no iOS.
+ * Store no Android e à App Store no iOS (a dica do iOS reforça).
  */
 @Composable
 fun UpdatePopup(state: AppState) {
@@ -112,7 +112,7 @@ fun UpdatePopup(state: AppState) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SecondaryButton(t(K.UPDATE_POPUP_LATER), modifier = Modifier.weight(1f)) { state.dismissUpdatePopup() }
                 PrimaryButton(
-                    if (ios) t(K.UPDATE_POPUP_SITE) else t(K.UPDATE_POPUP_STORE),
+                    t(K.UPDATE_POPUP_STORE),
                     modifier = Modifier.weight(1f)
                 ) {
                     openStoreListing()
