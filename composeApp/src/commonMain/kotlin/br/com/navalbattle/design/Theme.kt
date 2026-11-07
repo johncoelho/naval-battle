@@ -4,9 +4,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,71 +48,49 @@ object Naval {
 }
 
 /**
- * Caixa alta com espaçamento largo imita o painel condensado do design system
- * sem depender de fonte externa — o APK fica leve e não precisa de rede.
+ * Caixa alta com espaçamento largo imita o painel condensado do design system. As famílias vêm
+ * de [LocalNavalFonts]: Roboto e Roboto Mono embarcadas, iguais no Android e no iPhone (#80).
  */
 object NavalType {
-    val display = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Black,
-        fontSize = 30.sp,
-        letterSpacing = 0.5.sp
-    )
-    val title = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.ExtraBold,
-        fontSize = 20.sp,
-        letterSpacing = 1.sp
-    )
-    val button = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 15.sp,
-        letterSpacing = 1.2.sp
-    )
-    val body = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp
-    )
-    val mono = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        letterSpacing = 0.8.sp
-    )
-    val monoSmall = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Normal,
-        fontSize = 10.sp,
-        letterSpacing = 1.sp
-    )
-    val timer = TextStyle(
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Bold,
-        fontSize = 26.sp,
-        letterSpacing = 2.sp
-    )
+    private val displayBase = TextStyle(fontWeight = FontWeight.Black, fontSize = 30.sp, letterSpacing = 0.5.sp)
+    private val titleBase = TextStyle(fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, letterSpacing = 1.sp)
+    private val buttonBase = TextStyle(fontWeight = FontWeight.Bold, fontSize = 15.sp, letterSpacing = 1.2.sp)
+    private val bodyBase = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp)
+    private val monoBase = TextStyle(fontWeight = FontWeight.Medium, fontSize = 12.sp, letterSpacing = 0.8.sp)
+    private val monoSmallBase = TextStyle(fontWeight = FontWeight.Normal, fontSize = 10.sp, letterSpacing = 1.sp)
+    private val timerBase = TextStyle(fontWeight = FontWeight.Bold, fontSize = 26.sp, letterSpacing = 2.sp)
+
+    val display: TextStyle @Composable @ReadOnlyComposable get() = displayBase.copy(fontFamily = LocalNavalFonts.current.sans)
+    val title: TextStyle @Composable @ReadOnlyComposable get() = titleBase.copy(fontFamily = LocalNavalFonts.current.sans)
+    val button: TextStyle @Composable @ReadOnlyComposable get() = buttonBase.copy(fontFamily = LocalNavalFonts.current.sans)
+    val body: TextStyle @Composable @ReadOnlyComposable get() = bodyBase.copy(fontFamily = LocalNavalFonts.current.sans)
+    val mono: TextStyle @Composable @ReadOnlyComposable get() = monoBase.copy(fontFamily = LocalNavalFonts.current.mono)
+    val monoSmall: TextStyle @Composable @ReadOnlyComposable get() = monoSmallBase.copy(fontFamily = LocalNavalFonts.current.mono)
+    val timer: TextStyle @Composable @ReadOnlyComposable get() = timerBase.copy(fontFamily = LocalNavalFonts.current.mono)
 }
 
 /** O jogo mantém um único mundo visual, noturno — não segue o tema do sistema. */
 @Composable
 fun NavalTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = darkColorScheme(
-            primary = Naval.amber,
-            onPrimary = Naval.amberInk,
-            secondary = Naval.greenBright,
-            background = Naval.bg,
-            onBackground = Naval.ink,
-            surface = Naval.surface,
-            onSurface = Naval.ink,
-            error = Naval.danger
-        ),
-        typography = Typography(
-            bodyMedium = NavalType.body,
-            labelLarge = NavalType.button
-        ),
-        content = content
-    )
+    val fonts = rememberNavalFonts()
+    CompositionLocalProvider(LocalNavalFonts provides fonts) {
+        MaterialTheme(
+            colorScheme = darkColorScheme(
+                primary = Naval.amber,
+                onPrimary = Naval.amberInk,
+                secondary = Naval.greenBright,
+                background = Naval.bg,
+                onBackground = Naval.ink,
+                surface = Naval.surface,
+                onSurface = Naval.ink,
+                error = Naval.danger
+            ),
+            typography = Typography(
+                bodyLarge = NavalType.body,
+                bodyMedium = NavalType.body,
+                labelLarge = NavalType.button
+            ),
+            content = content
+        )
+    }
 }
