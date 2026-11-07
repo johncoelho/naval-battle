@@ -79,7 +79,7 @@ Prioridade: **P0** bloqueia release · **P1** funcionalidade quebrada · **P2** 
 | INST-04 | P1 | Permissão de notificação | Pedida ao chegar no menu (Android 13+), uma vez só |
 | INST-05 | P1 | Janela de versão nova | Não aparece com a versão mais recente instalada |
 | INST-06 | P2 | Girar/voltar no meio da abertura | Nada quebra; voltar no menu fecha o app |
-| INST-07 | P1 | Site (`johncoelho.github.io/naval-battle`), seção Baixar e botão do topo | Nenhum link ou instrução de APK; todo caminho de Android leva à página de beta tester / Play Store; seção do iPhone tem o passo a passo do TestFlight e o botão "Abrir no TestFlight" (link público, sem cadastro), sem link de `.ipa` nem passo a passo de instalação manual |
+| INST-07 | P1 | Site (`johncoelho.github.io/naval-battle`), seção Baixar e botão do topo | Nenhum link ou instrução de APK; todo caminho de Android leva à página de beta tester / Play Store; seção do iPhone (`#ios`) tem o botão "Baixar na App Store" (https://apps.apple.com/br/app/naval-battle-classic/id6827258132) e botão "Baixar na App Store" no topo; o TestFlight aparece só numa linha discreta para beta testers; sem link de `.ipa`, Sideloadly nem passo a passo de TestFlight para o público |
 
 ## 4. Conta e login (A e B)
 

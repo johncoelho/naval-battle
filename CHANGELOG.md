@@ -9,6 +9,13 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Site] — 2026-11-07 · Site do iPhone aponta para a App Store (#81)
+
+Só site: sem mudança de app, de banco nem de stack (commit `[skip ci]` + `pages.yml`).
+
+### Alterado
+- **Site:** a seção do iPhone em `index.html` e o botão do topo ("Baixar na App Store") levam à [App Store](https://apps.apple.com/br/app/naval-battle-classic/id6827258132); o TestFlight ficou numa linha discreta só para quem quer testar versões antes. `beta.html` (FAQ "Tenho iPhone") idem. A âncora `#ios` (aberta pelo aviso de atualização do app antigo) e `#baixar` seguem funcionando.
+
 ## [0.43.5] — 2026-11-04 · Presente de boas-vindas no login e "Sair da conta" sem aviso falso
 
 App 0.43.5 (versionCode 118). Só cliente: sem mudança de banco, de protocolo nem de stack.
