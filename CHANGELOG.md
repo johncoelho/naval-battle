@@ -21,6 +21,13 @@ App 0.43.6 (versionCode 119). Só cliente: sem mudança de banco (só o comentá
 ### Testes
 - `StoreLinksTest` e `UpdateTextTest` (`commonTest`).
 
+## [Site] — 2026-11-07 · iPhone no site: App Store e TestFlight em botões (#82)
+
+Só site: sem mudança de app, de banco nem de stack (commit `[skip ci]` + `pages.yml`).
+
+### Alterado
+- **Site:** a seção do iPhone em `index.html` ganha dois botões visíveis: "Baixar na App Store" (principal, para o público geral) e "Sou testador: entrar no beta (TestFlight)" (secundário), cada um com uma frase de quem deve usar. O FAQ "Tenho iPhone" de `beta.html` ganha os mesmos botões. Âncoras `#ios` e `#baixar` preservadas. `studio/index.html` não tem seção de download (só texto), então ficou como está.
+
 ## [Site] — 2026-11-07 · Site do iPhone aponta para a App Store (#81)
 
 Só site: sem mudança de app, de banco nem de stack (commit `[skip ci]` + `pages.yml`).
