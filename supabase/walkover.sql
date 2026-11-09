@@ -335,7 +335,7 @@ begin
   return next;
 end $$;
 
-revoke all on function public.record_ranked_result(uuid, boolean, integer, integer) from public;
+revoke all on function public.record_ranked_result(uuid, boolean, integer, integer) from public, anon;
 grant execute on function public.record_ranked_result(uuid, boolean, integer, integer) to authenticated;
 
 -- ------------------------------------------------------------------ vitória por ausência
@@ -509,7 +509,7 @@ begin
   return next;
 end $$;
 
-revoke all on function public.online_heartbeat(uuid) from public;
+revoke all on function public.online_heartbeat(uuid) from public, anon;
 grant execute on function public.online_heartbeat(uuid) to authenticated;
 
 -- ------------------------------------------------------------------ entrada e partida rápida
