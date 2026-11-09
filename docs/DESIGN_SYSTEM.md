@@ -105,6 +105,14 @@ sombra: profundidade vem de superfície mais clara + borda.
 - Padrão novo, por isso entra aqui. O artefato do Claude Design ainda precisa receber este cartão
   (pendente, ver HISTORY 17/10).
 
+### Faixa do posicionamento online (#85)
+
+`ui/WalkoverBanner.kt`, mesmo padrão da faixa de conexão da batalha: `Row` com `Naval.surface2`, borda
+`Naval.amber` de 1 dp, título em `HudLabel` `amberStrong` e subtítulo `muted` empilhados à esquerda
+(título em cima, legenda embaixo) e a contagem em `NavalType.title` `amberStrong` à direita, com dois
+dígitos. Fica abaixo do `PracticeBanner`, só no posicionamento online e só a partir de 15 s sem sinal do
+adversário. Textos `K.WO_WAITING` / `K.WO_WAITING_SUB` (pt/en/es), sem "KO".
+
 ### Dica da partida guiada (#43)
 
 - `GuidedTip` (`ui/GuidedOverlay.kt`): painel `surface2` com borda `amber` de 1 dp, "Passo N de 4" em `HudLabel`, título

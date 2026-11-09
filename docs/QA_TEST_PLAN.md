@@ -252,7 +252,7 @@ Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem
 | ON-12 | P2 | Cabeçalho da batalha nos dois aparelhos | Cada um vê "VS. <nome do outro>" — inclusive quem entrou na sala |
 | ON-13 | P1 | Revanche online | Recomeça; milha e pontos (na ranqueada) contam de novo |
 | ON-14 | P1 | B encerra a partida ainda no posicionamento | A vai para o relatório ("O adversário desistiu"), não fica preso no posicionamento |
-| ON-15 | P1 | Casual e ranqueada: B sai no posicionamento (ou antes do primeiro tiro de A) | A vê "Vitória sem combate"; XP, dobrões e milhas de A não mudam; desafio do dia não avança; na ranqueada os pontos seguem a regra de abandono; nada muda para B (#6) |
+| ON-15 | P1 | Casual e ranqueada: B sai no posicionamento (ou antes do primeiro tiro de A) | A vê "Vitória sem combate"; XP, dobrões e milhas de A não mudam; desafio do dia não avança; na ranqueada os pontos seguem a regra de abandono; nada muda para B (#6). B sair é diferente de B nunca entrar: este segundo caso é a vitória por ausência (ON-23 a ON-29, #85) |
 | ON-16 | P1 | A dá pelo menos 1 tiro (ou usa 1 habilidade) e B desiste depois | XP, dobrões, milha e desafio do dia pagos como antes (#6) |
 | ON-17 | P1 | Depois de abrir o app logado na versão nova, conferir no banco `device_checks` de A e B (e `profiles.is_test`) | Uma linha por conta e versão; com `allowlist_enforced = 'true'`, QA01/QA02 têm `is_test = true` (conta de teste, `source = 'qa'`), ficam fora do Placar e continuam se encontrando na partida rápida (teste com teste) (#23) |
 | ON-18 | P2 | Depois da revisão do Google de cada versão, conferir (só leitura) as contas criadas na janela do upload | Robôs (e-mail `nome.00000@gmail.com` ou `firebase.test.lab`) com `is_test = true`, fora do Placar. Contas comuns, testadores da lista e contas de iPhone com `is_test = false` (0.34.5, #35: quem não é robô vale). Conta comum marcada como teste por engano: conferir o e-mail de login em `auth.users` e a regra `is_robot_account` (#35) |
@@ -260,6 +260,14 @@ Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem
 | ON-20 | P0 | QA01 × QA02, Clássico e Tático, script de toques **simultâneos** nos dois a cada ~0,6 s, 3 partidas até o fim (#67) | Nenhum travamento; se os dois ficarem em AGUARDE, destrava sozinho em até ~35 s; o relatório dos dois lados bate (tiros e acertos) |
 | ON-21 | P1 | Depois do ON-20, conferir na sala (só leitura, `online_messages` em ordem de `id`) | Nenhum `ACT` gravado fora da vez e nenhum tiro repetido em casa já atirada (#67) |
 | ON-22 | P1 | Versões misturadas (0.43.2 × 0.43.1/0.42.2), partida inteira com toques alternados | Joga normal, sem travar. Limitação conhecida: se só o app antigo dessincronizar, a saída é "Encerrar" (#67) |
+| ON-23 | P0 | Casual: A hospeda partida rápida, B aceita o balão e **fecha o app logo depois do aceite** (#85) | A vê a faixa "Adversário não entrou" a partir de ~15 s e vence por ausência em ~60 s ("Vitória por ausência"); a milha gasta volta; XP, dobrões e desafio do dia não mudam; no banco: sala `abandoned`, `walkover = true`, `winner_id` de A, linhas `QUIT\|WO` (sender B) e `DROP\|WO` (sender A) |
+| ON-24 | P0 | Igual ao ON-23, ranqueada (contas que pontuam: ensaio do banco ou contas fora de teste; com QA como conta de teste não há pontos, #23) | A ganha o Elo normal e B perde o mesmo valor (soma zero, pela força de antes); `host/guest_delta_s` e `winner_id` conferem no banco; sem XP, dobrões, milha de vitória nem desafio |
+| ON-25 | P1 | B abre o app e volta aos ~40 s (antes dos 60 s) | Sem WO: a contagem some assim que B aparece e a partida segue normal |
+| ON-26 | P1 | B volta depois do WO | B vê "Você não entrou a tempo" (derrota por ausência), sem XP; na ranqueada o relato dele devolve a perda já gravada (`accepted = false`, pontos do banco), sem perder duas vezes |
+| ON-27 | P1 | Segundo WO ranqueado do mesmo par no mesmo dia | Vitória sem pontos para os dois ("no máximo uma por dia contra o mesmo adversário"); `ranked_wo_daily_pair_limit = 1` |
+| ON-28 | P1 | A hospeda partida rápida e fecha o app; C procura partida em até 10 min | A sala fantasma some da oferta em ~20 s (`host_seen_at`); C não recebe o balão. Anfitrião de app antigo (sem presença em espera) segue visível pela regra de 10 minutos |
+| ON-29 | P1 | App antigo (0.43.x) como quem ficou, B (versão nova ou antiga) aceita e não entra | O servidor resolve o WO pelo heartbeat do app antigo (~60 s): ele recebe o `QUIT` e vai ao relatório sem atualizar; só a faixa e o texto "Vitória por ausência" exigem a versão nova. Servidor primeiro, depois o app |
+| ON-30 | P2 | Ensaio do banco: `supabase/tests/walkover_ensaio.sql` (e `ranked_elo_ensaio.sql` antes e depois, ON-11) | Resultado esperado descrito no cabeçalho de cada arquivo; tudo desfeito no fim |
 | ON-06/ON-08 | P1 | **Refazer na 0.43.2** (pausa e queda de rede no meio do turno) | O vigia não dispara durante pausa nem queda, e a partida retoma como antes (#67) |
 
 ### 8a. Treino contra a IA enquanto procura (#41)
@@ -447,7 +455,7 @@ inválido suspende a conta AdMob). Servidor: `supabase/tests/ads_ensaio.sql` (bl
 | ADS-02 | P0 | Ligado, **vitória online** (`online:<sala>`; contra a IA o servidor devolve `not_eligible`, a IA não paga) que rendeu 130: tocar "DOBRAR DOBRÕES" e assistir até o fim | +130 uma vez ("130 dobrões entraram no seu cofre"); o botão some daquela tela |
 | ADS-03 | P0 | Vitória online que rendeu 205: dobrar | +150 (`ads_win_double_cap`) |
 | ADS-04 | P0 | Duas vitórias online já dobradas hoje; vencer a terceira online | Sem botão de dobrar |
-| ADS-05 | P0 | Derrota, 2 jogadores, rede local, vitória sem combate, vitória por ausência do outro, online acima de 3 por adversário | Sem botão de anúncio |
+| ADS-05 | P0 | Derrota, 2 jogadores, rede local, vitória sem combate, vitória por ausência do outro (queda na batalha, saída no posicionamento e WO de quem não entrou, #85), online acima de 3 por adversário | Sem botão de anúncio |
 | ADS-06 | P0 | Check-in feito: "DOBRAR CHECK-IN" e assistir; repetir no 7º dia | +25; no 7º dia continua +25 (o bônus de 300 não dobra) |
 | ADS-07 | P0 | Desafio resgatado: dobrar | +50; o botão não volta no mesmo dia |
 | ADS-08 | P0 | Saldo de milhas 0: "GANHAR 1 MILHA" e assistir | Saldo 1 (do servidor); entra numa partida online |

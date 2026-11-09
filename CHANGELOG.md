@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.44.0] — 2026-11-09 · Vitória por ausência: o adversário aceita e não entra
+
+App 0.44.0 (versionCode 120). Banco: `supabase/walkover.sql` (aplicar **antes** do app, "servidor primeiro"; só colunas e RPCs novas mais substituições com a mesma assinatura, o app antigo continua funcionando). Nenhuma biblioteca nova.
+
+### Adicionado
+- **Vitória por ausência (#85):** a sala `active` guarda `joined_at` (a entrada). Passados 60 s (`app_config.walkover_seconds`) sem sinal do adversário (presença `host/guest_seen_at` ou linha em `online_messages` depois da entrada), quem ficou vence: `resolve_walkover` grava a sala `abandoned` com `winner_id`, `walkover = true`, as duas flags `*_result_recorded` e as linhas `QUIT|WO` (sender = o ausente) e `DROP|WO` (sender = quem ficou). Sem cron: o `online_heartbeat` de quem ficou (a cada 3 s, app antigo também) resolve quando o prazo vence, e o app novo chama a RPC ao zerar a contagem. Reconexão antes da trava da sala cancela o WO (resultado único sob `for update`).
+- **Ranqueada (decisão do John, 09/11):** quem ficou ganha o Elo normal e o ausente leva derrota cheia (soma zero, força de antes), com no máximo 1 WO pontuado por par por dia (`ranked_wo_daily_pair_limit`); sem XP, dobrões, milha de vitória nem desafio (regra da #6). Conta de teste ou sem passe: vitória sem pontos. Casual e sala de amigo: vitória no histórico, sem pontos nem prêmios. Sem penalidade extra a reincidente.
+- **Milha devolvida** a quem ficou, uma vez por sala (`mile_ledger` ganha o tipo `refund`).
+- **Faixa no posicionamento (`ui/WalkoverBanner.kt`):** "Adversário não entrou · Vitória por ausência em Ns" com contagem, a partir de 15 s sem sinal (`game/WalkoverRules.kt`). Resultado: "Vitória por ausência" para quem ficou e "Você não entrou a tempo · Derrota por ausência" para o ausente (`Match.abandon(walkover)`, `Match.lostByAbsence`). Textos `WO_*` nas três línguas.
+- **Sala fantasma na origem:** o anfitrião passa a bater presença já em `waiting` (`OnlineLink.startWaitingBeat`) e `find_quick_offer` esconde a sala cujo anfitrião sumiu há mais de 20 s (`quick_host_fresh_seconds`); presença nula (app antigo) segue a regra de 10 minutos. Salas `active` sem sinal de ninguém por 2x o prazo viram `abandoned` sem vencedor (`sweep_empty_rooms`, dentro de `find_quick_offer`).
+
+### Alterado
+- `record_ranked_result` passa a usar `apply_ranked_side` (o miolo do Elo extraído, sem mudar a conta). O relato repetido (`accepted = false`) agora devolve os pontos gravados na sala em vez de 0, para o ausente que volta ver o que perdeu. Ensaio do Elo (`supabase/tests/ranked_elo_ensaio.sql`): baseline de produção medido antes (s1 +16/-16, s2 -24/+24, soma zero ok, 4ª do dia 0); o "depois" roda na aplicação do servidor (ver pendências).
+- `online_heartbeat` e `join_online_match` substituídos (mesma assinatura); `find_quick_offer` ganha o filtro de presença.
+
+### Testes
+- `WalkoverRulesTest` (contagem, presença nula, reconexão, nunca na batalha, faixa, textos sem "KO"), `MatchTest` (WO no posicionamento: sem combate, derrota por ausência). SQL: `supabase/tests/walkover_ensaio.sql` e `ranked_elo_ensaio.sql` (bloco que desfaz). QA_TEST_PLAN: ON-23 a ON-30, ON-15 e ADS-05 revisados.
+
 ## [0.43.6] — 2026-11-07 · Fontes embarcadas e aviso de atualização pela App Store
 
 App 0.43.6 (versionCode 119). Só cliente: sem mudança de banco (só o comentário de `supabase/releases.sql`), de protocolo nem de stack (nenhuma biblioteca nova).

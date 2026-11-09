@@ -151,7 +151,7 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
     `Profile.claimOnlineReward`). **Vitória sem combate** (o adversário saiu antes de
     quem ficou dar um tiro ou usar uma habilidade) conta no histórico, mas não rende XP,
     dobrões, milha nem desafio do dia (`Match.wonWithoutCombat`; a milha também é barrada
-    no servidor, em `award_win_miles`); os pontos da ranqueada seguem a regra de abandono.
+    no servidor, em `award_win_miles`); os pontos da ranqueada seguem a regra de abandono. **Vitória por ausência (WO)** quando o adversário aceita a sala e não entra: 60 s sem sinal desde a entrada, regra do servidor (`resolve_walkover`, `supabase/walkover.sql`; `game/WalkoverRules.kt` só conta para a faixa); na ranqueada quem ficou ganha o Elo normal e o ausente leva derrota cheia (no máximo 1 WO pontuado por par por dia), sem XP, dobrões, milha de vitória nem desafio; a milha gasta volta a quem ficou.
     Casual mostra "não conta para o ranking"; ranqueada
     ganha um bloco de ranking (pontos da partida e como foram compostos, pontos e
     posição na temporada antes → depois, partidas e vitórias, botão "Ver ranking").
@@ -237,6 +237,13 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   5 dias ou mais paga ◆100 + 3 milhas (carência de 30 dias, fora do teto online, `is_test` não recebe). Ajustes → **Testar notificação**
   dispara uma em 5 segundos e um aviso aparece quando o aparelho bloqueia as notificações do
   jogo, com atalho para os ajustes do sistema.
+- **Vitória por ausência no posicionamento (Online, #85)** — a sala guarda `joined_at`; sem
+  sinal do adversário (presença ou mensagem depois da entrada) por 60 s, quem ficou vence. O
+  servidor grava `QUIT|WO`/`DROP|WO` na sala (o app antigo lê só o tipo e já fecha a partida) e o
+  `online_heartbeat` de quem ficou dispara a resolução, sem cron. O app novo mostra a faixa
+  "Adversário não entrou" a partir de 15 s (`ui/WalkoverBanner.kt`) e pede a vitória ao zerar
+  (`AppState.claimWalkover`). O anfitrião bate presença já em espera e `find_quick_offer` esconde a
+  sala cujo anfitrião sumiu há mais de 20 s.
 - **Conexão instável (Online)** — cada jogada entra numa fila e é reenviada até o
   servidor confirmar, numerada para não duplicar (`client_seq`); a sessão se renova
   sozinha se o token vencer no meio da partida; e os dois lados batem o ponto de
