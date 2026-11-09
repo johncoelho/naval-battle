@@ -50,6 +50,7 @@ import br.com.navalbattle.game.SignOutDecision
 import br.com.navalbattle.game.SignOutReason
 import br.com.navalbattle.game.SignOutResult
 import br.com.navalbattle.game.SignOutRules
+import br.com.navalbattle.game.WalkoverRules
 import br.com.navalbattle.game.ReminderKind
 import br.com.navalbattle.game.ReturnReminder
 import br.com.navalbattle.game.epochDayOf
@@ -1007,6 +1008,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineLink.send(Protocol.hello(profile.displayName, mode.name))
         onlineLink.opponentId?.let { id -> uiScope?.launch { loadOpponentProfile(id) } }
         startResyncWatch()
+        startWalkoverWatch()
         screen = Screen.PLACEMENT
     }
 
@@ -2824,6 +2826,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Uma linha chegou do outro aparelho — mesmo protocolo para LAN e online. */
     private fun onLine(line: String) {
         lastOpponentLineAt = nowMillis()
+        walkoverLineSeen = true
         if (practiceSwitchSide != null) {
             // durante o aviso a partida ainda é a da IA: guarda e repete depois da troca
             practiceLines += line
@@ -2891,7 +2894,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             }
 
             Protocol.QUIT -> {
-                m.abandon(m.mySide)
+                val walkover = Protocol.isWalkover(parts)
+                m.abandon(m.mySide, walkover = walkover)
+                // vitória por ausência já gravada pelo servidor (#85): confere a milha devolvida
+                if (walkover) syncWalkoverRefund()
                 opponentQuit = true
                 if (m.opponent == Opponent.LAN) closeLink() else closeOnline()
                 // só a tela de batalha leva sozinha ao relatório: quem ainda estava
@@ -2903,8 +2909,15 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             Protocol.RESUME -> stopOpponentPauseWatch()
 
             Protocol.DROP -> if (m.opponent == Opponent.ONLINE) {
-                m.lostByDisconnect()
-                closeOnline()
+                if (Protocol.isWalkover(parts)) {
+                    // este aparelho não entrou a tempo (#85): o adversário venceu por ausência
+                    m.lostByAbsence()
+                    closeOnline()
+                    if (screen == Screen.PLACEMENT || screen == Screen.HANDOFF) screen = Screen.RESULT
+                } else {
+                    m.lostByDisconnect()
+                    closeOnline()
+                }
             }
         }
     }
@@ -3007,6 +3020,99 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineLink.finish("abandoned")
         m.abandon(m.mySide)
         closeOnline()
+    }
+
+    // ---------------- vitória por ausência no posicionamento (#85) ----------------
+
+    /** Segundos até a vitória por ausência; nulo sem contagem (ver [WalkoverRules.secondsLeft]). */
+    var walkoverSecondsLeft by mutableStateOf<Int?>(null)
+        private set
+
+    /** O servidor devolveu a milha gasta nesta partida a quem ficou. */
+    var walkoverMileRefunded by mutableStateOf(false)
+        private set
+
+    private var walkoverJob: Job? = null
+    private var walkoverJoinedAt = 0L
+    private var walkoverLineSeen = false
+    private var walkoverLastAttempt: Long? = null
+
+    /**
+     * Vigia do posicionamento online: a cada segundo calcula a contagem ([WalkoverRules]) e, ao zerar,
+     * pede a vitória ao servidor, que confere os 60 s sem sinal desde a entrada. Para sozinho quando a
+     * partida sai do posicionamento (a batalha tem a pausa e a queda de conexão).
+     */
+    private fun startWalkoverWatch() {
+        walkoverJob?.cancel()
+        walkoverJoinedAt = nowMillis()
+        walkoverLineSeen = false
+        walkoverLastAttempt = null
+        walkoverSecondsLeft = null
+        walkoverMileRefunded = false
+        walkoverJob = uiScope?.launch {
+            while (true) {
+                delay(1000)
+                val m = match
+                if (m == null || m.opponent != Opponent.ONLINE || m.phase != Phase.PLACEMENT) {
+                    walkoverSecondsLeft = null
+                    break
+                }
+                val now = nowMillis()
+                val since = ((now - walkoverJoinedAt) / 1000L).toInt()
+                val left = WalkoverRules.secondsLeft(
+                    placement = true,
+                    sinceJoinSeconds = since,
+                    opponentAwaySeconds = onlineLink.opponentAwaySeconds,
+                    opponentLineSeen = walkoverLineSeen,
+                    selfOffline = onlineLink.selfOffline
+                )
+                walkoverSecondsLeft = left
+                if (WalkoverRules.shouldClaim(left, now, walkoverLastAttempt)) {
+                    walkoverLastAttempt = now
+                    claimWalkover()
+                }
+            }
+        }
+    }
+
+    /**
+     * A contagem zerou: pede a vitória ao servidor. Só ele decide (60 s sem sinal do adversário desde a
+     * entrada); se ele disser que o adversário apareceu, a partida segue e a contagem tenta de novo
+     * depois do intervalo. Resolvido a favor deste aparelho: vitória por ausência. O relato ranqueado
+     * sai da tela de resultado, como em toda partida, e o servidor já devolve os pontos gravados.
+     */
+    private suspend fun claimWalkover() {
+        val m = match ?: return
+        val id = onlineMatchId ?: return
+        val me = profile.currentSession()?.userId ?: return
+        val out = (authed { session -> cloud.resolveWalkover(session, id) } as? CloudResult.Ok)?.value ?: return
+        if (!out.settled) return
+        val current = match ?: return
+        if (current !== m || current.phase != Phase.PLACEMENT) return
+        if (out.winnerId == me) {
+            walkoverMileRefunded = out.milesRefunded
+            current.abandon(current.mySide, walkover = true)
+            opponentQuit = true
+            closeOnline()
+            screen = Screen.RESULT
+            loadMiles()
+        } else {
+            current.lostByAbsence()
+            closeOnline()
+            screen = Screen.RESULT
+        }
+    }
+
+    /** Depois de o servidor gravar o WO sozinho (QUIT|WO): lê a milha devolvida e atualiza o saldo. */
+    private fun syncWalkoverRefund() {
+        val id = onlineMatchId ?: return
+        uiScope?.launch {
+            val out = (authed { session -> cloud.resolveWalkover(session, id) } as? CloudResult.Ok)?.value
+            if (out?.settled == true) {
+                walkoverMileRefunded = out.milesRefunded
+                loadMiles()
+            }
+        }
     }
 
     // ---------------- pausa em segundo plano (online) ----------------

@@ -237,11 +237,21 @@ fun ResultScreen(state: AppState, match: Match) {
                 val gained = state.milesGained
                 if (gained != null && gained > 0) {
                     MilesLabel(t(K.MILES_GAINED, gained), color = Naval.amberStrong, style = NavalType.mono, iconSize = 18.dp)
+                } else if (state.walkoverMileRefunded) {
+                    // vitória por ausência (#85): a milha gasta para entrar volta a quem ficou
+                    MilesLabel(t(K.WO_REFUND), color = Naval.amberStrong)
                 } else {
                     MilesLabel(t(K.MILES_SPENT), color = Naval.muted)
                 }
 
-                if (noCombat) {
+                if (match.endedByWalkover) {
+                    // vitória por ausência (#85): texto próprio nos dois lados
+                    Gap(16)
+                    HudLabel(
+                        if (victory) t(K.WO_WON) else "${t(K.WO_LOST)} · ${t(K.WO_LOST_SUB)}",
+                        if (victory) Naval.muted else Naval.danger
+                    )
+                } else if (noCombat) {
                     Gap(16)
                     HudLabel(t(K.RESULT_NO_COMBAT), Naval.muted)
                 }
@@ -432,10 +442,16 @@ private fun RankingBlock(state: AppState, match: Match) {
                 Gap(8)
             }
             // relato novo: o servidor diz em `accepted`; o total diferente de zero também
-            // prova (relato repetido sempre volta com 0) e cobre uma leitura de booleano
+            // prova (o relato repetido volta accepted=false) e cobre uma leitura de booleano
             // que falhe em alguma plataforma
+            // o relato repetido devolve os pontos já gravados na sala (desde a #85), então quem
+            // perdeu por ausência e voltou depois também vê o que perdeu (pontos != 0)
             val fresh = outcome.accepted || outcome.pointsDelta != 0
-            if (!fresh) {
+            if (!fresh && match.endedByWalkover) {
+                // WO sem pontos: o limite de 1 WO pontuado por dia contra o mesmo adversário (ou conta de teste)
+                HudLabel(t(K.RESULT_RANKING_WO_LIMIT), Naval.muted)
+                Gap(8)
+            } else if (!fresh) {
                 HudLabel(t(K.RESULT_RANKING_REPEAT), Naval.muted)
                 Gap(8)
             } else if (outcome.pointsDelta == 0 && outcome.basePoints == 0) {

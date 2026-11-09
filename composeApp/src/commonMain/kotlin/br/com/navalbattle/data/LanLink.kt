@@ -52,6 +52,13 @@ object Protocol {
     // quem abriu a sala antiga cria a nova e manda o id por aqui
     const val ROOM = "ROOM"
 
+    // vitória por ausência (#85): o servidor grava `QUIT|WO` (sender = o ausente) e `DROP|WO` (sender =
+    // quem ficou). O app antigo lê só o tipo e já fecha a partida; o app novo lê o sufixo para o texto
+    const val WALKOVER_TAG = "WO"
+
+    /** A linha traz o sufixo `|WO` do servidor. */
+    fun isWalkover(parts: List<String>): Boolean = parts.getOrNull(1) == WALKOVER_TAG
+
     fun room(matchId: String) = "$ROOM|$matchId"
 
     fun hello(name: String, mode: String) = "$HELLO|$name|$mode"

@@ -141,6 +141,39 @@ class MatchTest {
     }
 
     @Test
+    fun vitoriaPorAusenciaNoPosicionamentoOnline() {
+        // #85: o adversario aceitou e nao entrou; quem ficou vence sem combate, por ausencia
+        val m = Match(GameMode.CLASSIC, Opponent.ONLINE, mySide = Side.ENEMY)
+        m.abandon(m.mySide, walkover = true)
+        assertEquals(Phase.RESULT, m.phase)
+        assertEquals(Side.ENEMY, m.winner)
+        assertTrue(m.wonByAbsence)
+        assertTrue(m.endedByWalkover)
+        assertTrue(m.wonWithoutCombat(m.mySide), "sem XP, dobroes, milha nem desafio")
+        assertFalse(m.forfeitedBySelf)
+    }
+
+    @Test
+    fun derrotaPorAusenciaDeQuemNaoEntrou() {
+        val m = Match(GameMode.CLASSIC, Opponent.ONLINE, mySide = Side.PLAYER)
+        m.lostByAbsence()
+        assertEquals(Phase.RESULT, m.phase)
+        assertEquals(Side.ENEMY, m.winner)
+        assertTrue(m.forfeitedBySelf, "derrota sem recompensa de carreira")
+        assertTrue(m.endedByWalkover)
+        assertFalse(m.wonWithoutCombat(m.mySide))
+        assertEquals(br.com.navalbattle.i18n.t(br.com.navalbattle.i18n.K.WO_LOST), m.callout?.main)
+    }
+
+    @Test
+    fun abandonoComumNaoViraVitoriaPorAusencia() {
+        val m = Match(GameMode.CLASSIC, Opponent.ONLINE, mySide = Side.PLAYER)
+        m.abandon(m.mySide)
+        assertTrue(m.wonByAbsence)
+        assertFalse(m.endedByWalkover)
+    }
+
+    @Test
     fun umTiroJaContaComoCombate() {
         val m = battle()
         m.act(water) // o jogador atira e erra

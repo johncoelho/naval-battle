@@ -577,6 +577,36 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun resolveWalkover(session: Session, matchId: String): CloudResult<WalkoverOutcome?> = call {
+        val body = JSONObject().put("p_match_id", matchId)
+        val json = post("/rest/v1/rpc/resolve_walkover", body, token = session.accessToken)
+        val arr = runCatching { JSONArray(json) }.getOrNull()
+        if (arr == null || arr.length() == 0) return@call CloudResult.Ok(null)
+        val o = arr.getJSONObject(0)
+        val wasRanked = o.optBoolean("was_ranked", false)
+        val outcome = o.optString("outcome")
+        val settled = outcome == "resolved" || outcome == "already"
+        CloudResult.Ok(
+            WalkoverOutcome(
+                outcome = outcome,
+                winnerId = if (o.isNull("winner")) null else o.optString("winner"),
+                wasRanked = wasRanked,
+                ranked = if (wasRanked && settled) RankedOutcome(
+                    pointsDelta = o.optInt("points_delta"),
+                    seasonPoints = o.optInt("season_points", 1000),
+                    seasonPosition = o.optInt("season_position"),
+                    seasonName = if (o.isNull("season_name")) "" else o.optString("season_name"),
+                    seasonMatches = o.optInt("season_matches"),
+                    seasonWins = o.optInt("season_wins"),
+                    accepted = o.optBoolean("accepted", false),
+                    basePoints = o.optInt("base_points"),
+                    bonusPoints = o.optInt("bonus_points")
+                ) else null,
+                milesRefunded = o.optBoolean("miles_refunded", false)
+            )
+        )
+    }
+
     // ------------------------------------------------------------------ feedback e badges
 
     actual suspend fun submitFeedback(

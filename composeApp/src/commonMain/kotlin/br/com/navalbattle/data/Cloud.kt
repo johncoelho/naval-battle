@@ -142,6 +142,22 @@ data class RankedOutcome(
 )
 
 /**
+ * Resposta de `resolve_walkover` (vitória por ausência, #85). [outcome]: resolved | already | too_early |
+ * signal | no_self_signal | waiting | closed | unsupported. [winnerId] só em resolved/already.
+ * [ranked] traz os pontos do comandante que chamou quando a sala é ranqueada (em resolved/already).
+ */
+data class WalkoverOutcome(
+    val outcome: String,
+    val winnerId: String?,
+    val wasRanked: Boolean,
+    val ranked: RankedOutcome?,
+    val milesRefunded: Boolean
+) {
+    /** O servidor fechou a partida por ausência (agora ou antes). */
+    val settled: Boolean get() = outcome == "resolved" || outcome == "already"
+}
+
+/**
  * Passe da temporada corrente (ver `season_pass_status` em `supabase/season.sql`).
  * [tier] nulo = ainda não aderiu — e sem adesão não há ranqueada.
  */
@@ -580,6 +596,13 @@ expect class CloudApi() {
         accuracy: Int,
         shipsLeft: Int
     ): CloudResult<RankedOutcome?>
+
+    /**
+     * Pede a vitória por ausência (RPC `resolve_walkover`, ver `supabase/walkover.sql`): o servidor
+     * confere os 60 s sem sinal do adversário desde a entrada e, se valer, grava o WO (e os pontos da
+     * ranqueada). Nulo quando a sala não existe ou o comandante não está nela.
+     */
+    suspend fun resolveWalkover(session: Session, matchId: String): CloudResult<WalkoverOutcome?>
 
     // ---------------- feedback e badges ----------------
 

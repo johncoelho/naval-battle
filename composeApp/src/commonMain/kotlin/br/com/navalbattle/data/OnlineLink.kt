@@ -420,6 +420,9 @@ class OnlineLink(
         onState: (LinkState, Side) -> Unit,
         onLine: (String) -> Unit
     ) {
+        // presença já na espera (#85): sem ela, quem fecha o app deixa a sala rápida "fantasma" aberta
+        // e o servidor não tem como esconder a oferta de quem vai aceitar
+        startWaitingBeat(matchId)
         while (true) {
             delay(1500)
             val match = (cloud.getOnlineMatch(session, matchId) as? CloudResult.Ok)?.value ?: continue
@@ -432,6 +435,7 @@ class OnlineLink(
             // o convidado recusou (decline_online_invite fecha a sala): para de esperar
             if (match.status == "abandoned") {
                 inviteDeclined = match.invitedId != null
+                beatJob?.cancel()
                 onState(LinkState.FAILED, Side.PLAYER)
                 return
             }
@@ -474,6 +478,20 @@ class OnlineLink(
         }
         startHeartbeat(matchId)
         flushOutbox()
+    }
+
+    /**
+     * Só a batida de presença, enquanto a sala espera o convidado (o [startHeartbeat] completo
+     * substitui este laço ao conectar). Servidor antigo ou sem a RPC: a falha é ignorada.
+     */
+    private fun startWaitingBeat(matchId: String) {
+        beatJob?.cancel()
+        beatJob = scope.launch {
+            while (isActive) {
+                withSession { cloud.onlineHeartbeat(it, matchId) }
+                delay(HEARTBEAT_INTERVAL_MS)
+            }
+        }
     }
 
     /** Baixa o log da sala desde o começo, página por página (o PostgREST corta em 1000 linhas). */

@@ -272,10 +272,23 @@ class Match(
     var wonByAbsence by mutableStateOf(false)
         private set
 
-    /** O adversário deixou a partida: quem ficou leva a vitória. */
-    fun abandon(winnerSide: Side) {
+    /**
+     * Terminou por vitória por ausência no posicionamento (#85): o adversário aceitou a sala e não
+     * entrou a tempo. Vale para os dois lados (quem ficou e quem faltou); o resultado mostra o texto
+     * próprio em vez do "saiu antes do primeiro tiro".
+     */
+    var endedByWalkover by mutableStateOf(false)
+        private set
+
+    /**
+     * O adversário deixou a partida: quem ficou leva a vitória. [walkover] marca a vitória por
+     * ausência (WO) do posicionamento: o mesmo caminho do abandono (sem tiro, não rende XP, dobrões,
+     * milha nem desafio), só com o texto do WO.
+     */
+    fun abandon(winnerSide: Side, walkover: Boolean = false) {
         if (phase == Phase.RESULT) return
         if (winnerSide == mySide) wonByAbsence = true
+        if (walkover) endedByWalkover = true
         finish(winnerSide)
     }
 
@@ -304,6 +317,19 @@ class Match(
         forfeitedBySelf = true
         finish(mySide.other())
         say(t(K.CALL_DROPPED), t(K.CALL_DROPPED_SUB), Tone.MISS)
+    }
+
+    /**
+     * Este aparelho não entrou a tempo (#85): o adversário esperou os 60 s no posicionamento e levou
+     * a vitória por ausência (linha DROP|WO do servidor, lida ao voltar). Derrota sem recompensa de
+     * carreira, como [lostByDisconnect], com texto próprio (não foi queda de conexão).
+     */
+    fun lostByAbsence() {
+        if (phase == Phase.RESULT) return
+        forfeitedBySelf = true
+        endedByWalkover = true
+        finish(mySide.other())
+        say(t(K.WO_LOST), t(K.WO_LOST_SUB), Tone.MISS)
     }
 
     private fun startBattle() {

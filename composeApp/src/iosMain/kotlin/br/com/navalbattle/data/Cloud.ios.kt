@@ -586,6 +586,35 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun resolveWalkover(session: Session, matchId: String): CloudResult<WalkoverOutcome?> = call {
+        val json = post("/rest/v1/rpc/resolve_walkover", mapOf("p_match_id" to matchId), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            row?.let {
+                val wasRanked = (it["was_ranked"] as? Boolean) ?: false
+                val outcome = it.strOr("outcome", "")
+                val settled = outcome == "resolved" || outcome == "already"
+                WalkoverOutcome(
+                    outcome = outcome,
+                    winnerId = it["winner"] as? String,
+                    wasRanked = wasRanked,
+                    ranked = if (wasRanked && settled) RankedOutcome(
+                        pointsDelta = it.intOr("points_delta", 0),
+                        seasonPoints = it.intOr("season_points", 1000),
+                        seasonPosition = it.intOr("season_position", 0),
+                        seasonName = it.strOr("season_name", ""),
+                        seasonMatches = it.intOr("season_matches", 0),
+                        seasonWins = it.intOr("season_wins", 0),
+                        accepted = (it["accepted"] as? Boolean) ?: false,
+                        basePoints = it.intOr("base_points", 0),
+                        bonusPoints = it.intOr("bonus_points", 0)
+                    ) else null,
+                    milesRefunded = (it["miles_refunded"] as? Boolean) ?: false
+                )
+            }
+        )
+    }
+
     // ------------------------------------------------------------------ feedback e badges
 
     actual suspend fun submitFeedback(

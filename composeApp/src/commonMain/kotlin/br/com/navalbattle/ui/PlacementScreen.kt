@@ -91,6 +91,7 @@ fun PlacementScreen(state: AppState, match: Match) {
     val boardSide = placementBoardSideDp(maxWidth.value, maxHeight.value).dp
     Column(Modifier.fillMaxSize()) {
         PracticeBanner(state, match)
+        WalkoverBanner(state, match)
         ScreenTopBar(
             if (match.opponent == Opponent.LOCAL) {
                 "${t(K.PLACEMENT)} · ${match.sideName(match.placingSide).uppercase()}"
