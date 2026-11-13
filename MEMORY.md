@@ -181,10 +181,12 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 - **Produção na Play (25/10):** versão 91 (0.34.4) em revisão, todos os países. **0.34.5 (#35)** em
   revisão (regra em §4). Aviso de lançamento (#36, ligar `launch_notice_enabled` quando a Play aprovar).
   CI publica só na Alpha; a promoção para a produção (#39) está pronta: `promote-production.yml` + `tools/play-rollout.sh`, 20% → 50% → 100% (docs/ESTEIRA.md). **Pendente do John:** `gh variable set PLAY_PRODUCTION_LIVE --body true` depois do *Published* da 91 (hoje `false`; permissões e Reporting API já feitas). Ação `vitals` no script (#51): lê falha/ANR por versionCode; só `ALARME` pausa.
-- **Saldo de dobrões no servidor (#34, 0.34.9):** migração `dobroes_saldo` aplicada (inerte, nenhuma carteira
-  aberta; abre por conta quando o 0.34.9 entra). **Pendência** (decisão 8 do John, pode rodar sozinho): com a
-  0.34.9 na **produção** e o QA aprovado (bateria completa, casos DOB-30 a DOB-55), conferir os 4 produtos no
-  Play Console, rodar `select public.dobroes_open_all();` e só então `real_billing_enabled = 'true'`.
+- **Ligar a venda de dobrões (#93, P1):** seguir o **Roteiro da #93** em `docs/QA_TEST_PLAN.md` (a a i), começando
+  por `bash tools/dobroes-prevoo.sh` (só leitura). Em 13/11: 0.44.0 na produção, Edge igual ao repo, secret presente,
+  4 produtos e 6 migrações OK; **FALHA** no gate (11 testadores sem 0.33.3) e 138 contas sem carteira. Falta o QA
+  (DOB-30 a DOB-55, DOB-14, prova do secret, DOB-02/03/22). `dobroes_open_all()` real e `real_billing_enabled = 'true'`
+  **só com o OK do John na hora** (a decisão 8 de 25/10, "pode ligar sozinho", caiu); ligar a venda também espera a #92.
+  Estorno não implementado (issue própria).
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 

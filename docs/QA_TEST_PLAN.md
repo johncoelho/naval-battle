@@ -443,6 +443,32 @@ Desde 0.34.5 (#35), "testador" nos casos abaixo é conta com brinde: QA01, QA02 
 | DOBIOS-02 | P0 | iPhone com conta de testador e Prêmio ligado → aba Dobrões → pegar | Prêmio Beta aparece como no Android; ao pegar, aviso "+N" e saldo sobe; de novo no mesmo dia mostra o retorno à meia-noite |
 | DOBIOS-03 | P1 | Modo avião → abrir a aba Dobrões (iPhone e Android) | Aparece "Não consegui abrir o cofre..." com **Tentar de novo**; com a rede de volta, ao tocar a aba carrega |
 
+#### Roteiro da #93: ligar a venda real de dobrões (Android)
+
+Ordem fixa: um passo só começa com o anterior verde e a evidência colada na #93. Passos marcados
+**[OK do John]** param até ele dizer sim naquele momento (regra "confirmar antes de rodar"); o time
+nunca muda `real_billing_enabled`, `premio_beta_enabled`, `beta_store_enabled` nem a lista de licença
+por conta própria. Evidência nunca leva e-mail, `user_id`, token de compra, JWT ou valor de secret:
+só contagens, status, etapa e prints com e-mail borrado. Prints sobem por `tools/qa-evidencia.sh`.
+
+| Passo | Quem | O que fazer | Esperado | Evidência na #93 |
+|---|---|---|---|---|
+| a) Pré-voo | Dev/QA | `bash tools/dobroes-prevoo.sh` (só leitura; confere flags, gate, carteiras, razão, produtos, migrações, `app_releases`, Edge e secret) | OK em divergência, produtos, migrações, `app_releases`, Edge e secret; `real_billing_enabled = false`. FALHA esperada até os passos seguintes: gate (decisão sobre quem ainda está sem 0.33.3) e contas sem carteira (passo f) | A saída inteira do script, com data e hora |
+| b) DOB-30 a DOB-55 | QA | Servidor (DOB-30 a DOB-43, DOB-52, DOB-53): `supabase/tests/dobroes_saldo_ensaio.sql` no bloco que desfaz. Aparelho (DOB-44 a DOB-51, DOB-54, DOB-55) no QA01/QA02 com o app da Play | Todos como na tabela acima; o ensaio termina com a mensagem de rollback e nada fica gravado | A mensagem do ensaio; tabela caso a caso (OK/FALHA) com prints dos casos de aparelho |
+| c) DOB-14 (só servidor) | QA | `supabase/tests/dobroes_ensaio.sql` no bloco que desfaz (linhas `nao_beta_teste` e `nao_beta_real`) | `nao_beta_teste=not_beta`, `nao_beta_real=billing_off`, nada gravado | A mensagem do ensaio |
+| d) Prova do secret pela etapa gravada | QA | Se houver JWT de sessão QA01 obtido **sem digitar senha**: `POST` na Edge `dobroes-verify` com `{"product_id":"dobroes_bolsa","purchase_token":"<texto inválido de 20+ caracteres>","origem":"vitrine"}`. Sem esse JWT, a prova é a 1ª compra do passo e. Nos dois casos, ler Logs da Edge (evento `dobroes_verify_falha`) na janela da chamada | Secret funciona: resposta `not_found` ou `play_error` 400/410 com `compra_api` no log (passou do OAuth). Não funciona: `play_unavailable` 503 com etapa `secret_ausente`, `secret_invalido`, `chave_privada`, `oauth` ou `rede`; `compra_api` 401/403 = conta de serviço sem permissão financeira | Só o código HTTP, o `status` da resposta e a etapa do log |
+| e) DOB-02, DOB-03, DOB-22 (licença) | QA | QA01 (testador de licença, `beta_store_enabled = 'true'`): comprar a Bolsa (DOB-02), reabrir o app (DOB-03), depois os 4 pacotes da vitrine (DOB-22). A compra de licença grava `kind = 'test'`, não `'real'` | Cada pacote credita 1× a quantidade; reabrir não soma; folha da Play diz que é teste (sem cobrança); a Play consome a compra | Print da folha da Play (cartão de teste) e do saldo; contagem `select kind, count(*), sum(credited) from dobroes_purchases where day = brt_today() group by kind` (sem `user_id`); linhas do razão (`reason`, `delta`) |
+| f) **[OK do John]** `dobroes_open_all()` real | Release/Tech Lead | Antes: o ensaio DOB-42 (bloco que desfaz). Com o OK: `select public.dobroes_open_all();` como dono no SQL Editor. Depois: `bash tools/dobroes-prevoo.sh` de novo | Retorno = número de contas abertas (13/11: 138 sem carteira com saldo); pré-voo com 0 contas sem carteira e 0 divergentes | O número devolvido e a saída do pré-voo depois |
+| g) DOB-18 | John + QA | Conta do John fora da licença, `beta_store_enabled = 'true'`: compra real da Bolsa (cobrança de verdade, feita pelo John). **[OK do John]** para a segunda parte, com `beta_store_enabled` e `real_billing_enabled` em `'false'`: comprar de novo | Credita 500 uma vez (`kind = 'real'`); com as duas flags `'false'`: `billing_off`, nada gravado. Voltar `beta_store_enabled` ao valor anterior no fim | Contagem por `kind` do dia; status da segunda tentativa; valores das flags antes e depois |
+| h) **[OK do John + #92 concluída]** Ligar a venda e DOB-01 | Release | Só com a #92 fechada (perfil de pagamentos, DSA, impostos, reembolso) e o OK na hora: `update public.app_config set value = 'true' where key = 'real_billing_enabled';`. Depois, DOB-01 com conta comum (sem brinde), só até a folha da Play, sem concluir | Quatro cards com o preço da Play (R$ 4,90 · 9,90 · 24,90 · 49,90); toque abre a folha da Play | Valor da flag antes e depois, com data e hora; print dos 4 cards |
+| i) Conferência do dia seguinte | QA/Release | Play Console → Pedidos do dia anterior x `select kind, count(*), sum(credited) from dobroes_purchases where day = brt_today() - 1 group by kind` e a lista de `order_id` com `kind = 'real'` (só os ids de pedido, sem conta) | Cada pedido cobrado na Play tem 1 linha `real` com o mesmo `order_id`; nenhuma linha `real` sem pedido; nenhum pedido reembolsado com saldo creditado (estorno: ver nota) | Contagem dos dois lados e a lista de `order_id` conferida (quantidade igual) |
+
+Notas do Tech Lead (13/11): (1) o critério de aceite 1 da #93, feito com conta de licença, gera
+`kind = 'test'` e não `'real'`; a linha `real` só aparece no passo g (compra do John) ou depois do
+passo h. (2) Estorno (pedido reembolsado na Play) **não está implementado**: a Edge não lê as compras
+anuladas, então um reembolso não tira os dobrões. Vira issue própria; até lá, o passo i confere o
+reembolso à mão.
+
 ### 12d. Anúncios premiados opcionais (#29)
 
 Pré-requisitos: `ads_enabled = 'true'` só durante o teste (volta a `'false'` no fim, sempre);

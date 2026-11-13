@@ -9,6 +9,16 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Sem versão do app] — 2026-11-13 · Pré-voo e roteiro para ligar a venda de dobrões (#93)
+
+Refs #93. Sem mudança de banco, de flag nem de código Kotlin; commit `[skip ci]`, sem versão do app. Nada foi ligado: `real_billing_enabled` segue `'false'` e `dobroes_open_all()` não rodou.
+
+### Adicionado
+- **`tools/dobroes-prevoo.sh` + `tools/dobroes-prevoo.sql`** (só leitura): uma linha OK/FALHA/INFO por conferência e saída 1 se houver FALHA. Banco: valor das 3 flags, contagem do `dobroes_gate_licenca()`, contas sem carteira com `credits > 0`, divergência `credits` x último `balance_after` do razão, os 4 produtos, as 6 migrações `dobroes_*` e a última linha de `app_releases` (`android_live`, 0.34.9+). Edge `dobroes-verify` baixada numa pasta temporária (`mktemp -d`, nunca no repositório) e comparada com `supabase/functions/dobroes-verify/index.ts`. Secret `PLAY_BILLING_SERVICE_ACCOUNT`: só presente/ausente. O CLI roda num workdir temporário com `supabase/.temp/project-ref` (o `--linked` lê o projeto dali). Primeira rodada (13/11): 2 FALHAS esperadas (gate com 11 testadores, 138 contas sem carteira), o resto OK.
+- **`docs/QA_TEST_PLAN.md` → Roteiro da #93**: passos a) a i) (pré-voo, DOB-30 a DOB-55, DOB-14 só servidor, prova do secret pela etapa gravada, DOB-02/03/22 de licença, `dobroes_open_all()` real com OK do John, DOB-18, ligar `real_billing_enabled` com OK do John e a #92, conferência do dia seguinte), com a evidência de cada passo e as duas notas do Tech Lead (licença grava `kind = 'test'`; estorno não implementado).
+
+---
+
 ## [0.44.0] — 2026-11-09 · Vitória por ausência: o adversário aceita e não entra
 
 App 0.44.0 (versionCode 120). Banco: `supabase/walkover.sql` (aplicar **antes** do app, "servidor primeiro"; só colunas e RPCs novas mais substituições com a mesma assinatura, o app antigo continua funcionando). Nenhuma biblioteca nova.
