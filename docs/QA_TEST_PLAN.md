@@ -469,6 +469,19 @@ passo h. (2) Estorno (pedido reembolsado na Play) **não está implementado**: a
 anuladas, então um reembolso não tira os dobrões. Vira issue própria; até lá, o passo i confere o
 reembolso à mão.
 
+### 12h. Contas internas fora da medição (#96)
+
+Servidor e relatório; nenhum caso de aparelho. Pré-requisito: migração `internal_accounts` aplicada com o OK
+do John e a chave `internal_accounts` preenchida no banco (skill `beta-testers`). Evidência só em contagem:
+nunca e-mail, user_id ou apelido em issue.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| MED-01 | P0 | Servidor (bloco que desfaz): `internal_accounts.sql` + `supabase/tests/internal_accounts_ensaio.sql` na mesma execução | `RESULTADO (rollback)` igual ao esperado do cabeçalho do ensaio, sem nenhum `FALHOU` (passada 1/1/0, D nasce interna, view t/t/f a 4.90, anon e authenticated negados, service_role lê 3, trava, `is_test_user` inalterado, medição só com C e alerta 1) |
+| MED-02 | P0 | Depois da aplicação: `select kind, valor_brl, interna, teste from dobroes_purchases_com_origem where kind = 'real' order by data` (como dono do banco) | A compra real de 18/10 aparece com `interna = true` e `valor_brl` do pacote; a view não tem e-mail, `purchase_token` nem `order_id` |
+| MED-03 | P0 | Rodar `docs/medicao-semanal.sql` (como no cabeçalho dela, workdir temporário) antes e depois de marcar a conta do dono | Linha `sem_interna`/`fechada`: `perfis_reais` cai 1 e `compras_real_externas_acum` e `receita_bruta_acum_brl` perdem a compra de 18/10 (R$ 4,90 a menos); `com_interna` continua com ela; alertas sem `COMPRA_REAL_EXTERNA` e `alerta_real_nao_marcada` = 0 |
+| MED-04 | P0 | Com QA01 em `is_test = false` (durante um teste), rodar a medição | QA01 continua fora de `sem_interna` (é interna pelo `allowed_players` 'qa'); ao voltar `is_test = true`, nada muda na linha |
+
 ### 12d. Anúncios premiados opcionais (#29)
 
 Pré-requisitos: `ads_enabled = 'true'` só durante o teste (volta a `'false'` no fim, sempre);

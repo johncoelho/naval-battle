@@ -58,6 +58,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
 
 ## 3. Assuntos em andamento
 
+- **Lote 0.44.1 (#96 contas internas), só servidor e docs, no worktree da esteira (sem push até o Tech Lead aprovar):** `supabase/internal_accounts.sql` (`is_internal`, `is_internal_account`, `internal_accounts` vazia no repo, view privada `dobroes_purchases_com_origem`, `price_cents`) e `docs/medicao-semanal.sql` sem internas. Ensaio `internal_accounts_ensaio.sql` verde em 13/11 (rollback). **Pendente do John:** OK para aplicar a migração `internal_accounts`; depois, só no banco, a chave com o user_id dele, `refresh_all_internal(false)` = 1 e `(true)`. Reclassificar a linha de base e avisar o CMO seguem na #94. A medição semanal (#94) passa a excluir `is_test` e internas por `is_internal_account` (sai `beta_eligible`) e ganha `alerta_real_nao_marcada`. QA: MED-01 a MED-04.
 - **Lote 0.44.0 (#85 vitória por ausência), no worktree da esteira (sem push até o Tech Lead aprovar):** `supabase/walkover.sql` + cliente (`WalkoverRules`, faixa, `claimWalkover`). **Ordem obrigatória: servidor primeiro** (aplicar a migração `walkover`, rodar `walkover_ensaio.sql` e `ranked_elo_ensaio.sql` com o rollback), depois o push do app. QA: ON-23 a ON-30; app antigo como quem ficou resolve sozinho (ON-29). Medir WO reincidente antes de pensar em penalidade. **Trade-off aceito:** anfitrião novo em segundo plano some da oferta em ~20 s (`quick_host_fresh_seconds`) e, se entrarem antes, tem 60 s para voltar (ranqueada: derrota cheia); plano B é subir a chave em `app_config` (ON-28b).
 - **Lote 0.43.2 (#67), só código, publicado na 0.43.2; QA pendente ON-20 a ON-22 e refazer ON-06/ON-08:** partida online que travava com os dois em AGUARDE. `Match.act(coord, by)`/`canAct` validam quem joga, `fireShared` só envia jogada válida, e `replayNetworkMatch` (`game/NetworkReplay.kt`) reconstrói a partida pelo log da sala (ordem de `id`), chamado ao receber `ACT`/`ABIL` fora da vez e pelo vigia de 30 s (`shouldResync`); `PollCursor` consulta com piso e ids vistos. **Limitação aceita:** com app antigo do outro lado (0.42.2 em produção, 0.43.0/0.43.1) o novo se ressincroniza mas não corrige o antigo; a saída segue sendo "Encerrar". QA: ON-20 a ON-22 e refazer ON-06/ON-08.
 - **Lote 0.43.6 (#80 fontes, #81 aviso pela App Store), só cliente, no worktree `nb-wt/lote-0.43.6` (sem push até o Tech Lead aprovar):** ver CHANGELOG. O Release só marca `ios_live` da 0.43.6 quando o `lookup` mostrar 0.43.6; o QA compara o Android antes (0.43.5) e depois (0.43.6) e confere o iPhone pela 0.43.6.
@@ -192,6 +193,8 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   1 a 6 do PO para o John (contar a compra interna, bruta/líquida, anúncio, alertas, quem avisa, dia e hora).
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
+
+- 13/11 · Conta interna ≠ conta de teste (#96): `is_internal` / `is_internal_account` só para medição e relatório, nunca em regra de jogo; QA conta como interna pelo `allowed_players`; a lista `internal_accounts` vive só no banco.
 
 - 25/10 · Brindes (#35, 0.34.5): grátis e Prêmio Beta só para QA01, QA02 e o John (`beta_eligible` =
   `'qa'` ou `app_config.beta_gift_emails`, e-mail só no banco); testadores ficam com o que ganharam.

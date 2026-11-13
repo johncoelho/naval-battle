@@ -620,6 +620,17 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   play/manual) não decide `is_test` nem dá brinde: `beta_eligible()` (Prêmio Beta, vitrine beta,
   Prêmio legado) = conta `'qa'` ou e-mail de `app_config.beta_gift_emails` (só no banco). A lista é carregada direto no banco, fora do repositório (skill
   `beta-testers`).
+- Contas internas (`supabase/internal_accounts.sql`, #96): `profiles.is_internal` e o predicado único
+  `is_internal_account(id)` = `is_internal` OU conta QA (`allowed_players` 'qa') servem **só para medição e
+  relatório**. **Nenhuma regra de jogo, RLS, brinde, ranking ou preço lê `is_internal` ou
+  `is_internal_account`**: para tirar alguém do jogo real, o caminho continua sendo `is_test`. A marca vem
+  da chave `app_config.internal_accounts` (user_id ou e-mail de login, vazia no repositório, preenchida só no
+  banco), só soma (`refresh_internal` no gatilho de perfil novo, `refresh_all_internal(false|true)` na
+  passada) e o cliente não consegue mudá-la (gatilho `profiles_guard_is_internal`). As medições
+  (`docs/medicao-semanal.sql`) excluem `is_test OR is_internal_account(id)`. A view privada
+  `dobroes_purchases_com_origem` (só `service_role`, sem e-mail, token nem `order_id`) mostra cada compra com
+  `interna`/`teste` e `valor_brl` de `dobroes_products.price_cents`, a fonte única do preço de tabela.
+  Ensaio: `supabase/tests/internal_accounts_ensaio.sql`.
 - Aviso de lançamento (`supabase/launch_notice.sql`, #36): interruptor `app_config.launch_notice_enabled`
   (nasce `'false'`), tabela `launch_notice_seen` (RLS sem política), `launch_was_beta_tester(uuid)`
   (privada; não usa `beta_eligible()`), RPCs `launch_notice_status(p_platform)` (anon e authenticated;

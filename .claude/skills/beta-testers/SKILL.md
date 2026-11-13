@@ -64,6 +64,29 @@ select * from public.refresh_all_is_test(true);
 - A regra de `is_test` só vale com `app_config.allowlist_enforced = 'true'` (interruptor, sem exigir
   linha `play`); desligado, `refresh_all_is_test` recusa rodar.
 
+## Contas internas fora da medição (#96)
+
+Conta do time não pode inflar a medição (`docs/medicao-semanal.sql`) nem a receita. O predicado é
+`is_internal_account(id)` = `profiles.is_internal` OU conta QA (`allowed_players` 'qa'). Só medição:
+não muda o jogo de ninguém (para isso existe `is_test`).
+
+- **Conta QA nova**: entra em `allowed_players` com `source = 'qa'` (acima). Já vira interna, mesmo
+  quando o QA está com `is_test = false`.
+- **Conta nova do John** (ou de outra pessoa do time, com o OK dele): o user_id ou o e-mail de login vai
+  para `app_config.internal_accounts` (lista separada por vírgula), **só no banco**:
+```sql
+update public.app_config
+   set value = concat_ws(',', nullif(value, ''), '<user_id ou email>')
+ where key = 'internal_accounts';
+select * from public.refresh_all_internal(false);  -- conferir to_internal (quantas viram internas)
+select * from public.refresh_all_internal(true);   -- aplica (só soma, nunca desmarca)
+```
+  Conta criada depois que o e-mail está na lista já nasce interna (gatilho de perfil novo).
+- **Alerta**: `alerta_real_nao_marcada > 0` na medição = compra real de conta não interna nos últimos
+  7 dias. Conferir quem é em `select * from dobroes_purchases_com_origem where kind = 'real' and not
+  interna and not teste order by data desc;` (view privada, nunca colar o resultado em issue). Se for
+  do time, marcar como acima; se não, é receita de verdade.
+
 ## Prêmio Beta pela Play (legado, apps 0.33.0 a 0.33.2)
 
 Só o app antigo passava o Prêmio pela Play; quem não estava no Teste de licença era cobrado de

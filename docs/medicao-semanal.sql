@@ -1,5 +1,5 @@
--- Medição semanal do público e da receita (issue #94, plano #86). SÓ LEITURA: nenhum insert,
--- update, delete nem chamada que grave. Não altera código, banco nem flags.
+-- Medição semanal do público e da receita (issue #94, plano #86; contas internas pela #96).
+-- SÓ LEITURA: nenhum insert, update, delete nem chamada que grave. Não altera código, banco nem flags.
 --
 -- Como rodar (armadilha do project-ref): `supabase db query --linked` lê o projeto de
 -- supabase/.temp/project-ref do diretório atual, e o repositório não guarda esse arquivo. Rode
@@ -13,8 +13,11 @@
 --   semana 'fechada'  = a última semana completa, segunda 00:00 a domingo 23:59 (America/Sao_Paulo):
 --                       w1 = date_trunc('week', now() at time zone 'America/Sao_Paulo'), w0 = w1 - 7 dias;
 --          'anterior' = a semana antes dela (w0 - 7 dias a w0), para a variação.
--- Filtros: fora profiles.is_test (robôs e contas QA). Conta interna = public.beta_eligible(id)
--- (contas QA e a conta do dono em app_config.beta_gift_emails).
+-- Filtros (#96): conta interna = public.is_internal_account(id) = profiles.is_internal (lista
+-- app_config.internal_accounts, a conta do dono, só no banco) OU conta QA em allowed_players (vale
+-- mesmo com o QA em is_test = false durante um teste). 'sem_interna' exclui profiles.is_test e as
+-- internas de TODAS as colunas; 'com_interna' = os mesmos mais as internas, só para comparação.
+-- Robôs (is_test e não internos) ficam fora dos dois.
 --
 -- Medidas da semana (janela [w0, w1) aplicada à data de cada linha):
 --   novos (profiles.created_at), compras por kind e receita (dobroes_purchases.created_at), vales
@@ -24,10 +27,14 @@
 --   e retorno 1/7 dias vêm de profiles.last_seen_at, que guarda só a última visita (não há
 --   histórico de sessões; retorno N dias = última visita >= criação + N dias, superestima); push
 --   ativo = conta com token cujo check_status não é 'unregistered'.
--- Receita: preço de tabela dos pacotes kind = 'real' (bruta) e x 0,85 (líquida, taxa de 15% da
---   Play), na semana e acumulada até o fim da semana. Não há valor cobrado gravado no banco.
+-- Receita: preço de tabela (dobroes_products.price_cents, #96) dos pacotes kind = 'real' (bruta) e
+--   x 0,85 (líquida, taxa de 15% da Play), na semana e acumulada até o fim da semana. Não há valor
+--   cobrado gravado no banco.
 -- compras_real_externas: compra real de conta que não é interna nem teste (independe do escopo).
---   Maior que zero é alerta: conferir se a conta deveria estar marcada como interna (#96).
+-- alerta_real_nao_marcada (#96): as mesmas compras nos últimos 7 dias corridos (igual em todas as
+--   linhas). Maior que zero: conferir na view privada dobroes_purchases_com_origem se o comprador é
+--   do time; se for, entra em app_config.internal_accounts + refresh_all_internal (skill
+--   beta-testers); se não for, é receita de verdade. O relatório mostra só a contagem.
 -- alertas (linha 'sem_interna'/'fechada'): gatilhos do #86 atingidos nesta consulta.
 with
 par as (
@@ -41,29 +48,27 @@ semanas(semana, ord, ini, fim) as (
          (w1_local - interval '7 days') at time zone 'America/Sao_Paulo' from par
 ),
 base as (
-  select p.id, p.created_at, p.last_seen_at, public.beta_eligible(p.id) as is_interna
+  select p.id, p.created_at, p.last_seen_at,
+         coalesce(p.is_test, false) as is_teste, public.is_internal_account(p.id) as is_interna
     from public.profiles p
-   where not coalesce(p.is_test, false)
+   where not coalesce(p.is_test, false) or public.is_internal_account(p.id)
 ),
 escopos(escopo, ord) as (values ('sem_interna', 1), ('com_interna', 2)),
 b as (
   select e.escopo, base.*
-    from escopos e join base on (e.escopo = 'com_interna' or not base.is_interna)
-),
-preco(product_id, brl) as (
-  values ('dobroes_bolsa', 4.90), ('dobroes_bau', 9.90), ('dobroes_cofre', 24.90), ('dobroes_tesouro', 49.90)
+    from escopos e join base on (e.escopo = 'com_interna' or (not base.is_interna and not base.is_teste))
 ),
 compras as (
-  select b.escopo, dp.kind, dp.created_at, pr.brl
+  select b.escopo, dp.kind, dp.created_at, coalesce(pr.price_cents, 0) / 100.0 as brl
     from public.dobroes_purchases dp
     join b on b.id = dp.user_id
-    left join preco pr on pr.product_id = dp.product_id
+    left join public.dobroes_products pr on pr.product_id = dp.product_id
 ),
 externas as (
   select dp.created_at
     from public.dobroes_purchases dp
     join public.profiles p on p.id = dp.user_id
-   where dp.kind = 'real' and not coalesce(p.is_test, false) and not public.beta_eligible(p.id)
+   where dp.kind = 'real' and not coalesce(p.is_test, false) and not public.is_internal_account(p.id)
 ),
 flag as (
   select coalesce((select value from public.app_config where key = 'real_billing_enabled'), '(ausente)') as v
@@ -121,6 +126,7 @@ select escopo, semana,
   partidas_online_finalizadas, partidas_ranqueadas, push_ativos_agora,
   compras_real, compras_premio, compras_test, compras_ad,
   compras_real_externas, compras_real_externas_acum,
+  (select count(*) from externas x where x.created_at >= now() - interval '7 days') as alerta_real_nao_marcada,
   vales_iniciados, vales_aplicados, vales_pendentes, contas_gastaram_dobroes,
   receita_bruta_brl, round(receita_bruta_brl * 0.85, 2) as receita_liquida_brl,
   receita_bruta_acum_brl, round(receita_bruta_acum_brl * 0.85, 2) as receita_liquida_acum_brl,
