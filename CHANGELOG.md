@@ -9,6 +9,13 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Sem versão do app] — 2026-11-13 · Medição semanal do público e da receita (#94)
+
+Refs #94. Só leitura: sem mudança de banco, de flag nem de código; commit `[skip ci]`, sem versão do app. A rotina semanal que posta na #86 ainda não existe (depende das decisões do John na issue).
+
+### Adicionado
+- **`docs/medicao-semanal.sql`** (query do Game Designer com as 6 correções do Tech Lead): 4 linhas (escopo `sem_interna`/`com_interna` x semana `fechada`/`anterior`), só agregados, sem `user_id`, apelido nem e-mail. Semana fechada de segunda a domingo em `America/Sao_Paulo` (`w1 = date_trunc('week', now() at time zone 'America/Sao_Paulo')`, `w0 = w1 - 7 dias`) aplicada a novos, compras por `kind`, receita (bruta, líquida x 0,85 e acumulada), vales (`created_at`), gastos no razão e partidas finalizadas (`updated_at`). Conta interna = `public.beta_eligible(id)` (antes: "quem comprou `kind = 'real'`"). DAU/WAU/MAU, retorno e push com sufixo `_agora` ("no momento da consulta": `last_seen_at` guarda só a última visita); push ativo exclui `check_status = 'unregistered'`. Colunas novas: `compras_real_externas` (semana e acumulada), `real_billing_enabled` e `alertas` (WAU ≥ 60, DAU ≥ 30, compra real externa, vales < 80%). Cabeçalho com o contorno do project-ref. Primeira rodada (13/11, semana 02 a 08/11, sem interna): 36 perfis, DAU/WAU/MAU agora 1/15/32, 22 novos, 2 partidas finalizadas, 18 contas com push ativo, receita R$ 0,00 (a compra de 18/10 é interna).
+
 ## [Sem versão do app] — 2026-11-13 · Pré-voo e roteiro para ligar a venda de dobrões (#93)
 
 Refs #93. Sem mudança de banco, de flag nem de código Kotlin; commit `[skip ci]`, sem versão do app. Nada foi ligado: `real_billing_enabled` segue `'false'` e `dobroes_open_all()` não rodou.
