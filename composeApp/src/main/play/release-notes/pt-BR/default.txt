@@ -1,1 +1,1 @@
-Novo: vitoria por ausencia. Se o adversario aceita a partida online e nao entra, voce vence depois de 60 segundos, com uma faixa de contagem. Na ranqueada voce ganha os pontos normais (no maximo uma por dia contra o mesmo adversario), ele perde os dele e a milha gasta volta. Salas fantasmas somem mais rapido da partida rapida.
+Ajustes no servidor: as contas da equipe e de teste deixam de entrar nas medicoes do jogo, para os numeros mostrarem so os jogadores de verdade. Nada muda nas partidas, no placar, na loja ou nos premios.

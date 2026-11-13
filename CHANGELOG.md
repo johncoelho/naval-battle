@@ -9,6 +9,21 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.44.1] — 2026-11-13 · Contas internas fora da medição
+
+App 0.44.1 (versionCode 121). Só servidor e documentação; nenhum código do app mudou e nenhuma biblioteca nova. Banco: `supabase/internal_accounts.sql` (migração `internal_accounts`, **ainda não aplicada**: aguarda o OK do John; só colunas, funções, gatilhos e uma view novos, o app antigo segue igual).
+
+### Adicionado
+- **Contas internas (#96):** `profiles.is_internal` (o cliente não muda: gatilho `profiles_guard_is_internal`) e o predicado único `is_internal_account(id)` = `is_internal` OU conta QA em `allowed_players`. Só medição e relatório: nenhuma regra de jogo lê a coluna. A marca vem de `app_config.internal_accounts` (vazia no repositório, preenchida só no banco) e só soma: gatilho de perfil novo (`refresh_internal`) e passada `refresh_all_internal(false|true)`.
+- **View privada `dobroes_purchases_com_origem` (#96):** cada compra com apelido, kind, produto, dobrões, `valor_brl`, data, `interna` e `teste`; sem e-mail, `purchase_token` nem `order_id`; `revoke` de public/anon/authenticated, só `service_role`.
+- **`dobroes_products.price_cents` (#96):** preço de tabela (490/990/2490/4990), fonte única da view e da medição.
+
+### Alterado
+- **`docs/medicao-semanal.sql` (#94/#96):** conta interna passa de `beta_eligible` para `is_internal_account` (pega a QA mesmo com `is_test = false` e a conta do dono pela lista própria); `sem_interna` exclui `is_test` e internas de todas as colunas e `com_interna` vira só comparação; receita por `price_cents` (sai a lista fixa de preços); coluna nova `alerta_real_nao_marcada` (compra real de conta não interna nos últimos 7 dias).
+
+### Testes
+- `supabase/tests/internal_accounts_ensaio.sql` (bloco que desfaz), rodado em produção em 13/11 com rollback total: passada 1/1/0, conta nova da lista nasce interna, view t/t/f a R$ 4,90, anon e authenticated negados, `service_role` lê, trava, `is_test_user` inalterado, e na semana fechada da medição só o jogador normal entra (perfis +1, compra real +1, R$ 4,90, alerta 1). QA_TEST_PLAN: MED-01 a MED-04.
+
 ## [Sem versão do app] — 2026-11-13 · Medição semanal do público e da receita (#94)
 
 Refs #94. Só leitura: sem mudança de banco, de flag nem de código; commit `[skip ci]`, sem versão do app. A rotina semanal que posta na #86 ainda não existe (depende das decisões do John na issue).
