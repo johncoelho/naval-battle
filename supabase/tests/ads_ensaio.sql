@@ -45,6 +45,14 @@
 --   comum_true=t/f                 'true': conta comum -> on e test_ads = false
 --   gate_0430=f/off                'true' com gate 0.43.1 (versao da #40) e ultimo aparelho 0.43.0 -> off
 --   gate_0431=t                    ultimo aparelho 0.43.1 -> on
+--   --- #95 (0.44.2): o que o aparelho viu no anuncio (ad_reward_report) ---
+--   report_dono=ok/earned          dono grava o desfecho de um vale pendente
+--   report_repetido=ignored/earned segunda gravacao nao sobrescreve
+--   report_invalido=invalid        desfecho fora de earned|closed_early|unavailable
+--   report_alheio=ignored/(nulo)   outra conta nao grava no vale de quem nao e dela
+--   report_aplicado=ignored/(nulo) vale ja aplicado nao e tocado
+--   report_status=pending/pending  o relatorio nao muda o status do vale nem o valor
+--   report_anon=f report_auth=t    anon sem execute; authenticated com execute
 
 do $$
 declare
@@ -233,6 +241,34 @@ begin
     values (b, '0.43.1', 'android', false, now());
   select * into s from public.ads_status('android');
   out := out || ' | gate_0431=' || s.enabled;
+
+  -- #95: relatorio do desfecho no aparelho (vales inseridos direto; o bloco desfaz tudo)
+  declare va uuid; vc uuid; vd uuid; vx text; oc text;
+  begin
+    insert into public.ad_vales (user_id, place, ref, amount) values (a, 'mile', 'ensaio-rep-1', 1) returning id into va;
+    insert into public.ad_vales (user_id, place, ref, amount, status, transaction_id, applied_day, applied_at)
+      values (a, 'mile', 'ensaio-rep-2', 1, 'applied', 'ensaio-rep-tx', public.brt_today(), now()) returning id into vc;
+    perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
+    vx := public.ad_reward_report(va, 'earned');
+    select client_outcome into oc from public.ad_vales where id = va;
+    out := out || ' | report_alheio=' || vx || '/' || coalesce(oc, '(nulo)');
+    perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
+    vx := public.ad_reward_report(va, 'earned');
+    select client_outcome into oc from public.ad_vales where id = va;
+    out := out || ' | report_dono=' || vx || '/' || oc;
+    vx := public.ad_reward_report(va, 'closed_early');
+    select client_outcome into oc from public.ad_vales where id = va;
+    out := out || ' | report_repetido=' || vx || '/' || oc;
+    insert into public.ad_vales (user_id, place, ref, amount) values (a, 'mile', 'ensaio-rep-3', 1) returning id into vd;
+    out := out || ' | report_invalido=' || public.ad_reward_report(vd, 'banana');
+    vx := public.ad_reward_report(vc, 'unavailable');
+    select client_outcome into oc from public.ad_vales where id = vc;
+    out := out || ' | report_aplicado=' || vx || '/' || coalesce(oc, '(nulo)');
+    select s0.status into vx from public.ad_reward_status(va) s0;
+    out := out || ' | report_status=' || vx || '/' || (select v.status from public.ad_vales v where v.id = va);
+    out := out || ' | report_anon=' || has_function_privilege('anon', 'public.ad_reward_report(uuid,text)', 'execute')
+              || ' report_auth=' || has_function_privilege('authenticated', 'public.ad_reward_report(uuid,text)', 'execute');
+  end;
 
   raise exception 'RESULTADO (rollback): %', out;
 end $$;

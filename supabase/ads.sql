@@ -60,6 +60,16 @@ create table if not exists public.ad_vales (
   applied_at     timestamptz
 );
 
+-- #95: o que o aparelho viu no anúncio (earned | closed_early | unavailable), só para medir. Nulo =
+-- app antigo ou o relatório não chegou. Não entra em nenhuma regra de pagamento nem de limite.
+alter table public.ad_vales add column if not exists client_outcome text;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'ad_vales_client_outcome_check') then
+    alter table public.ad_vales add constraint ad_vales_client_outcome_check
+      check (client_outcome is null or client_outcome in ('earned', 'closed_early', 'unavailable'));
+  end if;
+end $$;
+
 -- cada vitória, check-in e desafio dobra uma vez só (a milha conta só pelo limite do dia)
 create unique index if not exists ad_vales_one_per_ref
   on public.ad_vales (user_id, place, ref) where status = 'applied' and place <> 'mile';
@@ -332,6 +342,26 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function public.ad_reward_status(uuid) from public, anon;
 grant execute on function public.ad_reward_status(uuid) to authenticated;
+
+-- #95: o app conta o que viu no anúncio, logo depois do show(). Só o dono, só vale ainda pendente,
+-- grava uma vez (o vale aplicado fica como está: a Edge já provou que o anúncio foi visto). Não mexe
+-- em status, valor nem limite. Retorna ok | ignored (vale alheio, já aplicado ou já relatado) | invalid.
+create or replace function public.ad_reward_report(p_vale uuid, p_outcome text)
+returns text language plpgsql security definer set search_path = public as $$
+declare n integer;
+begin
+  if auth.uid() is null or p_vale is null or p_outcome is null
+     or p_outcome not in ('earned', 'closed_early', 'unavailable') then
+    return 'invalid';
+  end if;
+  update public.ad_vales
+     set client_outcome = p_outcome
+   where id = p_vale and user_id = auth.uid() and status = 'pending' and client_outcome is null;
+  get diagnostics n = row_count;
+  return case when n = 1 then 'ok' else 'ignored' end;
+end $$;
+revoke all on function public.ad_reward_report(uuid, text) from public, anon;
+grant execute on function public.ad_reward_report(uuid, text) to authenticated;
 
 -- ------------------------------------------------------------------ aplicação (só a Edge)
 
