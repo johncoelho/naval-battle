@@ -42,7 +42,7 @@ begin
   insert into public.app_config (key, value) values
     ('real_billing_enabled', 'false'), ('premio_beta_enabled', 'false'), ('beta_store_enabled', 'false')
     on conflict (key) do update set value = excluded.value;
-  insert into public.allowed_players (user_id, source, note) values (a, 'manual', 'ensaio-dobroes');
+  insert into public.allowed_players (user_id, source, note) values (a, 'qa', 'ensaio-dobroes');
   select d.product_id into p2 from public.dobroes_products d where d.product_id <> 'dobroes_tesouro' order by d.doubloons limit 1;
 
   -- DOB-19: Prêmio com a flag desligada, depois ligada, duas vezes
