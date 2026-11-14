@@ -26,6 +26,9 @@
 --   novos (profiles.created_at), compras por kind e receita (dobroes_purchases.created_at), vales
 --   iniciados/aplicados/pendentes (ad_vales.created_at), contas que gastaram dobrões (dobroes_ledger
 --   delta < 0, created_at), partidas online finalizadas e ranqueadas (online_matches.updated_at).
+-- #97 bloco B: DAU/WAU/retorno abaixo seguem APROXIMADOS (última visita). A série exata (D1/D7/D30 por
+--   coorte, ativos por dia e semana) vem de activity_days e sai em docs/medicao-retorno.sql; a coluna
+--   serie_atividade_desde mostra quando ela começou (coortes anteriores só têm o aproximado).
 -- Medidas "no momento da consulta" (só na linha 'fechada'; na 'anterior' ficam nulas): DAU/WAU/MAU
 --   e retorno 1/7 dias vêm de profiles.last_seen_at, que guarda só a última visita (não há
 --   histórico de sessões; retorno N dias = última visita >= criação + N dias, superestima); push
@@ -125,6 +128,7 @@ select escopo, semana,
   to_char(ini at time zone 'America/Sao_Paulo', 'YYYY-MM-DD') as semana_inicio,
   to_char((fim at time zone 'America/Sao_Paulo') - interval '1 day', 'YYYY-MM-DD') as semana_fim,
   perfis_reais, dau_agora, wau_agora, mau_agora, novos,
+  coalesce((select value from public.app_config where key = 'activity_series_start'), '(ainda nao existe)') as serie_atividade_desde,
   coorte_d1, retorno_d1, coorte_d7, retorno_d7,
   partidas_online_finalizadas, partidas_ranqueadas, push_ativos_agora,
   compras_real, compras_premio, compras_test, compras_ad,

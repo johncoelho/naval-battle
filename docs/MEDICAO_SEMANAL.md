@@ -59,3 +59,25 @@ Tarefa agendada da esteira (skill `esteira`), domingo à noite (a semana fecha n
 **Estado:** a consulta e este roteiro estão no repositório; a tarefa agendada **ainda não foi criada** (aguarda
 as decisões do PO para o John: contar a compra interna, bruta ou líquida, anúncio na receita, alertas
 extras, quem avisa, dia e hora). Ligar a venda real e qualquer gasto continuam pedindo o OK do John.
+
+## Retorno de verdade: `activity_days` (#97 bloco B, 0.44.4)
+
+Depois da migração `behavior_activity_days`, a série exata de retorno sai de `docs/medicao-retorno.sql`
+(views privadas `behavior_*`, só service_role): ativos por dia e por semana e retorno D1/D7/D30 por coorte
+semanal de criação, com `completa_dN` (coorte inteira já passou pelo dia N; senão a taxa é parcial).
+
+- **Quando a série começa:** em `app_config.activity_series_start` (o dia seguinte ao da aplicação), também
+  na coluna `serie_atividade_desde` de `docs/medicao-semanal.sql`. Antes disso a tabela não existia, então as
+  coortes anteriores continuam só com o retorno **aproximado** da consulta semanal (última visita) e o D30 de
+  uma coorte nova leva 30 dias para fechar. Enquanto a série não tem coorte fechada, não comparar com os
+  gatilhos de retorno do #86.
+- **O que D1 mede:** "abriu o app com conta e com rede" (a partida contra a IA conta, porque o ponto sai
+  como `in_match`; convidado e aparelho sem rede o dia todo não aparecem). Não é "jogou". Partidas contra bot
+  (#105) entram à parte quando `bot_matches` existir.
+- **Privacidade:** célula com menos de 5 contas vem nula (não reconstruir por subtração), exclusão de teste e
+  internas na leitura, nunca postar linha por conta; retenção de 90 dias (`select public.purge_activity();`
+  na rodada diária), então só coortes dos últimos 89 dias aparecem.
+- **Guardar a semana fechada:** a retenção apaga o que passa de 90 dias, então salve o resultado da semana
+  fechada (só agregados, na issue #86) antes de ela sair da janela; a semana de borda fica parcial.
+- **Retorno nulo:** `retorno_dN` também vem nulo quando quem voltou ou quem não voltou é menor que 5; taxa
+  nula com coorte preenchida = célula pequena.

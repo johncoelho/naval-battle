@@ -12,6 +12,8 @@
 -- * friend_ranked_allowed(): chave app_config 'friend_ranked_enabled' (1 = liga).
 --   Ligada durante o teste fechado para testar a ranqueada entre amigos sem
 --   depender da partida rápida; desligar no lançamento.
+-- * touch_presence também grava o dia de atividade da conta (activity_days, #97, supabase/behavior.sql):
+--   uma linha por conta por dia, na primeira batida do dia, em melhor esforço.
 -- * push_on_match (supabase/push.sql) não manda push de convite para quem
 --   desligou o recebimento.
 
@@ -77,6 +79,18 @@ begin
          accept_invites = coalesce(p_accept_invites, true),
          friend_online_push = coalesce(p_friend_online_push, friend_online_push)
    where id = me;
+
+  -- registro diário de atividade (#97, supabase/behavior.sql): uma linha por conta por dia, só na primeira
+  -- batida do dia (a última visita ainda era de antes de hoje, em Brasília). Qualquer erro, inclusive a
+  -- função ainda não existir, é engolido: registrar o dia nunca derruba a presença.
+  begin
+    if v_old_seen is null
+       or (v_old_seen at time zone 'America/Sao_Paulo')::date < public.brt_today() then
+      perform public.log_activity_day(me);
+    end if;
+  exception when others then
+    null;
+  end;
 
   -- só a transição fora -> online dispara; o ponto de cada minuto nunca
   if v_state = 'online'

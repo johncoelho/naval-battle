@@ -324,6 +324,7 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 | FR-03c | P1 | Depois do aceite (ou com B já amigo), A busca B de novo ou fica com a busca aberta | Resultado mostra "Amigo" em verde, nunca "Pedido enviado"; se B pediu para A, o resultado mostra Pedido recebido; depois de recusar, nada de botão Aceitar |
 | FR-03d | P1 | B pede amizade a A; A busca B | O resultado mostra **Aceitar**; um toque vira "Amigo" (duplo toque não manda dois aceites); recusado ou já aceito não mostra Aceitar (#20) |
 | FR-04 | P1 | Presença | Com os dois com jogo aberto: bolinha verde e "Jogar"; B em partida: "Em partida"; B fechado há mais de 2 min: "há X min" |
+| FR-04b | P2 | Conta (não convidado) com o jogo aberto e rede, no primeiro ponto do dia; depois jogar contra a IA (#97) | Só leitura pelo SQL (service_role, nunca postar linha por conta): uma linha em `activity_days` para o dia de hoje (Brasília), sem duplicar nos pontos seguintes; convidado não grava; o app não muda em nada |
 | FR-05 | P0 | A → Jogar em B → Casual | B vê popup "A te convidou · Casual · <modo>" (push se app fechado); aceitar inicia a partida |
 | FR-06 | P1 | Convite recusado | A vê a recusa; nada fica preso na tela |
 | FR-07 | P1 | B desliga "Receber convites de amigos" em Ajustes | A não consegue convidar B (sem Jogar); religar volta ao normal |

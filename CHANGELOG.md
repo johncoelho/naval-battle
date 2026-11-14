@@ -9,6 +9,23 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.44.4] — 2026-11-14 · Registro diário de atividade (#97, bloco B)
+
+App 0.44.4 (versionCode 124). Só servidor e docs: nenhum código do app mudou, nenhuma biblioteca nova e nenhuma tela nova; o app antigo e o novo seguem iguais. Banco: `supabase/behavior.sql` e a `touch_presence` de `supabase/presence.sql` (migrações `behavior_activity_days` e `presence_activity_day`; ensaio `supabase/tests/behavior_ensaio.sql` verde em produção com rollback, aplicação só depois do APROVADO do Tech Lead).
+
+### Adicionado
+- **`activity_days` (conta x dia, só `user_id` e `day`):** gravada pela `touch_presence` na primeira batida do dia (Brasília), em melhor esforço (erro engolido, a presença nunca cai). RLS sem política, `revoke all` de anon e authenticated, só service_role lê. Grava todas as contas; teste e internas saem na leitura (#96).
+- **Views privadas** `behavior_ativos_diarios`, `behavior_ativos_semanais` e `behavior_retorno_semanal` (D1/D7/D30 por coorte semanal, com `completa_dN`): `security_invoker`, só service_role, sem `user_id`, e toda célula com menos de 5 contas sai nula (`activity_min_cell`). O retorno_dN também sai nulo quando quem voltou ou quem não voltou é menor que 5: taxa nula com coorte preenchida = célula pequena, não erro.
+- **`purge_activity()`:** retenção de 90 dias, chamada na rodada diária da esteira (como `purge_moderation`). Apagar a conta apaga o histórico (cascata).
+- **`docs/medicao-retorno.sql`** e coluna `serie_atividade_desde` em `docs/medicao-semanal.sql`; `docs/MEDICAO_SEMANAL.md` explica a série, o aviso de início e o que D1 mede.
+- **Privacidade:** linha nova no inventário de `site/privacy.html` (pt, en, es).
+
+### Conhecido
+- D1 mede "abriu o app com conta e com rede" (a partida contra a IA conta, porque durante ela o ponto sai como `in_match`; convidado e aparelho sem rede o dia todo não aparecem). Partidas contra bot (#105) ficam à parte quando `bot_matches` existir; o ponto de encaixe está em `behavior.sql`.
+- A série real começa no dia seguinte ao da aplicação (`activity_series_start`); coortes anteriores seguem só com a medição aproximada.
+
+Ajustes internos de medicao e estabilidade do servidor, para entender melhor como o jogo e usado e melhorar o app. Nada muda no jogo, nas partidas, na loja nem nos premios.
+
 ## [Site] — 2026-11-14 · Reembolso e termos de uso
 
 Só `site/`; sem versão do app, sem banco. [skip ci] (publica pelo `pages.yml` à mão). Parte do site do #88 e item 4 do #92.

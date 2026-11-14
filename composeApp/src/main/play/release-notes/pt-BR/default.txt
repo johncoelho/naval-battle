@@ -1,1 +1,1 @@
-Correcao na vitoria por ausencia: quando o adversario aceita a partida e fecha o app logo em seguida, quem ficou agora vence em cerca de 1 minuto, em vez de esperar para sempre. A regra olha se o adversario continua dando sinal de vida, e nao so se ele apareceu uma vez. Partidas normais nao mudam, nem placar, loja ou premios.
+Ajustes internos de medicao e estabilidade do servidor, para entender melhor como o jogo e usado e melhorar o app. Nada muda no jogo, nas partidas, na loja nem nos premios.
