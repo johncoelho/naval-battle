@@ -2264,6 +2264,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val unit = AdRules.unitFor(place, rewardedAds.buildUsesTestAds, adsStatus?.testAds ?: true, rewardedAds.runsOnEmulator)
         val audience = AgeRules.audience(ensureAgeBand())
         val outcome = rewardedAds.show(unit, session.userId, vale, audience)
+        // #95: conta ao servidor o que o aparelho viu (só medição; falha não muda o fluxo)
+        authed { s -> cloud.adRewardReport(s, vale, AdRules.reportCode(outcome)) }
         var confirmed: AdValeStatus? = null
         if (outcome == AdShowOutcome.EARNED) {
             // assistiu até o fim: a vitória não volta a oferecer, mesmo se a confirmação atrasar

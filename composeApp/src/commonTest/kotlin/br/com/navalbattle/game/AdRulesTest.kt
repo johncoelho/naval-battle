@@ -129,6 +129,15 @@ class AdRulesTest {
     }
 
     @Test
+    fun desfechoRelatadoAoServidor() {
+        // #95: os três códigos que `ad_reward_report` aceita, um por desfecho, sem repetição
+        assertEquals("earned", AdRules.reportCode(AdShowOutcome.EARNED))
+        assertEquals("closed_early", AdRules.reportCode(AdShowOutcome.CLOSED_EARLY))
+        assertEquals("unavailable", AdRules.reportCode(AdShowOutcome.UNAVAILABLE))
+        assertEquals(AdShowOutcome.entries.size, AdShowOutcome.entries.map { AdRules.reportCode(it) }.toSet().size)
+    }
+
+    @Test
     fun avisoQuandoOServidorRecusaOVale() {
         assertNull(AdRules.startNotice("ok"))
         assertEquals(K.AD_LIMIT, AdRules.startNotice("limit"))

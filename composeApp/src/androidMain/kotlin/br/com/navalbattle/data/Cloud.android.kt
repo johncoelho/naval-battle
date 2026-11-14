@@ -968,6 +968,12 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(AdStart(o.optString("status", "off"), o.stringOrNull("vale"), o.optInt("amount", 0)))
     }
 
+    actual suspend fun adRewardReport(session: Session, vale: String, outcome: String): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_vale", vale).put("p_outcome", outcome)
+        post("/rest/v1/rpc/ad_reward_report", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun adRewardStatus(session: Session, vale: String): CloudResult<AdValeStatus> = call {
         val body = JSONObject().put("p_vale", vale)
         val o = JSONArray(post("/rest/v1/rpc/ad_reward_status", body, token = session.accessToken)).getJSONObject(0)

@@ -689,6 +689,13 @@ expect class CloudApi() {
     /** Pede o vale de um anúncio: [ref] e [amount] só no lugar "win" (o servidor corta no teto). */
     suspend fun adRewardStart(session: Session, place: String, ref: String?, amount: Int?): CloudResult<AdStart>
 
+    /**
+     * Relata o desfecho que o aparelho viu no anúncio (earned | closed_early | unavailable), só para
+     * medição (#95). Melhor esforço: o resultado não muda nada no fluxo; o servidor ignora vale alheio,
+     * já aplicado ou já relatado.
+     */
+    suspend fun adRewardReport(session: Session, vale: String, outcome: String): CloudResult<Unit>
+
     /** Situação do vale depois do anúncio (applied | pending | expired | unknown) e o valor creditado. */
     suspend fun adRewardStatus(session: Session, vale: String): CloudResult<AdValeStatus>
 

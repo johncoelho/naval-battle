@@ -117,6 +117,17 @@ object AdRules {
         }
     }
 
+    /**
+     * Código que o app relata ao servidor depois do `show()` (`ad_reward_report`, #95), só para
+     * medir onde o vale pendente nasce: earned = assistiu até o fim, closed_early = fechou antes,
+     * unavailable = nem carregou ou falhou ao exibir. Não decide prêmio nem limite.
+     */
+    fun reportCode(outcome: AdShowOutcome): String = when (outcome) {
+        AdShowOutcome.EARNED -> "earned"
+        AdShowOutcome.CLOSED_EARLY -> "closed_early"
+        AdShowOutcome.UNAVAILABLE -> "unavailable"
+    }
+
     /** Aviso quando o servidor recusa o vale antes do anúncio (ok | off | limit | not_eligible | already). */
     fun startNotice(status: String): K? = when (status) {
         "ok" -> null
