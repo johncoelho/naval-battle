@@ -1,5 +1,5 @@
--- Ensaio que desfaz tudo (#85, 0.44.0): vitória por ausência (supabase/walkover.sql).
--- Rode no SQL Editor do projeto cwtslesnthbenxswdcbv ANTES de aplicar a migração `walkover`: cole o
+-- Ensaio que desfaz tudo (#85, 0.44.0; sinal por recência na 0.44.3): vitória por ausência (supabase/walkover.sql).
+-- Rode no SQL Editor do projeto cwtslesnthbenxswdcbv ANTES de aplicar a migração `walkover_signal_fresh`: cole o
 -- texto inteiro de walkover.sql e este bloco na MESMA execução. O raise no fim cancela a transação
 -- inteira, DDL inclusive, e devolve o resultado na mensagem de erro.
 -- Usuários e salas fictícios criados dentro do bloco (nenhuma conta real nem QA é tocada). As salas
@@ -15,8 +15,15 @@
 --   w2_de_novo=already vencedor_host=true segunda chamada é idempotente (nada regravado)
 --   w2_ausente=already vencedor_host=true o ausente que volta lê o mesmo resultado
 --   w2_terceiro=0 linhas                  quem não está na sala não resolve
---   w3=signal                             presença do adversário depois da entrada cancela
---   w3_msg=signal                         uma mensagem dele depois da entrada também (app antigo)
+--   w3=signal                             presença FRESCA (10 s) do adversário cancela
+--   w3_msg=signal                         uma mensagem FRESCA (5 s) dele também (app antigo)
+--   w3c=signal/active                     batida de 10 s atrás, 90 s depois da entrada: sem WO
+--   w3d=resolved                          batida de 45 s atrás (velha, passou de 30 s): WO
+--   w3e_fresca=signal w3e_velha=resolved  mensagem de 5 s cancela; a de 90 s atrás não
+--   on23b=resolved sala=abandoned/walkover=true winner_host=true msgs=QUIT|WO(guest) DROP|WO(host)
+--                                         join real, HELLO+batida automáticos 0,2 s depois, 90 s de silêncio
+--   on23c=abandoned                       o mesmo, só pelo online_heartbeat do anfitrião
+--   cfg_ausente: fresca=signal velha=resolved   sem a chave walkover_fresh_seconds vale o padrão 30
 --   w4=no_self_signal                     quem reivindica também precisa ter dado sinal
 --   w5_heartbeat=abandoned                o heartbeat de quem ficou resolve sem cliente novo
 --   w6_reconexao=active                   o heartbeat do ausente antes do claim impede o WO
@@ -35,12 +42,14 @@
 --   w14b_sem_gasto=sem refund             sem milha gasta, nada volta
 --   w15_fantasma_invisivel=0 fresco_visivel=1 antigo_nulo_visivel=1   sala fantasma fora de find_quick_offer
 --   w16_varredura=abandoned/winner nulo   sala ativa sem sinal de ninguém vira abandoned sem vencedor
---   w16_com_sinal=active
+--   w16b_so_antigos=abandoned             só HELLO/batida antigos dos dois: a varredura fecha
+--   w16_com_sinal=active  (w16c)          batida fresca: a varredura não fecha
 do $$
 declare
   a uuid := gen_random_uuid(); b uuid := gen_random_uuid(); c uuid := gen_random_uuid();
   d uuid := gen_random_uuid(); e uuid := gen_random_uuid(); f uuid := gen_random_uuid();
   g uuid := gen_random_uuid(); h uuid := gen_random_uuid(); k uuid := gen_random_uuid(); l uuid := gen_random_uuid();
+  q uuid;
   room uuid := gen_random_uuid(); r uuid;
   out text := ''; szn text; x record; y record; n integer; v text; bal integer;
   t_old timestamptz := now() - interval '90 seconds';
@@ -78,13 +87,13 @@ begin
   out := out || format('w4=%s | ', x.outcome);
 
   -- ------------------------------------------------------------ W3: sinal do adversário cancela
-  update public.online_matches set host_seen_at = now() - interval '2 seconds', guest_seen_at = t_old + interval '10 seconds'
+  update public.online_matches set host_seen_at = now() - interval '2 seconds', guest_seen_at = now() - interval '10 seconds'
    where id = room;
   select * into x from public.resolve_walkover(room);
   out := out || format('w3=%s | ', x.outcome);
   update public.online_matches set guest_seen_at = null where id = room;
   insert into public.online_messages (match_id, sender_id, body, created_at)
-    values (room, b, 'FLEET|x', t_old + interval '20 seconds');
+    values (room, b, 'FLEET|x', now() - interval '5 seconds');
   select * into x from public.resolve_walkover(room);
   out := out || format('w3_msg=%s | ', x.outcome);
   delete from public.online_messages where match_id = room;
@@ -118,7 +127,7 @@ begin
   -- ------------------------------------------------------------ W6: reconexão antes do claim
   r := gen_random_uuid();
   insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, joined_at, host_seen_at)
-    values (r, a, b, 'A', 'B', 'active', t_old, t_old + interval '3 seconds');
+    values (r, a, b, 'A', 'B', 'active', t_old, now() - interval '2 seconds');
   perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
   perform * from public.online_heartbeat(r);                       -- o ausente aparece
   perform set_config('request.jwt.claims', json_build_object('sub', a, 'role', 'authenticated')::text, true);
@@ -246,12 +255,83 @@ begin
     values (r, a, b, 'A', 'B', 'active', now() - interval '200 seconds');
   l := gen_random_uuid();   -- reaproveita a variável como id da sala com sinal
   insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, joined_at, guest_seen_at)
-    values (l, a, b, 'A', 'B', 'active', now() - interval '200 seconds', now() - interval '100 seconds');
+    values (l, a, b, 'A', 'B', 'active', now() - interval '200 seconds', now() - interval '5 seconds');
+  q := gen_random_uuid();   -- w16b: só HELLO e batida antigos dos dois
+  insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, joined_at, host_seen_at, guest_seen_at)
+    values (q, a, b, 'A', 'B', 'active', now() - interval '200 seconds', now() - interval '100 seconds', now() - interval '100 seconds');
+  insert into public.online_messages (match_id, sender_id, body, created_at)
+    values (q, b, 'HELLO|Bravo', now() - interval '100 seconds');
   perform * from public.find_quick_offer(true, true);
+  out := out || format('w16b_so_antigos=%s ', (select om.status from public.online_matches om where om.id = q));
   out := out || format('w16_varredura=%s/winner %s ',
     (select om.status from public.online_matches om where om.id = r),
     case when (select om.winner_id from public.online_matches om where om.id = r) is null then 'nulo' else 'FALHOU' end);
   out := out || format('w16_com_sinal=%s | ', (select om.status from public.online_matches om where om.id = l));
+
+  -- ------------------------------------------------------------ casos da 0.44.3 (sinal por recência)
+  -- w3c e w3d: batida do convidado fresca x velha, 90 s depois da entrada
+  r := gen_random_uuid();
+  insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, joined_at, host_seen_at, guest_seen_at)
+    values (r, c, d, 'C', 'D', 'active', t_old, now() - interval '2 seconds', now() - interval '10 seconds');
+  perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+  select * into x from public.resolve_walkover(r);
+  out := out || format('w3c=%s/%s | ', x.outcome, (select om.status from public.online_matches om where om.id = r));
+  update public.online_matches set guest_seen_at = now() - interval '45 seconds' where id = r;
+  select * into x from public.resolve_walkover(r);
+  out := out || format('w3d=%s | ', x.outcome);
+
+  -- w3e: mensagem do convidado de 5 s atrás cancela; a de 90 s atrás não
+  r := gen_random_uuid();
+  insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, joined_at, host_seen_at)
+    values (r, c, d, 'C', 'D', 'active', t_old, now() - interval '2 seconds');
+  insert into public.online_messages (match_id, sender_id, body, created_at) values (r, d, 'FLEET|x', now() - interval '5 seconds');
+  select * into x from public.resolve_walkover(r);
+  out := out || format('w3e_fresca=%s ', x.outcome);
+  update public.online_messages set created_at = now() - interval '89 seconds' where match_id = r;
+  select * into x from public.resolve_walkover(r);
+  out := out || format('w3e_velha=%s | ', x.outcome);
+
+  -- on23b: join real, HELLO e batida automáticos logo depois, o convidado some; 90 s de silêncio
+  update public.online_matches set status = 'abandoned' where status = 'waiting';
+  r := gen_random_uuid();
+  insert into public.online_matches (id, host_id, host_name, is_quick_match, status) values (r, c, 'Alfa', true, 'waiting');
+  perform set_config('request.jwt.claims', json_build_object('sub', d, 'role', 'authenticated')::text, true);
+  perform * from public.join_online_match(r, 'Bravo');
+  perform * from public.online_heartbeat(r);
+  insert into public.online_messages (match_id, sender_id, body) values (r, d, 'HELLO|Bravo');
+  perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+  update public.online_matches set host_seen_at = now() - interval '2 seconds',
+      joined_at = t_old, guest_seen_at = t_old + interval '0.2 seconds' where id = r;
+  update public.online_messages set created_at = t_old + interval '0.2 seconds' where match_id = r;
+  select * into x from public.resolve_walkover(r);
+  select om.status, om.walkover into y from public.online_matches om where om.id = r;
+  select string_agg(om.body || '(' || case when om.sender_id = d then 'guest' else 'host' end || ')', ' ' order by om.id)
+    into v from public.online_messages om where om.match_id = r and om.body like '%|WO';
+  out := out || format('on23b=%s sala=%s/walkover=%s winner_host=%s msgs=%s | ', x.outcome, y.status, y.walkover, x.winner = c, v);
+
+  -- on23c: o mesmo, só pelo online_heartbeat do anfitrião
+  r := gen_random_uuid();
+  insert into public.online_matches (id, host_id, host_name, is_quick_match, status) values (r, c, 'Alfa', true, 'waiting');
+  perform set_config('request.jwt.claims', json_build_object('sub', d, 'role', 'authenticated')::text, true);
+  perform * from public.join_online_match(r, 'Bravo');
+  perform * from public.online_heartbeat(r);
+  insert into public.online_messages (match_id, sender_id, body) values (r, d, 'HELLO|Bravo');
+  perform set_config('request.jwt.claims', json_build_object('sub', c, 'role', 'authenticated')::text, true);
+  update public.online_matches set joined_at = t_old, guest_seen_at = t_old + interval '0.2 seconds' where id = r;
+  update public.online_messages set created_at = t_old + interval '0.2 seconds' where match_id = r;
+  perform * from public.online_heartbeat(r);
+  out := out || format('on23c=%s | ', (select om.status from public.online_matches om where om.id = r));
+
+  -- config ausente: vale o padrão de 30 s
+  delete from public.app_config where key = 'walkover_fresh_seconds';
+  r := gen_random_uuid();
+  insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, joined_at, host_seen_at, guest_seen_at)
+    values (r, c, d, 'C', 'D', 'active', t_old, now() - interval '2 seconds', now() - interval '10 seconds');
+  select * into x from public.resolve_walkover(r);
+  out := out || format('cfg_ausente: fresca=%s ', x.outcome);
+  update public.online_matches set guest_seen_at = now() - interval '45 seconds' where id = r;
+  select * into x from public.resolve_walkover(r);
+  out := out || format('velha=%s | ', x.outcome);
 
   raise exception 'RESULTADO (rollback): %', out;
 end $$;

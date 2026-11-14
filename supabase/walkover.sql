@@ -13,8 +13,11 @@
 -- 1. A sala `active` guarda `joined_at` (o instante do join). Sala anterior a esta migração fica sem
 --    `joined_at` e fora da regra.
 -- 2. SINAL de um comandante = a presença dele (`host/guest_seen_at`) ou uma linha dele em
---    `online_messages` posterior ao `joined_at`. Mensagem conta porque o app antigo, sem presença,
---    manda a frota (FLEET) ao terminar de posicionar.
+--    `online_messages`, posterior ao `joined_at` E RECENTE (dentro dos últimos `walkover_fresh_seconds`,
+--    30). Recência (0.44.3, QA reprovou a 0.44.1): o HELLO e a primeira batida do join chegam 0,2 s
+--    depois do `joined_at` e, se bastasse "posterior à entrada", o convidado que entra e some daria
+--    sinal para sempre. Quem sumiu para de bater e o sinal envelhece; quem joga bate a cada 3 s.
+--    Mensagem conta porque o app antigo, sem presença, manda a frota (FLEET) ao terminar de posicionar.
 -- 3. Passados `walkover_seconds` (60) do `joined_at` sem sinal do adversário, quem ficou vence por
 --    ausência: `resolve_walkover` grava a sala como `abandoned`, `winner_id` = quem ficou,
 --    `walkover` = true e as duas flags `*_result_recorded`. Escreve as linhas `QUIT|WO` (sender = o
@@ -50,7 +53,8 @@ create index if not exists online_matches_active_joined_idx
 insert into public.app_config (key, value) values
   ('walkover_seconds', '60'),
   ('ranked_wo_daily_pair_limit', '1'),
-  ('quick_host_fresh_seconds', '20')
+  ('quick_host_fresh_seconds', '20'),
+  ('walkover_fresh_seconds', '30')
 on conflict (key) do nothing;
 
 -- razão de milhas ganha o tipo 'refund' (a milha gasta que volta a quem ficou). A chave
@@ -71,19 +75,23 @@ end $$;
 
 -- ------------------------------------------------------------------ sinal de presença
 
--- O comandante deu sinal nesta sala depois da entrada? Interna: só as RPCs abaixo chamam.
+-- O comandante deu sinal RECENTE nesta sala, depois da entrada? Interna: só as RPCs abaixo chamam.
+-- Recente = dentro de `walkover_fresh_seconds` (30 s, piso de 6 s = 2 batidas) e posterior ao joined_at.
 create or replace function public.room_has_signal(p_match_id uuid, p_user uuid)
 returns boolean language sql security definer set search_path = public as $$
   select exists (
     select 1 from public.online_matches m
      where m.id = p_match_id and m.joined_at is not null
-       and ((m.host_id = p_user and m.host_seen_at > m.joined_at)
-         or (m.guest_id = p_user and m.guest_seen_at > m.joined_at))
+       and ((m.host_id = p_user and m.host_seen_at > m.joined_at
+             and m.host_seen_at > now() - make_interval(secs => greatest(public.config_int('walkover_fresh_seconds', 30), 6)))
+         or (m.guest_id = p_user and m.guest_seen_at > m.joined_at
+             and m.guest_seen_at > now() - make_interval(secs => greatest(public.config_int('walkover_fresh_seconds', 30), 6))))
   ) or exists (
     select 1 from public.online_messages om
       join public.online_matches m on m.id = om.match_id
      where om.match_id = p_match_id and om.sender_id = p_user
        and m.joined_at is not null and om.created_at > m.joined_at
+       and om.created_at > now() - make_interval(secs => greatest(public.config_int('walkover_fresh_seconds', 30), 6))
   );
 $$;
 revoke all on function public.room_has_signal(uuid, uuid) from public, anon, authenticated;
@@ -469,8 +477,7 @@ grant execute on function public.resolve_walkover(uuid) to authenticated;
 
 -- substitui online_heartbeat (online.sql): mesma assinatura e mesmo retorno. A novidade: depois do
 -- prazo, se o adversário ainda não deu sinal desde a entrada, a própria batida de quem ficou resolve o
--- WO (sem cron, e o app antigo também resolve). O teste barato (presença do adversário nula ou anterior
--- à entrada) evita travar a sala a cada batida de uma partida normal; um erro na resolução nunca
+-- WO (sem cron, e o app antigo também resolve). O teste barato (presença do adversário nula ou velha, mais antiga que `walkover_fresh_seconds`) evita travar a sala a cada batida de uma partida normal; um erro na resolução nunca
 -- derruba a batida.
 create or replace function public.online_heartbeat(p_match_id uuid)
 returns table (opponent_seen_secs integer)
@@ -496,7 +503,8 @@ begin
 
   if m.status = 'active' and m.joined_at is not null
      and now() >= m.joined_at + make_interval(secs => greatest(public.config_int('walkover_seconds', 60), 10))
-     and (other_seen is null or other_seen <= m.joined_at) then
+     and (other_seen is null
+          or other_seen < now() - make_interval(secs => greatest(public.config_int('walkover_fresh_seconds', 30), 6))) then
     begin
       perform public.resolve_walkover(p_match_id);
     exception when others then

@@ -17,6 +17,19 @@ Só `site/`; sem versão do app, sem banco. [skip ci] (publica pelo `pages.yml` 
 - **`terms.html` (pt, en, es):** seção nova "Reembolso" (política da Play: 48 h pelo app, depois a Google ou o desenvolvedor analisa; sem promessa sobre o saldo, porque o estorno ainda não está implementado). Título, descrição e h1 passam a "Termos de uso e regras da comunidade"; data de atualização 14/11/2026. Contato mantido em `joncqs@gmail.com`.
 - **Rodapé de `index.html`:** "Regras da comunidade" vira "Termos de uso e regras da comunidade" (`beta.html` não tem o link).
 
+## [0.44.3] — 2026-11-14 · Vitória por ausência: sinal por recência (bug da #85)
+
+App 0.44.3 (versionCode 123). Só servidor: nenhum código do app mudou e nenhuma biblioteca nova. Banco: `supabase/walkover.sql` (migração `walkover_signal_fresh`, mesma assinatura e mesmos `revoke`; aplicada só depois do APROVADO do Tech Lead). O app antigo e o novo seguem iguais.
+
+### Corrigido
+- **WO nunca resolvia com convidado que entrou e sumiu (#85, ON-23 reprovado na 0.44.1):** o `HELLO|` e a primeira batida do join chegam 0,2 s depois do `joined_at`, e `room_has_signal` contava qualquer presença ou mensagem posterior à entrada, então o convidado dava "sinal" para sempre (o teste barato do `online_heartbeat` também nunca disparava). Agora o sinal tem de ser **recente**: presença ou mensagem do comandante nos últimos `walkover_fresh_seconds` (chave nova em `app_config`, padrão 30 s = 10 batidas de 3 s, piso de 6 s) e posterior ao `joined_at`. O teste barato do `online_heartbeat` vira `other_seen is null or other_seen < now() - fresh`. `resolve_walkover` e `sweep_empty_rooms` herdam. Os 60 s, a regra de pontos e o protocolo `QUIT|WO`/`DROP|WO` ficam como estavam.
+
+### Conhecido
+- A faixa "Adversário não entrou" e a contagem do app 0.44.x seguem sem aparecer (`WalkoverRules.hasSignal` do cliente tem o mesmo defeito); quem ficou vence do mesmo jeito pelo `online_heartbeat` e o app já trata o `QUIT|WO`. Ajuste do cliente fica em issue de melhoria separada.
+
+### Testes
+- `supabase/tests/walkover_ensaio.sql` ampliado (ON-23b, ON-23c, w3c, w3d, w3e, w16b, w16c e config ausente; w3, w3_msg, w6 e w6b reescritos com tempos frescos). Rodado em produção com rollback total: o ensaio novo contra o banco antigo reproduz o bug (`on23b=signal`, sala `active`); com o arquivo novo, todos os casos antigos e novos passam. `ranked_elo_ensaio.sql` com o mesmo resultado de antes. QA_TEST_PLAN: ON-23b.
+
 ## [0.44.2] — 2026-11-14 · Relato do anúncio no aparelho e link de convite com origem
 
 App 0.44.2 (versionCode 122). Duas mudanças pequenas de app, nenhuma biblioteca nova. Banco: `supabase/ads.sql` (migração `ad_reward_report`, **aplicada em produção em 14/11** depois do APROVADO do Tech Lead, com o ensaio `report_*` conferido; coluna e RPC novas e aditivas, o app antigo segue igual). Não muda limite, valor, `ads_enabled`, `ads_min_app_version` nem a ordem vale/anúncio.
