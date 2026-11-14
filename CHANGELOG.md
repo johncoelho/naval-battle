@@ -9,6 +9,14 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Site] — 2026-11-14 · Reembolso e termos de uso
+
+Só `site/`; sem versão do app, sem banco. [skip ci] (publica pelo `pages.yml` à mão). Parte do site do #88 e item 4 do #92.
+
+### Alterado
+- **`terms.html` (pt, en, es):** seção nova "Reembolso" (política da Play: 48 h pelo app, depois a Google ou o desenvolvedor analisa; sem promessa sobre o saldo, porque o estorno ainda não está implementado). Título, descrição e h1 passam a "Termos de uso e regras da comunidade"; data de atualização 14/11/2026. Contato mantido em `joncqs@gmail.com`.
+- **Rodapé de `index.html`:** "Regras da comunidade" vira "Termos de uso e regras da comunidade" (`beta.html` não tem o link).
+
 ## [0.44.2] — 2026-11-14 · Relato do anúncio no aparelho e link de convite com origem
 
 App 0.44.2 (versionCode 122). Duas mudanças pequenas de app, nenhuma biblioteca nova. Banco: `supabase/ads.sql` (migração `ad_reward_report`, **aplicada em produção em 14/11** depois do APROVADO do Tech Lead, com o ensaio `report_*` conferido; coluna e RPC novas e aditivas, o app antigo segue igual). Não muda limite, valor, `ads_enabled`, `ads_min_app_version` nem a ordem vale/anúncio.
