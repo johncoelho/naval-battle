@@ -10,7 +10,14 @@ import br.com.navalbattle.i18n.Lang
 
 private const val CODE_LENGTH = 6
 private const val CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-private const val STORE_LINK = "https://play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic"
+private const val STORE_PAGE = "https://play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic"
+
+/**
+ * Link do convite com origem (#88): a Play registra o `referrer` na ficha e o Play Console mostra as
+ * instalações por origem, sem biblioteca nova. A origem é só o canal (`convite`); nunca o código nem
+ * nada que identifique quem convidou.
+ */
+internal const val STORE_LINK = STORE_PAGE + "&referrer=utm_source%3Dconvite%26utm_medium%3Dorganic"
 
 /** Valores só para MOSTRAR antes do resgate; quem paga é o servidor (`referral_doubloons_*`, `referral_total_limit`). */
 internal const val REFERRAL_SHOWN_DOUBLOONS = 100
@@ -34,7 +41,8 @@ fun referralShareText(code: String, lang: Lang): String {
         Lang.EN -> key.en
         Lang.ES -> key.es
     }
-    return raw.replace("%1", STORE_LINK).replace("%2", code)
+    // o código primeiro: o link tem "%26" e "%3D" (referrer codificado), e "%2" casaria dentro dele
+    return raw.replace("%2", code).replace("%1", STORE_LINK)
 }
 
 /** Resposta de `referral_redeem`. */

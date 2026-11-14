@@ -32,7 +32,26 @@ class ReferralTest {
             val text = referralShareText("K7MQ2X", lang)
             assertTrue("K7MQ2X" in text, "código em ${lang.code}")
             assertTrue("play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic" in text, "link em ${lang.code}")
-            assertFalse("%1" in text || "%2" in text, "marcador sobrando em ${lang.code}")
+            // o link codificado tem "%26" e "%3D": confere os marcadores só no texto fora dele
+            val semLink = text.replace(STORE_LINK, "")
+            assertFalse("%1" in semLink || "%2" in semLink, "marcador sobrando em ${lang.code}")
+            assertTrue(STORE_LINK in text, "o link inteiro, sem o código dentro, em ${lang.code}")
+        }
+    }
+
+    @Test
+    fun linkDoConviteTemAOrigemEMaisNada() {
+        // #88: a Play lê o referrer codificado; só o canal, nunca o código nem quem convidou
+        assertEquals(
+            "https://play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic" +
+                "&referrer=utm_source%3Dconvite%26utm_medium%3Dorganic",
+            STORE_LINK
+        )
+        for (lang in Lang.entries) {
+            val text = referralShareText("K7MQ2X", lang)
+            assertTrue("&referrer=utm_source%3Dconvite" in text, "origem em ${lang.code}")
+            val link = text.substringAfter("https://").substringBefore(" ")
+            assertFalse("K7MQ2X" in link, "o link não leva o código em ${lang.code}")
         }
     }
 
