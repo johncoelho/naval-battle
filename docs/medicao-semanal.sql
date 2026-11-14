@@ -1,7 +1,10 @@
 -- Medição semanal do público e da receita (issue #94, plano #86; contas internas pela #96).
 -- SÓ LEITURA: nenhum insert, update, delete nem chamada que grave. Não altera código, banco nem flags.
 --
--- Como rodar (armadilha do project-ref): `supabase db query --linked` lê o projeto de
+-- Como rodar neste checkout: `supabase db query --linked` só funciona com a variável
+--   SUPABASE_PROJECT_ID=cwtslesnthbenxswdcbv supabase db query --linked -o csv -f docs/medicao-semanal.sql
+-- (sem ela o comando não acha o projeto). Detalhes, rotina e aproximações: docs/MEDICAO_SEMANAL.md.
+-- Alternativa (armadilha do project-ref): `supabase db query --linked` lê o projeto de
 -- supabase/.temp/project-ref do diretório atual, e o repositório não guarda esse arquivo. Rode
 -- numa pasta temporária, fora do repositório:
 --   W=$(mktemp -d); mkdir -p "$W/supabase/.temp"
