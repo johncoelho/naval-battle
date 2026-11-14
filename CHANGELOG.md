@@ -9,6 +9,20 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.44.2] — 2026-11-14 · Relato do anúncio no aparelho e link de convite com origem
+
+App 0.44.2 (versionCode 122). Duas mudanças pequenas de app, nenhuma biblioteca nova. Banco: `supabase/ads.sql` (migração `ad_reward_report`, **aplicada em produção em 14/11** depois do APROVADO do Tech Lead, com o ensaio `report_*` conferido; coluna e RPC novas e aditivas, o app antigo segue igual). Não muda limite, valor, `ads_enabled`, `ads_min_app_version` nem a ordem vale/anúncio.
+
+### Adicionado
+- **Relato do desfecho do anúncio (#95):** `ad_vales.client_outcome` (`earned`, `closed_early`, `unavailable`) e a RPC `ad_reward_report(p_vale, p_outcome)` (security definer, só `authenticated`, só o dono, só vale `pending`, grava uma vez). O app chama em melhor esforço logo depois do `show()` (`Cloud.adRewardReport`, mapeamento em `AdRules.reportCode`). Serve só para medir: `earned` + vencido = falha de SSV; `closed_early`/`unavailable` vencidos = abandono ou sem preenchimento. Consulta em `docs/medicao-vales.sql`. App antigo não chama: o vale fica com `client_outcome` nulo.
+- **Roteiro da medição semanal (#94):** `docs/MEDICAO_SEMANAL.md` (medidas, aproximações, gatilhos, rotina) e registro de que `supabase db query --linked` neste checkout só funciona com `SUPABASE_PROJECT_ID=cwtslesnthbenxswdcbv`. A tarefa agendada ainda não foi criada.
+
+### Alterado
+- **Link de convite com origem (#88, só a parte do app):** o link da Play do texto de compartilhamento do #44 leva `&referrer=utm_source%3Dconvite%26utm_medium%3Dorganic`, para o Play Console mostrar as instalações por origem. Só o canal: o link não leva o código nem quem convidou. Botão de instalar e política de reembolso do site **não entram** (dependem do #92).
+
+### Testes
+- `AdRulesTest.desfechoRelatadoAoServidor`, `ReferralTest.linkDoConviteTemAOrigemEMaisNada`; ensaio `supabase/tests/ads_ensaio.sql` com os casos `report_*` (rodado em produção com rollback total, a coluna e a função não ficaram lá). QA_TEST_PLAN: ADS-27, REF-08.
+
 ## [0.44.1] — 2026-11-13 · Contas internas fora da medição
 
 App 0.44.1 (versionCode 121). Só servidor e documentação; nenhum código do app mudou e nenhuma biblioteca nova. Banco: `supabase/internal_accounts.sql` (migração `internal_accounts`, **ainda não aplicada**: aguarda o OK do John; só colunas, funções, gatilhos e uma view novos, o app antigo segue igual).

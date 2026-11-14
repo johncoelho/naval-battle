@@ -1,1 +1,1 @@
-Ajustes no servidor: as contas da equipe e de teste deixam de entrar nas medicoes do jogo, para os numeros mostrarem so os jogadores de verdade. Nada muda nas partidas, no placar, na loja ou nos premios.
+Melhoria nos bastidores do anuncio premiado: agora o app conta ao servidor se o anuncio foi assistido, fechado antes ou nao carregou, para a equipe entender os creditos que demoram. O link de convite que voce compartilha passa a registrar a origem na ficha da Play. Nada muda nas partidas, no placar, na loja nem nos premios.
