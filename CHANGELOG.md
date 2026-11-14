@@ -19,7 +19,7 @@ Só `site/`; sem versão do app, sem banco. [skip ci] (publica pelo `pages.yml` 
 
 ## [0.44.3] — 2026-11-14 · Vitória por ausência: sinal por recência (bug da #85)
 
-App 0.44.3 (versionCode 123). Só servidor: nenhum código do app mudou e nenhuma biblioteca nova. Banco: `supabase/walkover.sql` (migração `walkover_signal_fresh`, mesma assinatura e mesmos `revoke`; aplicada só depois do APROVADO do Tech Lead). O app antigo e o novo seguem iguais.
+App 0.44.3 (versionCode 123). Só servidor: nenhum código do app mudou e nenhuma biblioteca nova. Banco: `supabase/walkover.sql` (migração `walkover_signal_fresh`, mesma assinatura e mesmos `revoke`; **aplicada em produção em 14/11** depois do APROVADO do Tech Lead, com o ensaio ON-23b/ON-23c conferido). O app antigo e o novo seguem iguais.
 
 ### Corrigido
 - **WO nunca resolvia com convidado que entrou e sumiu (#85, ON-23 reprovado na 0.44.1):** o `HELLO|` e a primeira batida do join chegam 0,2 s depois do `joined_at`, e `room_has_signal` contava qualquer presença ou mensagem posterior à entrada, então o convidado dava "sinal" para sempre (o teste barato do `online_heartbeat` também nunca disparava). Agora o sinal tem de ser **recente**: presença ou mensagem do comandante nos últimos `walkover_fresh_seconds` (chave nova em `app_config`, padrão 30 s = 10 batidas de 3 s, piso de 6 s) e posterior ao `joined_at`. O teste barato do `online_heartbeat` vira `other_seen is null or other_seen < now() - fresh`. `resolve_walkover` e `sweep_empty_rooms` herdam. Os 60 s, a regra de pontos e o protocolo `QUIT|WO`/`DROP|WO` ficam como estavam.
