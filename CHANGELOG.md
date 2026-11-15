@@ -9,6 +9,14 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Testes] — 2026-11-15 · Ensaio de dobrões alinhado à regra da #35
+
+Só `supabase/tests/` e docs; sem versão do app, sem banco. [skip ci].
+
+### Alterado
+- **`supabase/tests/dobroes_ensaio.sql`:** QA01 entra como `source = 'qa'` (desde a #35 só `qa` é elegível em `beta_eligible`). O gate DOB-20 passa a ser ensaiado com QA02 como `manual` (`gate_antes=1`, `gate_depois=0`) e uma linha só com e-mail como `play` (`gate_play=1`), e confirma `gate_qa=0`: QA fica fora do `dobroes_gate_licenca()`. Rodado no banco no bloco que desfaz, todos os resultados esperados bateram.
+- **`docs/QA_TEST_PLAN.md` (DOB-14 e DOB-20):** nota de que QA não entra no gate e do caveat do "Not now" da folha da Play.
+
 ## [0.44.5] — 2026-11-15 · Comparativo da vitória online sempre visível (#103)
 
 App 0.44.5 (versionCode 125). Só interface: sem texto, token, componente, dependência nem banco novos.

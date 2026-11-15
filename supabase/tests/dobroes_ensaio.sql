@@ -23,8 +23,10 @@
 --   promocao=promo_refused                                                         (DOB-15)
 --   real_store_on=credited        compra real de testador com vitrine ligada       (DOB-18)
 --   real_store_off=billing_off    mesma compra com as duas flags desligadas        (DOB-18)
---   gate_antes=1                  conta sem 0.33.3 aparece no gate                 (DOB-20)
+--   gate_qa=0                     QA01 (source 'qa') fica fora do gate, sem device_check (#35) (DOB-20)
+--   gate_antes=1                  conta extra 'manual' sem 0.33.3 aparece no gate  (DOB-20)
 --   gate_depois=0                 com device_check 0.33.3 some                     (DOB-20)
+--   gate_play=1                   conta extra 'play' (so e-mail) sem 0.33.3 aparece (DOB-20)
 --   versao_10_vs_9=true           app_version_at_least('0.33.10','0.33.3')         (DOB-20)
 --   versao_antiga=false           app_version_at_least('0.33.2','0.33.3')          (DOB-20)
 
@@ -42,7 +44,7 @@ begin
   insert into public.app_config (key, value) values
     ('real_billing_enabled', 'false'), ('premio_beta_enabled', 'false'), ('beta_store_enabled', 'false')
     on conflict (key) do update set value = excluded.value;
-  insert into public.allowed_players (user_id, source, note) values (a, 'manual', 'ensaio-dobroes');
+  insert into public.allowed_players (user_id, source, note) values (a, 'qa', 'ensaio-dobroes');
   select d.product_id into p2 from public.dobroes_products d where d.product_id <> 'dobroes_tesouro' order by d.doubloons limit 1;
 
   -- DOB-19: Prêmio com a flag desligada, depois ligada, duas vezes
@@ -93,7 +95,7 @@ begin
   select s.status into st from public.apply_dobroes_purchase(a, 'dobroes_tesouro', 'ensaio-dob-e5-' || replace(gen_random_uuid()::text, '-', ''), 'o12', 1, 0, true, null) s;
   out := out || 'promocao=' || st || ' | ';
 
-  -- DOB-18: compra real de testador (a, manual, fora da licença da Play)
+  -- DOB-18: compra real de conta de brinde (a, QA01 = source 'qa', fora da licença da Play)
   update public.app_config set value = 'true' where key = 'beta_store_enabled';
   select s.status into st from public.apply_dobroes_purchase(a, 'dobroes_tesouro', 'ensaio-dob-r1-' || replace(gen_random_uuid()::text, '-', ''), 'o13', null, 0, true, null) s;
   out := out || 'real_store_on=' || st || ' | ';
@@ -101,12 +103,19 @@ begin
   select s.status into st from public.apply_dobroes_purchase(a, 'dobroes_tesouro', 'ensaio-dob-r2-' || replace(gen_random_uuid()::text, '-', ''), 'o14', null, 0, true, null) s;
   out := out || 'real_store_off=' || st || ' | ';
 
-  -- DOB-20: gate da licença e comparação de versão
+  -- DOB-20: gate da licença e comparação de versão. QA (source 'qa') não entra no gate (#35);
+  -- b vira testador 'manual' só aqui, e uma linha só com e-mail faz o papel do testador 'play'.
   select count(*) into n from public.dobroes_gate_licenca() g where g.user_id = a;
+  out := out || 'gate_qa=' || n || ' | ';
+  insert into public.allowed_players (user_id, source, note) values (b, 'manual', 'ensaio-gate');
+  select count(*) into n from public.dobroes_gate_licenca() g where g.user_id = b;
   out := out || 'gate_antes=' || n || ' | ';
-  insert into public.device_checks (user_id, app_version, platform, test_lab) values (a, '0.33.3', 'android', true);
-  select count(*) into n from public.dobroes_gate_licenca() g where g.user_id = a;
+  insert into public.device_checks (user_id, app_version, platform, test_lab) values (b, '0.33.3', 'android', true);
+  select count(*) into n from public.dobroes_gate_licenca() g where g.user_id = b;
   out := out || 'gate_depois=' || n || ' | ';
+  insert into public.allowed_players (email, source, note) values ('ensaio-gate-play@example.invalid', 'play', 'ensaio-gate');
+  select count(*) into n from public.dobroes_gate_licenca() g where g.email = 'ensaio-gate-play@example.invalid';
+  out := out || 'gate_play=' || n || ' | ';
   out := out || 'versao_10_vs_9=' || public.app_version_at_least('0.33.10', '0.33.3') || ' | ';
   out := out || 'versao_antiga=' || public.app_version_at_least('0.33.2', '0.33.3') || ' | ';
 
