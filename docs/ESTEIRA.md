@@ -92,6 +92,7 @@ complexidade, usando os parâmetros da ferramenta Agent/Task, e **informa os doi
 0. **PENDENTE** (#26): `select public.push_check_daily();` no SQL, quando o John incluir este passo na
    skill `esteira`. Só então a conferência diária roda sozinha. Texto devolvido entra no relatório
    (resumo para o John); null = nada a dizer. Enquanto não entrar, não há conferência automática.
+0b. **Manutenção diária** (passo 0 da skill `esteira`): `select * from public.purge_moderation();`, `select public.purge_activity();` e `select public.purge_bots();` no SQL, e `select * from public.reports_pending();` para as denúncias abertas.
 1. Suporte faz a triagem (issues novas e feedback pendente).
 2. PO escreve proposta para melhorias novas e ordena a Fila.
 3. Se nada estiver **Em andamento**: pega **toda a Fila** como um lote → Tech Lead desenha (se preciso) → Dev

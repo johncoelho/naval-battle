@@ -9,6 +9,14 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Processo] — 2026-11-15 · Manutenção diária e decisão dos pontos de bot
+
+Só docs e processo; sem versão do app, sem banco. [skip ci].
+
+### Alterado
+- **Skill `esteira` e `docs/ESTEIRA.md` (passo 0):** a manutenção diária passa a incluir `select public.purge_activity();` (#97) e `select public.purge_bots();` (#105), ao lado de `purge_moderation()`.
+- **`HISTORY.md` e `MEMORY.md`:** registrada a decisão do John de que pontos de ranqueada contra bot contam na `ranked_season_stats`; a pendência dele cai, sobra o texto de termos e privacidade e o OK explícito para ligar `bots_enabled`.
+
 ## [0.44.6] — 2026-11-15 · Adversário virtual na partida rápida, desligado (#105)
 
 App 0.44.6 (versionCode 126). **Nada muda para o jogador enquanto `bots_enabled` estiver `false` (padrão).** Servidor primeiro: `supabase/bots.sql` (migração `bots_server`, mesmo conteúdo) vem ANTES do app novo e só depois do APROVADO do Tech Lead. Ligar a chave e publicar os textos de termos e privacidade exigem novo OK do John no chat. Sem dependência nova.
