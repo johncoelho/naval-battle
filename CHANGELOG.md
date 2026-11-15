@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Site] — 2026-11-15 · Termos e privacidade do adversário virtual (#105)
+
+Só `site/` e docs; sem versão do app, sem banco. [skip ci]; publicar com `gh workflow run pages.yml --ref main` depois do push. Textos aprovados pelo John no chat; as consoles (ficha da Play, notas da App Store) ficam por conta do Release.
+
+### Adicionado
+- **`site/terms.html` (pt/en/es):** seção "Adversário virtual e pontos" (nem toda partida online é contra pessoa; sem dobrões, milhas, desafios, conquistas nem prêmios contra ele; na ranqueada os pontos contam, com variação reduzida e limites por conta; ele não tem conta nem aparece no ranking; o servidor confere os pontos) e frase em "Dobrões, milhas e prêmios" sobre a classificação da temporada incluir esses pontos.
+- **`site/privacy.html` (pt/en/es):** linha "Partidas contra o adversário virtual" na tabela de dados com conta (conta, modo, nível, nome fictício do adversário, força sorteada, horários, resultado e pontos, versão do app; 90 dias com apagamento diário, pontos ficam no ranking), frase de apoio, nota de que abrir o app conta igual no registro diário e entrada no histórico de mudanças.
+
+### Alterado
+- Data de atualização das duas páginas: 15/11/2026. O rascunho foi ajustado ao `supabase/bots.sql` real: a tabela também guarda a persona (validada, até 40 caracteres, sempre de lista do jogo) e a força sorteada.
+
 ## [Processo] — 2026-11-15 · Manutenção diária e decisão dos pontos de bot
 
 Só docs e processo; sem versão do app, sem banco. [skip ci].
