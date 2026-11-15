@@ -151,7 +151,7 @@ fun BattleScreen(state: AppState, match: Match) {
     LaunchedEffect(match.turnOwner, match.phase) {
         if (!local && !lan && match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
             while (match.phase == Phase.BATTLE && match.turnOwner == Side.ENEMY) {
-                delay(1500)
+                delay(match.enemyThinkMillis())
                 if (AppForeground.active) match.enemyTurn()
             }
         }
@@ -444,7 +444,7 @@ fun BattleScreen(state: AppState, match: Match) {
             )
         }
 
-        if (lan) {
+        if (lan || match.bot != null) {
             TauntBubble(
                 match.lastTaunt,
                 senderLabel = { side -> if (side == match.mySide) t(K.YOU) else match.sideName(side) },

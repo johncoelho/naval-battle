@@ -70,6 +70,8 @@ fun ResultScreen(state: AppState, match: Match) {
     var rewardCapped by remember(match) { mutableStateOf(false) }
     // vitória sem combate (#6): conta no histórico, mas não paga carreira nem desafio
     val noCombat = online && match.wonWithoutCombat(me)
+    // adversario virtual (#105): relatorio como o da online, so XP na carreira, sem desafio, conquista nem milha
+    val bot = match.bot != null
     // referência desta vitória para o "dobrar dobrões" (#29), fotografada antes de a sala fechar
     val adRef = remember(match) { state.adWinRef(match) }
     LaunchedEffect(match) {
@@ -84,8 +86,11 @@ fun ResultScreen(state: AppState, match: Match) {
                 shotsFired = match.playerShots,
                 hitsLanded = match.playerHits,
                 shipsSunk = ShipClass.fleet.size - match.enemyBoard.remainingShips().size,
-                turns = match.turnCount
+                turns = match.turnCount,
+                xpOnly = bot
             )
+            // contra o bot o servidor fecha a partida (e, na ranqueada, decide os pontos)
+            if (bot) state.reportBotResult(victory)
             // com conta conectada a carreira sobe sozinha depois de cada partida
         } else if (online) {
             // sem combate nem gasta uma das 3 partidas recompensadas contra o adversário
@@ -124,7 +129,7 @@ fun ResultScreen(state: AppState, match: Match) {
         // avaliação na Play (#45): vitória já contada na carreira; o pedido sai ao voltar ao menu
         if (victory) award?.let { state.noteReviewCandidate(rankedUp = it.rankUp != null) }
         // conquistas do Play Games (#48): só partida que valeu carreira (a mesma regra do registerMatch)
-        award?.let { a ->
+        award?.takeIf { !bot }?.let { a ->
             state.reportMatchAchievements(
                 victory = victory,
                 online = online,
@@ -134,7 +139,7 @@ fun ResultScreen(state: AppState, match: Match) {
             )
         }
         // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
-        if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
+        if ((match.opponent == Opponent.AI || online) && !bot && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
         // anúncio premiado (#29): só lê o servidor; o botão aparece se ele liberar
         if (victory && online && state.onlineAwardAmount > 0) state.loadAds()
     }
@@ -171,7 +176,7 @@ fun ResultScreen(state: AppState, match: Match) {
                 Naval.inkSoft
             )
 
-            resultSections(local, online).forEach { section ->
+            (if (bot) botResultSections() else resultSections(local, online)).forEach { section ->
                 when (section) {
                     ResultSection.HEADLINE -> Unit
                     ResultSection.COMPARISON -> {
@@ -230,7 +235,7 @@ fun ResultScreen(state: AppState, match: Match) {
                     }
                     ResultSection.RANKING -> {
                         Gap(22)
-                        if (state.onlineMatchRanked) {
+                        if (state.onlineMatchRanked || state.botSession?.ranked == true) {
                             RankingBlock(state, match)
                         } else {
                             HudLabel(t(K.RESULT_CASUAL_NOTE), Naval.muted)
@@ -281,6 +286,9 @@ fun ResultScreen(state: AppState, match: Match) {
         Gap(12)
         if (match.opponent.isNetwork()) {
             RematchSection(state, match)
+        } else if (bot) {
+            // o adversario "saiu da sala": sem revanche e sem "nova partida" contra a IA (nao revela o bot)
+            PrimaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
         } else {
             PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
         }
@@ -300,8 +308,10 @@ fun ResultScreen(state: AppState, match: Match) {
             Gap(8)
             SecondaryButton(t(K.SAFETY_ACTIONS)) { state.openOpponentActions(ReportContext.RESULT) }
         }
-        Gap(8)
-        SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
+        if (!bot) {
+            Gap(8)
+            SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
+        }
     }
 }
 
@@ -324,7 +334,7 @@ private fun CareerReport(state: AppState, match: Match, a: Award) {
         OnlineAwardUi.LIMIT, OnlineAwardUi.CAPPED, OnlineAwardUi.NONE -> null
     }
     ScoreTally(a, creditsText, coin = state.onlineAward == OnlineAwardUi.PAID)
-    if (match.opponent == Opponent.AI) {
+    if (match.opponent == Opponent.AI && match.bot == null) {
         Gap(8)
         HudLabel(t(K.RESULT_AI_TRAINING), Naval.muted)
     } else if (state.onlineAward == OnlineAwardUi.RETRY) {

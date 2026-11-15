@@ -9,6 +9,19 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.44.6] — 2026-11-15 · Adversário virtual na partida rápida, desligado (#105)
+
+App 0.44.6 (versionCode 126). **Nada muda para o jogador enquanto `bots_enabled` estiver `false` (padrão).** Servidor primeiro: `supabase/bots.sql` (migração `bots_server`, mesmo conteúdo) vem ANTES do app novo e só depois do APROVADO do Tech Lead. Ligar a chave e publicar os textos de termos e privacidade exigem novo OK do John no chat. Sem dependência nova.
+
+### Adicionado
+- **Servidor (`supabase/bots.sql`):** `bots_enabled` (kill switch, criada com `'false'`; `'test'` liga só as contas QA, `'true'` liga para todos dentro de `bot_percent`), `bots_on_for(uid)`, tabela `bot_matches` (RLS sem política, só RPC e service_role, 90 dias), `cancel_quick_room` (A1: fecha a sala `waiting` sem corrida com quem entra; `joined` = partida humana), `bot_match_start` (A2: o servidor emite a partida, grava `started_at`, sorteia o rating do bot (até `bot_rating_spread` do jogador) e calcula o nível pelo histórico), `record_ranked_bot_result` + `apply_ranked_bot_side` (A4: Elo só do jogador, mesma fórmula K=32 da `apply_ranked_side`, que NÃO foi tocada; `bot_ranked_delta_pct` 50 % e teto `bot_ranked_max_delta` 16; vitória só depois de `bot_ranked_min_seconds` 75; relato idempotente), `bot_match_report` (casual), `bot_wait_info` (esperas e cotas para o app), `purge_bots()` e a view `behavior_dias_so_bot` (ponto de encaixe da #97). Cotas contadas no INÍCIO (A3): 3 ranqueadas/dia, 10 na vida da conta, 10 no total por dia; ranqueada aberta há mais de 30 min fecha como derrota. Teto de adulteração: 10 x 16 = 160 pontos de Elo por conta.
+- **App:** `game/BotRules.kt` (níveis, ritmo humano com mínimo de 1,2 s, provocações só da lista fechada, regras de quando o bot entra), `game/BotPersonas.kt` (40 nomes fictícios, passam no `NameFilter`), `Ai` com chance de erro por nível, `Match.bot` (nome da persona no lugar de "Inimigo"), fluxo em `AppState` (espera lida do servidor, `cancel_quick_room`, `bot_match_start`, relato), 5 chamadas novas em `CloudApi` (Android e iOS). Resultado: XP só (sem carreira, desafio, conquista, dobrão ou milha); a ranqueada mostra os pontos que o servidor aceitou.
+- **Testes:** `BotRulesTest` (nível, ritmo, A1 "só `cancelled` libera o bot", degradação com chave desligada ou servidor antigo, personas, erro da IA, partida inteira); ensaio SQL `supabase/tests/bots_ensaio.sql` (bloco que desfaz). QA: `BOT-01` a `BOT-17` em `docs/QA_TEST_PLAN.md` (seção 11b).
+
+### Pendências antes de ligar
+- Aplicar `bots_server` em produção (APROVADO do Tech Lead) e rodar `bots_ensaio.sql` na mesma execução com rollback. Ensaio rodado em 15/11 pelo Tech Lead, verde, com rollback conferido; re-rodado após a correção (sala casual no bloco "salas", persona validada no servidor).
+- Decisão do John: pontos de bot entram ou não na classificação que paga prêmio da temporada; textos de termos e privacidade (tabela 5g da #105) e ficha das lojas.
+
 ## [Testes] — 2026-11-15 · Ensaio de dobrões alinhado à regra da #35
 
 Só `supabase/tests/` e docs; sem versão do app, sem banco. [skip ci].

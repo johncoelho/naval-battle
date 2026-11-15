@@ -61,6 +61,11 @@ class Match(
     /** IA no nível mais fácil: só a partida guiada da primeira vez usa (#43). */
     easyAi: Boolean = false,
     /**
+     * Adversario virtual da partida rapida (#105): persona e nivel. Nulo = a IA de sempre (treino, guiada). Com perfil,
+     * o lado ENEMY aparece com o nome da persona, joga num ritmo humano e pode mandar uma provocacao da lista fechada.
+     */
+    val bot: BotProfile? = null,
+    /**
      * Id desta partida no aparelho: referência do "dobrar dobrões" contra a IA (cada vitória
      * dobra uma vez). Usa o sorteio padrão, nunca o [random] da partida (não muda o jogo).
      * A partida reconstruída pelo log da sala (#67) herda o id da que ela substitui.
@@ -90,7 +95,13 @@ class Match(
                 (playerBoard.remainingShips().size == 1 || enemyBoard.remainingShips().size == 1)
         }
 
-    private val ai = Ai(random, easyAi)
+    private val ai = Ai(random, easyAi, bot?.level?.errorChance ?: 0.0)
+
+    /** O ultimo tiro do bot acertou (a proxima jogada dele demora um pouco mais). */
+    private var botLastScored = false
+
+    /** Espera ate a jogada do adversario controlado pelo jogo: 1,5 s fixo na IA de sempre, ritmo humano no bot. */
+    fun enemyThinkMillis(): Long = bot?.let { BotRules.thinkMillis(it.level, botLastScored, random) } ?: 1500L
 
     var phase by mutableStateOf(Phase.PLACEMENT)
         private set
@@ -184,7 +195,7 @@ class Match(
     }
 
     fun sideName(side: Side): String = when (opponent) {
-        Opponent.AI -> if (side == Side.PLAYER) t(K.YOU) else t(K.ENEMY)
+        Opponent.AI -> if (side == Side.PLAYER) t(K.YOU) else bot?.name ?: t(K.ENEMY)
         Opponent.LOCAL, Opponent.LAN, Opponent.ONLINE ->
             if (side == Side.PLAYER) nameOne.ifBlank { t(K.NAMES_ONE) }
             else nameTwo.ifBlank { t(K.NAMES_TWO) }
@@ -557,6 +568,10 @@ class Match(
         val shot = ai.nextShot(playerBoard)
         val outcome = act(shot)
         if (outcome != null) ai.registerOutcome(outcome, playerBoard)
+        if (bot != null) {
+            botLastScored = outcome?.result == ShotResult.HIT || outcome?.result == ShotResult.SUNK
+            if (phase == Phase.BATTLE) BotRules.tauntAfterShot(random)?.let { sendTaunt(Side.ENEMY, it) }
+        }
     }
 
     // ---------------- utilidades ----------------
@@ -564,6 +579,7 @@ class Match(
     private fun finish(side: Side) {
         winner = side
         phase = Phase.RESULT
+        if (bot != null) BotRules.tauntOnFinish(random)?.let { sendTaunt(Side.ENEMY, it) }
         if (opponent == Opponent.LOCAL) {
             say(t(K.CALL_WON, sideName(side)), t(K.CALL_WON_SUB), Tone.SUNK)
         } else if (side == Side.PLAYER) {
@@ -575,7 +591,7 @@ class Match(
 
     private fun announce(outcome: ShotOutcome, attacker: Side) {
         val who = when {
-            opponent != Opponent.AI -> "${sideName(attacker)} · "
+            opponent != Opponent.AI || bot != null -> "${sideName(attacker)} · "
             attacker == Side.ENEMY -> "${t(K.ENEMY)} · "
             else -> ""
         }

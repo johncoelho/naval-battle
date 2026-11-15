@@ -424,6 +424,18 @@ cria sempre joga primeiro. Amizades (`friendships`) e a busca de comandante por 
 (`search_commander`) são independentes da sala — servem para montar a lista e convidar
 depois. Detalhe do schema em [supabase/online.sql](supabase/online.sql).
 
+#### Adversário virtual na partida rápida (#105, desligado por padrão)
+
+Quando `app_config.bots_enabled` liga para a conta (`'test'` = só QA, `'true'` = todos dentro de `bot_percent`) e a busca
+da partida rápida passa de `bot_wait_seconds` (30 s casual, 45 s ranqueada) sem ninguém entrar, o app joga contra um bot: a
+IA de `game/Ai.kt` no aparelho, com persona fictícia (`game/BotPersonas.kt`), ritmo humano (mínimo 1,2 s por jogada) e provocações
+só da lista fechada. Sem aviso em tela. O bot não tem conta e nunca aparece em ranking, busca ou amizade. Sala de amigo, código e
+convite nunca viram bot. Servidor (`supabase/bots.sql`): `bot_wait_info` (esperas e cotas), `cancel_quick_room` (fecha a sala sem
+corrida com quem entra; `joined` = partida humana), `bot_match_start` (emite a partida, sorteia o rating e calcula o nível pelo
+histórico), `record_ranked_bot_result` (Elo só do jogador: metade do normal, teto 16, vitória só depois de 75 s, 3 por dia e 10 na
+vida) e `bot_match_report` (casual). Resultado: só XP (sem carreira, desafio, conquista, dobrão ou milha). Medição: `bot_matches`
+(90 dias) e a view `behavior_dias_so_bot`. Desligado ou servidor antigo, o treino contra a IA (#41) segue como era.
+
 ### Conta e sincronização
 
 A carreira é gravada **no aparelho** e, havendo conta, espelhada no Supabase.
@@ -699,7 +711,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   uuids em ordem crescente) antes de `dobroes:<uid>`. Tabelas `referral_codes`, `referrals`, `referral_tries` (RLS, só
   leitura do que é seu). Números em `app_config` (`referral_*`). Ensaio: `supabase/tests/referral_ensaio.sql`. App:
   `game/Referral.kt`, `AppState.redeemReferral/loadReferralStatus` e o `referral_settle` em `flushOnlineAwards`.
-- Registro diário de atividade (`supabase/behavior.sql`, #97): `activity_days(user_id, day)`, uma linha por conta por dia, gravada pela `touch_presence` na primeira batida do dia (Brasília) por `log_activity_day`, em melhor esforço. **Tem `user_id`**: RLS sem política, `revoke all` de anon e authenticated, só service_role lê; retenção de 90 dias por `purge_activity()` na rodada diária; cascata em `auth.users`. Grava todas as contas; as views privadas `behavior_ativos_diarios`, `behavior_ativos_semanais` e `behavior_retorno_semanal` (D1/D7/D30 por coorte) excluem `is_test` e contas internas na leitura e anulam célula com menos de 5 contas (`activity_min_cell`). Início da série em `app_config.activity_series_start`. Mede "abriu o app com conta e com rede" (IA conta; convidado não). Partidas contra bot (#105): `bot_matches` virá à parte. Inventário em `site/privacy.html`. Consulta: `docs/medicao-retorno.sql`. Ensaio: `supabase/tests/behavior_ensaio.sql`.
+- Registro diário de atividade (`supabase/behavior.sql`, #97): `activity_days(user_id, day)`, uma linha por conta por dia, gravada pela `touch_presence` na primeira batida do dia (Brasília) por `log_activity_day`, em melhor esforço. **Tem `user_id`**: RLS sem política, `revoke all` de anon e authenticated, só service_role lê; retenção de 90 dias por `purge_activity()` na rodada diária; cascata em `auth.users`. Grava todas as contas; as views privadas `behavior_ativos_diarios`, `behavior_ativos_semanais` e `behavior_retorno_semanal` (D1/D7/D30 por coorte) excluem `is_test` e contas internas na leitura e anulam célula com menos de 5 contas (`activity_min_cell`). Início da série em `app_config.activity_series_start`. Mede "abriu o app com conta e com rede" (IA conta; convidado não). Partidas contra bot (#105): `bot_matches` (`supabase/bots.sql`) também **tem `user_id`**: RLS sem política, só RPC (definer) e service_role, retenção de 90 dias por `purge_bots()` na rodada diária, cascata em `auth.users`; grava as contas elegíveis (conta de teste não joga contra bot) e a leitura exclui teste e internas; persona só para medição (padrão `[[:alnum:]_ .-]`, até 40). Inventário em `site/privacy.html` (sem texto novo por decisão do John; só muda antes de ligar). Consulta: `docs/medicao-retorno.sql`. Ensaio: `supabase/tests/behavior_ensaio.sql`.
 - Segurança entre jogadores (`supabase/safety.sql`, #58): `player_blocks`, `player_reports`, `name_terms`/`name_allow`, `name_resets`, `moderation_push_log` e
   `profiles.suspended_until`. Filtro de nome no servidor (`name_is_offensive`, que nunca dá erro: mantém o nome anterior, para o app antigo não perder a carreira);
   bloqueio nos dois sentidos dentro da política de leitura das salas, de `join_online_match`, `find_quick_offer`, `search_commander` e das políticas de convite e

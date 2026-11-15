@@ -1,1 +1,1 @@
-Tela de resultado online: o comparativo entre voce e o adversario (tiros, acertos, precisao e navios) agora aparece logo abaixo do titulo, antes do mapa, e nao some mais quando o anuncio de dobrar dobroes esta na tela.
+Ajustes internos na busca de partida rapida e na estabilidade do online. Sem mudancas visiveis nesta versao.

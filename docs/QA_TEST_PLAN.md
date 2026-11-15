@@ -364,6 +364,32 @@ O ensaio `supabase/tests/safety_ensaio.sql` roda antes da migração. Casos com 
 | QO-02 | P1 | B ignora 50s ou toca "Agora não" | Balão some e não volta para aquela sala |
 | QO-03 | P1 | B aceita | Entra direto na partida de A |
 
+### 11b. Adversário virtual na partida rápida (#105)
+
+Pré-requisito: migração `bots_server` aplicada com o OK do John e `bots_enabled = 'test'` (só QA) durante o teste; no fim volta
+para `'false'`. QA01 em `is_test = false` só durante o teste. Evidência só em contagem; nunca e-mail ou id em issue. Casos de
+servidor: `supabase/tests/bots_ensaio.sql` (bloco que desfaz).
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| BOT-01 | P0 | `bots_enabled = 'test'`, `bot_wait_seconds = 30`; QA01 abre partida rápida casual e espera sozinho | Aos ~30 s (±3) entra em partida contra adversário com nome do pool, jogável até o fim; sem faixa de IA nem botão de treino |
+| BOT-02 | P0 | QA02 com sala rápida do mesmo modo aberta; QA01 procura | QA01 entra na sala de QA02; nenhuma linha em `bot_matches` |
+| BOT-03 | P0 | Bot esperado (30 s quase), QA02 abre sala aos ~25 s | Vale a partida humana; se o `cancel_quick_room` voltou `joined`, nenhum bot e nenhuma linha em `bot_matches` |
+| BOT-04 | P0 | `bots_enabled = 'false'`; QA01 espera 45 s na casual e na ranqueada | Nunca entra bot; o treino com faixa de IA (#41) aparece aos 20 s como na 0.44.5 |
+| BOT-05 | P0 | Ranqueada (QA01 com passe, `ranked_rating = R`), espera 45 s, vence o bot depois de 75 s | `ranked_rating` e pontos da temporada de QA01 sobem no máximo 16 (metade do normal); nenhuma outra conta muda; dobrões, milhas, desafio do dia e conquistas iguais ao antes; bloco de ranking mostra os pontos |
+| BOT-06 | P0 | Mesma partida, mas perde (ou sai pelo menu) | Perde o delta limitado; sair antes do fim é derrota |
+| BOT-07 | P1 | `select bot_rating, level, ranked, status, won from bot_matches` da partida | `bot_rating` entre R-100 e R+100; nível fácil para conta nova |
+| BOT-08 | P1 | 3 partidas: ver o intervalo entre jogadas do adversário | Nenhuma jogada em menos de 1,2 s; o intervalo varia; só provocações da lista (emoji ou frase pronta), nunca texto livre |
+| BOT-09 | P1 | Conferir nomes das personas vistas | Passam no filtro, não são pessoa conhecida, não coincidem com `profiles.username`, não aparecem na busca de comandantes nem no ranking |
+| BOT-10 | P0 | `bot_ranked_daily_limit = 3`: três ranqueadas contra bot no dia e uma quarta espera | Não entra bot na quarta (cai no treino de hoje); idem `bot_max_per_day` |
+| BOT-11 | P1 | Partida contra bot em andamento, `bots_enabled = 'false'` | A partida atual termina e fecha no servidor; a próxima busca já não tem bot, sem atualizar o app |
+| BOT-12 | P1 | Versão 0.44.5 instalada com `bots_enabled = 'test'` | Nada quebra: só o treino de hoje |
+| BOT-13 | P1 | 10 partidas contra bot: contar chamadas | No máximo `bot_wait_info`, `cancel_quick_room`, `bot_match_start` e o relato por partida; nenhuma linha nova em `online_matches` além da sala cancelada nem em `online_messages` |
+| BOT-14 | P0 | Sala de amigo, código e convite mirado sem ninguém entrar | Nunca entra bot |
+| BOT-15 | P0 | Chamar `record_ranked_bot_result` direto: sem linha aberta, antes de 75 s com vitória, repetida, de outra conta | Rejeita (`invalid`, `too_short`, `repeat`); Elo e ranking não mudam |
+| BOT-16 | P1 | Modo avião no meio da partida contra bot ranqueada, volta no fim | Joga até o fim local; relato com até 3 tentativas; sem rede o resultado não relatado não vale ponto (a linha fecha como derrota pelo prazo) |
+| BOT-17 | P1 | Resultado de partida contra bot (casual e ranqueada) | Sem "treino contra a IA", sem "nova partida" nem revanche; só volta ao deque; `docs/medicao-semanal.sql` devolve os mesmos números com e sem a partida |
+
 ## 12. Economia, loja e personalização
 
 | ID | P | Passos | Esperado |

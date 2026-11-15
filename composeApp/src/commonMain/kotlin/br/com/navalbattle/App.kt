@@ -177,6 +177,10 @@ import br.com.navalbattle.game.OnlineAwardQueue
 import br.com.navalbattle.game.PendingAward
 import br.com.navalbattle.game.PendingCredits
 import br.com.navalbattle.game.QuickPractice
+import br.com.navalbattle.game.BotLevel
+import br.com.navalbattle.game.BotPersonas
+import br.com.navalbattle.game.BotProfile
+import br.com.navalbattle.game.BotRules
 import br.com.navalbattle.game.UpdatePrompt
 import br.com.navalbattle.game.Wallet
 import br.com.navalbattle.game.PremioState
@@ -426,6 +430,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     fun startGuidedMatch(replay: Boolean = false) {
         guidedOffer = false
         guidedReplay = replay
+        botSession = null
         opponentProfile = null
         mode = GameMode.CLASSIC
         match = Match(GameMode.CLASSIC, Opponent.AI, easyAi = true)
@@ -601,6 +606,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     fun newMatch(opponent: Opponent) {
+        botSession = null
         opponentProfile = null
         match = Match(mode, opponent)
         // no modo local os dois se identificam antes de posicionar as frotas
@@ -653,6 +659,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 onlineLink.finish("abandoned")
                 closeOnline()
             }
+        }
+        // adversario virtual (#105): sair antes do fim e derrota (na ranqueada, o servidor aplica o Elo)
+        botSession?.let { bs ->
+            if (match?.phase != Phase.RESULT && !botReported) uiScope?.launch { reportBotResultFor(bs, false) }
         }
         match = null
         guidedStep = null
@@ -864,14 +874,20 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineInvitedFriend = false
         practiceWhileSearching = false
         practiceSwitchSide = null
+        botSession = null
         quickSearchStartedAt = nowMillis()
+        val rankedSearch = rankedMode && !seasonPopupNeeded
         onlineLink.quickMatch(
             session = session,
             mode = mode.name,
-            ranked = rankedMode && !seasonPopupNeeded,
+            ranked = rankedSearch,
             onState = { s, side -> onMain { onOnlineState(s, side) } },
             onLine = { line -> onMain { onLine(line) } }
         )
+        // adversario virtual (#105): so arma se o servidor ligar para esta conta; app/servidor antigo = nada acontece
+        val suppress = botSuppressNextArm
+        botSuppressNextArm = false
+        if (!suppress) armBotWatch(rankedSearch)
     }
 
     /** Entra numa sala de amigo pelo código que ele compartilhou por fora do jogo. */
@@ -889,6 +905,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     fun closeOnline() {
         onlineLink.close()
+        botWatchJob?.cancel()
+        botWatchJob = null
+        botExpected = false
         quickSearchStartedAt = 0L
         practiceWhileSearching = false
         practiceSwitchSide = null
@@ -910,6 +929,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     private fun onOnlineState(state: LinkState, side: Side) {
+        // o cancelamento da sala para o bot (#105) fecha a sala `waiting`; o laco do anfitriao le "abandoned" e
+        // avisaria falha: nao e falha, quem decide o que fazer e o fluxo do bot
+        if (botCancelling && state == LinkState.FAILED) return
         onlineLinkState = state
         if (state == LinkState.FAILED && practiceWhileSearching) {
             // a busca caiu durante o treino: o treino vira partida comum contra a IA
@@ -983,6 +1005,151 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
     }
 
+    // ---------------- adversario virtual na partida rapida (#105) ----------------
+
+    /** A partida contra o adversario virtual em curso (ou recem-terminada, para a tela de resultado); nula fora dela. */
+    class BotSession(val id: String, val ranked: Boolean, val persona: String)
+
+    var botSession by mutableStateOf<BotSession?>(null)
+        private set
+
+    /** O servidor ligou o bot para esta busca: o treino manual (#41) nao e oferecido, o bot entra sozinho. */
+    var botExpected by mutableStateOf(false)
+        private set
+
+    private var botWatchJob: Job? = null
+    private var botCancelling = false
+    private var botSuppressNextArm = false
+    private var botReported = false
+    private var botLastPersona: String? = null
+
+    /**
+     * Depois da espera da modalidade (`bot_wait_seconds` / `bot_wait_seconds_ranked`, lidas do servidor) sem ninguem
+     * entrar, joga contra o bot. So na partida rapida procurando de verdade; sala de amigo, codigo e convite nunca
+     * passam por aqui. Qualquer falha (servidor antigo, chave desligada, cota) = nada acontece e o treino de hoje
+     * segue como esta.
+     */
+    private fun armBotWatch(ranked: Boolean) {
+        botWatchJob?.cancel()
+        val scope = uiScope ?: return
+        botWatchJob = scope.launch {
+            val info = (authed { s -> cloud.botWaitInfo(s) } as? CloudResult.Ok)?.value ?: return@launch
+            val modeOk = if (ranked) info.rankedOk else info.casualOk
+            if (!BotRules.shouldArm(true, info.on, modeOk, practiceWhileSearching)) return@launch
+            botExpected = true
+            val waitMs = BotRules.waitMillis(if (ranked) info.waitRankedSeconds else info.waitCasualSeconds)
+            while (true) {
+                if (!botStillSearching()) {
+                    botExpected = false
+                    return@launch
+                }
+                val left = quickSearchStartedAt + waitMs - nowMillis()
+                // a sala so existe depois das tentativas de entrar em uma sala aberta (matchId nulo antes disso)
+                if (left <= 0L && AppForeground.active && onlineLink.matchId != null) break
+                delay(if (left > 1000L) 1000L else 300L)
+            }
+            startBotMatch(ranked)
+        }
+    }
+
+    private fun botStillSearching(): Boolean =
+        quickSearchStartedAt > 0L && !practiceWhileSearching && match == null &&
+            (onlineLinkState == LinkState.SEARCHING || onlineLinkState == LinkState.HOSTING)
+
+    /**
+     * Cancela a sala (sem corrida com quem entra), pede ao servidor a partida contra bot e a abre. So `cancelled`
+     * seguido de `ok` vira bot; `joined` segue como partida humana; qualquer outra resposta recomeca a busca sem bot.
+     */
+    private suspend fun startBotMatch(ranked: Boolean) {
+        val roomId = onlineLink.matchId ?: return
+        val roomMode = onlineLink.roomMode ?: mode.name
+        botCancelling = true
+        var start: br.com.navalbattle.data.BotStart? = null
+        val persona = BotPersonas.pick(last = botLastPersona, playerName = profile.displayName)
+        val cancel: String?
+        try {
+            cancel = (authed { s -> cloud.cancelQuickRoom(s, roomId) } as? CloudResult.Ok)?.value
+            when (BotRules.afterCancel(cancel)) {
+                BotRules.AfterCancel.HUMAN_JOINED -> {
+                    // alguem entrou na frente: o laco do anfitriao ja traz o CONNECTED, a partida e humana
+                    botCancelling = false
+                    botExpected = false
+                    return
+                }
+                BotRules.AfterCancel.KEEP_SEARCHING -> {
+                    botCancelling = false
+                    restartSearchWithoutBot()
+                    return
+                }
+                BotRules.AfterCancel.START_BOT -> Unit
+            }
+            // o comandante cancelou a busca no meio da chamada: a sala ja esta fechada, nada a iniciar
+            if (quickSearchStartedAt == 0L) return
+            start = (authed { s -> cloud.botMatchStart(s, roomMode, roomId, persona, appVersionName) } as? CloudResult.Ok)?.value
+        } finally {
+            botCancelling = false
+        }
+        val botId = start?.id
+        if (start == null || !BotRules.startAccepted(start.outcome) || botId == null) {
+            restartSearchWithoutBot()
+            return
+        }
+        botLastPersona = persona
+        onlineLink.finish("abandoned")
+        closeOnline()
+        opponentProfile = null
+        onlineMatchRanked = false
+        rankedResultSent = false
+        rankedOutcome = null
+        rankedReport = RankedReport.IDLE
+        rankBefore = null
+        botReported = false
+        botSession = BotSession(botId, start.ranked, persona)
+        GameMode.entries.firstOrNull { it.name == roomMode }?.let { mode = it }
+        match = Match(mode, Opponent.AI, bot = BotProfile(persona, BotLevel.of(start.level)))
+        if (botSession?.ranked == true) uiScope?.launch { loadRankBefore() }
+        screen = Screen.PLACEMENT
+    }
+
+    /** A sala foi fechada mas o bot nao saiu (cota, chave desligada, erro): procura de novo, agora sem esperar bot. */
+    private fun restartSearchWithoutBot() {
+        botExpected = false
+        botSuppressNextArm = true
+        onlineLink.finish("abandoned")
+        startQuickMatchOnline()
+    }
+
+    /** A tela de resultado chama ao terminar a partida contra o bot: fecha no servidor (ranqueada: o servidor julga os pontos). */
+    fun reportBotResult(victory: Boolean) {
+        val bs = botSession ?: return
+        // no escopo do app, nao no efeito da tela: sair do resultado nao cancela o relato da vitoria
+        uiScope?.launch { reportBotResultFor(bs, victory) }
+    }
+
+    private suspend fun reportBotResultFor(bs: BotSession, victory: Boolean) {
+        if (botReported) return
+        botReported = true
+        if (!bs.ranked) {
+            authed { s -> cloud.botMatchReport(s, bs.id, victory) }
+            return
+        }
+        rankedReport = RankedReport.PENDING
+        var result: br.com.navalbattle.data.BotRankedResult? = null
+        // duas tentativas curtas: sem rede o resultado ranqueado nao relatado nao vale pontos (o servidor fecha como derrota)
+        for (attempt in 0 until 3) {
+            result = (authed { s -> cloud.recordRankedBotResult(s, bs.id, victory) } as? CloudResult.Ok)?.value
+            if (result != null) break
+            delay(4_000L)
+        }
+        val ranked = result?.ranked?.takeIf { result.outcome != "invalid" }
+        rankedOutcome = ranked
+        rankedReport = if (ranked != null) RankedReport.DONE else RankedReport.FAILED
+        if (ranked != null && BotRules.rankedCounts(result?.outcome)) {
+            if (GameServices.supported) GameServices.submitRanked(leaderboardScore(ranked.seasonPoints))
+        }
+        loadMyRank(leaderboardSeasonMode)
+    }
+
     private fun startOnlineMatch(side: Side) {
         // o modo é o da sala (quem a abriu escolheu) — o convite e o balão mostram
         // esse modo antes de aceitar, então a partida tem que bater com o que foi dito
@@ -1001,6 +1168,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         onlineMatchId = onlineLink.matchId
         onlineMatchRanked = onlineLink.ranked
         onlineOpponentId = onlineLink.opponentId
+        botExpected = false
+        botSession = null
         opponentProfile = null
         milesGained = null
         spendMileFor(onlineMatchId)

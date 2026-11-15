@@ -57,7 +57,9 @@ fun OnlineWaitingDialog(state: AppState) {
             now = nowMillis()
         }
     }
-    val offer = QuickPractice.practiceOfferVisible(state.quickSearchStartedAt, now, state.quickSearchStartedAt > 0L)
+    // com o adversario virtual esperado (#105) o treino manual nao e oferecido: o jogo decide a hora
+    val offer = !state.botExpected &&
+        QuickPractice.practiceOfferVisible(state.quickSearchStartedAt, now, state.quickSearchStartedAt > 0L)
 
     Box(
         Modifier

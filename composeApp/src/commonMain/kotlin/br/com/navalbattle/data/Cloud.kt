@@ -142,6 +142,24 @@ data class RankedOutcome(
 )
 
 /**
+ * Esperas e cotas do adversario virtual (#105, `bot_wait_info`): [on] so com a chave ligada para esta conta;
+ * [casualOk] e [rankedOk] ja descontam as cotas do dia e da vida. Nulo/erro = sem bot (treino de hoje).
+ */
+data class BotWaitInfo(
+    val on: Boolean,
+    val waitCasualSeconds: Int,
+    val waitRankedSeconds: Int,
+    val casualOk: Boolean,
+    val rankedOk: Boolean
+)
+
+/** Partida emitida pelo servidor (`bot_match_start`): so [outcome] = "ok" traz [id], [rating] do bot e [level]. */
+data class BotStart(val outcome: String, val id: String?, val rating: Int, val level: String, val ranked: Boolean)
+
+/** Resposta de `record_ranked_bot_result`: [outcome] ok | repeat | too_short | no_points | invalid; [ranked] os pontos. */
+data class BotRankedResult(val outcome: String, val ranked: RankedOutcome?)
+
+/**
  * Resposta de `resolve_walkover` (vitória por ausência, #85). [outcome]: resolved | already | too_early |
  * signal | no_self_signal | waiting | closed | unsupported. [winnerId] só em resolved/already.
  * [ranked] traz os pontos do comandante que chamou quando a sala é ranqueada (em resolved/already).
@@ -603,6 +621,23 @@ expect class CloudApi() {
      * ranqueada). Nulo quando a sala não existe ou o comandante não está nela.
      */
     suspend fun resolveWalkover(session: Session, matchId: String): CloudResult<WalkoverOutcome?>
+
+    // ---------------- adversario virtual (#105, supabase/bots.sql) ----------------
+
+    /** Esperas e cotas do bot para a busca atual; nulo se o servidor nao tem a funcao (servidor antigo). */
+    suspend fun botWaitInfo(session: Session): CloudResult<BotWaitInfo?>
+
+    /** Fecha a sala rapida do anfitriao sem corrida com quem entra: "cancelled", "joined" ou "invalid". */
+    suspend fun cancelQuickRoom(session: Session, matchId: String): CloudResult<String>
+
+    /** O servidor emite a partida contra bot (depois de `cancelQuickRoom` = cancelled). Nulo se a funcao nao existe. */
+    suspend fun botMatchStart(session: Session, mode: String, roomId: String, persona: String, appVersion: String): CloudResult<BotStart?>
+
+    /** Fecha a partida casual contra bot (so telemetria). */
+    suspend fun botMatchReport(session: Session, botId: String, won: Boolean): CloudResult<Unit>
+
+    /** Relata a ranqueada contra bot; o servidor decide os pontos (tetos, duracao minima, cotas). */
+    suspend fun recordRankedBotResult(session: Session, botId: String, won: Boolean): CloudResult<BotRankedResult?>
 
     // ---------------- feedback e badges ----------------
 

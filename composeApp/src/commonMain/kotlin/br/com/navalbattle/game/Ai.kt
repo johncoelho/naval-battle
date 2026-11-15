@@ -8,13 +8,22 @@ import kotlin.random.Random
  * de acertos até afundar o alvo. No nível fácil (partida guiada, #43) atira em casa
  * aleatória, sem padrão nem perseguição, e nunca usa o sonar.
  */
-class Ai(private val random: Random = Random.Default, private val easy: Boolean = false) {
+class Ai(
+    private val random: Random = Random.Default,
+    private val easy: Boolean = false,
+    /**
+     * Chance de o tiro sair aleatorio em vez da melhor jogada (adversario virtual, #105): gente erra. Zero (padrao)
+     * mantem a IA de sempre; a fila de alvos segue guardada, o erro so adia a perseguicao.
+     */
+    private val errorChance: Double = 0.0
+) {
 
     private val pendingTargets = ArrayDeque<Coord>()
     private val confirmedHits = mutableListOf<Coord>()
 
     fun nextShot(enemyBoard: Board): Coord {
         if (easy) return randomShot(enemyBoard)
+        if (errorChance > 0.0 && random.nextDouble() < errorChance) return randomShot(enemyBoard)
         while (pendingTargets.isNotEmpty()) {
             val candidate = pendingTargets.removeFirst()
             if (isOpen(enemyBoard, candidate)) return candidate

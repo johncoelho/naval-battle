@@ -774,7 +774,11 @@ class Profile(private val prefs: Prefs) {
      * limite diário de [claimOnlineReward] (XP e medalhas). Partidas locais não valem carreira —
      * os dois jogam no mesmo perfil do aparelho.
      */
-    fun registerMatch(victory: Boolean, shotsFired: Int, hitsLanded: Int, shipsSunk: Int, turns: Int): Award {
+    fun registerMatch(
+        victory: Boolean, shotsFired: Int, hitsLanded: Int, shipsSunk: Int, turns: Int,
+        /** Partida contra o adversario virtual (#105): so o XP entra; partidas, vitorias, tiros e sequencia nao mudam. */
+        xpOnly: Boolean = false
+    ): Award {
         val before = rank
         // vitória rende o dobro; precisão e economia de turnos entram como bônus
         val base = if (victory) 220 else 80
@@ -787,6 +791,14 @@ class Profile(private val prefs: Prefs) {
         val gainedCredits = Wallet.aiCredits(victory)
 
         xp += gainedXp
+        if (xpOnly) {
+            prefs.putInt(K_XP, xp)
+            return Award(
+                xp = gainedXp, credits = 0, victory = victory, rankUp = rank.takeIf { it != before },
+                base = base, precision = precision, precisionBonus = precisionBonus, shipsSunk = shipsSunk,
+                sunkBonus = sunkBonus, blitzBonus = blitzBonus, turns = turns
+            )
+        }
         matches += 1
         if (victory) wins += 1
         shots += shotsFired

@@ -586,6 +586,82 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun botWaitInfo(session: Session): CloudResult<BotWaitInfo?> = call {
+        val json = post("/rest/v1/rpc/bot_wait_info", emptyMap<String, Any?>(), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            row?.let {
+                BotWaitInfo(
+                    on = (it["bot_on"] as? Boolean) ?: false,
+                    waitCasualSeconds = it.intOr("wait_casual", 30),
+                    waitRankedSeconds = it.intOr("wait_ranked", 45),
+                    casualOk = (it["casual_ok"] as? Boolean) ?: false,
+                    rankedOk = (it["ranked_ok"] as? Boolean) ?: false
+                )
+            }
+        )
+    }
+
+    actual suspend fun cancelQuickRoom(session: Session, matchId: String): CloudResult<String> = call {
+        val json = post("/rest/v1/rpc/cancel_quick_room", mapOf("p_match_id" to matchId), token = session.accessToken)
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(row?.strOr("outcome", "invalid") ?: "invalid")
+    }
+
+    actual suspend fun botMatchStart(
+        session: Session, mode: String, roomId: String, persona: String, appVersion: String
+    ): CloudResult<BotStart?> = call {
+        val json = post(
+            "/rest/v1/rpc/bot_match_start",
+            mapOf("p_mode" to mode, "p_room" to roomId, "p_persona" to persona, "p_app_version" to appVersion),
+            token = session.accessToken
+        )
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            row?.let {
+                BotStart(
+                    outcome = it.strOr("outcome", "invalid"),
+                    id = it["bot_id"] as? String,
+                    rating = it.intOr("bot_rating", 1000),
+                    level = it.strOr("level", "easy"),
+                    ranked = (it["ranked"] as? Boolean) ?: false
+                )
+            }
+        )
+    }
+
+    actual suspend fun botMatchReport(session: Session, botId: String, won: Boolean): CloudResult<Unit> = call {
+        post("/rest/v1/rpc/bot_match_report", mapOf("p_id" to botId, "p_won" to won), token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun recordRankedBotResult(session: Session, botId: String, won: Boolean): CloudResult<BotRankedResult?> = call {
+        val json = post(
+            "/rest/v1/rpc/record_ranked_bot_result",
+            mapOf("p_id" to botId, "p_won" to won),
+            token = session.accessToken
+        )
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            row?.let {
+                BotRankedResult(
+                    outcome = it.strOr("outcome", "invalid"),
+                    ranked = RankedOutcome(
+                        pointsDelta = it.intOr("points_delta", 0),
+                        seasonPoints = it.intOr("season_points", 1000),
+                        seasonPosition = it.intOr("season_position", 0),
+                        seasonName = it.strOr("season_name", ""),
+                        seasonMatches = it.intOr("season_matches", 0),
+                        seasonWins = it.intOr("season_wins", 0),
+                        accepted = (it["accepted"] as? Boolean) ?: false,
+                        basePoints = it.intOr("base_points", 0),
+                        bonusPoints = it.intOr("bonus_points", 0)
+                    )
+                )
+            }
+        )
+    }
+
     actual suspend fun resolveWalkover(session: Session, matchId: String): CloudResult<WalkoverOutcome?> = call {
         val json = post("/rest/v1/rpc/resolve_walkover", mapOf("p_match_id" to matchId), token = session.accessToken)
         val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
