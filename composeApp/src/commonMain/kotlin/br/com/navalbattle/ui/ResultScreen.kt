@@ -171,102 +171,109 @@ fun ResultScreen(state: AppState, match: Match) {
                 Naval.inkSoft
             )
 
-            Gap(20)
-            if (local || online) {
-                // encerrada a partida as duas frotas se revelam: onde estavam os navios
-                // e todos os tiros que cada uma levou, na cor do seu dono
-                HudLabel(t(K.RESULT_CHART))
-                Gap(6)
-                BoardView(
-                    board = match.playerBoard,
-                    skin = state.skin,
-                    showShips = true,
-                    sweep = false,
-                    markTint = commanderColor(Side.PLAYER),
-                    overlay = match.enemyBoard,
-                    overlayTint = commanderColor(Side.ENEMY),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Gap(8)
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(9.dp).background(commanderColor(side)))
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                t(K.RESULT_FLEET_OF, match.sideName(side)).uppercase(),
-                                style = NavalType.monoSmall,
-                                color = commanderColor(side)
-                            )
-                        }
+            resultSections(local, online).forEach { section ->
+                when (section) {
+                    ResultSection.HEADLINE -> Unit
+                    ResultSection.COMPARISON -> {
+                        Gap(22)
+                        Comparison(match)
                     }
-                }
-            }
+                    ResultSection.CHART -> {
+                        Gap(20)
+                        // encerrada a partida as duas frotas se revelam: onde estavam os navios
+                        // e todos os tiros que cada uma levou, na cor do seu dono
+                        HudLabel(t(K.RESULT_CHART))
+                        Gap(6)
+                        BoardView(
+                            board = match.playerBoard,
+                            skin = state.skin,
+                            showShips = true,
+                            sweep = false,
+                            markTint = commanderColor(Side.PLAYER),
+                            overlay = match.enemyBoard,
+                            overlayTint = commanderColor(Side.ENEMY),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Gap(8)
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(Modifier.size(9.dp).background(commanderColor(side)))
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        t(K.RESULT_FLEET_OF, match.sideName(side)).uppercase(),
+                                        style = NavalType.monoSmall,
+                                        color = commanderColor(side)
+                                    )
+                                }
+                            }
+                    }
+                    }
+                    ResultSection.LOCAL_STATS -> {
+                        Gap(16)
+                        listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
+                            HudLabel(match.sideName(side).uppercase(), commanderColor(side))
+                            StatRow(
+                                t(K.RESULT_SHOTS_HITS),
+                                "${match.shotsOf(side)} / ${match.hitsOf(side)} · ${match.accuracyOf(side)}%"
+                            )
+                            StatRow(
+                                t(K.RESULT_SHIPS_LEFT),
+                                "${match.board(side).remainingShips().size} / ${ShipClass.fleet.size}"
+                            )
+                            Gap(8)
+                    }
+                    StatRow(t(K.TURNS), match.turnCount.toString())
+                    }
+                    ResultSection.RANKING -> {
+                        Gap(22)
+                        if (state.onlineMatchRanked) {
+                            RankingBlock(state, match)
+                        } else {
+                            HudLabel(t(K.RESULT_CASUAL_NOTE), Naval.muted)
+                    }
+                    }
+                    ResultSection.MILES -> {
+                        // milhas náuticas: o custo da partida e, na vitória, o que entrou
+                        Gap(16)
+                        val gained = state.milesGained
+                        if (gained != null && gained > 0) {
+                            MilesLabel(t(K.MILES_GAINED, gained), color = Naval.amberStrong, style = NavalType.mono, iconSize = 18.dp)
+                        } else if (state.walkoverMileRefunded) {
+                            // vitória por ausência (#85): a milha gasta para entrar volta a quem ficou
+                            MilesLabel(t(K.WO_REFUND), color = Naval.amberStrong)
+                        } else {
+                            MilesLabel(t(K.MILES_SPENT), color = Naval.muted)
+                    }
 
-            if (local) {
-                Gap(16)
-                listOf(Side.PLAYER, Side.ENEMY).forEach { side ->
-                    HudLabel(match.sideName(side).uppercase(), commanderColor(side))
-                    StatRow(
-                        t(K.RESULT_SHOTS_HITS),
-                        "${match.shotsOf(side)} / ${match.hitsOf(side)} · ${match.accuracyOf(side)}%"
-                    )
-                    StatRow(
-                        t(K.RESULT_SHIPS_LEFT),
-                        "${match.board(side).remainingShips().size} / ${ShipClass.fleet.size}"
-                    )
-                    Gap(8)
+                    if (match.endedByWalkover) {
+                        // vitória por ausência (#85): texto próprio nos dois lados
+                        Gap(16)
+                        HudLabel(
+                            if (victory) t(K.WO_WON) else "${t(K.WO_LOST)} · ${t(K.WO_LOST_SUB)}",
+                            if (victory) Naval.muted else Naval.danger
+                        )
+                    } else if (noCombat) {
+                        Gap(16)
+                        HudLabel(t(K.RESULT_NO_COMBAT), Naval.muted)
+                    }
+                    if (rewardCapped) {
+                        Gap(16)
+                        HudLabel(t(K.RESULT_NO_REWARD_TODAY, Profile.ONLINE_REWARDS_PER_OPPONENT), Naval.muted)
+                    }
+                    }
+                    ResultSection.SOLO_STATS -> {
+                        Gap(20)
+                        StatRow(t(K.RESULT_SHOTS_FIRED), match.playerShots.toString())
+                        StatRow(t(K.RESULT_HITS), match.playerHits.toString())
+                        StatRow(t(K.ACCURACY), "${match.accuracy}%")
+                        StatRow(t(K.TURNS), match.turnCount.toString())
+                    }
+                    ResultSection.CAREER -> award?.let { a -> CareerReport(state, match, a) }
                 }
-                StatRow(t(K.TURNS), match.turnCount.toString())
-            } else if (online) {
-                Gap(22)
-                Comparison(match)
-
-                Gap(22)
-                if (state.onlineMatchRanked) {
-                    RankingBlock(state, match)
-                } else {
-                    HudLabel(t(K.RESULT_CASUAL_NOTE), Naval.muted)
-                }
-
-                // milhas náuticas: o custo da partida e, na vitória, o que entrou
-                Gap(16)
-                val gained = state.milesGained
-                if (gained != null && gained > 0) {
-                    MilesLabel(t(K.MILES_GAINED, gained), color = Naval.amberStrong, style = NavalType.mono, iconSize = 18.dp)
-                } else if (state.walkoverMileRefunded) {
-                    // vitória por ausência (#85): a milha gasta para entrar volta a quem ficou
-                    MilesLabel(t(K.WO_REFUND), color = Naval.amberStrong)
-                } else {
-                    MilesLabel(t(K.MILES_SPENT), color = Naval.muted)
-                }
-
-                if (match.endedByWalkover) {
-                    // vitória por ausência (#85): texto próprio nos dois lados
-                    Gap(16)
-                    HudLabel(
-                        if (victory) t(K.WO_WON) else "${t(K.WO_LOST)} · ${t(K.WO_LOST_SUB)}",
-                        if (victory) Naval.muted else Naval.danger
-                    )
-                } else if (noCombat) {
-                    Gap(16)
-                    HudLabel(t(K.RESULT_NO_COMBAT), Naval.muted)
-                }
-                if (rewardCapped) {
-                    Gap(16)
-                    HudLabel(t(K.RESULT_NO_REWARD_TODAY, Profile.ONLINE_REWARDS_PER_OPPONENT), Naval.muted)
-                }
-                award?.let { a -> CareerReport(state, match, a) }
-            } else {
-                StatRow(t(K.RESULT_SHOTS_FIRED), match.playerShots.toString())
-                StatRow(t(K.RESULT_HITS), match.playerHits.toString())
-                StatRow(t(K.ACCURACY), "${match.accuracy}%")
-                StatRow(t(K.TURNS), match.turnCount.toString())
-
-                award?.let { a -> CareerReport(state, match, a) }
             }
             Gap(16)
         }

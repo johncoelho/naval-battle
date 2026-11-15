@@ -9,6 +9,14 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.44.5] — 2026-11-15 · Comparativo da vitória online sempre visível (#103)
+
+App 0.44.5 (versionCode 125). Só interface: sem texto, token, componente, dependência nem banco novos.
+
+### Corrigido
+- **Tela de resultado online (#103):** o Comparativo (tiros, acertos, precisão, navios) ficava depois do mapa da partida, no fim da rolagem; com o anúncio de dobrar dobrões no rodapé a janela encolhe e ele saía da tela. Agora vem logo depois da manchete, antes do mapa. Modo local e contra a IA seguem como estavam; rodapé e botão do anúncio não mudam.
+- A ordem dos blocos agora está em `resultSections` (`ResultLayout.kt`) e é travada por `ResultLayoutTest`.
+
 ## [0.44.4] — 2026-11-14 · Registro diário de atividade (#97, bloco B)
 
 App 0.44.4 (versionCode 124). Só servidor e docs: nenhum código do app mudou, nenhuma biblioteca nova e nenhuma tela nova; o app antigo e o novo seguem iguais. Banco: `supabase/behavior.sql` e a `touch_presence` de `supabase/presence.sql` (migrações `behavior_activity_days` e `presence_activity_day`; ensaio `supabase/tests/behavior_ensaio.sql` verde em produção com rollback, aplicação só depois do APROVADO do Tech Lead).

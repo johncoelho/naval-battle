@@ -1,1 +1,1 @@
-Ajustes internos de medicao e estabilidade do servidor, para entender melhor como o jogo e usado e melhorar o app. Nada muda no jogo, nas partidas, na loja nem nos premios.
+Tela de resultado online: o comparativo entre voce e o adversario (tiros, acertos, precisao e navios) agora aparece logo abaixo do titulo, antes do mapa, e nao some mais quando o anuncio de dobrar dobroes esta na tela.
