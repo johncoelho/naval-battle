@@ -194,8 +194,7 @@ Atualizar quando surgir regra, preferência ou fato novo; apagar o que deixar de
   (DOB-30 a DOB-55, DOB-14, prova do secret, DOB-02/03/22). `dobroes_open_all()` real e `real_billing_enabled = 'true'`
   **só com o OK do John na hora** (a decisão 8 de 25/10, "pode ligar sozinho", caiu); ligar a venda também espera a #92.
   Estorno não implementado (issue própria).
-- **Medição semanal (#94):** `docs/medicao-semanal.sql`, só leitura, rodada com `SUPABASE_PROJECT_ID=cwtslesnthbenxswdcbv supabase db query --linked` (ver `docs/MEDICAO_SEMANAL.md`). Rotina semanal que posta na #86 **não criada**: aguarda as decisões
-  1 a 6 do PO para o John (contar a compra interna, bruta/líquida, anúncio, alertas, quem avisa, dia e hora).
+- **Medição semanal (#94):** `docs/medicao-semanal.sql`, só leitura, rodada com `SUPABASE_PROJECT_ID=cwtslesnthbenxswdcbv supabase db query --linked` (ver `docs/MEDICAO_SEMANAL.md`). Rotina semanal pronta em `tools/medicao-semanal.sh` (`--postar` comenta na #86, marcador guarda a semana anterior e as sequências dos gatilhos); a **tarefa agendada não foi criada**: aguarda dia e hora do John e as decisões 1 a 6 do PO (contar a compra interna, bruta/líquida, anúncio, alertas, quem avisa).
 
 ## 4. Decisões recentes (detalhe e porquê no HISTORY)
 

@@ -9,6 +9,16 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Processo] — 2026-11-16 · Rotina da medição semanal: tabela, variação e gatilhos (#94)
+
+Refs #94. Só `tools/` e docs: sem versão do app, sem banco, sem flag, sem workflow. [skip ci]. A tarefa agendada continua **não criada** (falta o dia e a hora do John).
+
+### Adicionado
+- `tools/medicao-semanal.sh`: roda `docs/medicao-semanal.sql` (só leitura, numa pasta temporária por causa do project-ref) e monta o comentário da semana com a tabela (semana fechada, anterior e variação), a seção **GATILHO** (aviso ao PO) e um marcador com DAU/WAU/MAU e as sequências dos gatilhos de WAU >= 60 (2 semanas) e DAU >= 30 (4 semanas). `--postar` comenta na #86; sem ele só imprime. Só agregados.
+- `docs/MEDICAO_SEMANAL.md`: seção "Rotina semanal" descreve o script, o marcador e os gatilhos.
+
+---
+
 ## [Loja] — 2026-11-16 · Ficha da Play alinhada à copy aprovada (#87)
 
 Refs #87. Só `assets/store/listing-pt-BR.txt`: sem versão do app, sem banco. [skip ci]. **Não aplica nada na Play Console nem na App Store**: o arquivo é a fonte versionada do texto; quem cola na ficha é o John (login dele).

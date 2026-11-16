@@ -48,17 +48,33 @@ pendentes e queda de WAU.
 
 ## Rotina semanal
 
-Tarefa agendada da esteira (skill `esteira`), domingo à noite (a semana fecha no domingo):
+O roteiro está pronto em `tools/medicao-semanal.sh` (só leitura no banco; precisa de bash, awk, supabase CLI
+logado e gh):
 
-1. Rodar `docs/medicao-semanal.sql` e, depois da migração do #95, `docs/medicao-vales.sql`, com o comando acima.
-2. Postar na #86 a tabela e a variação contra a semana anterior (só agregados) e a coluna `alertas`.
-3. Se algum gatilho do #86 foi atingido, avisar o PO.
-4. Se `alerta_real_nao_marcada` for maior que zero: conferir na view privada
-   `dobroes_purchases_com_origem` se o comprador é do time (skill `beta-testers`).
+```bash
+bash tools/medicao-semanal.sh            # imprime o comentário da semana (não publica nada)
+bash tools/medicao-semanal.sh --postar   # imprime e comenta na #86
+```
 
-**Estado:** a consulta e este roteiro estão no repositório; a tarefa agendada **ainda não foi criada** (aguarda
-as decisões do PO para o John: contar a compra interna, bruta ou líquida, anúncio na receita, alertas
-extras, quem avisa, dia e hora). Ligar a venda real e qualquer gasto continuam pedindo o OK do John.
+O que ele faz, na ordem do que a #94 pede:
+
+1. Roda `docs/medicao-semanal.sql` (numa pasta temporária com o project-ref, a armadilha do `--linked`) e
+   monta a tabela: semana fechada x semana anterior x variação, só agregados. O que a consulta só sabe "no
+   momento" (DAU, WAU, MAU) compara com o **marcador** do último comentário postado na #86.
+2. Com `--postar`, comenta na #86. A última linha do comentário é um marcador HTML
+   (`<!-- medicao-semanal fim=... dau=... wau=... mau=... seq_wau60=... seq_dau30=... -->`) com a sequência
+   dos gatilhos; sem marcador anterior a sequência começa em 1.
+3. Seção **GATILHO** no comentário (é o aviso ao PO, sem menção a ninguém): WAU >= 60 por 2 semanas, DAU >= 30
+   por 4 semanas, retorno em 7 dias >= 45% (aproximado), vales abaixo de 80%, compra real de conta não
+   marcada e, como alerta sugerido, WAU abaixo de 15.
+4. Depois da migração do #95, rodar também `docs/medicao-vales.sql` (desfecho do vale no aparelho).
+5. Se `alerta_real_nao_marcada` for maior que zero: conferir na view privada `dobroes_purchases_com_origem`
+   se o comprador é do time (skill `beta-testers`).
+
+**Quando rodar:** domingo à noite (a semana fecha no domingo), pela tarefa agendada da esteira. **Estado:** o
+script e este roteiro estão no repositório; a tarefa agendada **ainda não foi criada** (aguarda o dia e a hora
+do John e as decisões do PO: contar a compra interna, bruta ou líquida, anúncio na receita, alertas extras).
+Ligar a venda real e qualquer gasto continuam pedindo o OK do John.
 
 ## Retorno de verdade: `activity_days` (#97 bloco B, 0.44.4)
 
