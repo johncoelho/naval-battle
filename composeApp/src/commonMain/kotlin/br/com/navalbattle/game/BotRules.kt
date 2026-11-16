@@ -43,9 +43,6 @@ object BotRules {
         return (base + if (afterHit) AFTER_HIT_EXTRA_MS else 0L).coerceAtLeast(MIN_THINK_MS)
     }
 
-    /** Tempo ate o adversario "terminar de posicionar" a frota depois que o jogador confirma (humano nao posiciona em 0 s). */
-    fun placementMillis(random: Random = Random.Default): Long = random.nextLong(2_000L, 6_001L)
-
     /**
      * Ajuste suave de dificuldade (#112, pedido do John: tendencia a dar a vitoria ao jogador). Quando o jogador esta
      * ATRAS (menos navios a flote que o adversario), o adversario erra um pouco mais a mira: [CATCH_UP_STEP] de chance

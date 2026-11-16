@@ -1031,15 +1031,6 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var blockedPersonas by mutableStateOf<Set<String>>(emptySet())
         private set
 
-    /** Espera o adversario virtual "terminar de posicionar" e abre a batalha (#112). */
-    fun beginBotBattleSoon() {
-        val m = match ?: return
-        uiScope?.launch {
-            delay(BotRules.placementMillis())
-            if (match === m) m.beginBotBattle()
-        }
-    }
-
     /** Ficha mostrada no "adversario encontrado" da partida contra o adversario virtual (#112); nunca rotulada. */
     var botOpponentProfile by mutableStateOf<OpponentProfile?>(null)
         private set

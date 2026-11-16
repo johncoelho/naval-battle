@@ -176,13 +176,20 @@ class BotRulesTest {
         assertTrue(followRate(1.0) < 40, "erro certo = tiro aleatorio, quase nunca o vizinho")
     }
 
+    // #114: o adversario virtual posiciona como a IA de sempre; nenhuma fase intermediaria abre "Passe o aparelho"
+    @Test fun confirmarContraOBotAbreABatalhaNaHoraSemPassarOAparelho() {
+        val m = Match(GameMode.CLASSIC, Opponent.AI, random = Random(5), bot = BotProfile("MarujoLeo", BotLevel.EASY))
+        m.randomizePlacingFleet()
+        m.confirmPlacement()
+        assertEquals(Phase.BATTLE, m.phase)
+        assertEquals(Side.PLAYER, m.placingSide, "so o modo local troca o comandante que posiciona")
+    }
+
     @Test fun partidaInteiraContraOBotTerminaComRitmoEProvocacoesConhecidas() {
         val bot = BotProfile("MarujoLeo", BotLevel.MEDIUM)
         val m = Match(GameMode.CLASSIC, Opponent.AI, random = Random(21), bot = bot)
         m.confirmPlacement()
-        assertEquals(Phase.PLACEMENT, m.phase, "o adversario ainda posiciona (2 a 6 s)")
-        m.beginBotBattle()
-        assertEquals(Phase.BATTLE, m.phase)
+        assertEquals(Phase.BATTLE, m.phase, "como a IA de sempre: sem fase intermediaria (#114)")
         assertTrue(m.enemyThinkMillis() >= BotRules.MIN_THINK_MS)
         var guard = 0
         while (m.phase == Phase.BATTLE && guard++ < 1_000) {
@@ -209,7 +216,6 @@ class BotRulesTest {
             val rnd = Random(seed * 100_003 + g)
             val m = Match(GameMode.CLASSIC, Opponent.AI, random = rnd, bot = BotProfile("MarujoLeo", level))
             m.confirmPlacement()
-            m.beginBotBattle()
             val human = Ai(Random(seed * 7_919 + g), easy = false, errorChance = humanError)
             var guard = 0
             while (m.phase == Phase.BATTLE && guard++ < 2_000) {
@@ -267,10 +273,9 @@ class BotRulesTest {
         repeat(50) { assertEquals(BotPersonas.POOL.first(), BotPersonas.pick(Random(it), blocked = blocked)) }
     }
 
-    @Test fun posicionamentoEEsperaDeRevanchePareceGente() {
+    @Test fun esperaDeRevanchePareceGente() {
         val r = Random(2)
         repeat(100) {
-            assertTrue(BotRules.placementMillis(r) in 2_000L..6_000L)
             assertTrue(BotRules.rematchWaitMillis(r) in 2_000L..6_000L)
         }
     }

@@ -9,6 +9,15 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.45.1] — 2026-11-16 · Adversário virtual: sem "Passe o aparelho" (#114)
+
+App 0.45.1 (versionCode 128). Sem servidor, sem dependência nova.
+
+### Corrigido
+- **P0 (#114):** na 0.45.0 a partida rápida contra o adversário virtual abria a tela local "Passe o aparelho" (`HandoffScreen`) depois de posicionar a frota: a fase ficava em posicionamento durante a "espera do bot" e o `PlacementScreen` a tratava como o segundo comandante do modo local. Por decisão do John o adversário virtual posiciona "como uma IA normal": `Match.confirmPlacement` abre a batalha na hora (como a IA de sempre), sem fase intermediária. Removidos `Match.beginBotBattle`, `AppState.beginBotBattleSoon` e `BotRules.placementMillis`. Rede humana e modo local seguem iguais. Revanche contra o bot usa a mesma tela e fica corrigida junto. Teste de regressão em `BotRulesTest`.
+
+---
+
 ## [0.45.0] — 2026-11-16 · Partida rápida: jornada completa, sala fantasma e recompensas (#112, #113)
 
 App 0.45.0 (versionCode 127). Lote único (uma revisão do Google): jornada do adversário virtual (#112), sala fantasma (#113), revanche e recompensas. **Servidor primeiro**, na ordem: `supabase/ghost_rooms.sql` (migração `ghost_rooms`), `supabase/bots.sql` (migração `bots_rewards`: recompensas, `bot_rematch_start`, milha e versão mínima) e `supabase/weekly.sql` (migração `weekly_bot`), cada uma depois do ensaio com rollback (`supabase/tests/ghost_rooms_ensaio.sql`, `bots_rewards_ensaio.sql`, `bots_ensaio.sql`). Chaves novas nascem desligadas (`bot_rewards_enabled = 'false'`); `bots_enabled` segue como está. Sem dependência nova. Pedido do John: "a gente visa engajamento; demorar e ocultar as telas da experiência completa não nos ajuda". Auditoria do Tech Lead: `scratchpad/auditoria-jornada-bot.md`.

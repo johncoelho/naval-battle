@@ -403,6 +403,7 @@ servidor: `supabase/tests/bots_ensaio.sql` (bloco que desfaz).
 | BOT-29 | P1 | Convite de amigo: o convidado joga só contra o adversário virtual | O convite NÃO é liquidado (`referral_settle` não paga) |
 | BOT-30 | P1 | Desafio da semana (`weekly_enabled = true`) com partidas contra o adversário | `weekly_progress_of` soma as partidas fechadas (ONLINE_PLAY_5) e as ranqueadas vencidas plausíveis (RANKED_WIN_3) |
 | BOT-31 | P1 | App 0.44.6 com `bots_enabled = true` | Nunca recebe adversário virtual (`bot_match_start` devolve `off`); segue no treino |
+| BOT-32 | P0 | Partida rápida casada com o adversário virtual (casual e ranqueada), posicionar a frota e confirmar; também a revanche contra o bot | Vai direto para a batalha, nunca abre "Passe o aparelho" (HandoffScreen); Voltar no posicionamento volta ao menu; partida online humana e modo local seguem como antes (local ainda passa o aparelho entre os comandantes) |
 | GHOST-01 | P0 | Sala `waiting` rápida de 5 dias sem presença do anfitrião; QA02 toca em Partida rápida | A sala não aparece nem aceita QA02; ele cria a própria sala ou cai no balão; nenhum WO falso |
 | GHOST-02 | P0 | Sala `waiting` de código ou convite com mais de 2 dias | Fecha na limpeza; salas `7ebaf69c` e `bdabaaf2` aparecem como `abandoned` depois da migração |
 | GHOST-03 | P1 | WO legítimo: anfitrião some depois de aceitar | Vitória por ausência com o texto do WO e a milha devolvida |

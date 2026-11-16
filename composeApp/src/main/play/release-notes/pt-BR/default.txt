@@ -1,1 +1,1 @@
-Partida rapida mais agil: a busca acha adversario em poucos segundos, com a tela de adversario encontrado, revanche e emotes em toda partida online. Salas antigas deixaram de aparecer na busca. Correcoes no resultado das partidas online.
+Correcao: na partida rapida contra o adversario encontrado, depois de posicionar a frota a batalha abria uma tela de passar o aparelho. Agora vai direto para a batalha, como na partida contra a IA.

@@ -219,15 +219,8 @@ class Match(
             // em rede a batalha só abre quando as duas frotas estiverem a bordo
             remote -> markFleetReady()
             opponent == Opponent.LOCAL && placingSide == Side.PLAYER -> placingSide = Side.ENEMY
-            // adversario virtual (#112): ele "posiciona" por 2 a 6 s como um humano; o App chama [beginBotBattle]
-            bot != null -> Unit
             else -> startBattle()
         }
-    }
-
-    /** Fim da espera do adversario virtual terminar de posicionar (#112): abre a batalha. */
-    fun beginBotBattle() {
-        if (bot != null && phase == Phase.PLACEMENT) startBattle()
     }
 
     /** Uma frota ficou pronta; com as duas, a batalha começa nos dois aparelhos. */
