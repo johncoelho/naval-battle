@@ -21,9 +21,11 @@ class Ai(
     private val pendingTargets = ArrayDeque<Coord>()
     private val confirmedHits = mutableListOf<Coord>()
 
-    fun nextShot(enemyBoard: Board): Coord {
+    /** [extraError]: erro somado ao do nivel neste tiro (ajuste de dificuldade do adversario virtual, #112). */
+    fun nextShot(enemyBoard: Board, extraError: Double = 0.0): Coord {
         if (easy) return randomShot(enemyBoard)
-        if (errorChance > 0.0 && random.nextDouble() < errorChance) return randomShot(enemyBoard)
+        val chance = (errorChance + extraError).coerceIn(0.0, 0.9)
+        if (chance > 0.0 && random.nextDouble() < chance) return randomShot(enemyBoard)
         while (pendingTargets.isNotEmpty()) {
             val candidate = pendingTargets.removeFirst()
             if (isOpen(enemyBoard, candidate)) return candidate
