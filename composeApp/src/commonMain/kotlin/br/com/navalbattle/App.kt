@@ -1146,6 +1146,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val look = BotPersonas.look(persona, BotLevel.of(start.level), profile.xp, start.rating, exact = true)
         botOpponentProfile = OpponentProfile(persona, "", look.avatarId, look.xp, look.rating)
         botOpponentRanked = start.ranked
+        // a partida custa 1 milha, debitada pelo servidor (`bot_match_start`): le o saldo novo
+        uiScope?.launch { loadMiles() }
         screen = Screen.PLACEMENT
     }
 
@@ -1158,10 +1160,16 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** A tela de resultado chama ao terminar a partida contra o bot: fecha no servidor (ranqueada: o servidor julga os pontos). */
-    fun reportBotResult(victory: Boolean) {
+    fun reportBotResult(victory: Boolean, shots: Int, hits: Int, sunk: Int, turns: Int) {
         val bs = botSession ?: return
-        // no escopo do app, nao no efeito da tela: sair do resultado nao cancela o relato da vitoria
-        uiScope?.launch { reportBotResultFor(bs, victory) }
+        // no escopo do app, nao no efeito da tela: sair do resultado nao cancela o relato da vitoria.
+        // Ordem (#112): numeros -> relato (fecha a linha) -> dobroes -> milha da vitoria; o servidor confere cada passo
+        uiScope?.launch {
+            authed { s -> cloud.botMatchStats(s, bs.id, shots, hits, sunk, turns) }
+            reportBotResultFor(bs, victory)
+            awardOnlineDobroes(shots, hits, sunk, turns, victory, forId = bs.id)
+            if (victory) awardWinMiles(forId = bs.id)
+        }
     }
 
     private suspend fun reportBotResultFor(bs: BotSession, victory: Boolean) {
@@ -2339,8 +2347,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** Milhas da vitória online — chamado pela tela de resultado depois do relato ranqueado. */
-    suspend fun awardWinMiles() {
-        val id = onlineMatchId ?: return
+    suspend fun awardWinMiles(forId: String? = null) {
+        val id = forId ?: onlineMatchId ?: return
         val before = miles?.miles
         val r = authed { session -> cloud.awardWinMiles(session, id) }
         val after = (r as? CloudResult.Ok)?.value ?: return
@@ -2663,8 +2671,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * enviar: se o app fechar ou a rede cair, a próxima abertura reenvia (o servidor paga uma vez
      * por sala). Contra a IA não existe isso: são zero dobrões.
      */
-    suspend fun awardOnlineDobroes(shots: Int, hits: Int, sunk: Int, turns: Int, victory: Boolean) {
-        val id = onlineMatchId ?: return
+    suspend fun awardOnlineDobroes(shots: Int, hits: Int, sunk: Int, turns: Int, victory: Boolean, forId: String? = null) {
+        val id = forId ?: onlineMatchId ?: return
         if (!profile.signedIn) return
         onlineAward = OnlineAwardUi.CHECKING
         onlineAwardAmount = 0
@@ -2702,7 +2710,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 }
             }
             if (r.amount > 0) refreshBalance()
-            settleReferral(a.matchId)
+            // convite de amigo nunca e liquidado por partida contra o adversario virtual (decisao do John, #112)
+            if (a.matchId != botSession?.id) settleReferral(a.matchId)
         }
         return AwardFlushReport(true, statuses, networkFail)
     }
@@ -3475,14 +3484,16 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             // adversario virtual (#112): o botao e o "aguardando" sao iguais aos da revanche humana; passados uns
             // segundos o adversario "saiu da sala" (mesma tela de quando um humano sai), sem nova partida no servidor
             if (rematchRequestedByMe || opponentQuit) return
+            // revanche e uma partida nova: custa 1 milha como a humana (sem milha, o mesmo popup)
+            if (!hasMileOrPrompt()) return
             rematchRequestedByMe = true
             uiScope?.launch {
                 delay(BotRules.rematchWaitMillis())
                 if (match !== m || !rematchRequestedByMe) return@launch
-                // o adversario "desiste" (mesma tela de quando um humano nao volta). Aceitar a revanche pede
-                // `bot_match_start` sem sala (hoje exige a sala rapida cancelada): fica para decisao do John (#112)
                 rematchRequestedByMe = false
-                opponentQuit = true
+                // ~30% das vezes ele topa (nova partida, mesmas cotas do servidor); senao "saiu da sala"
+                if (BotRules.rematchAccepted() && startBotRematch(m)) return@launch
+                if (match === m) opponentQuit = true
             }
             return
         }
@@ -3497,6 +3508,30 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         rematchRequestedByMe = true
         sendToOpponent(Protocol.REMATCH)
         maybeStartRematch()
+    }
+
+    /** Revanche aceita pelo adversario virtual: `bot_rematch_start` (mesma modalidade, cotas e milha). Falso = nao abriu. */
+    private suspend fun startBotRematch(old: Match): Boolean {
+        val bot = old.bot ?: return false
+        val prev = botSession ?: return false
+        val start = (authed { s -> cloud.botRematchStart(s, prev.id, bot.name, appVersionName) } as? CloudResult.Ok)?.value
+        val id = start?.id
+        if (match !== old || start == null || !BotRules.startAccepted(start.outcome) || id == null) return false
+        opponentQuit = false
+        rankedResultSent = false
+        rankedOutcome = null
+        rankedReport = RankedReport.IDLE
+        rankBefore = null
+        botReported = false
+        botSession = BotSession(id, start.ranked, bot.name)
+        match = Match(old.mode, Opponent.AI, bot = BotProfile(bot.name, BotLevel.of(start.level)))
+        val look = BotPersonas.look(bot.name, BotLevel.of(start.level), profile.xp, start.rating, exact = true)
+        botOpponentProfile = OpponentProfile(bot.name, "", look.avatarId, look.xp, look.rating)
+        botOpponentRanked = start.ranked
+        if (start.ranked) uiScope?.launch { loadRankBefore() }
+        uiScope?.launch { loadMiles() }
+        screen = Screen.PLACEMENT
+        return true
     }
 
     private fun maybeStartRematch() {

@@ -1,1 +1,1 @@
-Ajustes na busca de partida rapida e correcoes no resultado das partidas online.
+Partida rapida mais agil: a busca acha adversario em poucos segundos, com a tela de adversario encontrado, revanche e emotes em toda partida online. Salas antigas deixaram de aparecer na busca. Correcoes no resultado das partidas online.

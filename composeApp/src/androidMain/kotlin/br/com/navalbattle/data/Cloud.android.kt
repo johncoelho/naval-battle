@@ -618,6 +618,29 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun botMatchStats(session: Session, botId: String, shots: Int, hits: Int, sunk: Int, turns: Int): CloudResult<Unit> = call {
+        val body = JSONObject().put("p_id", botId).put("p_shots", shots).put("p_hits", hits).put("p_sunk", sunk).put("p_turns", turns)
+        post("/rest/v1/rpc/bot_match_stats", body, token = session.accessToken)
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun botRematchStart(session: Session, prevBotId: String, persona: String, appVersion: String): CloudResult<BotStart?> = call {
+        val body = JSONObject().put("p_prev", prevBotId).put("p_persona", persona).put("p_app_version", appVersion)
+        val json = post("/rest/v1/rpc/bot_rematch_start", body, token = session.accessToken)
+        val arr = runCatching { JSONArray(json) }.getOrNull()
+        if (arr == null || arr.length() == 0) return@call CloudResult.Ok(null)
+        val o = arr.getJSONObject(0)
+        CloudResult.Ok(
+            BotStart(
+                outcome = o.optString("outcome", "invalid"),
+                id = if (o.isNull("bot_id")) null else o.optString("bot_id"),
+                rating = o.optInt("bot_rating", 1000),
+                level = o.optString("level", "easy"),
+                ranked = o.optBoolean("ranked", false)
+            )
+        )
+    }
+
     actual suspend fun botMatchReport(session: Session, botId: String, won: Boolean): CloudResult<Unit> = call {
         post("/rest/v1/rpc/bot_match_report", JSONObject().put("p_id", botId).put("p_won", won), token = session.accessToken)
         CloudResult.Ok(Unit)
@@ -825,7 +848,7 @@ actual class CloudApi actual constructor() {
     ): CloudResult<OnlineAwardResult> = call {
         val body = JSONObject().put("p_match_id", matchId).put("p_shots", shots).put("p_hits", hits)
             .put("p_sunk", sunk).put("p_turns", turns).put("p_victory", victory)
-        val o = JSONArray(post("/rest/v1/rpc/award_online_match", body, token = session.accessToken)).getJSONObject(0)
+        val o = JSONArray(post("/rest/v1/rpc/award_match_any", body, token = session.accessToken)).getJSONObject(0)
         CloudResult.Ok(OnlineAwardResult(o.optString("status", "unknown"), o.optInt("amount", 0), o.optInt("balance", 0)))
     }
 
@@ -1074,7 +1097,7 @@ actual class CloudApi actual constructor() {
         milesCall("spend_mile", JSONObject().put("p_match_id", matchId), session)
 
     actual suspend fun awardWinMiles(session: Session, matchId: String): CloudResult<Int> =
-        milesCall("award_win_miles", JSONObject().put("p_match_id", matchId), session)
+        milesCall("award_win_miles_any", JSONObject().put("p_match_id", matchId), session)
 
     actual suspend fun buyMiles(session: Session, packs: Int): CloudResult<Int> =
         milesCall("buy_miles", JSONObject().put("p_packs", packs), session)

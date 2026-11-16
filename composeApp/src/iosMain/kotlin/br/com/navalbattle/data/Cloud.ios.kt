@@ -630,6 +630,35 @@ actual class CloudApi actual constructor() {
         )
     }
 
+    actual suspend fun botMatchStats(session: Session, botId: String, shots: Int, hits: Int, sunk: Int, turns: Int): CloudResult<Unit> = call {
+        post(
+            "/rest/v1/rpc/bot_match_stats",
+            mapOf("p_id" to botId, "p_shots" to shots, "p_hits" to hits, "p_sunk" to sunk, "p_turns" to turns),
+            token = session.accessToken
+        )
+        CloudResult.Ok(Unit)
+    }
+
+    actual suspend fun botRematchStart(session: Session, prevBotId: String, persona: String, appVersion: String): CloudResult<BotStart?> = call {
+        val json = post(
+            "/rest/v1/rpc/bot_rematch_start",
+            mapOf("p_prev" to prevBotId, "p_persona" to persona, "p_app_version" to appVersion),
+            token = session.accessToken
+        )
+        val row = (json as? List<*>)?.firstOrNull() as? Map<*, *>
+        CloudResult.Ok(
+            row?.let {
+                BotStart(
+                    outcome = it.strOr("outcome", "invalid"),
+                    id = it["bot_id"] as? String,
+                    rating = it.intOr("bot_rating", 1000),
+                    level = it.strOr("level", "easy"),
+                    ranked = (it["ranked"] as? Boolean) ?: false
+                )
+            }
+        )
+    }
+
     actual suspend fun botMatchReport(session: Session, botId: String, won: Boolean): CloudResult<Unit> = call {
         post("/rest/v1/rpc/bot_match_report", mapOf("p_id" to botId, "p_won" to won), token = session.accessToken)
         CloudResult.Ok(Unit)
@@ -825,7 +854,7 @@ actual class CloudApi actual constructor() {
             "p_match_id" to matchId, "p_shots" to shots, "p_hits" to hits,
             "p_sunk" to sunk, "p_turns" to turns, "p_victory" to victory
         )
-        val o = firstRow(post("/rest/v1/rpc/award_online_match", body, token = session.accessToken))
+        val o = firstRow(post("/rest/v1/rpc/award_match_any", body, token = session.accessToken))
         CloudResult.Ok(OnlineAwardResult(o.strOr("status", "unknown"), o.intOr("amount", 0), o.intOr("balance", 0)))
     }
 
@@ -1079,7 +1108,7 @@ actual class CloudApi actual constructor() {
         milesCall("spend_mile", mapOf("p_match_id" to matchId), session)
 
     actual suspend fun awardWinMiles(session: Session, matchId: String): CloudResult<Int> =
-        milesCall("award_win_miles", mapOf("p_match_id" to matchId), session)
+        milesCall("award_win_miles_any", mapOf("p_match_id" to matchId), session)
 
     actual suspend fun buyMiles(session: Session, packs: Int): CloudResult<Int> =
         milesCall("buy_miles", mapOf("p_packs" to packs), session)

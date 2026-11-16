@@ -274,4 +274,10 @@ class BotRulesTest {
             assertTrue(BotRules.rematchWaitMillis(r) in 2_000L..6_000L)
         }
     }
+
+    @Test fun revancheAceitaEmCercaDe30PorCento() {
+        val r = Random(8)
+        val ok = (1..2_000).count { BotRules.rematchAccepted(r) }
+        assertTrue(ok in 500..700, "aceitou $ok de 2000")
+    }
 }

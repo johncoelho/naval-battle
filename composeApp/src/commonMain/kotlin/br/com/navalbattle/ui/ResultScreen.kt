@@ -86,11 +86,16 @@ fun ResultScreen(state: AppState, match: Match) {
                 shotsFired = match.playerShots,
                 hitsLanded = match.playerHits,
                 shipsSunk = ShipClass.fleet.size - match.enemyBoard.remainingShips().size,
-                turns = match.turnCount,
-                xpOnly = bot
+                turns = match.turnCount
             )
-            // contra o bot o servidor fecha a partida (e, na ranqueada, decide os pontos)
-            if (bot) state.reportBotResult(victory)
+            // contra o bot o servidor fecha a partida (na ranqueada decide os pontos) e paga dobrões e milha como na
+            // online (#112): numeros -> relato -> dobrões -> milha, tudo no AppState
+            if (bot) {
+                state.reportBotResult(
+                    victory, match.playerShots, match.playerHits,
+                    ShipClass.fleet.size - match.enemyBoard.remainingShips().size, match.turnCount
+                )
+            }
             // com conta conectada a carreira sobe sozinha depois de cada partida
         } else if (online) {
             // sem combate nem gasta uma das 3 partidas recompensadas contra o adversário
@@ -129,19 +134,19 @@ fun ResultScreen(state: AppState, match: Match) {
         // avaliação na Play (#45): vitória já contada na carreira; o pedido sai ao voltar ao menu
         if (victory) award?.let { state.noteReviewCandidate(rankedUp = it.rankUp != null) }
         // conquistas do Play Games (#48): só partida que valeu carreira (a mesma regra do registerMatch)
-        award?.takeIf { !bot }?.let { a ->
+        award?.let { a ->
             state.reportMatchAchievements(
                 victory = victory,
-                online = online,
+                online = online || bot,
                 shipsLost = ShipClass.fleet.size - match.board(me).remainingShips().size,
                 shipsSunk = a.shipsSunk,
                 rankUp = a.rankUp
             )
         }
         // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
-        if ((match.opponent == Opponent.AI || online) && !bot && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
+        if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
         // anúncio premiado (#29): só lê o servidor; o botão aparece se ele liberar
-        if (victory && online && state.onlineAwardAmount > 0) state.loadAds()
+        if (victory && (online || bot) && state.onlineAwardAmount > 0) state.loadAds()
     }
 
     Column(
@@ -176,7 +181,7 @@ fun ResultScreen(state: AppState, match: Match) {
                 Naval.inkSoft
             )
 
-            (if (bot) botResultSections() else resultSections(local, online)).forEach { section ->
+            resultSections(local, online || bot).forEach { section ->
                 when (section) {
                     ResultSection.HEADLINE -> Unit
                     ResultSection.COMPARISON -> {
@@ -291,7 +296,7 @@ fun ResultScreen(state: AppState, match: Match) {
             PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
         }
         // anúncio premiado opcional (#29): secundário, abaixo da ação principal, nunca prende o resto
-        val credits = if (online) state.onlineAwardAmount else 0  // contra a IA são zero: não há o que dobrar
+        val credits = if (online || bot) state.onlineAwardAmount else 0  // contra a IA são zero: não há o que dobrar
         if (state.adWinShows(match, credits, adRef)) {
             Gap(8)
             AdButton(state, AdPlace.WIN, t(K.AD_DOUBLE_WIN), t(K.AD_WATCH_PLUS, state.adWinAmount(credits))) {
@@ -350,10 +355,8 @@ private fun CareerReport(state: AppState, match: Match, a: Award) {
             award = a,
             ownShipsLeft = afloat,
             fleetSize = ShipClass.fleet.size,
-            // contra o adversario virtual a carreira nao conta a partida (so o XP): sem isso a "primeira saida" e as
-            // "tres seguidas" se repetiam a cada partida (auditoria #112, P1)
-            matchesBefore = if (match.bot != null) state.profile.matches else state.profile.matches - 1,
-            streakAfter = if (match.bot != null) 0 else state.profile.streak
+            matchesBefore = state.profile.matches - 1,
+            streakAfter = state.profile.streak
         )
     )
 

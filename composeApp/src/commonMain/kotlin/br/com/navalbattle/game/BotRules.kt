@@ -64,8 +64,10 @@ object BotRules {
         }
     }
 
-    /** Revanche pedida ao adversario virtual: espera de 2 a 6 s e ele "desiste" (aceitar pede mudanca no servidor). */
+    /** Revanche pedida ao adversario virtual: espera de 2 a 6 s e, em [REMATCH_ACCEPT_CHANCE], ele topa (senao "saiu da sala"). */
+    internal const val REMATCH_ACCEPT_CHANCE = 0.30
     fun rematchWaitMillis(random: Random = Random.Default): Long = random.nextLong(2_000L, 6_001L)
+    fun rematchAccepted(random: Random = Random.Default): Boolean = random.nextDouble() < REMATCH_ACCEPT_CHANCE
 
     /**
      * Depois de `bot_match_start`: so abre a partida se o jogador ainda esta na busca; se cancelou durante a chamada,

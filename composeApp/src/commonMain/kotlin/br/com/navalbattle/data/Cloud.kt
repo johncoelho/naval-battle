@@ -633,7 +633,13 @@ expect class CloudApi() {
     /** O servidor emite a partida contra bot (depois de `cancelQuickRoom` = cancelled). Nulo se a funcao nao existe. */
     suspend fun botMatchStart(session: Session, mode: String, roomId: String, persona: String, appVersion: String): CloudResult<BotStart?>
 
-    /** Fecha a partida casual contra bot (so telemetria). */
+    /** Os numeros da partida contra o adversario virtual (`bot_match_stats`), gravados antes do relato; o servidor confere. */
+    suspend fun botMatchStats(session: Session, botId: String, shots: Int, hits: Int, sunk: Int, turns: Int): CloudResult<Unit>
+
+    /** Revanche contra o adversario virtual (`bot_rematch_start`): mesma modalidade, mesmas cotas e 1 milha. Nulo se a funcao nao existe. */
+    suspend fun botRematchStart(session: Session, prevBotId: String, persona: String, appVersion: String): CloudResult<BotStart?>
+
+    /** Fecha a partida casual contra bot. */
     suspend fun botMatchReport(session: Session, botId: String, won: Boolean): CloudResult<Unit>
 
     /** Relata a ranqueada contra bot; o servidor decide os pontos (tetos, duracao minima, cotas). */
@@ -713,7 +719,7 @@ expect class CloudApi() {
      */
     suspend fun dobroesBuy(session: Session, kind: String, item: String, request: String? = null): CloudResult<WalletBuy>
 
-    /** Recompensa de dobrões de uma partida online (RPC `award_online_match`); o servidor confere e paga uma vez por sala. */
+    /** Recompensa de dobrões de uma partida online ou contra o adversário virtual (RPC `award_match_any`); o servidor confere e paga uma vez por partida. */
     suspend fun awardOnlineMatch(
         session: Session, matchId: String, shots: Int, hits: Int, sunk: Int, turns: Int, victory: Boolean
     ): CloudResult<OnlineAwardResult>

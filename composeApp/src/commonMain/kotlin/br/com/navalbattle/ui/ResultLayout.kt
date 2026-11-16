@@ -8,11 +8,6 @@ enum class ResultSection { HEADLINE, COMPARISON, CHART, LOCAL_STATS, RANKING, MI
  * antes do mapa: com o anúncio no rodapé a janela encolhe e o que ficava no fim saía
  * da tela (#103). Não depende do anúncio.
  */
-/** Partida contra o adversario virtual (#105): o mesmo relatorio da online, sem milhas (o bot nao gasta nem paga milha). */
-fun botResultSections(): List<ResultSection> = listOf(
-    ResultSection.HEADLINE, ResultSection.COMPARISON, ResultSection.CHART, ResultSection.RANKING, ResultSection.CAREER
-)
-
 fun resultSections(local: Boolean, online: Boolean): List<ResultSection> = when {
     local -> listOf(ResultSection.HEADLINE, ResultSection.CHART, ResultSection.LOCAL_STATS)
     online -> listOf(
