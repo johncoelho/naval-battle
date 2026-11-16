@@ -9,6 +9,22 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.44.7] — 2026-11-15 · Adversário virtual com a jornada completa, espera curta e ajuste de dificuldade (#112)
+
+App 0.44.7 (versionCode 127). Sem banco novo, sem dependência. Correção de produto da 0.44.6 (bots ligados a 100%), pedida pelo John: "a gente visa engajamento; demorar e ocultar as telas da experiência completa não nos ajuda". Auditoria do Tech Lead da jornada (29 etapas): `scratchpad/auditoria-jornada-bot.md`.
+
+### Corrigido
+- **Espera de 3 a 6 s (sorteada a cada busca)** em vez de 30 s (casual) e 45 s (ranqueada); piso de 3 s no código. `bot_wait_seconds` e `bot_wait_seconds_ranked` do `app_config` viram só TETO (30 e 45 não mudam nada). A tela de busca é a mesma da busca por humano.
+- **Tela "Adversário encontrado" também contra o adversário virtual**, casual e ranqueada: nome da persona, retrato, patente e pontos (ranqueada, os do adversário sorteado pelo servidor) no mesmo layout da online, sem rótulo, com "Ações de segurança" (denúncia e bloqueio ficam no aparelho, sem rede; persona bloqueada não volta a ser sorteada). Ficha em `BotPersonas.look`.
+- **Cancelar a busca durante a chamada ao servidor não abre mais a partida** (a linha aberta fecha com `bot_match_report(id, false)`).
+- **Medalhas do resultado**: "primeira saída" e "três seguidas" não se repetem a cada partida contra o adversário virtual.
+- **Cabeçalho da batalha "VS nome"** e **botão de emotes** (💬) também contra o adversário virtual; ele responde de vez em quando, com tempo humano, só com emote ou frase pronta da lista fechada.
+- **Resultado igual ao da online**: revanche (espera 2 a 6 s e "o adversário desistiu", sem partida nova), "Ações de segurança" e "voltar ao convés".
+- **Posicionamento**: depois de confirmar a frota o adversário "termina de posicionar" em 2 a 6 s; o ritmo de jogadas ganha pausas longas ocasionais (7%, 7 a 15 s).
+
+### Adicionado
+- **Ajuste suave de dificuldade** (`BotRules.catchUpError`, pedido do John: tendência a dar a vitória ao jogador): quando o jogador está empatado ou atrás em navios a flote, o adversário erra um pouco mais a mira (tiro aleatório válido; teto 60%); adiante, mira normal. Teste por simulação (700 partidas por nível): vitória do jogador entre 55% e 72% (medido 57% a 63%). Vale para casual e ranqueada; os limites de pontos continuam (metade do Elo, teto de 16, 10 ranqueadas na vida).
+
 ## [Site] — 2026-11-15 · Termos e privacidade do adversário virtual (#105)
 
 Só `site/` e docs; sem versão do app, sem banco. [skip ci]; publicar com `gh workflow run pages.yml --ref main` depois do push. Textos aprovados pelo John no chat; as consoles (ficha da Play, notas da App Store) ficam por conta do Release.

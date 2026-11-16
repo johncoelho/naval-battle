@@ -1,1 +1,1 @@
-Ajustes internos na busca de partida rapida e na estabilidade do online. Sem mudancas visiveis nesta versao.
+Ajustes na busca de partida rapida e correcoes no resultado das partidas online.

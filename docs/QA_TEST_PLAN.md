@@ -372,7 +372,7 @@ servidor: `supabase/tests/bots_ensaio.sql` (bloco que desfaz).
 
 | ID | P | Passos | Esperado |
 |---|---|---|---|
-| BOT-01 | P0 | `bots_enabled = 'test'`, `bot_wait_seconds = 30`; QA01 abre partida rápida casual e espera sozinho | Aos ~30 s (±3) entra em partida contra adversário com nome do pool, jogável até o fim; sem faixa de IA nem botão de treino |
+| BOT-01 | P0 | `bots_enabled = 'test'`, `bot_wait_seconds = 30` (agora só teto); QA01 abre partida rápida casual e espera sozinho | Entre 3 e 6 s entra em partida contra adversário com nome do pool, jogável até o fim; sem faixa de IA nem botão de treino |
 | BOT-02 | P0 | QA02 com sala rápida do mesmo modo aberta; QA01 procura | QA01 entra na sala de QA02; nenhuma linha em `bot_matches` |
 | BOT-03 | P0 | Bot esperado (30 s quase), QA02 abre sala aos ~25 s | Vale a partida humana; se o `cancel_quick_room` voltou `joined`, nenhum bot e nenhuma linha em `bot_matches` |
 | BOT-04 | P0 | `bots_enabled = 'false'`; QA01 espera 45 s na casual e na ranqueada | Nunca entra bot; o treino com faixa de IA (#41) aparece aos 20 s como na 0.44.5 |
@@ -388,7 +388,15 @@ servidor: `supabase/tests/bots_ensaio.sql` (bloco que desfaz).
 | BOT-14 | P0 | Sala de amigo, código e convite mirado sem ninguém entrar | Nunca entra bot |
 | BOT-15 | P0 | Chamar `record_ranked_bot_result` direto: sem linha aberta, antes de 75 s com vitória, repetida, de outra conta | Rejeita (`invalid`, `too_short`, `repeat`); Elo e ranking não mudam |
 | BOT-16 | P1 | Modo avião no meio da partida contra bot ranqueada, volta no fim | Joga até o fim local; relato com até 3 tentativas; sem rede o resultado não relatado não vale ponto (a linha fecha como derrota pelo prazo) |
-| BOT-17 | P1 | Resultado de partida contra bot (casual e ranqueada) | Sem "treino contra a IA", sem "nova partida" nem revanche; só volta ao deque; `docs/medicao-semanal.sql` devolve os mesmos números com e sem a partida |
+| BOT-17 | P1 | Resultado de partida contra bot (casual e ranqueada) | Sem "treino contra a IA" nem "nova partida"; revanche, "Ações de segurança" e "voltar ao convés" iguais aos da online (revanche: espera 2 a 6 s e "o adversário desistiu"); `docs/medicao-semanal.sql` devolve os mesmos números com e sem a partida |
+| BOT-18 | P0 | Busca rápida casual e ranqueada sozinho, bots ligados | Entra em 3 a 6 s (várias vezes: varia); tela de busca igual à da humana; "Adversário encontrado" com nome, retrato, patente (e pontos na ranqueada), mesmo layout da online, sem as palavras bot, IA ou virtual |
+| BOT-19 | P1 | Cancelar a busca no instante em que o adversário entra (durante a chamada ao servidor) | Volta ao menu, nenhuma partida abre; a linha em `bot_matches` fecha como derrota |
+| BOT-20 | P1 | Batalha contra o adversário | Cabeçalho "VS nome"; depois de confirmar a frota espera 2 a 6 s; jogadas com pausas ocasionais mais longas |
+| BOT-21 | P1 | Tocar em 💬 e mandar emote ou frase pronta | Aparece na tela; o adversário responde de vez em quando só com emote ou frase da lista, nunca texto livre |
+| BOT-22 | P1 | Duas partidas seguidas contra o adversário, com 1 partida de carreira | "Primeira saída" e "três seguidas" não repetem no resultado |
+| BOT-23 | P1 | Resultado: tocar em Revanche | Botão "aguardando" por 2 a 6 s, depois "o adversário desistiu"; "voltar ao convés" funciona; nenhuma linha nova em `bot_matches` |
+| BOT-24 | P1 | "Ações de segurança" no popup e no resultado: denunciar e bloquear | Mesmo fluxo do humano e mesma mensagem final; nenhuma chamada de rede; a persona bloqueada não volta nas partidas seguintes da sessão |
+| BOT-25 | P1 | 20 partidas casuais, jogador mediano | Jogador vence em torno de 60% (55% a 70%); nenhuma jogada absurda do adversário |
 
 ## 12. Economia, loja e personalização
 

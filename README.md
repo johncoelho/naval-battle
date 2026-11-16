@@ -427,7 +427,7 @@ depois. Detalhe do schema em [supabase/online.sql](supabase/online.sql).
 #### Adversário virtual na partida rápida (#105, desligado por padrão)
 
 Quando `app_config.bots_enabled` liga para a conta (`'test'` = só QA, `'true'` = todos dentro de `bot_percent`) e a busca
-da partida rápida passa de `bot_wait_seconds` (30 s casual, 45 s ranqueada) sem ninguém entrar, o app joga contra um bot: a
+da partida rápida passa de uma espera sorteada de 3 a 6 s (`BotRules.waitMillis`; `bot_wait_seconds` e `bot_wait_seconds_ranked` do servidor são só o teto, #112) sem ninguém entrar, passa pela tela "Adversário encontrado" (ficha de `BotPersonas.look`, sem rótulo) e pela mesma jornada de uma partida online (emotes, ações de segurança locais, revanche) e tem ajuste suave de dificuldade a favor do jogador (`BotRules.catchUpError`, ~60% de vitória dele), o app joga contra um bot: a
 IA de `game/Ai.kt` no aparelho, com persona fictícia (`game/BotPersonas.kt`), ritmo humano (mínimo 1,2 s por jogada) e provocações
 só da lista fechada. Sem aviso em tela. O bot não tem conta e nunca aparece em ranking, busca ou amizade. Sala de amigo, código e
 convite nunca viram bot. Servidor (`supabase/bots.sql`): `bot_wait_info` (esperas e cotas), `cancel_quick_room` (fecha a sala sem
