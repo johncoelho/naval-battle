@@ -83,6 +83,10 @@ begin
                     and (x.body like 'ACT|%' or x.body like 'ABIL|%'))
       and exists (select 1 from public.online_messages x where x.match_id = s.id and x.sender_id = s.guest_id
                     and (x.body like 'ACT|%' or x.body like 'ABIL|%'));
+    -- contra o adversário virtual (#112, bots.sql aplicado antes): partida fechada com duração mínima
+    n := n + (select count(*)::integer from public.bot_matches b
+               where b.user_id = p_user and b.status = 'closed' and b.started_at >= t0 and b.started_at < t1
+                 and b.ended_at - b.started_at >= make_interval(secs => public.config_int('bot_min_seconds_loss', 30)));
   elsif m.code = 'CHECKIN_5' then
     select count(*)::integer into n from public.daily_claims c
      where c.user_id = p_user and c.kind = 'checkin' and c.day >= p_week and c.day < p_week + 7;
@@ -96,6 +100,10 @@ begin
                      and (x.body like 'ACT|%' or x.body like 'ABIL|%'))
        and exists (select 1 from public.online_messages x where x.match_id = om.id and x.sender_id = om.guest_id
                      and (x.body like 'ACT|%' or x.body like 'ABIL|%'));
+    -- vitória ranqueada plausível contra o adversário virtual (#112)
+    n := n + (select count(*)::integer from public.bot_matches b
+               where b.user_id = p_user and b.ranked and b.started_at >= t0 and b.started_at < t1
+                 and public.bot_win_valid(b));
   end if;
   return least(n, m.target);
 end $$;

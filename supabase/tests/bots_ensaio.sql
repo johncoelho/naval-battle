@@ -58,7 +58,7 @@ begin
   perform pg_temp.nb_as(u);
   rid := pg_temp.nb_room(u, rk, md);
   perform public.cancel_quick_room(rid);
-  return query select * from public.bot_match_start(md, rid, 'Marujo', '0.44.6');
+  return query select * from public.bot_match_start(md, rid, 'Marujo', '0.45.0');
 end $$;
 
 do $$
@@ -86,6 +86,8 @@ begin
   insert into public.season_passes (user_id, season_key, tier)
     select u, szn, 'free' from unnest(array[a, b, c, e, f, g, h, k, o, z]) u;  -- d fica sem passe
   insert into public.allowed_players (user_id, source, note) values (a, 'qa', 'ensaio bots');
+  -- a partida contra o bot custa 1 milha (#112): milhas de sobra para as cotas do ensaio
+  update public.profiles set nautical_miles = 50, miles_day = public.brt_today() where id in (a, b, c, d, e, f, g, h, k, o, z);
   -- veterano de 20 partidas, 14 vitórias (70 %); médio de 8 partidas
   update public.profiles set matches = 20, wins = 14 where id = b;
   update public.profiles set matches = 8, wins = 3 where id = h;
@@ -113,7 +115,7 @@ begin
   -- salas: ordem do A1
   perform pg_temp.nb_as(a);
   rid := pg_temp.nb_room(a, false);
-  select * into s from public.bot_match_start('CLASSIC', rid, 'Marujo', '0.44.6');
+  select * into s from public.bot_match_start('CLASSIC', rid, 'Marujo', '0.45.0');
   out := out || format('start_sem_cancelar=%s | ', s.outcome);
   perform pg_temp.nb_as(b);
   out := out || format('cancel_outro=%s | ', (select c0.outcome from public.cancel_quick_room(rid) c0));
@@ -123,13 +125,13 @@ begin
   -- a sala cancelada não aceita mais ninguém (a mesma condição de join_online_match)
   select count(*) into n from public.online_matches om where om.id = rid and om.guest_id is null and om.status = 'waiting';
   out := out || format('join_apos_cancel=%s linhas | ', n);
-  select * into s from public.bot_match_start('CLASSIC', rid, 'Marujo', '0.44.6');
+  select * into s from public.bot_match_start('CLASSIC', rid, 'Marujo', '0.45.0');
   out := out || format('start1=%s nivel=%s ranked=%s | ', s.outcome, s.level, s.ranked);
   bid := s.bot_id;
   select p.ranked_rating into r1000 from public.profiles p where p.id = a;
   dv := s.bot_rating - r1000;
   out := out || format('rating_do_bot=%s | ', case when abs(dv) <= 100 then 'ok' else 'FALHOU(' || dv || ')' end);
-  select * into s from public.bot_match_start('CLASSIC', rid, 'Marujo', '0.44.6');
+  select * into s from public.bot_match_start('CLASSIC', rid, 'Marujo', '0.45.0');
   out := out || format('sala_reusada=%s | ', s.outcome);
   -- fecha a casual para não pesar nas outras contas
   out := out || format('casual_report=%s ', (select c0.outcome from public.bot_match_report(bid, true) c0));
@@ -154,7 +156,7 @@ begin
   rid := pg_temp.nb_room(a, false);
   perform public.cancel_quick_room(rid);
   perform pg_temp.nb_room(a, false);  -- outra sala waiting do mesmo anfitrião
-  select * into s from public.bot_match_start('CLASSIC', rid, 'Marujo', '0.44.6');
+  select * into s from public.bot_match_start('CLASSIC', rid, 'Marujo', '0.45.0');
   out := out || format('busy=%s | ', s.outcome);
   delete from public.online_matches om where om.host_id = a;
 
