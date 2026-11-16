@@ -25,13 +25,13 @@ data class BotProfile(val name: String, val level: BotLevel)
 
 object BotRules {
     /** Nenhuma jogada do bot sai antes disto (criterio 7: jogada instantanea denuncia). */
-    const val MIN_THINK_MS = 1_200L
+    internal const val MIN_THINK_MS = 1_200L
 
     /** Pausa extra depois que o proprio bot acerta: gente comemora, confere, pensa de novo. */
     private const val AFTER_HIT_EXTRA_MS = 700L
 
     /** Chance de uma pausa longa (gente se distrai, confere o tabuleiro, olha o celular) numa jogada do bot (#112). */
-    const val LONG_PAUSE_CHANCE = 0.07
+    internal const val LONG_PAUSE_CHANCE = 0.07
     private const val LONG_PAUSE_MIN_MS = 7_000L
     private const val LONG_PAUSE_MAX_MS = 15_000L
 
@@ -52,9 +52,9 @@ object BotRules {
      * de tiro aleatorio por navio de diferenca, no maximo [CATCH_UP_MAX]. Empatado: um erro leve ([EVEN_ERROR]). Adiante: mira normal. Nunca
      * joga fora de proposito (o tiro ruim e um tiro aleatorio valido, como o de quem erra).
      */
-    const val CATCH_UP_STEP = 0.25
-    const val CATCH_UP_MAX = 0.60
-    const val EVEN_ERROR = 0.18
+    internal const val CATCH_UP_STEP = 0.25
+    internal const val CATCH_UP_MAX = 0.60
+    internal const val EVEN_ERROR = 0.18
     fun catchUpError(botShipsLeft: Int, humanShipsLeft: Int): Double {
         val behind = botShipsLeft - humanShipsLeft
         return when {
@@ -114,10 +114,10 @@ object BotRules {
         isQuick && botOn && modeOk && !practicing
 
     /** Espera minima do sorteio: abaixo disso a partida "achada" parece instantanea demais (#112). */
-    const val WAIT_MIN_SECONDS = 3
+    internal const val WAIT_MIN_SECONDS = 3
 
     /** Teto do sorteio (e da espera): a busca real dura so isto antes do adversario entrar (#112). */
-    const val WAIT_MAX_SECONDS = 6
+    internal const val WAIT_MAX_SECONDS = 6
 
     /** Piso absoluto: um valor de configuracao absurdo (0, negativo) nao pode virar adversario instantaneo. */
     private const val WAIT_FLOOR_SECONDS = 3
