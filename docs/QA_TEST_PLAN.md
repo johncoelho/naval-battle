@@ -376,7 +376,7 @@ servidor: `supabase/tests/bots_ensaio.sql` (bloco que desfaz).
 | BOT-02 | P0 | QA02 com sala rápida do mesmo modo aberta; QA01 procura | QA01 entra na sala de QA02; nenhuma linha em `bot_matches` |
 | BOT-03 | P0 | Bot esperado (30 s quase), QA02 abre sala aos ~25 s | Vale a partida humana; se o `cancel_quick_room` voltou `joined`, nenhum bot e nenhuma linha em `bot_matches` |
 | BOT-04 | P0 | `bots_enabled = 'false'`; QA01 espera 45 s na casual e na ranqueada | Nunca entra bot; o treino com faixa de IA (#41) aparece aos 20 s como na 0.44.5 |
-| BOT-05 | P0 | Ranqueada (QA01 com passe, `ranked_rating = R`), espera 45 s, vence o bot depois de 75 s | `ranked_rating` e pontos da temporada de QA01 sobem no máximo 16 (metade do normal); nenhuma outra conta muda; dobrões, milhas, desafio do dia e conquistas iguais ao antes; bloco de ranking mostra os pontos |
+| BOT-05 | P0 | Ranqueada (QA01 com passe, `ranked_rating = R`), espera 3 a 6 s, vence o adversário depois de 75 s | `ranked_rating` e pontos da temporada de QA01 sobem no máximo 16 (metade do normal); nenhuma outra conta muda; com `bot_rewards_enabled = true` os dobrões (formula humana) e a milha da vitória (+5) entram, a partida custou 1 milha e o desafio do dia e as conquistas contam; bloco de ranking mostra os pontos |
 | BOT-06 | P0 | Mesma partida, mas perde (ou sai pelo menu) | Perde o delta limitado; sair antes do fim é derrota |
 | BOT-07 | P1 | `select bot_rating, level, ranked, status, won from bot_matches` da partida | `bot_rating` entre R-100 e R+100; nível fácil para conta nova |
 | BOT-08 | P1 | 3 partidas: ver o intervalo entre jogadas do adversário | Nenhuma jogada em menos de 1,2 s; o intervalo varia; só provocações da lista (emoji ou frase pronta), nunca texto livre |
@@ -390,13 +390,22 @@ servidor: `supabase/tests/bots_ensaio.sql` (bloco que desfaz).
 | BOT-16 | P1 | Modo avião no meio da partida contra bot ranqueada, volta no fim | Joga até o fim local; relato com até 3 tentativas; sem rede o resultado não relatado não vale ponto (a linha fecha como derrota pelo prazo) |
 | BOT-17 | P1 | Resultado de partida contra bot (casual e ranqueada) | Sem "treino contra a IA" nem "nova partida"; revanche, "Ações de segurança" e "voltar ao convés" iguais aos da online (revanche: espera 2 a 6 s e "o adversário desistiu"); `docs/medicao-semanal.sql` devolve os mesmos números com e sem a partida |
 | BOT-18 | P0 | Busca rápida casual e ranqueada sozinho, bots ligados | Entra em 3 a 6 s (várias vezes: varia); tela de busca igual à da humana; "Adversário encontrado" com nome, retrato, patente (e pontos na ranqueada), mesmo layout da online, sem as palavras bot, IA ou virtual |
-| BOT-19 | P1 | Cancelar a busca no instante em que o adversário entra (durante a chamada ao servidor) | Volta ao menu, nenhuma partida abre; a linha em `bot_matches` fecha como derrota |
-| BOT-20 | P1 | Batalha contra o adversário | Cabeçalho "VS nome"; depois de confirmar a frota espera 2 a 6 s; jogadas com pausas ocasionais mais longas |
+| BOT-19 | P1 | Cancelar a busca no instante em que o adversário entra (durante a chamada ao servidor) | Volta ao menu, nenhuma partida abre; a linha em `bot_matches` fecha como derrota e a milha gasta fica gasta (igual à sala cancelada) |
+| BOT-20 | P1 | Batalha: cabeçalho, ritmo e posicionamento | "VS nome"; depois de confirmar a frota espera 2 a 6 s; jogadas com pausas ocasionais mais longas |
 | BOT-21 | P1 | Tocar em 💬 e mandar emote ou frase pronta | Aparece na tela; o adversário responde de vez em quando só com emote ou frase da lista, nunca texto livre |
-| BOT-22 | P1 | Duas partidas seguidas contra o adversário, com 1 partida de carreira | "Primeira saída" e "três seguidas" não repetem no resultado |
-| BOT-23 | P1 | Resultado: tocar em Revanche | Botão "aguardando" por 2 a 6 s, depois "o adversário desistiu"; "voltar ao convés" funciona; nenhuma linha nova em `bot_matches` |
+| BOT-22 | P1 | Resultado de partida contra o adversário (casual): vitória plausível | Dobrões pagos (fórmula humana, teto 500/dia somando online e bot, 250/dia do bot) e +1 milha; a entrada custou 1; XP, partidas, tiros, sequência, desafio do dia e medalhas contam como na online; botão de dobrar dobrões aparece |
+| BOT-23 | P1 | Resultado: tocar em Revanche (várias vezes) | Botão "aguardando" por 2 a 6 s; em cerca de 30% abre nova partida (custa 1 milha, respeita as cotas); nas outras, "o adversário saiu"; "voltar ao convés" funciona |
 | BOT-24 | P1 | "Ações de segurança" no popup e no resultado: denunciar e bloquear | Mesmo fluxo do humano e mesma mensagem final; nenhuma chamada de rede; a persona bloqueada não volta nas partidas seguintes da sessão |
 | BOT-25 | P1 | 20 partidas casuais, jogador mediano | Jogador vence em torno de 60% (55% a 70%); nenhuma jogada absurda do adversário |
+| BOT-26 | P0 | Chamar `award_match_any` direto: partida repetida, de outra conta, aberta, vitória < 75 s, vitória com menos de 17 acertos | `already`, `not_eligible`, `not_eligible`, `not_eligible`, `not_eligible`; nada é pago |
+| BOT-27 | P1 | `bot_rewards_enabled = false` | Nada é pago e a tela mostra o mesmo "limite do dia" da online; as milhas da vitória também não entram |
+| BOT-28 | P1 | Sem milha (saldo 0) | A busca já cai no popup de milhas como na online; a revanche também |
+| BOT-29 | P1 | Convite de amigo: o convidado joga só contra o adversário virtual | O convite NÃO é liquidado (`referral_settle` não paga) |
+| BOT-30 | P1 | Desafio da semana (`weekly_enabled = true`) com partidas contra o adversário | `weekly_progress_of` soma as partidas fechadas (ONLINE_PLAY_5) e as ranqueadas vencidas plausíveis (RANKED_WIN_3) |
+| BOT-31 | P1 | App 0.44.6 com `bots_enabled = true` | Nunca recebe adversário virtual (`bot_match_start` devolve `off`); segue no treino |
+| GHOST-01 | P0 | Sala `waiting` rápida de 5 dias sem presença do anfitrião; QA02 toca em Partida rápida | A sala não aparece nem aceita QA02; ele cria a própria sala ou cai no balão; nenhum WO falso |
+| GHOST-02 | P0 | Sala `waiting` de código ou convite com mais de 2 dias | Fecha na limpeza; salas `7ebaf69c` e `bdabaaf2` aparecem como `abandoned` depois da migração |
+| GHOST-03 | P1 | WO legítimo: anfitrião some depois de aceitar | Vitória por ausência com o texto do WO e a milha devolvida |
 
 ## 12. Economia, loja e personalização
 
