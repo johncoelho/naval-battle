@@ -397,8 +397,9 @@ begin
                 then public.config_int('dobroes_online_blitz_bonus', 120) else 0 end;
   pay := raw / greatest(public.config_int('dobroes_online_divisor', 3), 1);
 
+  -- teto diario unico (#112): o online humano e o adversario virtual (reason 'bot') somam no mesmo teto
   select coalesce(sum(l.delta), 0)::integer into used_day from public.dobroes_ledger l
-   where l.user_id = uid and l.reason = 'online'
+   where l.user_id = uid and l.reason in ('online', 'bot')
      and (l.created_at at time zone 'America/Sao_Paulo')::date = day_;
   pay := least(pay, greatest(public.config_int('dobroes_online_daily_cap', 500) - used_day, 0));
   if pay <= 0 then

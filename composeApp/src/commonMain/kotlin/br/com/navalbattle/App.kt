@@ -3516,6 +3516,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val prev = botSession ?: return false
         val start = (authed { s -> cloud.botRematchStart(s, prev.id, bot.name, appVersionName) } as? CloudResult.Ok)?.value
         val id = start?.id
+        if (start != null && BotRules.startAccepted(start.outcome) && id != null && match !== old) {
+            // o jogador saiu durante a chamada: a partida nao abre e a linha aberta no servidor fecha
+            authed { s -> cloud.botMatchReport(s, id, false) }
+            return false
+        }
         if (match !== old || start == null || !BotRules.startAccepted(start.outcome) || id == null) return false
         opponentQuit = false
         rankedResultSent = false

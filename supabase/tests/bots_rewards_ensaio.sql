@@ -19,7 +19,8 @@
 --   sem_carteira=no_wallet
 --   chave_off=capped                       bot_rewards_enabled='false': "limite do dia", sem pagar
 --   teto_bot=ok parcial / depois=capped    teto de 250 dobrões do bot por dia
---   teto_unico=ok <=restante               online (reason online) + bot nunca passam de 500
+--   teto_unico=capped 0                    b já recebeu 40 do bot e 495 do online (535): nada sobra do teto de 500
+--   teto_unico_online_depois_do_bot=ok 10   bot 250 + online 240 ja pagos: o online humano so recebe os 10 que faltam para 500
 --   any_bot=ok any_humano=not_eligible     award_match_any escolhe o caminho pelo id
 --   revanche_ok=ok mesma modalidade        bot_rematch_start da partida fechada (nova milha)
 --   revanche_aberta=invalid revanche_outra_conta=invalid revanche_velha=invalid
@@ -99,7 +100,7 @@ begin
   perform pg_temp.nbr_as(a);
   select p.credits into bal0 from public.profiles p where p.id = a;
   select * into s from public.award_match_any(bid, 0, 0, 0, 0, true);
-  out := out || format('pago_vitoria=%s %s saldo%+d | ', s.status, s.amount, (select p.credits from public.profiles p where p.id = a) - bal0);
+  out := out || format('pago_vitoria=%s %s saldo+%s | ', s.status, s.amount, (select p.credits from public.profiles p where p.id = a) - bal0);
   select * into s from public.award_match_any(bid, 0, 0, 0, 0, true);
   out := out || format('pago_de_novo=%s | ', s.status);
 
@@ -166,6 +167,19 @@ begin
   bid2 := pg_temp.nbr_play(b, true, 18, 90);
   select * into s from public.award_match_any(bid2, 0, 0, 0, 0, true);
   out := out || format('teto_unico=%s %s | ', s.status, s.amount);
+
+
+  -- teto unico nos dois sentidos: bot 250 e depois o online humano so ate completar 500
+  insert into public.dobroes_ledger (user_id, delta, reason, ref, balance_after) values (c, 250, 'bot', gen_random_uuid()::text, 0);
+  insert into public.dobroes_wallets (user_id, opening, source) values (c, 0, 'admin') on conflict do nothing;
+  perform pg_temp.nbr_as(c);
+  rid := gen_random_uuid();
+  insert into public.online_matches (id, host_id, guest_id, host_name, guest_name, status, is_quick_match, mode)
+  values (rid, c, b, 'ens', 'ens2', 'active', true, 'CLASSIC');
+  insert into public.online_messages (match_id, sender_id, body) values (rid, c, 'ACT|1|1'), (rid, b, 'ACT|2|2');
+  insert into public.dobroes_ledger (user_id, delta, reason, ref, balance_after) values (c, 240, 'online', gen_random_uuid()::text, 0);
+  select * into s from public.award_online_match(rid, 40, 30, 5, 20, true);
+  out := out || format('teto_unico_online_depois_do_bot=%s %s (restavam 10) | ', s.status, s.amount);
 
   -- award_match_any: id que não é de bot cai no caminho humano (sem sala = not_eligible)
   select * into s from public.award_match_any(gen_random_uuid(), 5, 5, 1, 10, true);

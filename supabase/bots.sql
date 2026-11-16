@@ -333,6 +333,7 @@ declare
   has_pass boolean := true;
 begin
   outcome := 'off'; bot_id := null; bot_rating := null; level := null; ranked := false;
+  if me is not null then perform pg_advisory_xact_lock(hashtext('botmatch:' || me::text)); end if;
   if me is null or not public.bots_on_for(me) then
     return next; return;
   end if;
@@ -463,6 +464,7 @@ declare
   has_pass boolean := true;
 begin
   outcome := 'off'; bot_id := null; bot_rating := null; level := null; ranked := false;
+  if me is not null then perform pg_advisory_xact_lock(hashtext('botmatch:' || me::text)); end if;
   if me is null or not public.bots_on_for(me) then
     return next; return;
   end if;
@@ -862,6 +864,108 @@ begin
 end $$;
 revoke all on function public.award_win_miles_any(uuid) from public, anon;
 grant execute on function public.award_win_miles_any(uuid) to authenticated;
+
+-- award_online_match com o teto diario unico (online + bot): mesma funcao de dobroes_saldo.sql, so o used_day mudou (#112)
+create or replace function public.award_online_match(
+  p_match_id uuid, p_shots integer, p_hits integer, p_sunk integer, p_turns integer, p_victory boolean)
+returns table (status text, amount integer, balance integer)
+language plpgsql security definer set search_path = public as $$
+declare
+  uid uuid := auth.uid();
+  m public.online_matches%rowtype;
+  opp uuid;
+  won boolean;
+  sh integer;
+  hi integer;
+  su integer;
+  tu integer;
+  prec integer;
+  raw integer;
+  pay integer;
+  used_opp integer;
+  used_day integer;
+  prior integer;
+  bal integer;
+  day_ date := public.brt_today();
+begin
+  if uid is null then
+    raise exception 'dobroes_auth';
+  end if;
+  perform pg_advisory_xact_lock(hashtext('dobroes:' || uid::text));
+  select p.credits into bal from public.profiles p where p.id = uid;
+  if not public.dobroes_has_wallet(uid) then
+    return query select 'no_wallet'::text, 0, bal; return;
+  end if;
+
+  select l.delta into prior from public.dobroes_ledger l
+   where l.user_id = uid and l.reason = 'online' and l.ref = p_match_id::text;
+  if found then
+    return query select 'already'::text, prior, bal; return;
+  end if;
+
+  select * into m from public.online_matches om where om.id = p_match_id;
+  if m.id is null or m.guest_id is null or (m.host_id <> uid and m.guest_id <> uid) then
+    return query select 'not_eligible'::text, 0, bal; return;
+  end if;
+  opp := case when m.host_id = uid then m.guest_id else m.host_id end;
+
+  -- sem combate não paga: os DOIS lados precisam ter dado tiro (ACT) ou usado habilidade (ABIL)
+  if not exists (select 1 from public.online_messages om where om.match_id = p_match_id and om.sender_id = uid
+                    and (om.body like 'ACT|%' or om.body like 'ABIL|%'))
+     or not exists (select 1 from public.online_messages om where om.match_id = p_match_id and om.sender_id = opp
+                    and (om.body like 'ACT|%' or om.body like 'ABIL|%')) then
+    return query select 'not_eligible'::text, 0, bal; return;
+  end if;
+
+  -- ranqueada: o vencedor é o que o servidor registrou (winner_id); sem ele ainda, tenta de novo depois
+  if m.ranked then
+    if m.winner_id is null then
+      return query select 'no_result'::text, 0, bal; return;
+    end if;
+    won := m.winner_id = uid;
+  else
+    won := coalesce(p_victory, false);
+  end if;
+
+  -- limite por adversário e por dia (mesma regra que Profile.claimOnlineReward tinha no aparelho)
+  select count(*)::integer into used_opp
+    from public.dobroes_ledger l
+    join public.online_matches om on om.id::text = l.ref
+   where l.user_id = uid and l.reason = 'online'
+     and (l.created_at at time zone 'America/Sao_Paulo')::date = day_
+     and (case when om.host_id = uid then om.guest_id else om.host_id end) = opp;
+  if used_opp >= public.config_int('dobroes_online_per_opponent', 3) then
+    return query select 'limit'::text, 0, bal; return;
+  end if;
+
+  -- mesma fórmula de Profile.registerMatch, com os números limitados no servidor
+  sh := least(greatest(coalesce(p_shots, 0), 0), public.config_int('dobroes_online_max_shots', 200));
+  hi := least(greatest(coalesce(p_hits, 0), 0), sh);
+  su := least(greatest(coalesce(p_sunk, 0), 0), 5);
+  tu := greatest(coalesce(p_turns, 1), 1);
+  prec := case when sh = 0 then 0 else (hi * 100) / sh end;
+  raw := case when won then public.config_int('dobroes_online_base_win', 220)
+              else public.config_int('dobroes_online_base_loss', 80) end
+         + prec * public.config_int('dobroes_online_precision_mult', 2)
+         + su * public.config_int('dobroes_online_sunk_mult', 15)
+         + case when won and tu <= public.config_int('dobroes_online_blitz_turns', 40)
+                then public.config_int('dobroes_online_blitz_bonus', 120) else 0 end;
+  pay := raw / greatest(public.config_int('dobroes_online_divisor', 3), 1);
+
+  -- teto diario unico (#112): o online humano e o adversario virtual (reason 'bot') somam no mesmo teto
+  select coalesce(sum(l.delta), 0)::integer into used_day from public.dobroes_ledger l
+   where l.user_id = uid and l.reason in ('online', 'bot')
+     and (l.created_at at time zone 'America/Sao_Paulo')::date = day_;
+  pay := least(pay, greatest(public.config_int('dobroes_online_daily_cap', 500) - used_day, 0));
+  if pay <= 0 then
+    return query select 'capped'::text, 0, bal; return;
+  end if;
+
+  bal := public.dobroes_apply(uid, pay, 'online', p_match_id::text);
+  return query select 'ok'::text, pay, bal;
+end $$;
+revoke all on function public.award_online_match(uuid, integer, integer, integer, integer, boolean) from public, anon;
+grant execute on function public.award_online_match(uuid, integer, integer, integer, integer, boolean) to authenticated;
 
 -- sinal de fazenda (só service_role, não bloqueia ninguém): 20+ partidas em 14 dias com mais de 90% de vitórias, ou
 -- duração média perto do mínimo. Revisão na rodada da esteira.
