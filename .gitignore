@@ -9,3 +9,6 @@ captures/
 .dcscratch/
 
 supabase/.temp/
+
+# CLI do Supabase (estado local)
+.temp/
