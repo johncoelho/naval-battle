@@ -284,11 +284,9 @@ fun ResultScreen(state: AppState, match: Match) {
         }
 
         Gap(12)
-        if (match.opponent.isNetwork()) {
+        if (match.opponent.isNetwork() || bot) {
+            // contra o adversario virtual a jornada e a da partida online (#112): revanche e "voltar ao convés" iguais
             RematchSection(state, match)
-        } else if (bot) {
-            // o adversario "saiu da sala": sem revanche e sem "nova partida" contra a IA (nao revela o bot)
-            PrimaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
         } else {
             PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
         }
@@ -304,14 +302,12 @@ fun ResultScreen(state: AppState, match: Match) {
             Gap(6)
             HudLabel(it, Naval.amberStrong)
         }
-        if (online && state.canActOnOpponent) {
+        if ((online || bot) && state.canActOnOpponent) {
             Gap(8)
             SecondaryButton(t(K.SAFETY_ACTIONS)) { state.openOpponentActions(ReportContext.RESULT) }
         }
-        if (!bot) {
-            Gap(8)
-            SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
-        }
+        Gap(8)
+        SecondaryButton(t(K.BACK_TO_DECK)) { state.quitToMenu() }
     }
 }
 
@@ -354,8 +350,10 @@ private fun CareerReport(state: AppState, match: Match, a: Award) {
             award = a,
             ownShipsLeft = afloat,
             fleetSize = ShipClass.fleet.size,
-            matchesBefore = state.profile.matches - 1,
-            streakAfter = state.profile.streak
+            // contra o adversario virtual a carreira nao conta a partida (so o XP): sem isso a "primeira saida" e as
+            // "tres seguidas" se repetiam a cada partida (auditoria #112, P1)
+            matchesBefore = if (match.bot != null) state.profile.matches else state.profile.matches - 1,
+            streakAfter = if (match.bot != null) 0 else state.profile.streak
         )
     )
 
@@ -563,7 +561,7 @@ private fun RematchSection(state: AppState, match: Match) {
     // cada transporte guarda o próprio estado de ligação (linkState pra LAN,
     // onlineLinkState pra internet) — usar sempre linkState fazia toda partida
     // online cair aqui achando que a ligação tinha caído, mesmo conectada
-    val connected = when (match.opponent) {
+    val connected = if (match.bot != null) !state.opponentQuit else when (match.opponent) {
         Opponent.LAN -> state.linkState == LinkState.CONNECTED
         Opponent.ONLINE -> state.onlineLinkState == LinkState.CONNECTED
         else -> false

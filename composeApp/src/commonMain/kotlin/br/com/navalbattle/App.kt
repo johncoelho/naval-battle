@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlin.random.Random
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -253,6 +254,9 @@ internal fun screenForPushKind(kind: String): Screen? = when (kind) {
 }
 
 /** Chave (no Prefs do aparelho) dos tokens de dobrões já somados (#15). */
+/** Prefixo do alvo de seguranca que e o adversario virtual (#112): nunca vai ao servidor. */
+private const val VIRTUAL_PREFIX = "virtual:"
+
 private const val DELIVERED_KEY = ProfileKeys.DOBROES_DELIVERED
 private const val AWARDS_KEY = "online_awards_pending"
 private const val CHARGE_REQUEST_KEY = "charge_request_pending"
@@ -1023,6 +1027,25 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     private var botReported = false
     private var botLastPersona: String? = null
 
+    /** Personas bloqueadas pelo jogador nesta sessao (lista local, sem rede): nao voltam a ser sorteadas (#112). */
+    var blockedPersonas by mutableStateOf<Set<String>>(emptySet())
+        private set
+
+    /** Espera o adversario virtual "terminar de posicionar" e abre a batalha (#112). */
+    fun beginBotBattleSoon() {
+        val m = match ?: return
+        uiScope?.launch {
+            delay(BotRules.placementMillis())
+            if (match === m) m.beginBotBattle()
+        }
+    }
+
+    /** Ficha mostrada no "adversario encontrado" da partida contra o adversario virtual (#112); nunca rotulada. */
+    var botOpponentProfile by mutableStateOf<OpponentProfile?>(null)
+        private set
+    var botOpponentRanked by mutableStateOf(false)
+        private set
+
     /**
      * Depois da espera da modalidade (`bot_wait_seconds` / `bot_wait_seconds_ranked`, lidas do servidor) sem ninguem
      * entrar, joga contra o bot. So na partida rapida procurando de verdade; sala de amigo, codigo e convite nunca
@@ -1037,6 +1060,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             val modeOk = if (ranked) info.rankedOk else info.casualOk
             if (!BotRules.shouldArm(true, info.on, modeOk, practiceWhileSearching)) return@launch
             botExpected = true
+            // sorteio de 3 a 6 s por busca (#112); o valor do servidor so encurta (teto)
             val waitMs = BotRules.waitMillis(if (ranked) info.waitRankedSeconds else info.waitCasualSeconds)
             while (true) {
                 if (!botStillSearching()) {
@@ -1065,7 +1089,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val roomMode = onlineLink.roomMode ?: mode.name
         botCancelling = true
         var start: br.com.navalbattle.data.BotStart? = null
-        val persona = BotPersonas.pick(last = botLastPersona, playerName = profile.displayName)
+        val persona = BotPersonas.pick(last = botLastPersona, playerName = profile.displayName, blocked = blockedPersonas)
         val cancel: String?
         try {
             cancel = (authed { s -> cloud.cancelQuickRoom(s, roomId) } as? CloudResult.Ok)?.value
@@ -1094,7 +1118,16 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             restartSearchWithoutBot()
             return
         }
+        if (!BotRules.openAfterStart(quickSearchStartedAt > 0L)) {
+            // o jogador cancelou a busca durante a chamada: a partida nao abre e a linha do servidor fecha (auditoria #112, P1-2)
+            botExpected = false
+            uiScope?.launch { authed { s -> cloud.botMatchReport(s, botId, false) } }
+            return
+        }
         botLastPersona = persona
+        opponentQuit = false
+        rematchRequestedByMe = false
+        rematchRequestedByOpponent = false
         onlineLink.finish("abandoned")
         closeOnline()
         opponentProfile = null
@@ -1107,7 +1140,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         botSession = BotSession(botId, start.ranked, persona)
         GameMode.entries.firstOrNull { it.name == roomMode }?.let { mode = it }
         match = Match(mode, Opponent.AI, bot = BotProfile(persona, BotLevel.of(start.level)))
-        if (botSession?.ranked == true) uiScope?.launch { loadRankBefore() }
+        // ficha do "adversario encontrado" (#112): perto do nivel do jogador, igual a de um humano, sem rotulo
+        if (start.ranked) uiScope?.launch { loadRankBefore() }
+        // pontos da ficha = os do adversario sorteado pelo servidor (bot_rating), sem esperar rede
+        val look = BotPersonas.look(persona, BotLevel.of(start.level), profile.xp, start.rating, exact = true)
+        botOpponentProfile = OpponentProfile(persona, "", look.avatarId, look.xp, look.rating)
+        botOpponentRanked = start.ranked
         screen = Screen.PLACEMENT
     }
 
@@ -1255,7 +1293,9 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var blockedPlayers by mutableStateOf<List<BlockedPlayer>>(emptyList())
         private set
 
-    fun isBlocked(userId: String): Boolean = blockedPlayers.any { it.userId == userId }
+    fun isBlocked(userId: String): Boolean =
+        if (userId.startsWith(VIRTUAL_PREFIX)) userId.removePrefix(VIRTUAL_PREFIX) in blockedPersonas
+        else blockedPlayers.any { it.userId == userId }
 
     /** Denunciar e bloquear só existe com conta (o servidor precisa saber quem pede) e nunca contra si mesmo. */
     fun canActOn(userId: String): Boolean =
@@ -1275,10 +1315,16 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     /** O adversário da partida online atual pode ser denunciado/bloqueado (tem conta e id conhecido). */
-    val canActOnOpponent: Boolean get() = onlineOpponentId?.let { canActOn(it) } == true
+    val canActOnOpponent: Boolean
+        get() = match?.bot?.let { profile.signedIn } ?: (onlineOpponentId?.let { canActOn(it) } == true)
 
     /** Abre o popup para o adversário da partida online, com a sala junto da denúncia. */
     fun openOpponentActions(context: ReportContext) {
+        // adversario virtual (#112): o mesmo popup; denuncia e bloqueio ficam no aparelho, sem chamada de rede
+        match?.bot?.let { b ->
+            openPlayerActions(VIRTUAL_PREFIX + b.name, b.name, context, null)
+            return
+        }
         val id = onlineOpponentId ?: return
         openPlayerActions(id, opponentProfile?.username.orEmpty(), context, onlineMatchId)
     }
@@ -1297,6 +1343,15 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val target = safetyTarget ?: return
         if (safetyBusy) return
         safetyBusy = true
+        if (target.userId.startsWith(VIRTUAL_PREFIX)) {
+            uiScope?.launch {
+                delay(Random.nextLong(500L, 1_200L))
+                safetyResult = t(K.SAFETY_REPORT_SENT)
+                safetyStep = SafetyStep.RESULT
+                safetyBusy = false
+            } ?: run { safetyBusy = false }
+            return
+        }
         uiScope?.launch {
             val r = authed { s -> cloud.reportPlayer(s, target.userId, reason.code, target.context.code, target.matchId) }
             val outcome = if (r is CloudResult.Ok) parseReportResult(r.value) else ReportOutcome.ERROR
@@ -1317,6 +1372,16 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val target = safetyTarget ?: return
         if (safetyBusy) return
         safetyBusy = true
+        if (target.userId.startsWith(VIRTUAL_PREFIX)) {
+            uiScope?.launch {
+                delay(Random.nextLong(400L, 900L))
+                blockedPersonas = blockedPersonas + target.userId.removePrefix(VIRTUAL_PREFIX)
+                safetyResult = t(K.SAFETY_BLOCKED_DONE)
+                safetyStep = SafetyStep.RESULT
+                safetyBusy = false
+            } ?: run { safetyBusy = false }
+            return
+        }
         uiScope?.launch {
             val r = authed { s -> cloud.blockPlayer(s, target.userId) }
             val outcome = if (r is CloudResult.Ok) parseBlockResult(r.value) else BlockOutcome.ERROR
@@ -1334,6 +1399,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     }
 
     fun unblockPlayer(userId: String) {
+        if (userId.startsWith(VIRTUAL_PREFIX)) {
+            blockedPersonas = blockedPersonas - userId.removePrefix(VIRTUAL_PREFIX)
+            return
+        }
         uiScope?.launch {
             authed { s -> cloud.unblockPlayer(s, userId) }
             loadBlocks()
@@ -3378,6 +3447,18 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     /** Emoji ou grito de guerra: decoração pura, não passa pela lógica da partida. */
     fun sendTaunt(code: String) {
         val m = match ?: return
+        if (m.bot != null) {
+            // adversario virtual (#112): o jogador "fala" como na online (so a lista fechada) e o adversario responde
+            // de vez em quando, depois de um tempo humano, tambem so com emote ou frase pronta
+            m.sendTaunt(m.mySide, code)
+            BotRules.replyTo(code)?.let { reply ->
+                uiScope?.launch {
+                    delay(Random.nextLong(1_500L, 4_001L))
+                    if (match === m && m.phase == Phase.BATTLE) m.sendTaunt(m.mySide.other(), reply)
+                }
+            }
+            return
+        }
         if (!m.opponent.isNetwork()) return
         sendToOpponent(Protocol.taunt(code))
         m.sendTaunt(m.mySide, code)
@@ -3390,6 +3471,21 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      */
     fun requestRematch() {
         val m = match ?: return
+        if (m.bot != null) {
+            // adversario virtual (#112): o botao e o "aguardando" sao iguais aos da revanche humana; passados uns
+            // segundos o adversario "saiu da sala" (mesma tela de quando um humano sai), sem nova partida no servidor
+            if (rematchRequestedByMe || opponentQuit) return
+            rematchRequestedByMe = true
+            uiScope?.launch {
+                delay(BotRules.rematchWaitMillis())
+                if (match !== m || !rematchRequestedByMe) return@launch
+                // o adversario "desiste" (mesma tela de quando um humano nao volta). Aceitar a revanche pede
+                // `bot_match_start` sem sala (hoje exige a sala rapida cancelada): fica para decisao do John (#112)
+                rematchRequestedByMe = false
+                opponentQuit = true
+            }
+            return
+        }
         val connected = when (m.opponent) {
             Opponent.LAN -> linkState == LinkState.CONNECTED
             Opponent.ONLINE -> onlineLinkState == LinkState.CONNECTED

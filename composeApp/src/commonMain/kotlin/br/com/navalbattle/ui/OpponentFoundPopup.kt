@@ -43,8 +43,10 @@ import br.com.navalbattle.i18n.t
 fun OpponentFoundPopup(state: AppState) {
     // troca do treino contra a IA pela online (#41): 3 s de aviso, sem "recusar" nem "Continuar"
     val switching = state.practiceSwitchSide != null
-    if (!switching && state.match?.opponent != Opponent.ONLINE) return
-    val opponent = state.opponentProfile
+    // adversario virtual (#112): mesma tela da partida online, com a ficha da persona e sem nenhum rotulo
+    val virtual = state.match?.bot != null
+    if (!switching && state.match?.opponent != Opponent.ONLINE && !virtual) return
+    val opponent = if (virtual) state.botOpponentProfile else state.opponentProfile
     if (opponent == null && !switching) return
     var dismissed by remember(state.match, opponent) { mutableStateOf(false) }
     if (dismissed && !switching) return
@@ -91,8 +93,9 @@ fun OpponentFoundPopup(state: AppState) {
             Gap(4)
             HudLabel(Rank.of(opponent.xp).label.uppercase(), Naval.amberStrong)
             Gap(10)
-            MatchTags(ranked = state.onlineMatchRanked, mode = state.match?.mode?.name ?: state.mode.name)
-            if (state.onlineMatchRanked) {
+            val ranked = if (virtual) state.botOpponentRanked else state.onlineMatchRanked
+            MatchTags(ranked = ranked, mode = state.match?.mode?.name ?: state.mode.name)
+            if (ranked) {
                 Gap(6)
                 HudLabel(t(K.LEADERBOARD_POINTS, opponent.rankedRating), Naval.inkSoft)
             }

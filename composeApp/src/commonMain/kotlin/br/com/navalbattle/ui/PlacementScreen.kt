@@ -262,7 +262,10 @@ fun PlacementScreen(state: AppState, match: Match) {
                 }
                 // no local ainda falta o segundo comandante posicionar a frota dele
                 match.phase == Phase.PLACEMENT -> state.handoffToPlacement(match.placingSide)
-                else -> state.screen = Screen.BATTLE
+                else -> {
+                    if (match.bot != null) state.beginBotBattleSoon()
+                    state.screen = Screen.BATTLE
+                }
             }
         }
         Gap(8)

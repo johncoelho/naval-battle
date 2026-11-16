@@ -238,13 +238,13 @@ fun BattleScreen(state: AppState, match: Match) {
                         // rede (LAN ou online): o nome do adversário chega pelo HELLO do
                         // protocolo — antes a tela mostrava só "alvo inimigo" sempre
                         // o lado de quem entrou na sala é o ENEMY: o adversário é sempre o outro lado
-                        lan -> t(K.BATTLE_VS, match.sideName(viewSide.other())).uppercase()
+                        lan || match.bot != null -> t(K.BATTLE_VS, match.sideName(viewSide.other())).uppercase()
                         else -> t(K.BATTLE_ENEMY_TARGET)
                     },
                     "${t(K.TURN)} ${match.turnCount.toString().padStart(2, '0')}",
                     Modifier.weight(1f)
                 )
-                if (lan) {
+                if (lan || match.bot != null) {
                     GapW(8)
                     HudLabel(
                         "💬",
