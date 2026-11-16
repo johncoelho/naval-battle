@@ -9,6 +9,19 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Loja] — 2026-11-16 · Ficha da Play alinhada à copy aprovada (#87)
+
+Refs #87. Só `assets/store/listing-pt-BR.txt`: sem versão do app, sem banco. [skip ci]. **Não aplica nada na Play Console nem na App Store**: o arquivo é a fonte versionada do texto; quem cola na ficha é o John (login dele).
+
+### Alterado
+- Descrição curta (78 caracteres, limite 80) e descrição completa (2537 caracteres, limite 4000) trocadas pela copy aprovada pelo John em 14/11: abre com as habilidades (sonar, barragem dupla, reconhecimento aéreo, fumaça), Tático antes de Clássico, seção "Jogue com amigos" e a frase final sobre anúncios premiados, compras no app e dobrões sem valor em dinheiro. Contagem conferida por script.
+- Capturas da ficha registradas na ordem 1-sonar, 2-barragem-dupla, 3-navio-afundado, 4-revanche-v2 (sha256 da 4 no arquivo); a captura 4 antiga não sobe. Os PNG ficam no repositório privado do marketing, não aqui.
+
+### Pendente (não é do time de código)
+- John aplica a ficha e as 4 capturas no Play Console; só depois o QA confere pela URL pública e o Release registra data e hora na issue (linha de base de conversão de 13/11, reavaliar em 30 dias). App Store: texto só preparado, sem publicar sem o OK dele.
+
+---
+
 ## [0.45.1] — 2026-11-16 · Adversário virtual: sem "Passe o aparelho" (#114)
 
 App 0.45.1 (versionCode 128). Sem servidor, sem dependência nova.
