@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Site] — 2026-11-18 · Privacidade cita convites para jogar (#117)
+
+Refs #117. Só `site/` e `tools/`; sem versão do app, sem banco, sem flag. [skip ci]. OK explícito do John para mexer na política.
+
+### Alterado
+- **`site/privacy.html` (pt/en/es):** a linha de notificações push passa a listar "convites para jogar uma partida rápida"; data de atualização 18/11/2026.
+
+### Adicionado
+- **`tools/push-convite-partida-rapida.sql`:** envio único preparado, **não executado** (exige OK do John na hora e a 0.45.1 na produção), com travas de janela 11h-15h, sem duplicar o `daily_invite` do dia e 7 dias entre envios.
+
+---
+
 ## [CI] — 2026-11-18 · QA do iPhone no simulador, runner macOS (#116)
 
 Só CI, `tools/` e docs; sem versão do app, sem banco, sem mudança em `composeApp/`, `iosApp/` ou `site/`. [skip ci].
