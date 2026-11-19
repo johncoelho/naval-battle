@@ -1,0 +1,108 @@
+name: QA iOS no simulador
+
+# QA do iPhone sem aparelho (#116): compila o app para o simulador, instala e roda o roteiro de toques
+# do Maestro (tools/ios-qa/). Não publica nada, não usa segredo e não toca o app da loja: o Maestro é
+# ferramenta só deste job. Manual por enquanto; depois de estável pode seguir o "Build iOS framework".
+# Ver docs/BUILD.md (seção iOS), docs/QA_TEST_PLAN.md (IOS-SIM-*) e tools/ios-qa/README.md.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-qa
+  cancel-in-progress: true
+
+env:
+  MAESTRO_VERSION: "1.41.0"   # fixa; subir só com ensaio verde
+  SIM_DEVICE: "iPhone 16"     # modelo do simulador; conferir no 1o ensaio se a imagem tem
+  APP_ID: br.com.navalbattle
+
+jobs:
+  qa:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Versões da imagem (Xcode e runtimes)
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+          xcrun simctl list devicetypes | grep -i "iphone" | tail -5
+
+      - name: Compila o app para o simulador (arm64) sem assinatura
+        run: |
+          xcodebuild \
+            -project iosApp/iosApp.xcodeproj \
+            -target iosApp \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -arch arm64 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            BUILD_DIR="$(pwd)/build/Products" \
+            build
+          ls build/Products/Debug-iphonesimulator/
+
+      - name: Cria e liga o simulador (en-US)
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; r=[x for x in json.load(sys.stdin)['runtimes'] if x['isAvailable'] and x['identifier'].split('.')[-1].startswith('iOS')]; print(r[-1]['identifier'])")
+          echo "runtime: $RUNTIME"
+          UDID=$(xcrun simctl create nb-qa "$SIM_DEVICE" "$RUNTIME")
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl spawn "$UDID" defaults write -g AppleLanguages -array en
+          xcrun simctl spawn "$UDID" defaults write -g AppleLocale -string en_US
+          xcrun simctl install "$UDID" build/Products/Debug-iphonesimulator/iosApp.app
+          xcrun simctl listapps "$UDID" | grep -i "$APP_ID" || true
+
+      - name: Instala o Maestro (versão fixa)
+        run: |
+          curl -fsSL -o maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
+          unzip -q maestro.zip -d "$HOME"
+          echo "$HOME/maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Roteiro de toques (grava vídeo)
+        run: |
+          mkdir -p qa-out/prints
+          xcrun simctl io "$UDID" recordVideo --codec=h264 qa-out/qa.mp4 &
+          echo $! > rec.pid
+          set +e
+          RC=0
+          for tentativa in 1 2; do
+            maestro --device "$UDID" test --format junit --output qa-out/junit.xml \
+              --test-output-dir qa-out/prints tools/ios-qa/vs-ia.yaml
+            RC=$?
+            [ $RC -eq 0 ] && break
+            echo "tentativa $tentativa falhou (o driver do Maestro costuma falhar no 1o arranque)"
+          done
+          maestro --device "$UDID" test --format junit --output qa-out/junit-controle.xml \
+            --test-output-dir qa-out/prints tools/ios-qa/local-controle.yaml
+          RC2=$?
+          kill -INT "$(cat rec.pid)" || true
+          sleep 3
+          [ $RC -eq 0 ] && [ $RC2 -eq 0 ]
+
+      - name: Sobe prints, vídeo e relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-qa-${{ github.run_id }}
+          path: qa-out/
+          retention-days: 7
+          if-no-files-found: warn

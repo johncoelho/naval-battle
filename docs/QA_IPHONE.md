@@ -84,6 +84,10 @@ Por isso o grupo D é feito **com o QA conectado**: ele diz "pode seguir" a cada
 Entrar com a Apple (janela da Apple), push pelo APNs (produção, só TestFlight/App Store), permissão de
 notificação, volta do segundo plano, teclado e área segura do iPhone. Nada disso vale em simulador.
 
+### O que o simulador do CI cobre (#116)
+
+O workflow `ios-qa.yml` roda no simulador, sem aparelho, o roteiro convidado → vs. IA → Clássico → batalha e prova que "Passe o aparelho" não aparece contra a IA (casos IOS-SIM-01 a 03 em [QA_TEST_PLAN.md](QA_TEST_PLAN.md)). Serve de regressão rápida do fluxo; não troca os casos acima, que dependem do aparelho.
+
 ### Regras da QA03 para o QA (não do John)
 
 1. Já feito em 04/11: linha em `allowed_players` (`aigamesfactory.qa03@gmail.com`, `source = 'qa'`, nota "QA03 iPhone"). Vale pelo e-mail, então continua valendo se a conta do jogo for apagada e recriada.

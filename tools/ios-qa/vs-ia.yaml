@@ -1,0 +1,53 @@
+# IOS-SIM-01: convidado -> vs. IA -> Classico -> posicionamento -> Confirmar -> batalha.
+# Prova que a partida contra a IA NUNCA mostra "Passe o aparelho" (tela do modo local).
+# Textos casados por regex nas 3 linguas (o simulador roda en-US). Passos incertos sao optional.
+appId: br.com.navalbattle
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "(?i)Jogar como convidado|Play as guest|Jugar como invitado"
+    timeout: 60000
+- takeScreenshot: 01-boas-vindas
+- tapOn: "(?i)Jogar como convidado|Play as guest|Jugar como invitado"
+
+# popups opcionais: oferta guiada e pedido de notificacao do sistema
+- tapOn:
+    text: "(?i)Pular|Skip|Saltar"
+    optional: true
+- tapOn:
+    text: "(?i)Allow|Permitir|Não permitir|Don.t Allow"
+    optional: true
+- takeScreenshot: 02-menu
+
+- tapOn: "(?i)vs\\. IA|vs\\. AI"
+- tapOn: "(?i)Clássico|Classic|Clásico"
+- extendedWaitUntil:
+    visible: "(?i)Posicionamento|Deployment|Despliegue"
+    timeout: 15000
+- takeScreenshot: 03-posicionamento
+- tapOn:
+    text: "(?i)Aleatório|Random|Aleatorio"
+    optional: true
+- tapOn: "(?i)Confirmar|Confirm"
+
+# ponto 1: depois de Confirmar
+- extendedWaitUntil:
+    visible: "(?i)Alvo inimigo|Enemy target|Objetivo enemigo"
+    timeout: 15000
+- assertNotVisible: "(?i)Passe o aparelho|Pass the device|Pasa el aparato"
+- takeScreenshot: 04-batalha-apos-confirmar
+
+# ponto 2: depois do 1o tiro (tabuleiro e Canvas: toque por coordenada, ajustar no ensaio)
+- tapOn:
+    point: "50%,40%"
+- assertVisible: "(?i)Alvo inimigo|Enemy target|Objetivo enemigo"
+- assertNotVisible: "(?i)Passe o aparelho|Pass the device|Pasa el aparato"
+- takeScreenshot: 05-batalha-apos-tiro
+
+# ponto 3: depois da resposta da IA
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible: "(?i)Alvo inimigo|Enemy target|Objetivo enemigo"
+- assertNotVisible: "(?i)Passe o aparelho|Pass the device|Pasa el aparato"
+- takeScreenshot: 06-batalha-apos-ia

@@ -1,0 +1,35 @@
+# IOS-SIM-02 (controle positivo): no modo local (2 jogadores) o "Passe o aparelho" APARECE.
+# Prova que o Maestro enxerga essa tela, entao o assertNotVisible do vs-ia.yaml vale.
+appId: br.com.navalbattle
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "(?i)Jogar como convidado|Play as guest|Jugar como invitado"
+    timeout: 60000
+- tapOn: "(?i)Jogar como convidado|Play as guest|Jugar como invitado"
+- tapOn:
+    text: "(?i)Pular|Skip|Saltar"
+    optional: true
+- tapOn:
+    text: "(?i)Allow|Permitir|Não permitir|Don.t Allow"
+    optional: true
+- tapOn: "(?i)2 jogadores|2 players|2 jugadores"
+- tapOn:
+    text: "(?i)Clássico|Classic|Clásico"
+    optional: true
+# tela de nomes (so do local): seguir com os nomes padrao
+- tapOn:
+    text: "(?i)Continuar|Continue|Começar|Start|Empezar"
+    optional: true
+- extendedWaitUntil:
+    visible: "(?i)Posicionamento|Deployment|Despliegue"
+    timeout: 15000
+- tapOn:
+    text: "(?i)Aleatório|Random|Aleatorio"
+    optional: true
+- tapOn: "(?i)Confirmar|Confirm"
+- extendedWaitUntil:
+    visible: "(?i)Passe o aparelho|Pass the device|Pasa el aparato"
+    timeout: 15000
+- takeScreenshot: 10-local-passe-o-aparelho

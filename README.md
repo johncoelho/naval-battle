@@ -526,7 +526,8 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check`, `dobroes-verify`, `ads-reward` e `apple-revoke` (Deno) | `supabase/` |
 | Site | HTML estático no GitHub Pages | `site/`, `pages.yml` |
 | Testes | `kotlin.test` em `composeApp/src/commonTest` (JVM e simulador iOS) | aprovado em 10/10/2026 |
-| CI | GitHub Actions: `android.yml` (trava de release + testes + APK + `.aab` + Play), `ios.yml` (testes no simulador + compilação do framework e do app, sem publicar), `pages.yml` | JDK 21 Temurin |
+| QA iOS (CI) | Maestro 1.41.0 (CLI, só no job `ios-qa.yml`; não entra no app nem no build da loja) roda `tools/ios-qa/` no simulador do runner `macos-15`; aprovado pelo John em 18/11 (#116) | dependência só de CI, sem segredo |
+| CI | GitHub Actions: `android.yml` (trava de release + testes + APK + `.aab` + Play), `ios.yml` (testes no simulador + compilação do framework e do app, sem publicar), `ios-qa.yml` (manual: roteiro de toques no simulador, #116), `pages.yml` | JDK 21 Temurin |
 
 **A regra das dependências é não ter.** Fora o que está na tabela, nada: sem biblioteca de imagem,
 de fonte, de rede, de serialização ou de injeção. Rede é `HttpURLConnection` + `org.json`

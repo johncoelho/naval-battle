@@ -173,6 +173,14 @@ Telas grandes: AVD Pixel Tablet e Pixel 9 Pro Fold (API 36), mais o QA01 em retr
 | IA-06 | P1 | Cartucho avulso comprado (ver LOJA-03) | Libera um uso mesmo em recarga e some depois |
 | IA-07 | P2 | Sons e trilha | Tocam; respeitam os toggles de Ajustes |
 
+### 6x. iPhone no simulador do CI (`ios-qa.yml`, #116)
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| IOS-SIM-01 | P1 | `gh workflow run ios-qa.yml --ref main`; roteiro `tools/ios-qa/vs-ia.yaml`: convidado, vs. IA, Clássico, posicionar, Confirmar, 1 tiro, esperar a IA | Job verde; prints 01 a 06 no artefato; batalha visível e "Passe o aparelho / Pass the device / Pasa el aparato" ausente depois de Confirmar, do 1º tiro e da resposta da IA |
+| IOS-SIM-02 | P1 | `tools/ios-qa/local-controle.yaml`: 2 jogadores, posicionar, Confirmar | "Pass the device" aparece (controle positivo: o Maestro enxerga essa tela, então o IOS-SIM-01 vale) |
+| IOS-SIM-03 | P2 | Conferir o artefato `ios-qa-<run>` | Tem `qa.mp4`, prints e junit, mesmo com o job vermelho |
+
 ### 6a. Aviso de retorno e prêmio de retorno (#42)
 
 Conta QA01 com "Lembrete diário" ligado e notificações permitidas. Ensaio do banco: `supabase/tests/daily_return_ensaio.sql`.

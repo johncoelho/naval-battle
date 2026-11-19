@@ -9,6 +9,20 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [CI] — 2026-11-18 · QA do iPhone no simulador, runner macOS (#116)
+
+Só CI, `tools/` e docs; sem versão do app, sem banco, sem mudança em `composeApp/`, `iosApp/` ou `site/`. [skip ci].
+
+### Adicionado
+- **`.github/workflows/ios-qa.yml`** (manual, `macos-15`, `contents: read`, sem segredo): compila o app para o simulador (`-sdk iphonesimulator -arch arm64`), cria e liga o simulador em en-US, instala, roda o roteiro do Maestro (versão fixa 1.41.0) gravando vídeo e sobe prints, vídeo e junit como artefato (`if: always()`, 7 dias).
+- **`tools/ios-qa/`:** `vs-ia.yaml` (convidado, vs. IA, Clássico, posicionamento, Confirmar, 1 tiro e resposta da IA; `assertNotVisible` de "Passe o aparelho" em 3 pontos) e `local-controle.yaml` (controle positivo no modo local).
+- **Casos IOS-SIM-01 a IOS-SIM-03** em `docs/QA_TEST_PLAN.md` e nota em `docs/QA_IPHONE.md` sobre o que o simulador cobre.
+
+### Alterado
+- **README → Especificação técnica, `docs/BUILD.md`, `HISTORY.md` e `MEMORY.md`:** Maestro registrado como ferramenta de CI (fora do app e do build da loja), aprovada pelo John em 18/11. Primeiro ensaio no runner ainda por fazer.
+
+---
+
 ## [Processo] — 2026-11-16 · Rotina da medição semanal: tabela, variação e gatilhos (#94)
 
 Refs #94. Só `tools/` e docs: sem versão do app, sem banco, sem flag, sem workflow. [skip ci]. A tarefa agendada continua **não criada** (falta o dia e a hora do John).

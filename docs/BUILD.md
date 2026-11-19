@@ -299,6 +299,10 @@ Só falta uma linha: mandar o **Client ID do cliente Web** (não o Android) para
 para quem entra pelo Google — é o mesmo mecanismo que já funciona para o cadastro por
 e-mail, sem mudança nenhuma na base.
 
+## QA iOS no simulador (`ios-qa.yml`, #116)
+
+Workflow manual (`gh workflow run ios-qa.yml --ref main`), `macos-15`, sem segredo e sem publicar: compila o app com `-sdk iphonesimulator -arch arm64`, cria o simulador (`SIM_DEVICE`, runtime iOS mais novo da imagem, en-US), instala `br.com.navalbattle` e roda o Maestro (`MAESTRO_VERSION`, baixado do release oficial) com `tools/ios-qa/vs-ia.yaml` e `local-controle.yaml`, gravando vídeo. O artefato `ios-qa-<run>` (7 dias) traz prints, `qa.mp4` e junit. Repositório público: minutos de macOS gratuitos. Não substitui o aparelho: Entrar com a Apple, push e compra seguem em [QA_IPHONE.md](QA_IPHONE.md).
+
 ## iOS — em andamento
 
 O alvo iOS foi adicionado ao `composeApp/build.gradle.kts` (`iosX64`, `iosArm64`,
