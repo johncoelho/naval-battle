@@ -117,10 +117,22 @@ Deno.serve(async (req) => {
 
   // sem destinatário = aviso geral: vai para todos os aparelhos (com ou sem conta)
   // tokens marcados 'unregistered' (desinstalado, #26) ficam fora dos envios; NULL precisa do "is.null"
-  let query = sb.from("push_tokens").select("token, platform").in("platform", ["android", "ios"])
-    .or("check_status.is.null,check_status.neq.unregistered");
-  if (msg.user_id) query = query.eq("user_id", msg.user_id);
-  const { data: all } = await query;
+  // Aviso segmentado (#117: min_version, max_version_excl ou platform preenchidos): a seleção vem do banco
+  // (push_segment_tokens, supabase/push_segment.sql), que cruza a versão em device_checks. Sem filtro: caminho de sempre.
+  const segmentado = !msg.user_id && (msg.min_version || msg.max_version_excl || msg.platform);
+  let all: { token: string; platform: string }[] | null;
+  if (segmentado) {
+    const r = await sb.rpc("push_segment_tokens", {
+      p_min: msg.min_version, p_max_excl: msg.max_version_excl, p_platform: msg.platform,
+    });
+    if (r.error) return finish("segment error");
+    all = r.data;
+  } else {
+    let query = sb.from("push_tokens").select("token, platform").in("platform", ["android", "ios"])
+      .or("check_status.is.null,check_status.neq.unregistered");
+    if (msg.user_id) query = query.eq("user_id", msg.user_id);
+    all = (await query).data;
+  }
   const android = (all ?? []).filter((t) => t.platform === "android");
   const ios = KINDS_SEM_IOS.has(msg.kind) ? [] : (all ?? []).filter((t) => t.platform === "ios");
   if (!android.length && !ios.length) return finish("no tokens");

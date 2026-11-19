@@ -656,6 +656,10 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
 - Push: gatilhos gravam em `push_outbox`, `pg_net` chama a Edge Function `push`, que envia via
   FCM v1 (segredo `FCM_SERVICE_ACCOUNT` só nos secrets do Supabase) para Android e direto ao APNs
   (`api.push.apple.com`, JWT ES256 com os segredos Apple) para iPhone; 410 e `BadDeviceToken` marcam o token.
+  Aviso segmentado (#117, `supabase/push_segment.sql`): `push_outbox.min_version`, `max_version_excl` e `platform`
+  (nulos = todos); a Edge lê os tokens de `push_segment_tokens`, que usa a maior versão da conta em `device_checks`
+  na plataforma do token (`app_version_at_least`). Versão desconhecida fica fora de `min_version` e entra em
+  `max_version_excl`; contas robô/Test Lab nunca recebem. Envio manual: `push_broadcast(título, texto, kind, min, max_excl, plataforma)`.
 - Conferência de instalação (`supabase/push_check.sql`, #26): `push_check_run()` chama a Edge
   `push-check`, que pede ao FCM uma validação sem entrega (`validate_only`) para cada aparelho e grava
   `check_status`; pula os já `unregistered` e confere em lotes de 10. Relatório só da lista da Play:

@@ -9,6 +9,21 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Banco e Edge] — 2026-11-18 · Push segmentado por versão: convite só para 0.45.0+ e aviso "atualize" (#117)
+
+Refs #117. Sem versão do app, sem mudança em `composeApp/`, `iosApp/` nem `site/`; `[skip ci]`. John aprovou no chat (18/11) a Opção A do Tech Lead (sem mudar o app). **Nada foi enviado**; a migração e o deploy da Edge `push` só depois do APROVADO do Tech Lead.
+
+### Adicionado
+- **`supabase/push_segment.sql`:** `push_outbox` ganha `min_version`, `max_version_excl` e `platform` (nulos = sem filtro); `push_segment_tokens(min, max_excl, plataforma)` escolhe os tokens pela maior versão da conta em `device_checks` na plataforma do token; `queue_push_segment`; `push_broadcast` ganha os três parâmetros (a chamada de 3 argumentos segue valendo). Versão desconhecida (token sem conta ou conta sem registro): **fora** do convite (`min_version`), **dentro** do "atualize" (`max_version_excl`). Contas robô/Test Lab nunca recebem aviso segmentado.
+- **`tools/push-atualize-0451.sql`:** envio único "Atualize o Naval Battle" / "Mais adversários esperando você na partida rápida." (`new_version`, só Android, versão < 0.45.0 ou desconhecida), **não executado**: janela 11h-15h de Brasília, 1 push por dia (não soma ao `daily_invite`), sem repetir em 7 dias.
+- **`supabase/tests/push_segment_ensaio.sql`:** ensaio que desfaz tudo; sem enviar. Contagem real em 18/11: convite 1 token Android, atualização 241 (49 robôs/Test Lab excluídos); sem sobreposição.
+
+### Alterado
+- **Edge `push`:** linha sem `user_id` com algum filtro lê os tokens de `push_segment_tokens`; erro na seleção não envia nada (`segment error`). Sem filtro, o caminho de sempre.
+- **`tools/push-convite-partida-rapida.sql`:** agora `push_broadcast(..., '0.45.0', null, 'android')` (antes ia a todos os tokens); trava de 1 push por dia inclui `quick_match_invite` e `new_version`.
+
+---
+
 ## [Site] — 2026-11-18 · Privacidade cita convites para jogar (#117)
 
 Refs #117. Só `site/` e `tools/`; sem versão do app, sem banco, sem flag. [skip ci]. OK explícito do John para mexer na política.
@@ -17,7 +32,7 @@ Refs #117. Só `site/` e `tools/`; sem versão do app, sem banco, sem flag. [ski
 - **`site/privacy.html` (pt/en/es):** a linha de notificações push passa a listar "convites para jogar uma partida rápida"; data de atualização 18/11/2026.
 
 ### Adicionado
-- **`tools/push-convite-partida-rapida.sql`:** envio único preparado, **não executado** (exige OK do John na hora e a 0.45.1 na produção), com travas de janela 11h-15h, sem duplicar o `daily_invite` do dia e 7 dias entre envios.
+- **`tools/push-convite-partida-rapida.sql`:** envio único preparado, **não executado** (exige OK do John na hora e a 0.45.1 na produção), com travas de janela 11h-15h, sem duplicar o `daily_invite` do dia e 7 dias entre envios. *(Corrigido na entrada "Push segmentado" abaixo: não vai mais para todos os tokens, só para Android com 0.45.0+ conhecida.)*
 
 ---
 
