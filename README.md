@@ -523,7 +523,7 @@ e no design system do Claude Design ([Naval Battle Command HUD](https://claude.a
 | Avaliação (Android) | Play In-App Review (`com.google.android.play:review-ktx` 2.0.2): pede a nota da Play dentro do jogo; só `androidMain`, usa o mesmo `core-common` do App Update | aprovado pelo John em 25/10 (#45) |
 | Compras (Android) | Google Play Billing (`com.android.billingclient:billing` 9.1.0): lista produtos, abre a folha de compra e lê o que já foi comprado. O crédito é decidido no servidor | aprovado pelo John em 17/10 (#15) |
 | Publicação | Gradle Play Publisher 3.13.0 (faixa Alpha do teste fechado) | aprovado em 0.16 |
-| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check`, `dobroes-verify`, `ads-reward` e `apple-revoke` (Deno) | `supabase/` |
+| Back-end | Supabase: Auth, Postgres com RLS, RPCs `security definer`, `pg_net`, Edge Functions `push`, `push-check`, `dobroes-verify`, `dobroes-verify-ios`, `apple-iap-notifications`, `ads-reward` e `apple-revoke` (Deno) | `supabase/` |
 | Site | HTML estático no GitHub Pages | `site/`, `pages.yml` |
 | Testes | `kotlin.test` em `composeApp/src/commonTest` (JVM e simulador iOS) | aprovado em 10/10/2026 |
 | QA iOS (CI) | Maestro 1.41.0 (CLI, só no job `ios-qa.yml`; não entra no app nem no build da loja) roda `tools/ios-qa/` no simulador do runner `macos-15`; aprovado pelo John em 18/11 (#116) | dependência só de CI, sem segredo |
@@ -557,6 +557,9 @@ supabase/functions/push/   Edge Function que envia FCM
 supabase/functions/push-check/     Edge Function: conferência de instalação (validate_only, sem entrega)
 supabase/functions/dobroes-verify/ Edge Function: confere a compra na Play e manda o crédito ao banco
 supabase/functions/ads-reward/     Edge Function: callback SSV do AdMob (assinatura do Google, sem JWT)
+supabase/functions/dobroes-verify-ios/      Edge Function: confere a compra do iPhone na App Store Server API e credita (#65)
+supabase/functions/apple-iap-notifications/ Edge Function: reembolso/revogação do iPhone (notificações V2, sem JWT, #65)
+supabase/functions/_shared/                 lógica pura das duas Edges do iPhone (appstore.ts, coberta por `deno test`)
 supabase/functions/apple-revoke/   Edge Function: revoga o token do Entrar com a Apple na exclusão de conta (#13, ES256 por WebCrypto)
 site/               landing page e página de beta tester
 docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
@@ -704,6 +707,21 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   segurança é a assinatura ECDSA sobre a query crua. Dobrões pelo mesmo `dobroes_pending`
   (`kind = 'ad'`); milha direto no perfil, até `miles_cap`. Interruptor `ads_enabled` (nasce
   `'false'`; `'true'` liga para todos com o gate `ads_min_app_version`, e conta `is_test` fora do QA, os robôs da Play, fica sem anúncio, #40); números em `app_config` (`ads_*`); `ads_test_emails` só no banco e **vazia por padrão** (04/11): a conta de teste vem de `profiles.is_test`, não de e-mail.
+- Compra de dobrões no iPhone (`supabase/dobroes_ios.sql`, #65, fatia 1: servidor; tudo **desligado**): Edge
+  `dobroes-verify-ios` (`verify_jwt` ligado; entrada `{ product_id, signed_transaction }`) lê só o `transactionId` do JWS,
+  reconsulta a App Store Server API (Get Transaction Info, JWT ES256 por WebCrypto, Production e, no 404, Sandbox) e confere
+  bundle `br.com.navalbattle`, produto, consumível, sem `revocationDate` e `appAccountToken` = usuário. A cadeia x5c do JWS
+  **não** é validada (a verdade é a chamada autenticada; HISTORY). Chama `apply_dobroes_purchase_ios` (só `service_role`;
+  PK `ios:<transactionId>`, mesmo gatilho do razão do Android) e devolve `{ status, doubloons, finish }`: o app só chama
+  `transaction.finish()` com `finish = true` (`credited`, `already`, `sandbox_refused`, `not_purchased`). Production credita
+  com `real_billing_ios_enabled = 'true'` (ou testador com `beta_store_enabled`); Sandbox **nunca** credita conta real
+  (só `beta_eligible` + vitrine beta, `kind = 'test'`). Edge `apple-iap-notifications` (`verify_jwt` desligado, como a
+  `ads-reward`): `REFUND`/`REVOKE` reconsultam a API e só agem com `revocationDate`; `apply_dobroes_refund_ios` debita até
+  zerar o saldo (nunca negativo) e guarda a diferença em `dobroes_refund_shortfall`. Colunas novas em `dobroes_purchases`:
+  `store`, `environment`, `refunded_at`. Secrets (só nomes): `APPLE_IAP_KEY_ID`, `APPLE_IAP_ISSUER_ID`, `APPLE_IAP_KEY_P8`;
+  faltando, 503 sem gravar. Lógica pura em `supabase/functions/_shared/appstore.ts` (`deno test
+  supabase/functions/_shared/appstore_test.ts`). Ensaio: `supabase/tests/dobroes_ios_ensaio.sql`. Revisão da Apple (2.1):
+  a conta de demonstração precisa ser `beta_eligible`.
 - Presente de boas-vindas (`supabase/welcome.sql`, #43): `claim_welcome_gift()` devolve `ok | already |
   not_eligible | no_wallet`; paga por `dobroes_apply(uid, valor, 'welcome', 'welcome')` (o razão é a trava de uma vez só,
   fora do teto `dobroes_online_daily_cap`), soma milhas até `miles_cap`, grava `welcome_gifts` (RLS, só leitura da própria

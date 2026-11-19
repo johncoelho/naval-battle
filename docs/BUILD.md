@@ -551,3 +551,19 @@ sem depender da memória de ninguém.
   permissões): aguarda decisão do John. O secret `PLAY_BILLING_SERVICE_ACCOUNT` ainda não foi cadastrado.
 - Produtos no Play Console (consumíveis, ativos): `dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`,
   `dobroes_tesouro`. Os IDs têm que ser exatamente esses (são os de `dobroes_products` no banco).
+
+## Compras de dobrões no iPhone (StoreKit 2, #65)
+
+- Fatia 1 (servidor, tudo desligado): Edges `dobroes-verify-ios` (`verify_jwt` **ligado**) e `apple-iap-notifications`
+  (`verify_jwt` **desligado**, quem chama é a Apple; deploy com `--no-verify-jwt`), mais `supabase/functions/_shared/`
+  (importado pelas duas). Banco: `supabase/dobroes_ios.sql` (migração com o mesmo conteúdo; o repositório não tem
+  `supabase/migrations`, a migração vai por `apply_migration`).
+- Secrets (só nomes, valores só em Supabase → Edge Functions → Secrets): `APPLE_IAP_KEY_ID`, `APPLE_IAP_ISSUER_ID`,
+  `APPLE_IAP_KEY_P8` (chave In-App Purchase do App Store Connect: Users and Access > Integrations). Não colidem com os
+  do `apple-revoke`. Sem eles a Edge responde 503 e não grava nada.
+- Log de falha: `dobroes_verify_ios_falha` e `apple_iap_notificacao_falha`, com etapa (`secret_ausente`, `chave_privada`,
+  `rede`, `apple_api`, `resposta`, `ambiente_divergente`) e só o status HTTP; nunca segredo, JWS, token nem corpo da Apple.
+- Teste da lógica pura: `deno test supabase/functions/_shared/appstore_test.ts` (sem rede, sem segredo real).
+- Cadastrar no App Store Connect as URLs de notificação (Production e Sandbox) apontando para `apple-iap-notifications`.
+- Ligar a venda só com `real_billing_ios_enabled = 'true'`, depois da #93, dos produtos aprovados e do OK do John.
+  Corte imediato: voltar a `'false'`.

@@ -9,6 +9,20 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Banco e Edge] — 2026-11-19 · Compra de dobrões no iPhone, fatia 1 (servidor), tudo desligado (#65)
+
+Refs #65. Sem versão do app, sem mudança em `composeApp/`, `iosApp/` nem `site/`; `[skip ci]`. John aprovou (18/11) com a stack. **Nada foi aplicado, implantado nem enviado**: migração, Edges e secrets só depois do APROVADO do Tech Lead.
+
+### Adicionado
+- **`supabase/dobroes_ios.sql`:** `dobroes_purchases` ganha `store` (`play` por padrão), `environment` e `refunded_at`; `app_config.real_billing_ios_enabled = 'false'`; `apply_dobroes_purchase_ios` (só `service_role`; PK `ios:<transactionId>`; Production `real`, Sandbox só `beta_eligible` + vitrine beta como `test`, senão `sandbox_refused`); `apply_dobroes_refund_ios` (debita até zerar, nunca negativo; diferença em `dobroes_refund_shortfall`). `apply_dobroes_purchase` do Android não foi tocada. Bloco de rollback no próprio arquivo.
+- **Edge `dobroes-verify-ios`** (`verify_jwt` ligado): lê só o `transactionId` do JWS, reconsulta a App Store Server API (Production, 404 cai na Sandbox) e devolve `{ status, doubloons, finish }`. A cadeia x5c não é validada (decisão no HISTORY).
+- **Edge `apple-iap-notifications`** (`verify_jwt` desligado): `REFUND`/`REVOKE` reconsultam a API e só estornam com `revocationDate` confirmado; `TEST` e demais tipos respondem 200; erro passageiro responde 5xx.
+- **`supabase/functions/_shared/appstore.ts`** (lógica pura) e `appstore_test.ts` (15 testes de `deno test`): JWT ES256, leitura do JWS, avaliação da transação, decisão de `finish`, consulta com fetch falso.
+- **`supabase/tests/dobroes_ios_ensaio.sql`:** ensaio que desfaz tudo (DOBIOS-10 a 18). **`docs/QA_TEST_PLAN.md`:** DOBIOS-10 a 20.
+- Secrets só por nome: `APPLE_IAP_KEY_ID`, `APPLE_IAP_ISSUER_ID`, `APPLE_IAP_KEY_P8`. Documentação em README, BUILD, HISTORY e MEMORY.
+
+---
+
 ## [Banco e Edge] — 2026-11-18 · Push segmentado por versão: convite só para 0.45.0+ e aviso "atualize" (#117)
 
 Refs #117. Sem versão do app, sem mudança em `composeApp/`, `iosApp/` nem `site/`; `[skip ci]`. John aprovou no chat (18/11) a Opção A do Tech Lead (sem mudar o app). **Nada foi enviado**; a migração e o deploy da Edge `push` só depois do APROVADO do Tech Lead.
