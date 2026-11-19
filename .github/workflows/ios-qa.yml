@@ -86,14 +86,15 @@ jobs:
           RC=0
           for tentativa in 1 2; do
             maestro --device "$UDID" test --format junit --output qa-out/junit.xml \
-              --test-output-dir qa-out/prints tools/ios-qa/vs-ia.yaml
+              --debug-output qa-out/prints --flatten-debug-output tools/ios-qa/vs-ia.yaml
             RC=$?
             [ $RC -eq 0 ] && break
             echo "tentativa $tentativa falhou (o driver do Maestro costuma falhar no 1o arranque)"
           done
           maestro --device "$UDID" test --format junit --output qa-out/junit-controle.xml \
-            --test-output-dir qa-out/prints tools/ios-qa/local-controle.yaml
+            --debug-output qa-out/prints --flatten-debug-output tools/ios-qa/local-controle.yaml
           RC2=$?
+          mv ./*.png qa-out/prints/ 2>/dev/null || true
           kill -INT "$(cat rec.pid)" || true
           sleep 3
           [ $RC -eq 0 ] && [ $RC2 -eq 0 ]
