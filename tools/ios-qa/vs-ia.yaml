@@ -23,7 +23,7 @@ appId: br.com.navalbattle
 - tapOn: "(?i)vs\\. IA|vs\\. AI"
 - tapOn: "(?i)Clássico|Classic|Clásico"
 - extendedWaitUntil:
-    visible: "(?i)Posicionamento|Deployment|Despliegue"
+    visible: "(?i).*(Posicionamento|Deployment|Despliegue).*"
     timeout: 15000
 - takeScreenshot: 03-posicionamento
 - tapOn:
@@ -35,19 +35,19 @@ appId: br.com.navalbattle
 - extendedWaitUntil:
     visible: "(?i)Alvo inimigo|Enemy target|Objetivo enemigo"
     timeout: 15000
-- assertNotVisible: "(?i)Passe o aparelho|Pass the device|Pasa el aparato"
+- assertNotVisible: "(?i).*(Passe o aparelho|Pass the device|Pasa el aparato).*"
 - takeScreenshot: 04-batalha-apos-confirmar
 
 # ponto 2: depois do 1o tiro (tabuleiro e Canvas: toque por coordenada, ajustar no ensaio)
 - tapOn:
     point: "50%,40%"
 - assertVisible: "(?i)Alvo inimigo|Enemy target|Objetivo enemigo"
-- assertNotVisible: "(?i)Passe o aparelho|Pass the device|Pasa el aparato"
+- assertNotVisible: "(?i).*(Passe o aparelho|Pass the device|Pasa el aparato).*"
 - takeScreenshot: 05-batalha-apos-tiro
 
 # ponto 3: depois da resposta da IA
 - waitForAnimationToEnd:
     timeout: 8000
 - assertVisible: "(?i)Alvo inimigo|Enemy target|Objetivo enemigo"
-- assertNotVisible: "(?i)Passe o aparelho|Pass the device|Pasa el aparato"
+- assertNotVisible: "(?i).*(Passe o aparelho|Pass the device|Pasa el aparato).*"
 - takeScreenshot: 06-batalha-apos-ia

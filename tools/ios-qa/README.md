@@ -9,4 +9,5 @@ Roteiro do Maestro que o `.github/workflows/ios-qa.yml` roda no runner macOS (di
 
 Maestro é ferramenta só de CI (versão em `MAESTRO_VERSION` no workflow): não entra no app nem no build da loja.
 Fica fora do simulador: Entrar com a Apple, push e compra (docs/QA_IPHONE.md).
-Ajustes prováveis no 1º ensaio: toque por coordenada no tabuleiro (Canvas), nome do botão da tela de nomes e modelo do simulador.
+Aprendido no ensaio (run 44443698499): o Maestro 1.41 não tem `--test-output-dir` (usa `--debug-output`); o texto casa pelo elemento INTEIRO, então regex precisa de `.*...*` (o título é "POSICIONAMENTO · COMANDANTE 1"); o simulador mostra o app em pt-BR mesmo com o sistema em en; o vs-ia passou com os 3 `assertNotVisible`.
+Ajustes que podem faltar: toque por coordenada no tabuleiro (Canvas), nome do botão da tela de nomes e modelo do simulador.

@@ -23,13 +23,13 @@ appId: br.com.navalbattle
     text: "(?i)Continuar|Continue|Começar|Start|Empezar"
     optional: true
 - extendedWaitUntil:
-    visible: "(?i)Posicionamento|Deployment|Despliegue"
+    visible: "(?i).*(Posicionamento|Deployment|Despliegue).*"
     timeout: 15000
 - tapOn:
     text: "(?i)Aleatório|Random|Aleatorio"
     optional: true
 - tapOn: "(?i)Confirmar|Confirm"
 - extendedWaitUntil:
-    visible: "(?i)Passe o aparelho|Pass the device|Pasa el aparato"
+    visible: "(?i).*(Passe o aparelho|Pass the device|Pasa el aparato).*"
     timeout: 15000
 - takeScreenshot: 10-local-passe-o-aparelho
