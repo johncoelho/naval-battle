@@ -112,7 +112,7 @@ jobs:
             FW_SRC=""
             while IFS= read -r d; do
               echo "achado: $d"; ls "$d" | head -5
-              if [ -z "$FW_SRC" ] && [ -f "$d/StoreKitTest" ] && file "$d/StoreKitTest" | grep -q "Mach-O"; then FW_SRC="$d"; fi
+              if [ -z "$FW_SRC" ] && [[ "$d" == *iPhoneSimulator* || "$d" == *CoreSimulator* ]] && [ -f "$d/StoreKitTest" ] && file "$d/StoreKitTest" | grep -q "Mach-O"; then FW_SRC="$d"; fi
             done < <(find "$(xcode-select -p)" /Library/Developer/CoreSimulator -type d -name StoreKitTest.framework 2>/dev/null)
             echo "escolhido: ${FW_SRC:-nenhum}"
             echo "--- otool -L do binario (StoreKitTest) ---"; otool -L "$BIN" | grep -i -E "storekit" || true
