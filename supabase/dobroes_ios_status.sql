@@ -3,6 +3,8 @@
 -- só com a coluna nova no fim; app antigo (Android e iPhone até 0.45.x) lê as colunas pelo nome e ignora a nova.
 -- Depende de dobroes.sql e dobroes_ios.sql (flag real_billing_ios_enabled, nasce 'false').
 --
+-- Atualizado pelo Plano B (dobroes_ios_review.sql): real_ios_enabled = flag OR (beta_eligible AND beta_store_on).
+--
 -- ROLLBACK: reaplicar a definição antiga de dobroes.sql (sem a coluna); o app novo trata ausência como falso.
 
 drop function if exists public.dobroes_store_status();
@@ -19,7 +21,10 @@ language sql stable security definer set search_path = public as $$
              where d.user_id = auth.uid() and d.premio and d.day = public.brt_today()),
     public.brt_seconds_to_midnight(),
     public.beta_eligible(auth.uid()) and public.beta_store_on(),
-    coalesce((select value = 'true' from public.app_config where key = 'real_billing_ios_enabled'), false);
+    -- #65 (Plano B): a aba Dobrões do iPhone abre com a flag global OU para conta de brinde
+    -- (QA e e-mails de beta_gift_emails) com a vitrine beta ligada; o público só com a flag.
+    coalesce((select value = 'true' from public.app_config where key = 'real_billing_ios_enabled'), false)
+      or (public.beta_eligible(auth.uid()) and public.beta_store_on());
 $$;
 revoke all on function public.dobroes_store_status() from public, anon;
 grant execute on function public.dobroes_store_status() to authenticated;

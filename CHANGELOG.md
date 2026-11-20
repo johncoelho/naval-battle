@@ -9,6 +9,13 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## Banco — 2026-11-20 · Aba Dobrões do iPhone abre por conta para a revisão da Apple (#65, Plano B)
+
+Sem App x.y.z, só `supabase/` e docs (`[skip ci]`, sem subir versão). Refs #65.
+
+### Banco
+- `dobroes_store_status().real_ios_enabled` passa a ser `flag real_billing_ios_enabled = 'true'` **OU** (`beta_eligible` **E** `beta_store_on()`). A conta de demonstração da revisão, as contas QA e a do John veem a aba e compram em Sandbox; o público continua sem a aba até o John ligar a flag. Nada muda no app (0.46.0 lê a coluna pelo nome) nem no Android. Arquivo `supabase/dobroes_ios_review.sql` (idempotente, rollback no cabeçalho), espelhado em `dobroes.sql` e `dobroes_ios_status.sql`. Ensaio `tests/dobroes_ios_review_ensaio.sql`.
+
 ## Site — 2026-11-20 · Página de download `/baixar` (#120)
 
 Sem App x.y.z, só `site/` (`[skip ci]`, sem subir versão). Novo `site/baixar.html` (`https://johncoelho.github.io/naval-battle/baixar`), destino dos anúncios: iPhone/iPad (user agent iOS) vai direto para a App Store; Android vai para a Play repassando os `utm_*` da URL como `referrer` codificado (mesmo formato dos anúncios T01/T02); desktop e sem JavaScript veem os dois botões. Página leve (HTML e CSS inline, sem imagem, fonte externa, cookie, pixel nem coleta de dado).

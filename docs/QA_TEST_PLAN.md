@@ -514,6 +514,8 @@ Desde 0.34.5 (#35), "testador" nos casos abaixo é conta com brinde: QA01, QA02 
 | DOBIOS-23 | P0 | iPhone 0.46.0, flag ligada: comprar um pacote; depois repetir a compra pendente (matar o app logo após pagar) | Credita 1x (aviso "+N", saldo sobe), só então a transação some das pendentes; reabrir o app não credita de novo |
 | DOBIOS-24 | P1 | iPhone: cancelar a folha; Ask to Buy (pendente); modo avião logo depois de pagar | Cancelar não muda nada nem mostra erro; pendente mostra o texto neutro e entra quando aprovado; sem rede a compra fica aberta e é conferida na volta |
 | DOBIOS-25 | P1 | Servidor: `supabase/tests/dobroes_ios_status_ensaio.sql` | `ios_desligada=false, ios_ligada=true, android_intacto=true` |
+| DOBIOS-26 | P0 | Servidor: `supabase/tests/dobroes_ios_review_ensaio.sql` (depois de `dobroes_ios_review.sql`) | `publico_sem_flag=false, beta_vitrine_on=true, beta_vitrine_off=false, publico_flag_on=true, beta_flag_on=true, android_intacto=true` |
+| DOBIOS-27 | P0 | iPhone 0.46.0, flag `real_billing_ios_enabled = 'false'`, `beta_store_enabled = 'true'`: conta de demonstração (`beta_eligible`) e conta comum → Loja | Demonstração vê a aba Dobrões e compra em Sandbox (`credited`, `kind = 'test'`); a conta comum não vê a aba |
 | DOBIOS-20 | P1 | Fatia 2 (app, Sandbox em aparelho/TestFlight, só depois de ligar a flag `real_billing_ios_enabled` na conta de teste): comprar cada pacote com a conta QA; recusar na folha; Ask to Buy; modo avião no meio; reembolso por notificação de teste do App Store Connect | Credita 1x e só então finaliza; cancelar não grava; pendente fica sem finalizar e entra depois; Edge fora não perde a compra; o estorno debita pelo `apple-iap-notifications` |
 
 #### Roteiro da #93: ligar a venda real de dobrões (Android)
