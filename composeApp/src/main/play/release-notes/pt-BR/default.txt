@@ -1,1 +1,1 @@
-Reforco na partida rapida contra o adversario: mensagens atrasadas da busca nao alteram mais o resultado, e uma partida em andamento nao e trocada. Revanche e Denunciar ou bloquear seguem iguais aos da partida online.
+Ajustes na loja e correcoes internas para deixar o jogo mais estavel. Preparativos para as compras de dobroes no iPhone. No Android nada muda na loja.

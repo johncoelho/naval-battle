@@ -12,8 +12,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     ) -> Bool {
         // antes de a abertura terminar: senão o toque que abriu o app fechado se perde
         UNUserNotificationCenter.current().delegate = self
+        // compra de dobrões (#65): registra a ponte StoreKit 2 e já escuta Transaction.updates. A vitrine
+        // só abre se a flag real_billing_ios_enabled estiver ligada no servidor.
+        StoreKitBridge.shared.native = storeKit
         return true
     }
+
+    private let storeKit = StoreKitDriver()
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let hex = deviceToken.map { String(format: "%02x", $0) }.joined()

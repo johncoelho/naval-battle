@@ -773,7 +773,8 @@ actual class CloudApi actual constructor() {
                 premioEnabled = (o["premio_enabled"] as? Boolean) ?: false,
                 premioClaimed = (o["premio_claimed"] as? Boolean) ?: false,
                 premioResetsInSeconds = o.intOr("premio_resets_in_seconds", 0),
-                vitrineBeta = (o["vitrine_beta"] as? Boolean) ?: false
+                vitrineBeta = (o["vitrine_beta"] as? Boolean) ?: false,
+                realIosEnabled = (o["real_ios_enabled"] as? Boolean) ?: false
             )
         )
     }
@@ -795,10 +796,21 @@ actual class CloudApi actual constructor() {
         productId: String,
         purchaseToken: String,
         origem: String?
-    ): CloudResult<DobroesVerifyResult> = CloudResult.Fail("loja indisponível no iPhone")
+    ): CloudResult<DobroesVerifyResult> = call {
+        // purchaseToken = signedTransaction (JWS) da App Store; o servidor só lê o id e reconsulta a Apple (#65)
+        val body = mapOf("product_id" to productId, "signed_transaction" to purchaseToken)
+        val o = post("/functions/v1/dobroes-verify-ios", body, token = session.accessToken) as? Map<*, *> ?: emptyMap<Any?, Any?>()
+        CloudResult.Ok(
+            DobroesVerifyResult(
+                status = o.strOr("status", "unknown"),
+                doubloons = o.intOr("doubloons", 0),
+                finish = (o["finish"] as? Boolean) ?: false
+            )
+        )
+    }
 
-    // Avisos "+N" do Prêmio Beta (#62). O ack só marca o aviso como visto; o consumo da Play é no
-    // servidor (dobroes-verify), então confirmar aqui não mexe em compra da Play.
+    // Avisos "+N" (Prêmio, compras). O ack só marca o aviso como visto; consumir/finalizar a compra
+    // é com o servidor (dobroes-verify / dobroes-verify-ios).
     actual suspend fun dobroesPending(session: Session): CloudResult<List<DobroesPending>> = call {
         val json = post("/rest/v1/rpc/dobroes_pending", emptyMap<String, Any?>(), token = session.accessToken)
         val rows = (json as? List<*>).orEmpty().mapNotNull { it as? Map<*, *> }

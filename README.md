@@ -293,7 +293,7 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
   servidor ser a única fonte do saldo e o app estar em produção na Play (interruptor
   `real_billing_enabled`, padrão
   desligado). A loja simulada saiu. No iPhone a aba Dobrões **não existe** (0.45.2, #118: a Apple
-  recusou texto de beta e "compra em breve" sem IAP); volta com a parte StoreKit (#65).
+  recusou texto de beta e "compra em breve" sem IAP). Com a parte StoreKit (#65, 0.46.0) ela volta no iPhone **só** com `real_billing_ios_enabled` ligada no servidor e a ponte StoreKit presente; desligada, o iPhone segue sem aba nem botão de compra.
 - **Passe de temporada**: para jogar ranqueada é preciso aderir à temporada da estação —
   Passe Gratuito (só participa) ou Passe de Temporada (dobrões: camuflagem exclusiva da
   estação, dobrões e milhas bônus; upgrade depois sai mais caro). Fim de temporada premia
@@ -707,6 +707,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   segurança é a assinatura ECDSA sobre a query crua. Dobrões pelo mesmo `dobroes_pending`
   (`kind = 'ad'`); milha direto no perfil, até `miles_cap`. Interruptor `ads_enabled` (nasce
   `'false'`; `'true'` liga para todos com o gate `ads_min_app_version`, e conta `is_test` fora do QA, os robôs da Play, fica sem anúncio, #40); números em `app_config` (`ads_*`); `ads_test_emails` só no banco e **vazia por padrão** (04/11): a conta de teste vem de `profiles.is_test`, não de e-mail.
+- Compra de dobrões no iPhone, app (#65, fatia 2, 0.46.0): ponte Swift `iosApp/iosApp/StoreKitBridge.swift` (`StoreKitDriver`, StoreKit 2: produtos, `purchase` com `appAccountToken` = id da conta, `Transaction.updates`/`unfinished`, `finish`) no padrão do `PushBridge`: o Kotlin declara `StoreKitNative` em `iosMain`, o `AppDelegate` registra `StoreKitBridge.shared.native` e o Swift responde por `onItem`/`onDone` (método, não lambda). O fluxo é do `commonMain` (`StoreKitFlow`, `verifyThenSettle`): o servidor (`dobroes-verify-ios`) credita e só com `finish = true` o app chama `transaction.finish()`. A aba e a vitrine do iPhone só aparecem com `dobroes_store_status().real_ios_enabled` (`supabase/dobroes_ios_status.sql`) E a ponte registrada; vitrine beta e aviso de cobrança da Play são só do Android. Arquivo Swift novo exige entrada manual no `project.pbxproj`.
 - Compra de dobrões no iPhone (`supabase/dobroes_ios.sql`, #65, fatia 1: servidor; tudo **desligado**): Edge
   `dobroes-verify-ios` (`verify_jwt` ligado; entrada `{ product_id, signed_transaction }`) lê só o `transactionId` do JWS,
   reconsulta a App Store Server API (Get Transaction Info, JWT ES256 por WebCrypto, Production e, no 404, Sandbox) e confere

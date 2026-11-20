@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.StoreProduct
+import br.com.navalbattle.data.platformName
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawCompassRose
@@ -102,7 +103,8 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -
             HudLabel(t(K.DOUBLOON_PACKS_SECTION), Naval.muted)
             Gap(6)
         }
-        if (status.beta) {
+        // aviso de cobrança da Play: só Android (no iPhone a compra é de verdade e sem texto de beta, #118)
+        if (status.beta && platformName != "ios") {
             // testador: a vitrine cobra de verdade (exceto na compra de teste da Play)
             Text(t(K.DOUBLOON_BETA_CHARGE), style = NavalType.mono, color = Naval.amberStrong, textAlign = TextAlign.Center)
             Gap(8)

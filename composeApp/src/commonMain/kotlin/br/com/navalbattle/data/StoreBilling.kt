@@ -22,13 +22,13 @@ sealed class BuyOutcome {
 }
 
 /**
- * Compras de dobrões pela Google Play (#15). O aparelho só fala com a Play (lista
- * produtos, abre a folha, lista o que está comprado); quem decide o crédito é o
- * servidor (`dobroes-verify`). Implementação real só no Android; no iPhone a loja
- * fica fechada até a parte StoreKit (issue própria).
+ * Compras de dobrões pela loja do aparelho: Google Play no Android (#15) e StoreKit 2 no iPhone (#65). O
+ * aparelho só fala com a loja (lista produtos, abre a folha, lista o que está comprado); quem decide o
+ * crédito é o servidor (`dobroes-verify` / `dobroes-verify-ios`). O token da compra é o purchaseToken da
+ * Play ou o JWS da transação da App Store.
  */
 expect class StoreBilling() {
-    /** Falso onde não há loja de compras (iPhone): a aba Dobrões fica fechada. */
+    /** Falso onde não há loja de compras (iPhone sem a ponte StoreKit): a aba Dobrões fica fechada. */
     val available: Boolean
 
     /** Produtos ativos na Play (lista vazia = indisponível). */
@@ -42,4 +42,10 @@ expect class StoreBilling() {
 
     /** Compras já confirmadas pela Play que ainda não foram conferidas no servidor. */
     suspend fun purchasedTokens(): List<PurchasedToken>
+
+    /**
+     * Fecha a compra de [token] depois de o servidor creditar (`finish = true`): no iPhone, `transaction.finish()`;
+     * no Android o próprio servidor consome a compra, então não faz nada.
+     */
+    suspend fun settle(token: String)
 }

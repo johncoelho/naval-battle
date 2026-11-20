@@ -8,12 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		1A0000000000000000000007 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000004 /* iOSApp.swift */; };
+		1A0000000000000000000017 /* StoreKitBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000016 /* StoreKitBridge.swift */; };
 		1A0000000000000000000008 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A0000000000000000000006 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		1A0000000000000000000003 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1A0000000000000000000004 /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
+		1A0000000000000000000016 /* StoreKitBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitBridge.swift; sourceTree = "<group>"; };
 		1A0000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1A0000000000000000000006 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -41,6 +43,7 @@
 			isa = PBXGroup;
 			children = (
 				1A0000000000000000000004 /* iOSApp.swift */,
+				1A0000000000000000000016 /* StoreKitBridge.swift */,
 				1A0000000000000000000006 /* Assets.xcassets */,
 				1A0000000000000000000005 /* Info.plist */,
 			);
@@ -147,6 +150,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1A0000000000000000000007 /* iOSApp.swift in Sources */,
+				1A0000000000000000000017 /* StoreKitBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

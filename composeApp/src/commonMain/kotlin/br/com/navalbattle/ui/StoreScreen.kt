@@ -80,8 +80,9 @@ private class PendingBuy(val name: String, val price: Int, val confirm: () -> Un
 @Composable
 fun StoreScreen(state: AppState) {
     val profile = state.profile
-    // iPhone sem a aba Dobrões enquanto não há compra (#118); índice 3 cai em Cascos
-    val aisles = remember { Aisle.entries.filter { it != Aisle.DOUBLOONS || dobroesAisleDisponivel(platformName) } }
+    // iPhone: aba Dobrões escondida (#118) até a flag `real_billing_ios_enabled` abrir a compra (#65); índice 3 cai em Cascos
+    LaunchedEffect(Unit) { state.refreshIosSaleGate() }
+    val aisles = Aisle.entries.filter { it != Aisle.DOUBLOONS || dobroesAisleDisponivel(platformName, state.iosSaleOpen) }
     var aisle by remember { mutableStateOf(aisles.getOrElse(state.storeAisle) { Aisle.FLEETS }) }
     var notice by remember { mutableStateOf<String?>(null) }
     var pending by remember { mutableStateOf<PendingBuy?>(null) }

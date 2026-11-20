@@ -754,7 +754,8 @@ actual class CloudApi actual constructor() {
                 premioEnabled = o.optBoolean("premio_enabled", false),
                 premioClaimed = o.optBoolean("premio_claimed", false),
                 premioResetsInSeconds = o.optInt("premio_resets_in_seconds", 0),
-                vitrineBeta = o.optBoolean("vitrine_beta", false)
+                vitrineBeta = o.optBoolean("vitrine_beta", false),
+                realIosEnabled = o.optBoolean("real_ios_enabled", false)
             )
         )
     }

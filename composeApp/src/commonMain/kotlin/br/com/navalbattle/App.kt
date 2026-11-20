@@ -33,6 +33,7 @@ import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.BuyOutcome
 import br.com.navalbattle.data.DobroesStoreStatus
 import br.com.navalbattle.data.StoreBilling
+import br.com.navalbattle.data.verifyThenSettle
 import br.com.navalbattle.data.AdValeStatus
 import br.com.navalbattle.data.AdsStatus
 import br.com.navalbattle.data.RewardedAds
@@ -188,6 +189,7 @@ import br.com.navalbattle.game.PremioState
 import br.com.navalbattle.game.avisoCompra
 import br.com.navalbattle.game.avisoPremio
 import br.com.navalbattle.game.premioState
+import br.com.navalbattle.game.vitrineIosVisivel
 import br.com.navalbattle.game.vitrineVisivel
 import br.com.navalbattle.game.isNetwork
 import br.com.navalbattle.game.Profile
@@ -2731,12 +2733,26 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             return premioState(s.beta, s.premioEnabled, s.premioClaimed, platformName)
         }
 
-    /** Vitrine paga visível: só com a Play (não no iPhone, #30), e com venda real ou vitrine beta (#28). */
+    /**
+     * Vitrine paga visível. Android: com a Play, venda real ou vitrine beta (#28). iPhone (#65): só com a
+     * ponte StoreKit pronta e `real_billing_ios_enabled` ligada; a flag manda também para testador.
+     */
     val vitrineAberta: Boolean
         get() {
             val s = dobroesStatus ?: return false
+            if (platformName == "ios") return vitrineIosVisivel(billing.available, s.realIosEnabled)
             return vitrineVisivel(billing.available, s.realEnabled, s.vitrineBeta)
         }
+
+    /** iPhone: a aba Dobrões só existe com a venda aberta (#65). Nunca no Android (lá a aba é sempre dele). */
+    val iosSaleOpen: Boolean
+        get() = platformName == "ios" && vitrineIosVisivel(billing.available, dobroesStatus?.realIosEnabled ?: false)
+
+    /** Ao abrir a loja no iPhone: pergunta ao servidor se a venda está ligada, para a aba aparecer ou não. */
+    suspend fun refreshIosSaleGate() {
+        if (platformName != "ios" || !billing.available || profile.currentSession() == null) return
+        refreshDobroesStatus()
+    }
 
     /**
      * Abrir a aba: situação da conta (Prêmio) e, com a Play, preços dos pacotes e compras que
@@ -2771,13 +2787,16 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         dobroesNotice = null
         try {
             when (val outcome = billing.buy(pack.code, session.userId)) {
-                is BuyOutcome.Purchased -> when (val v = authed { s -> cloud.dobroesVerify(s, outcome.productId, outcome.token, "vitrine") }) {
+                is BuyOutcome.Purchased -> when (val v = authed { s ->
+                    // iPhone: só finaliza a transação com o crédito confirmado pelo servidor (#65)
+                    verifyThenSettle(outcome.token, { cloud.dobroesVerify(s, outcome.productId, outcome.token, "vitrine") }, { billing.settle(it) })
+                }) {
                     // o saldo entra em recoverPending (aviso "dobrões entraram")
                     is CloudResult.Ok -> dobroesNotice = avisoCompra(v.value.status)?.let { t(it) }
                     is CloudResult.Fail -> dobroesNotice = t(K.DOUBLOON_BUY_FAILED)
                 }
                 BuyOutcome.Cancelled -> Unit
-                BuyOutcome.Pending -> dobroesNotice = t(K.DOUBLOON_PENDING)
+                BuyOutcome.Pending -> dobroesNotice = t(if (platformName == "ios") K.DOUBLOON_PENDING_IOS else K.DOUBLOON_PENDING)
                 is BuyOutcome.Failed -> dobroesNotice = t(K.DOUBLOON_BUY_FAILED)
             }
         } finally {
@@ -2817,9 +2836,12 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (recovering || profile.currentSession() == null) return
         recovering = true
         try {
-            // só a Play tem recibos para repetir; o Prêmio (token premio:) chega direto por dobroes_pending (#30)
-            if (billing.available) billing.purchasedTokens().forEach { p ->
-                authed { s -> cloud.dobroesVerify(s, p.productId, p.token, "vitrine") }
+            // só a loja (Play ou App Store) tem recibos para repetir; o Prêmio (token premio:) chega direto por
+            // dobroes_pending (#30). No iPhone são as transações sem finalizar (#65), só com a venda aberta.
+            if (billing.available && (platformName != "ios" || iosSaleOpen)) billing.purchasedTokens().forEach { p ->
+                authed { s ->
+                    verifyThenSettle(p.token, { cloud.dobroesVerify(s, p.productId, p.token, "vitrine") }, { billing.settle(it) })
+                }
             }
             // sem carteira aberta o servidor não creditou: a abertura soma o que está pendente (sem duplicar)
             if (!ensureWallet()) return

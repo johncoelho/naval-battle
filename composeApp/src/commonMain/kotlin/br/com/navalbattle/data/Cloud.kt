@@ -219,11 +219,17 @@ data class DobroesStoreStatus(
     val premioEnabled: Boolean,
     val premioClaimed: Boolean,
     val premioResetsInSeconds: Int,
-    val vitrineBeta: Boolean
+    val vitrineBeta: Boolean,
+    /** `real_billing_ios_enabled` (#65): a vitrine do iPhone só abre com ela ligada. Servidor antigo não manda: falso. */
+    val realIosEnabled: Boolean = false
 )
 
-/** Resposta de `dobroes-verify`: o status do servidor e os dobrões que a compra vale. */
-data class DobroesVerifyResult(val status: String, val doubloons: Int)
+/**
+ * Resposta de `dobroes-verify` (Play) e `dobroes-verify-ios` (App Store): o status do servidor e os
+ * dobrões que a compra vale. [finish] (só iPhone, #65): o servidor já tratou a transação e o app pode
+ * finalizá-la; sem isso a App Store devolve a compra no próximo lançamento.
+ */
+data class DobroesVerifyResult(val status: String, val doubloons: Int, val finish: Boolean = false)
 
 /**
  * Anúncio premiado hoje (#29, `ads_status` em `supabase/ads.sql`): o que cada lugar ainda pode.

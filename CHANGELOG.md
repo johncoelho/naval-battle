@@ -13,6 +13,25 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 Sem App x.y.z, só `site/` (`[skip ci]`, sem subir versão). Novo `site/baixar.html` (`https://johncoelho.github.io/naval-battle/baixar`), destino dos anúncios: iPhone/iPad (user agent iOS) vai direto para a App Store; Android vai para a Play repassando os `utm_*` da URL como `referrer` codificado (mesmo formato dos anúncios T01/T02); desktop e sem JavaScript veem os dois botões. Página leve (HTML e CSS inline, sem imagem, fonte externa, cookie, pixel nem coleta de dado).
 
+## [0.46.0] — 2026-11-20 · iPhone: ponte StoreKit 2 e fluxo de compra, vitrine desligada (#65, fatia 2)
+
+App 0.46.0 (versionCode 131). Refs #65. O servidor (fatia 1) já está no ar e desligado. **Sem dependência nova** (StoreKit 2 é do sistema; sem SPM nem pod). A 0.45.3/130 fica reservada ao #119.
+
+### Adicionado
+- **`iosApp/iosApp/StoreKitBridge.swift`** (`StoreKitDriver`, ~120 linhas): `Product.products(for:)` (preço local), `purchase(options: [.appAccountToken(uuid)])` com o id da conta, `Transaction.updates` e `Transaction.unfinished`, `finish()` só quando o Kotlin manda. Sem regra de negócio. Registrada no `AppDelegate`; arquivo no `project.pbxproj` à mão (referência, grupo e build phase).
+- **Ponte no padrão do `PushBridge`** (`iosMain/StoreKitBridge.kt`): interface `StoreKitNative` (o Swift implementa) e callbacks `onItem`/`onDone`, sem closures; `NativeStoreKitPort` vira `suspend`.
+- **Fluxo no `commonMain`** (`data/StoreKitFlow.kt`): `StoreKitFlow` mapeia compra, cancelamento e pendente (Ask to Buy) e guarda o id da transação de cada JWS; `verifyThenSettle` só finaliza com `finish = true` do servidor. `StoreBilling` (iOS) deixa de ser vazio; ganha `settle(token)` (Android: nada).
+- **`dobroesVerify` no iPhone** chama a Edge `dobroes-verify-ios` (`signed_transaction`); `DobroesVerifyResult` ganha `finish`.
+- `dobroes_store_status()` devolve `real_ios_enabled` (`supabase/dobroes_ios_status.sql`, espelhado em `dobroes.sql`; app antigo ignora, app novo lê ausente como falso). Ensaio `tests/dobroes_ios_status_ensaio.sql`.
+- Texto neutro de compra pendente no iPhone (`DOUBLOON_PENDING_IOS`, sem "Google Play"). Novidades da 0.46.0 (`RN_V0460`).
+
+### Segurança da exposição
+- **Nada aparece no iPhone por padrão.** A aba Dobrões e qualquer botão de compra só existem com `real_billing_ios_enabled = 'true'` no servidor **e** a ponte StoreKit registrada (`dobroesAisleDisponivel(platform, iosVendaAberta)`, `vitrineIosVisivel`). A loja do iPhone pergunta à `dobroes_store_status` ao abrir. A vitrine beta e o aviso de cobrança da Play (`DOUBLOON_BETA_CHARGE`) ficam só no Android. As compras sem finalizar só são repetidas com a venda aberta. Com a flag desligada a 0.46.x se comporta como a 0.45.2.
+
+### Testes
+- `StoreKitFlowTest` (7 casos, ponte falsa): compra devolve JWS e passa a conta como `appAccountToken`; cancelado, pendente e falha não viram compra; só finaliza com `finish = true`; `billing_off` e rede fora deixam aberta; transação de sessão anterior é creditada e finalizada; `finish` falho repete. `StoreViewTest` cobre o portão do iPhone. `IosVisibleTextTest` segue verde.
+- **Não testado aqui:** o Swift só compila no Mac (CI do iPhone) e a compra só roda em Sandbox/TestFlight (DOBIOS-21 a 24).
+
 ---
 
 ## [0.45.3] — 2026-11-20 · Bot: partida e resultado protegidos de mensagens atrasadas (#119)

@@ -25,6 +25,9 @@ actual class StoreBilling actual constructor() {
 
     actual val available: Boolean get() = true
 
+    /** O servidor consome a compra na Play (`dobroes-verify`); nada a finalizar aqui. */
+    actual suspend fun settle(token: String) = Unit
+
     private var client: BillingClient? = null
     private var pendingBuy: CompletableDeferred<BuyOutcome>? = null
 

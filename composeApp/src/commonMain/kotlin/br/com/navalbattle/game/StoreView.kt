@@ -19,10 +19,18 @@ fun premioState(beta: Boolean, premioEnabled: Boolean, premioClaimed: Boolean, p
     }
 
 /**
- * A aba Dobrões da loja existe só no Android (#118): no iPhone não há compra ainda (#65) e a aba
- * "chega em breve" fez a Apple procurar IAP (guideline 2.1b). Volta no iPhone com o StoreKit.
+ * A aba Dobrões da loja existe no Android sempre. No iPhone ela fica escondida (#118: a aba "chega em
+ * breve" fez a Apple procurar IAP, guideline 2.1b) e só aparece com a compra de verdade pronta
+ * ([iosVendaAberta], #65): flag `real_billing_ios_enabled` ligada no servidor E a ponte StoreKit presente.
  */
-fun dobroesAisleDisponivel(platform: String): Boolean = platform != "ios"
+fun dobroesAisleDisponivel(platform: String, iosVendaAberta: Boolean = false): Boolean =
+    platform != "ios" || iosVendaAberta
+
+/**
+ * Vitrine do iPhone (#65): só com a ponte StoreKit ([storeKitPronto]) e a flag `real_billing_ios_enabled`
+ * ligada. Sem vitrine beta no iPhone: o texto de beta nunca aparece lá.
+ */
+fun vitrineIosVisivel(storeKitPronto: Boolean, realIosEnabled: Boolean): Boolean = storeKitPronto && realIosEnabled
 
 /** O que a aba Dobrões mostra (#62), em ordem de prioridade. */
 enum class DoubloonAisleView { SIGN_IN, LOADING, FAILED, CLOSED, PREMIO, JA_PEGOU, VITRINE }

@@ -292,7 +292,7 @@ instale a 0.43.4; o grupo H fica para a **próxima** versão.
 | #62 Aba Dobrões no iPhone | DOBIOS-01 a 03 | Liberado para testes | **Em produção** |
 | #40 Anúncios para todos | ADS-18 (iPhone); o resto no Android | Liberado para testes | Só o lado do iPhone fecha aqui; o cartão espera o QA do Android |
 | #46 Atualização ao voltar | UPD-10 a 12 (Android pela Play e iPhone) | Liberado para testes | **Em produção** (o Android pode ir antes: a 0.43.4 já está na Play) |
-| #65 StoreKit | nenhum caso | Fila | Não entra: sem build |
+| #65 StoreKit | DOBIOS-21 a 25 (e 10 a 20 no servidor) | Fila | A 0.46.0 chega com a vitrine **desligada**: só DOBIOS-21 vale até ligar a flag; 22 a 24 só em Sandbox/TestFlight com a flag ligada |
 
 Regra: o cartão só vai para Em produção se **todos** os casos dele estiverem "Passou" ou com falha já explicada como bug
 conhecido (#72, #70 e #71) que o PO aceitou. Falha nova vira bug na Fila. Caso só de iPhone que o John não conseguir

@@ -106,7 +106,8 @@ revoke all on function public.beta_store_on() from public, anon, authenticated;
 drop function if exists public.dobroes_store_status();
 create or replace function public.dobroes_store_status()
 returns table (beta boolean, real_enabled boolean, premio_enabled boolean,
-               premio_claimed boolean, premio_resets_in_seconds integer, vitrine_beta boolean)
+               premio_claimed boolean, premio_resets_in_seconds integer, vitrine_beta boolean,
+               real_ios_enabled boolean)
 language sql stable security definer set search_path = public as $$
   select
     public.beta_eligible(auth.uid()),
@@ -115,7 +116,9 @@ language sql stable security definer set search_path = public as $$
     exists (select 1 from public.dobroes_purchases d
              where d.user_id = auth.uid() and d.premio and d.day = public.brt_today()),
     public.brt_seconds_to_midnight(),
-    public.beta_eligible(auth.uid()) and public.beta_store_on();
+    public.beta_eligible(auth.uid()) and public.beta_store_on(),
+    -- #65: a aba Dobrões do iPhone só abre com esta flag (app 0.46.0+; app antigo ignora a coluna)
+    coalesce((select value = 'true' from public.app_config where key = 'real_billing_ios_enabled'), false);
 $$;
 revoke all on function public.dobroes_store_status() from public, anon;
 grant execute on function public.dobroes_store_status() to authenticated;

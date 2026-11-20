@@ -54,6 +54,16 @@ class StoreViewTest {
     }
 
     @Test
+    fun iPhoneSoVeAbaEVitrineComAFlagIosELigadaEAPonteStoreKit() {
+        // #65: a 0.46 pode ir para a Apple sem expor IAP antes dos produtos aprovados
+        assertEquals(false, dobroesAisleDisponivel("ios", iosVendaAberta = false))
+        assertEquals(true, dobroesAisleDisponivel("ios", iosVendaAberta = true))
+        assertEquals(true, vitrineIosVisivel(storeKitPronto = true, realIosEnabled = true))
+        assertEquals(false, vitrineIosVisivel(storeKitPronto = true, realIosEnabled = false))
+        assertEquals(false, vitrineIosVisivel(storeKitPronto = false, realIosEnabled = true))
+    }
+
+    @Test
     fun avisoDaCompraSemAvisoQuandoCredita() {
         assertEquals(null, avisoCompra("credited"))
         assertEquals(null, avisoCompra("already"))
