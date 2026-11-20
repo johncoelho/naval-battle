@@ -140,6 +140,15 @@ jobs:
             echo "tentativa $tentativa falhou (o driver do Maestro costuma falhar no 1o arranque)"
           done
           echo "maestro saiu com $RC"
+          if [ $RC -ne 0 ]; then
+            # diagnóstico de abertura (sem login, sem segredo): console do app por 15 s e relatórios de queda
+            echo "--- launch --console ---"
+            (xcrun simctl launch --console-pty --terminate-running-process "$UDID" "$APP_ID" 2>&1 | head -n 80) & LP=$!
+            sleep 15; kill $LP 2>/dev/null
+            echo "--- relatórios de queda ---"
+            ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5
+            for r in $(ls -t ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -2); do grep -m1 -E '"exception"|"termination"' "$r" | cut -c1-600; grep -E 'dyld|Library not loaded|Reason' "$r" | head -5 | cut -c1-400; done
+          fi
           # diagnóstico sem segredo: a tela final do simulador, mesmo se o roteiro caiu antes
           xcrun simctl io "$UDID" screenshot "diagnostico-estado-final.png" || true
           # mantém só PNGs; confere o tamanho em pixels (Apple: 1290x2796 para 6,7 pol)
