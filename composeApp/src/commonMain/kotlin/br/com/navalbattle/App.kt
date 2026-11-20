@@ -2723,11 +2723,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     var dobroesBusy by mutableStateOf(false)
         private set
 
-    /** Prêmio Beta de hoje (#28): nulo enquanto a situação da conta ainda não chegou. No iPhone também vale (#30). */
+    /** Prêmio Beta de hoje (#28): nulo enquanto a situação da conta ainda não chegou. Escondido no iPhone (#118). */
     val premioView: PremioState?
         get() {
             val s = dobroesStatus ?: return null
-            return premioState(s.beta, s.premioEnabled, s.premioClaimed)
+            return premioState(s.beta, s.premioEnabled, s.premioClaimed, platformName)
         }
 
     /** Vitrine paga visível: só com a Play (não no iPhone, #30), e com venda real ou vitrine beta (#28). */

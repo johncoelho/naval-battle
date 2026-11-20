@@ -7,14 +7,22 @@ enum class PremioState { ESCONDIDO, PEGAR, JA_PEGOU }
 
 /**
  * Regra do Prêmio Beta, pura para testar. Só testador, e só com o interruptor
- * `premio_beta_enabled` ligado no servidor. O Prêmio não passa pela Play.
+ * `premio_beta_enabled` ligado no servidor. O Prêmio não passa pela Play. No iPhone nunca aparece
+ * (#118: a Apple recusou a 0.44.6 por "beta" visível, guideline 2.2).
  */
-fun premioState(beta: Boolean, premioEnabled: Boolean, premioClaimed: Boolean): PremioState =
+fun premioState(beta: Boolean, premioEnabled: Boolean, premioClaimed: Boolean, platform: String = "android"): PremioState =
     when {
+        platform == "ios" -> PremioState.ESCONDIDO
         !beta || !premioEnabled -> PremioState.ESCONDIDO
         premioClaimed -> PremioState.JA_PEGOU
         else -> PremioState.PEGAR
     }
+
+/**
+ * A aba Dobrões da loja existe só no Android (#118): no iPhone não há compra ainda (#65) e a aba
+ * "chega em breve" fez a Apple procurar IAP (guideline 2.1b). Volta no iPhone com o StoreKit.
+ */
+fun dobroesAisleDisponivel(platform: String): Boolean = platform != "ios"
 
 /** O que a aba Dobrões mostra (#62), em ordem de prioridade. */
 enum class DoubloonAisleView { SIGN_IN, LOADING, FAILED, CLOSED, PREMIO, JA_PEGOU, VITRINE }

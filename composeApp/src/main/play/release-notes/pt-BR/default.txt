@@ -1,1 +1,1 @@
-Correcao: na partida rapida contra o adversario encontrado, depois de posicionar a frota a batalha abria uma tela de passar o aparelho. Agora vai direto para a batalha, como na partida contra a IA.
+Ajustes de textos e da loja para o iPhone: removemos mencoes ao teste fechado e a aba Dobroes fica oculta no iPhone por enquanto. No Android nada muda na loja. Correcoes internas.

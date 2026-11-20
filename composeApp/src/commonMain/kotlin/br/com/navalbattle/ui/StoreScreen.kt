@@ -51,6 +51,8 @@ import br.com.navalbattle.design.drawAbilityIcon
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.game.Ability
 import br.com.navalbattle.game.DoubloonPack
+import br.com.navalbattle.game.dobroesAisleDisponivel
+import br.com.navalbattle.data.platformName
 import kotlinx.coroutines.launch
 import br.com.navalbattle.game.ShipClass
 
@@ -78,7 +80,9 @@ private class PendingBuy(val name: String, val price: Int, val confirm: () -> Un
 @Composable
 fun StoreScreen(state: AppState) {
     val profile = state.profile
-    var aisle by remember { mutableStateOf(Aisle.entries.getOrElse(state.storeAisle) { Aisle.FLEETS }) }
+    // iPhone sem a aba Dobrões enquanto não há compra (#118); índice 3 cai em Cascos
+    val aisles = remember { Aisle.entries.filter { it != Aisle.DOUBLOONS || dobroesAisleDisponivel(platformName) } }
+    var aisle by remember { mutableStateOf(aisles.getOrElse(state.storeAisle) { Aisle.FLEETS }) }
     var notice by remember { mutableStateOf<String?>(null) }
     var pending by remember { mutableStateOf<PendingBuy?>(null) }
     val scope = rememberCoroutineScope()
@@ -111,7 +115,7 @@ fun StoreScreen(state: AppState) {
             Gap(8)
 
             Row(Modifier.fillMaxWidth()) {
-                Aisle.entries.forEach { option ->
+                aisles.forEach { option ->
                     UnderlineTab(
                         label = t(option.key),
                         selected = aisle == option,

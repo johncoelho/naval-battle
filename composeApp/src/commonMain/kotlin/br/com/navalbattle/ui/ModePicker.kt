@@ -77,10 +77,6 @@ fun ModePickerSheet(state: AppState) {
                         state.friendRanked = true
                     }
                 }
-                if (state.friendRanked) {
-                    Gap(6)
-                    HudLabel(t(K.MODE_PICK_RANKED_BETA), Naval.amberStrong)
-                }
             }
             Gap(16)
             ModeCard(

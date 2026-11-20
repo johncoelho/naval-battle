@@ -9,6 +9,20 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.45.2] — 2026-11-20 · iPhone: sem texto de beta e sem aba Dobrões (#118)
+
+App 0.45.2 (versionCode 129). Só `commonMain`, sem servidor, sem dependência nova. A Apple recusou a 0.44.6 (build 33) por **2.2 Beta Testing** e **2.1(b) IAP não encontrado**; diagnóstico do Tech Lead na issue.
+
+### Corrigido
+- **P0 (#118), 2.2:** removida a linha "Ranqueada entre amigos liberada no teste fechado" do convite de amigo (`ModePicker`, chave `MODE_PICK_RANKED_BETA` apagada nas três línguas), para todos. O **Prêmio Beta** não aparece no iPhone (`premioState` ganha o parâmetro `platform`; `AppState.premioView` passa `platformName`); no Android segue para os testadores.
+- **P0 (#118), 2.1(b):** a aba **Dobrões** da loja não existe no iPhone (`dobroesAisleDisponivel`), até a compra por StoreKit (#65). Não há mais "A compra de dobrões chega em breve". O saldo continua no topo da loja e dos menus, sem botão de compra. `openStore(3)` no iPhone cai em Cascos. Android intocado.
+
+### Testes
+- Novidades antigas (`RN_V0280`, `RN_V0330`, `RN_V0390`, `RN_V0410`) reescritas sem "beta", "teste fechado" nem "Google Play", neutras para todos.
+- `StoreViewTest`: iPhone nunca vê o Prêmio nem a aba; Android sim. Novo `IosVisibleTextTest`: nenhum texto do app (exceto os exclusivos do Android, o aviso de lançamento, e a medalha Beta Tester; as Novidades entram na varredura) cita "beta", "teste fechado" ou "Google Play".
+
+---
+
 ## [Banco e Edge] — 2026-11-19 · Compra de dobrões no iPhone, fatia 1 (servidor), tudo desligado (#65)
 
 Refs #65. Sem versão do app, sem mudança em `composeApp/`, `iosApp/` nem `site/`; `[skip ci]`. John aprovou (18/11) com a stack. **Nada foi aplicado, implantado nem enviado**: migração, Edges e secrets só depois do APROVADO do Tech Lead.

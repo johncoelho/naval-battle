@@ -44,10 +44,13 @@ class StoreViewTest {
     }
 
     @Test
-    fun iPhoneDeTestadorVeOPremioMasNaoAVitrina() {
-        // o Prêmio não depende da Play: premioState segue valendo no iPhone
-        assertEquals(PremioState.PEGAR, premioState(beta = true, premioEnabled = true, premioClaimed = false))
-        assertEquals(false, vitrineVisivel(vendaPelaPlay = false, realEnabled = false, vitrineBeta = true))
+    fun iPhoneNuncaVeOPremioBetaNemAAbaDobroes() {
+        // #118: a Apple recusou a 0.44.6 (2.2 Beta Testing e 2.1b); Android segue com o Premio
+        assertEquals(PremioState.ESCONDIDO, premioState(true, true, false, platform = "ios"))
+        assertEquals(PremioState.ESCONDIDO, premioState(true, true, true, platform = "ios"))
+        assertEquals(PremioState.PEGAR, premioState(true, true, false, platform = "android"))
+        assertEquals(false, dobroesAisleDisponivel("ios"))
+        assertEquals(true, dobroesAisleDisponivel("android"))
     }
 
     @Test

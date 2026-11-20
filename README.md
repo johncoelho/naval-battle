@@ -292,8 +292,8 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
   até o secret e os 4 produtos estarem prontos; #28). A venda para jogador comum fica fechada até o
   servidor ser a única fonte do saldo e o app estar em produção na Play (interruptor
   `real_billing_enabled`, padrão
-  desligado). A loja simulada saiu. No iPhone a aba mostra só o Prêmio Beta (testador); os pacotes
-  ficam ocultos até a parte StoreKit (#30, 0.33.4).
+  desligado). A loja simulada saiu. No iPhone a aba Dobrões **não existe** (0.45.2, #118: a Apple
+  recusou texto de beta e "compra em breve" sem IAP); volta com a parte StoreKit (#65).
 - **Passe de temporada**: para jogar ranqueada é preciso aderir à temporada da estação —
   Passe Gratuito (só participa) ou Passe de Temporada (dobrões: camuflagem exclusiva da
   estação, dobrões e milhas bônus; upgrade depois sai mais caro). Fim de temporada premia
@@ -577,7 +577,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `AppleAuth` + `AppleSignInButton` | Entrar com a Apple (#13): `signIn()` devolve `AppleAuthResult` (token, nonce cru, código, nome); nunca lança | `supported = false`, botão vazio | `AuthenticationServices` (`ASAuthorizationController`), nonce sha256 hex; botão `ASAuthorizationAppleIDButton` via `UIKitView`; entitlement `iosApp.entitlements` |
 | `LanLink` | rede local | `NsdManager` + sockets | `NetService` |
 | `PushMessaging` | token de push | Firebase Messaging | token do APNs: o Kotlin pede o registro e o `AppDelegate` devolve o token via `PushBridge` (#14) |
-| `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes, a aba mostra só o Prêmio Beta (#30) |
+| `StoreBilling` | compra de dobrões pela Play | Google Play Billing (`available = true`) | `available = false`: sem pacotes; no iPhone a aba Dobrões fica oculta (#118) |
 | `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque; recebe o `AdAudience` da faixa (`setAgeRestrictedTreatment` UNSPECIFIED/CHILD/TEEN, `npa`, classificação máxima; as marcas TFUA/TFCD são obsoletas e não se usam; a do UMP deriva do tratamento) (`supported = true`) | vazio (`supported = false`) |
 | `AgeSignals` | faixa etária da loja (#49): `read()` devolve `AgeBand`, nunca lança | Play Age Signals; `-PageFake` troca pelo `FakeAgeSignalsManager` no debug | sem leitura (`supported = false`, `UNKNOWN`) |
 | `GameServices` | conquistas e placar do Play Games (#48): `start`, `unlock`, `increment`, `setSteps`, `submitRanked`, `showAchievements`; nunca lança; a regra de quando desbloquear é `game/Achievements` | Play Games Services v2; só liga com `supported` (app_id e IDs preenchidos) | `supported = false`, sem chamada |

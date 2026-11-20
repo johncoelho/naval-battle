@@ -233,9 +233,12 @@ Fim do grupo E: o QA apaga a amizade com o QA01 e os tokens de teste.
 
 | ID | Preparar | Passos | Esperado | Resultado |
 |---|---|---|---|---|
+| DOBIOS-04 | Conta de testador/demonstração, **0.45.2** | 1. Abra a Loja. 2. No convite de amigo marque Ranqueada. | Abas Cascos, Camuflagens e Habilidades, **sem Dobrões**; nenhum texto com "beta", "teste fechado" ou "Google Play"; sem Prêmio Beta | |
 | DOBIOS-01 | Conta que **não** é testador: a **QA03** (o QA confere `beta_eligible` dela) | 1. Loja → aba **Dobrões**. 2. Espere 10 s. | Mostra **"A compra de dobrões chega em breve."**. **Nunca** em branco nem preso em "Abrindo o cofre…" | |
 | DOBIOS-02 | Conta **principal** (testador) com o Prêmio Beta ligado (`beta_store_enabled` já está `true`; o QA confere `beta_eligible` da conta) | 1. Aba Dobrões. 2. Toque para pegar o **Prêmio Beta**. 3. Toque de novo no mesmo dia. | Só o cartão do Prêmio (nenhum pacote pago); ao pegar, aviso **"+N"** e o saldo sobe; de novo no mesmo dia mostra o retorno à meia-noite | |
 | DOBIOS-03 | Qualquer conta | 1. **Modo avião**. 2. Aba Dobrões. 3. Desligue o modo avião. 4. **Tentar de novo**. | "Não consegui abrir o cofre…" com **Tentar de novo**; com a rede, carrega | |
+
+**Na 0.45.2 (#118) DOBIOS-01 a 03 não se aplicam: a aba Dobrões some no iPhone.**
 
 **#65 (StoreKit, compras reais) não tem caso aqui:** continua na Fila e **não há compra no iPhone nesta versão**.
 Pré-requisitos antes de testar: aprovar a stack (StoreKit 2 + App Store Server API); Paid Apps Agreement, impostos e
