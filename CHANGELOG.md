@@ -9,6 +9,12 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## Site — 2026-11-20 · Página de download `/baixar` (#120)
+
+Sem App x.y.z, só `site/` (`[skip ci]`, sem subir versão). Novo `site/baixar.html` (`https://johncoelho.github.io/naval-battle/baixar`), destino dos anúncios: iPhone/iPad (user agent iOS) vai direto para a App Store; Android vai para a Play repassando os `utm_*` da URL como `referrer` codificado (mesmo formato dos anúncios T01/T02); desktop e sem JavaScript veem os dois botões. Página leve (HTML e CSS inline, sem imagem, fonte externa, cookie, pixel nem coleta de dado).
+
+---
+
 ## [0.45.3] — 2026-11-20 · Bot: partida e resultado protegidos de mensagens atrasadas (#119)
 
 App 0.45.3 (versionCode 130). Só `commonMain`, sem servidor, sem dependência nova. Achado do QA na 0.45.1: nome do adversário diferente entre batalha e resultado, e resultado sem Revanche e Denunciar ou bloquear. Não reproduzido no código: o nome vem sempre de `Match.bot` (imutável) e as duas capturas do QA têm horários diferentes (partidas distintas). Causas plausíveis (não confirmadas) corrigidas: (1) `onLine` aceitava linha de protocolo (ex.: QUIT atrasado da sala fechada) na partida do bot, que virava abandono e `opponentQuit`, trocando o resultado e escondendo Revanche; agora `BotRules.acceptsNetworkLine` ignora; (2) `startBotMatch` podia abrir por cima de uma partida já aberta durante a chamada de rede; agora `openAfterStart` exige nenhuma partida em andamento. Testes de regressão em `BotRulesTest`; caso BOT-17b no QA_TEST_PLAN.

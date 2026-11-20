@@ -561,7 +561,7 @@ supabase/functions/dobroes-verify-ios/      Edge Function: confere a compra do i
 supabase/functions/apple-iap-notifications/ Edge Function: reembolso/revogação do iPhone (notificações V2, sem JWT, #65)
 supabase/functions/_shared/                 lógica pura das duas Edges do iPhone (appstore.ts, coberta por `deno test`)
 supabase/functions/apple-revoke/   Edge Function: revoga o token do Entrar com a Apple na exclusão de conta (#13, ES256 por WebCrypto)
-site/               landing page e página de beta tester
+site/               landing page, página de beta tester e redirecionador de download (baixar.html)
 docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 .claude/skills/     processos repetíveis (ciclo de desenvolvimento, release, QA, …)
 ```
