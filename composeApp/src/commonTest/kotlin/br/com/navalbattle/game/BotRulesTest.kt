@@ -259,6 +259,25 @@ class BotRulesTest {
         assertFalse(BotRules.openAfterStart(stillSearching = false))
     }
 
+    @Test fun partidaEmAndamentoNuncaETrocadaPeloBot() {
+        // #119: o bot nao abre por cima de uma partida que ja esta na tela
+        assertFalse(BotRules.openAfterStart(stillSearching = true, noMatchRunning = false))
+        assertTrue(BotRules.openAfterStart(stillSearching = true, noMatchRunning = true))
+    }
+
+    @Test fun linhaDeRedeAtrasadaNaoMexeNaPartidaDoBot() {
+        assertFalse(BotRules.acceptsNetworkLine(botMatch = true))
+        assertTrue(BotRules.acceptsNetworkLine(botMatch = false))
+    }
+
+    @Test fun nomeDoAdversarioVirtualNaoMudaAteOResultado() {
+        val m = Match(GameMode.CLASSIC, Opponent.AI, bot = BotProfile("SeaFox_Jr", BotLevel.MEDIUM))
+        assertEquals("SeaFox_Jr", m.sideName(Side.ENEMY))
+        m.abandon(m.mySide)
+        assertEquals("SeaFox_Jr", m.sideName(Side.ENEMY))
+        assertEquals("SeaFox_Jr", m.sideName(m.mySide.other()))
+    }
+
     @Test fun respostaDoAdversarioSoUsaAListaFechada() {
         val r = Random(4)
         val replies = List(400) { BotRules.replyTo("FIRE", r) }

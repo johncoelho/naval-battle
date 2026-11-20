@@ -1109,7 +1109,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             restartSearchWithoutBot()
             return
         }
-        if (!BotRules.openAfterStart(quickSearchStartedAt > 0L)) {
+        // nem se uma partida (treino) abriu durante a chamada: nunca troca uma partida em andamento (#119)
+        if (!BotRules.openAfterStart(quickSearchStartedAt > 0L, match == null)) {
             // o jogador cancelou a busca durante a chamada: a partida nao abre e a linha do servidor fecha (auditoria #112, P1-2)
             botExpected = false
             uiScope?.launch { authed { s -> cloud.botMatchReport(s, botId, false) } }
@@ -3073,6 +3074,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             return
         }
         val m = match ?: return
+        // partida contra o adversario virtual nao tem ligacao: linha atrasada da sala fechada e ignorada (#119)
+        if (!BotRules.acceptsNetworkLine(m.bot != null)) return
         val parts = Protocol.parts(line)
         when (parts.firstOrNull()) {
             Protocol.HELLO -> {

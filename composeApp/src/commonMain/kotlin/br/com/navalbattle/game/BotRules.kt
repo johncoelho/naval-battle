@@ -70,7 +70,15 @@ object BotRules {
      * Depois de `bot_match_start`: so abre a partida se o jogador ainda esta na busca; se cancelou durante a chamada,
      * a linha aberta no servidor e fechada sem partida (P1-2 da auditoria).
      */
-    fun openAfterStart(stillSearching: Boolean): Boolean = stillSearching
+    fun openAfterStart(stillSearching: Boolean, noMatchRunning: Boolean = true): Boolean =
+        stillSearching && noMatchRunning
+
+    /**
+     * A partida contra o adversario virtual nao tem ligacao: linha de protocolo que chegue (resto da sala fechada,
+     * atraso da rede) nunca mexe nela (#119). Antes um QUIT atrasado dava "abandono" na partida do bot, trocava o
+     * resultado e escondia Revanche e Denunciar ou bloquear.
+     */
+    fun acceptsNetworkLine(botMatch: Boolean): Boolean = !botMatch
 
     /** Chance de uma provocacao depois de uma jogada do bot. Baixa de proposito. */
     private const val TAUNT_CHANCE = 0.06

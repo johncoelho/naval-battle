@@ -9,6 +9,12 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.45.3] — 2026-11-20 · Bot: partida e resultado protegidos de mensagens atrasadas (#119)
+
+App 0.45.3 (versionCode 130). Só `commonMain`, sem servidor, sem dependência nova. Achado do QA na 0.45.1: nome do adversário diferente entre batalha e resultado, e resultado sem Revanche e Denunciar ou bloquear. Não reproduzido no código: o nome vem sempre de `Match.bot` (imutável) e as duas capturas do QA têm horários diferentes (partidas distintas). Causas plausíveis (não confirmadas) corrigidas: (1) `onLine` aceitava linha de protocolo (ex.: QUIT atrasado da sala fechada) na partida do bot, que virava abandono e `opponentQuit`, trocando o resultado e escondendo Revanche; agora `BotRules.acceptsNetworkLine` ignora; (2) `startBotMatch` podia abrir por cima de uma partida já aberta durante a chamada de rede; agora `openAfterStart` exige nenhuma partida em andamento. Testes de regressão em `BotRulesTest`; caso BOT-17b no QA_TEST_PLAN.
+
+---
+
 ## [0.45.2] — 2026-11-20 · iPhone: sem texto de beta e sem aba Dobrões (#118)
 
 App 0.45.2 (versionCode 129). Só `commonMain`, sem servidor, sem dependência nova. A Apple recusou a 0.44.6 (build 33) por **2.2 Beta Testing** e **2.1(b) IAP não encontrado**; diagnóstico do Tech Lead na issue.

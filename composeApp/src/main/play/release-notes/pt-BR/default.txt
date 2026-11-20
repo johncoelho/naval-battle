@@ -1,1 +1,1 @@
-Ajustes de textos e da loja para o iPhone: removemos mencoes ao teste fechado e a aba Dobroes fica oculta no iPhone por enquanto. No Android nada muda na loja. Correcoes internas.
+Reforco na partida rapida contra o adversario: mensagens atrasadas da busca nao alteram mais o resultado, e uma partida em andamento nao e trocada. Revanche e Denunciar ou bloquear seguem iguais aos da partida online.
