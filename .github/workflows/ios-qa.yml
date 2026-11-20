@@ -110,10 +110,14 @@ jobs:
             BIN="$APP/iosApp"
             echo "--- onde esta o StoreKitTest.framework no runner ---"
             FW_SRC=""
-            while IFS= read -r d; do
+            # o framework real vive no RuntimeRoot do runtime iOS usado pelo simulador (os do tvOS/watchOS/xrOS nao servem)
+            RTNAME=$(echo "$RUNTIME" | sed -e 's/.*SimRuntime\.//' -e 's/-/ /' -e 's/-/./g')
+            echo "runtime do simulador: $RTNAME"
+            for d in /Library/Developer/CoreSimulator/Volumes/iOS_*/Library/Developer/CoreSimulator/Profiles/Runtimes/"$RTNAME".simruntime/Contents/Resources/RuntimeRoot/Developer/Library/Frameworks/StoreKitTest.framework; do
+              [ -d "$d" ] || continue
               echo "achado: $d"; ls "$d" | head -5
-              if [ -z "$FW_SRC" ] && [[ "$d" == *iPhoneSimulator* || "$d" == *CoreSimulator* ]] && [ -f "$d/StoreKitTest" ] && file "$d/StoreKitTest" | grep -q "Mach-O"; then FW_SRC="$d"; fi
-            done < <(find "$(xcode-select -p)" /Library/Developer/CoreSimulator -type d -name StoreKitTest.framework 2>/dev/null)
+              if [ -z "$FW_SRC" ] && [ -f "$d/StoreKitTest" ] && file "$d/StoreKitTest" | grep -q "Mach-O"; then FW_SRC="$d"; fi
+            done
             echo "escolhido: ${FW_SRC:-nenhum}"
             echo "--- otool -L do binario (StoreKitTest) ---"; otool -L "$BIN" | grep -i -E "storekit" || true
             if [ -n "$FW_SRC" ]; then
