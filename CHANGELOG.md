@@ -13,6 +13,16 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 Sem App x.y.z, só `site/` (`[skip ci]`, sem subir versão). Novo `site/baixar.html` (`https://johncoelho.github.io/naval-battle/baixar`), destino dos anúncios: iPhone/iPad (user agent iOS) vai direto para a App Store; Android vai para a Play repassando os `utm_*` da URL como `referrer` codificado (mesmo formato dos anúncios T01/T02); desktop e sem JavaScript veem os dois botões. Página leve (HTML e CSS inline, sem imagem, fonte externa, cookie, pixel nem coleta de dado).
 
+## [0.46.1] — 2026-11-20 · iPhone: binário sem referência a Android nem Google Play (Apple 2.3.10)
+
+App 0.46.1 (versionCode 132). A Apple recusou a 0.45.3 (build 41) por 2.3.10 (metadados imprecisos: "remova referências a Android e Google Play" do binário). O número é 0.46.1 e não 0.45.4 porque a `main` já está na 0.46.0. **Sem dependência nova.**
+
+### Corrigido
+- Novidades (0.41.0, 0.39.0, 0.27.0), vínculo com Google ("jogue em outros aparelhos") e aviso de compra pendente (o texto geral agora diz "a loja") reescritos sem citar Android nem Google Play, nas três línguas.
+- Texto de convite de amigo: no iPhone o link passa a ser o da App Store; o endereço da Play ficou só no Android (`expect val storeInviteLink`, `StoreLink.android.kt` e `StoreLink.ios.kt`), então o binário do iPhone não leva mais `play.google.com`.
+- `IosVisibleTextTest` agora também barra "android", "google play", "play store", "play games", `play.google` e "da/na Play" em todo texto que o iPhone pode mostrar; ficam de fora só os textos filtrados por plataforma (Prêmio Beta, aviso de cobrança da Play, aviso de lançamento, medalha de testador).
+- Android: nada muda na tela (textos neutros) e o link do convite segue com a origem `convite`.
+
 ## [0.46.0] — 2026-11-20 · iPhone: ponte StoreKit 2 e fluxo de compra, vitrine desligada (#65, fatia 2)
 
 App 0.46.0 (versionCode 131). Refs #65. O servidor (fatia 1) já está no ar e desligado. **Sem dependência nova** (StoreKit 2 é do sistema; sem SPM nem pod). A 0.45.3/130 fica reservada ao #119.

@@ -297,3 +297,9 @@ instale a 0.43.4; o grupo H fica para a **próxima** versão.
 Regra: o cartão só vai para Em produção se **todos** os casos dele estiverem "Passou" ou com falha já explicada como bug
 conhecido (#72, #70 e #71) que o PO aceitou. Falha nova vira bug na Fila. Caso só de iPhone que o John não conseguir
 rodar é registrado como "não testado" e **não segura** o cartão.
+
+## I. Metadados do binário · Apple 2.3.10 (0.46.1)
+
+| ID | Preparar | Passos | Esperado | Resultado |
+|---|---|---|---|---|
+| META-01 | iPhone, **0.46.1** | 1. Abra Novidades e leia as versões 0.41, 0.39 e 0.27. 2. Em Perfil, abra Vincular conta. 3. Em Amigos, toque em Compartilhar no convite. | Nenhum texto cita Android, Google Play, Play Store ou Play Games; o link do convite é o da App Store (apps.apple.com), nunca o da Play. | |

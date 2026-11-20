@@ -1,5 +1,6 @@
 package br.com.navalbattle.game
 
+import br.com.navalbattle.data.platformName
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.Lang
 import kotlin.test.Test
@@ -31,7 +32,8 @@ class ReferralTest {
         for (lang in Lang.entries) {
             val text = referralShareText("K7MQ2X", lang)
             assertTrue("K7MQ2X" in text, "código em ${lang.code}")
-            assertTrue("play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic" in text, "link em ${lang.code}")
+            val lojaEsperada = if (platformName == "ios") "apps.apple.com/app/id6827258132" else "play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic"
+            assertTrue(lojaEsperada in text, "link em ${lang.code}")
             // o link codificado tem "%26" e "%3D": confere os marcadores só no texto fora dele
             val semLink = text.replace(STORE_LINK, "")
             assertFalse("%1" in semLink || "%2" in semLink, "marcador sobrando em ${lang.code}")
@@ -42,6 +44,11 @@ class ReferralTest {
     @Test
     fun linkDoConviteTemAOrigemEMaisNada() {
         // #88: a Play lê o referrer codificado; só o canal, nunca o código nem quem convidou
+        if (platformName == "ios") {
+            assertEquals("https://apps.apple.com/app/id6827258132", STORE_LINK)
+            assertFalse("play.google" in STORE_LINK)
+            return
+        }
         assertEquals(
             "https://play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic" +
                 "&referrer=utm_source%3Dconvite%26utm_medium%3Dorganic",
