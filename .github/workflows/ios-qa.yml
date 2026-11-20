@@ -104,6 +104,19 @@ jobs:
             # relógio e barras padrão da Apple (9:41, bateria cheia): é o mesmo simulador, só sem o ruído do runner
             xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularMode active --cellularBars 4 --wifiBars 3
             cp tools/ios-qa/NavalIAP.storekit build/Products/Debug-iphonesimulator/iosApp.app/NavalIAP.storekit
+            # dyld abortava na abertura (SIGABRT em /usr/lib/dyld): o rpath absoluto da plataforma do Xcode nao vale dentro do simulador.
+            # Embute o StoreKitTest.framework (so neste modo, so no .app de QA) e aponta o rpath para ele.
+            APP=build/Products/Debug-iphonesimulator/iosApp.app
+            BIN="$APP/iosApp"
+            FW_SRC="$(xcode-select -p)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/StoreKitTest.framework"
+            ls "$FW_SRC" || true
+            echo "--- otool -L do binario (StoreKitTest) ---"; otool -L "$BIN" | grep -i -E "storekit|xctest" || true
+            echo "--- otool -L do StoreKitTest.framework ---"; otool -L "$FW_SRC/StoreKitTest" | head -20 || true
+            mkdir -p "$APP/Frameworks"
+            cp -R "$FW_SRC" "$APP/Frameworks/"
+            install_name_tool -add_rpath @executable_path/Frameworks "$BIN" || true
+            codesign --force --sign - "$APP/Frameworks/StoreKitTest.framework" || true
+            codesign --force --sign - "$APP" || true
           else
             LANG_SIM=en; LOC_SIM=en_US
           fi
@@ -147,7 +160,7 @@ jobs:
             sleep 15; kill $LP 2>/dev/null
             echo "--- relatórios de queda ---"
             ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5
-            for r in $(ls -t ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -2); do grep -m1 -E '"exception"|"termination"' "$r" | cut -c1-600; grep -E 'dyld|Library not loaded|Reason' "$r" | head -5 | cut -c1-400; done
+            for r in $(ls -t ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -2); do grep -m1 -E '"exception"|"termination"' "$r" | cut -c1-600; grep -m3 -E 'termination|Library not loaded|Reason|"asi"' "$r" | cut -c1-900; done
           fi
           # diagnóstico sem segredo: a tela final do simulador, mesmo se o roteiro caiu antes
           xcrun simctl io "$UDID" screenshot "diagnostico-estado-final.png" || true
