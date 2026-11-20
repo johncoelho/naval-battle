@@ -127,6 +127,7 @@ jobs:
           mkdir -p qa-out/capturas
           ROTEIRO="$(pwd)/tools/ios-qa/captura-iap.yaml"
           cd qa-out/capturas
+          set +e
           RC=1
           for tentativa in 1 2; do
             # sem --debug-output, --format nem vídeo: nada que guarde o texto digitado

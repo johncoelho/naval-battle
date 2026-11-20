@@ -47,8 +47,8 @@ appId: br.com.navalbattle
 - extendedWaitUntil:
     visible: "(?i)Bolsa|Pouch"
     timeout: 20000
-- assertVisible: "(?i).*R\$ ?4,90.*"
-- assertVisible: "(?i).*R\$ ?49,90.*"
+- assertVisible: '(?i).*R\$ ?4,90.*'
+- assertVisible: '(?i).*R\$ ?49,90.*'
 - assertNotVisible: "(?i).*(beta|android|google play).*"
 - takeScreenshot: iap-00-vitrine
 
