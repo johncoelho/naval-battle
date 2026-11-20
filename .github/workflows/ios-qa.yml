@@ -108,14 +108,24 @@ jobs:
             # Embute o StoreKitTest.framework (so neste modo, so no .app de QA) e aponta o rpath para ele.
             APP=build/Products/Debug-iphonesimulator/iosApp.app
             BIN="$APP/iosApp"
-            FW_SRC="$(xcode-select -p)/Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/StoreKitTest.framework"
-            ls "$FW_SRC" || true
-            echo "--- otool -L do binario (StoreKitTest) ---"; otool -L "$BIN" | grep -i -E "storekit|xctest" || true
-            echo "--- otool -L do StoreKitTest.framework ---"; otool -L "$FW_SRC/StoreKitTest" | head -20 || true
-            mkdir -p "$APP/Frameworks"
-            cp -R "$FW_SRC" "$APP/Frameworks/"
-            install_name_tool -add_rpath @executable_path/Frameworks "$BIN" || true
-            codesign --force --sign - "$APP/Frameworks/StoreKitTest.framework" || true
+            echo "--- onde esta o StoreKitTest.framework no runner ---"
+            FW_SRC=""
+            while IFS= read -r d; do
+              echo "achado: $d"; ls "$d" | head -5
+              if [ -z "$FW_SRC" ] && [ -f "$d/StoreKitTest" ] && file "$d/StoreKitTest" | grep -q "Mach-O"; then FW_SRC="$d"; fi
+            done < <(find "$(xcode-select -p)" /Library/Developer/CoreSimulator -type d -name StoreKitTest.framework 2>/dev/null)
+            echo "escolhido: ${FW_SRC:-nenhum}"
+            echo "--- otool -L do binario (StoreKitTest) ---"; otool -L "$BIN" | grep -i -E "storekit" || true
+            if [ -n "$FW_SRC" ]; then
+              echo "--- otool -L do framework escolhido ---"; otool -L "$FW_SRC/StoreKitTest" | head -20 || true
+              mkdir -p "$APP/Frameworks"
+              cp -R "$FW_SRC" "$APP/Frameworks/"
+              # o binario aponta para /Developer/Library/Frameworks/..., caminho que so existe sob o Xcode: reaponta para o embutido
+              install_name_tool -change /Developer/Library/Frameworks/StoreKitTest.framework/StoreKitTest @rpath/StoreKitTest.framework/StoreKitTest "$BIN" || true
+              install_name_tool -add_rpath @executable_path/Frameworks "$BIN" || true
+              codesign --force --sign - "$APP/Frameworks/StoreKitTest.framework" || true
+              otool -L "$BIN" | grep -i -E "storekit" || true
+            fi
             codesign --force --sign - "$APP" || true
           else
             LANG_SIM=en; LOC_SIM=en_US
