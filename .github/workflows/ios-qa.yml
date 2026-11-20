@@ -131,8 +131,11 @@ jobs:
           RC=1
           for tentativa in 1 2; do
             # sem --debug-output, --format nem vídeo: nada que guarde o texto digitado
-            maestro --device "$UDID" test -e EMAIL="$IOS_REVIEW_EMAIL" -e PASSWORD="$IOS_REVIEW_PASSWORD" "$ROTEIRO" > /dev/null 2>&1
+            maestro --device "$UDID" test -e EMAIL="$IOS_REVIEW_EMAIL" -e PASSWORD="$IOS_REVIEW_PASSWORD" "$ROTEIRO" > "$RUNNER_TEMP/maestro-iap.log" 2>&1
             RC=$?
+            # o log do Maestro vai so para o log do Actions (segredos mascarados) e filtrado dos valores; nunca vira artefato
+            sed -e "s|$IOS_REVIEW_EMAIL|***|g" -e "s|$IOS_REVIEW_PASSWORD|***|g" "$RUNNER_TEMP/maestro-iap.log" | tail -n 60
+            rm -f "$RUNNER_TEMP/maestro-iap.log"
             [ $RC -eq 0 ] && break
             echo "tentativa $tentativa falhou (o driver do Maestro costuma falhar no 1o arranque)"
           done
