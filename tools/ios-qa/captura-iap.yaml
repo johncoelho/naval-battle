@@ -1,0 +1,86 @@
+# Capturas de revisao da compra (Apple, #65/#118): app REAL no simulador do iPhone, com a conta de demonstracao.
+# Roda so pelo ios-qa.yml, modo "capturas-iap". Usuario e senha vem de -e EMAIL / -e PASSWORD (secrets do
+# GitHub); nunca escreva o valor aqui. Sem `--debug-output`: o JSON dos comandos guardaria a senha digitada.
+# Os PNGs saem na pasta onde o Maestro roda (o workflow usa qa-out/capturas). Textos por regex nas 3 linguas.
+appId: br.com.navalbattle
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "(?i)Entrar ou criar conta|Sign in or create account|Entrar o crear cuenta"
+    timeout: 60000
+- tapOn: "(?i)Entrar ou criar conta|Sign in or create account|Entrar o crear cuenta"
+
+# tela Conta: aba "Entrar" (a de criar vem aberta com a conta nova); os rotulos E-MAIL e SENHA ficam acima dos campos
+- tapOn:
+    text: "(?i)Entrar|Sign in"
+    index: 0
+- tapOn:
+    below: "(?i)E-?mail|Correo"
+- inputText: ${EMAIL}
+- tapOn:
+    below: "(?i)Senha|Password|Contraseña"
+- inputText: ${PASSWORD}
+- hideKeyboard
+# o 2o "Entrar" e o botao de enviar (o 1o e a aba)
+- tapOn:
+    text: "(?i)Entrar|Sign in"
+    index: 1
+- extendedWaitUntil:
+    visible: "(?i).*(Loja|Store|Tienda).*"
+    timeout: 45000
+
+# popups opcionais depois do login: oferta guiada e pedido de notificacao do sistema
+- tapOn:
+    text: "(?i)Pular|Skip|Saltar"
+    optional: true
+- tapOn:
+    text: "(?i)Allow|Permitir|Não permitir|Don.t Allow"
+    optional: true
+
+- tapOn: "(?i)Loja|Store|Tienda"
+- extendedWaitUntil:
+    visible: "(?i)Dobrões|Doubloons|Doblones"
+    timeout: 15000
+- tapOn: "(?i)Dobrões|Doubloons|Doblones"
+# a aba so existe com a venda aberta no servidor; os 4 pacotes carregam do StoreKit
+- extendedWaitUntil:
+    visible: "(?i)Bolsa|Pouch"
+    timeout: 20000
+- assertVisible: "(?i).*R\$ ?4,90.*"
+- assertVisible: "(?i).*R\$ ?49,90.*"
+- assertNotVisible: "(?i).*(beta|android|google play).*"
+- takeScreenshot: iap-00-vitrine
+
+# uma captura por produto: folha de compra do StoreKit aberta, depois cancela (nao compra nada)
+- tapOn: "(?i)Bolsa|Pouch"
+- waitForAnimationToEnd:
+    timeout: 4000
+- takeScreenshot: iap-01-dobroes_bolsa
+- tapOn:
+    text: "(?i)Cancel|Cancelar"
+    optional: true
+
+- tapOn: "(?i)Baú|Chest|Baúl"
+- waitForAnimationToEnd:
+    timeout: 4000
+- takeScreenshot: iap-02-dobroes_bau
+- tapOn:
+    text: "(?i)Cancel|Cancelar"
+    optional: true
+
+- tapOn: "(?i)Cofre|Strongbox|Caja fuerte"
+- waitForAnimationToEnd:
+    timeout: 4000
+- takeScreenshot: iap-03-dobroes_cofre
+- tapOn:
+    text: "(?i)Cancel|Cancelar"
+    optional: true
+
+- tapOn: "(?i)Tesouro do Almirante|Admiral.s Treasure|Tesoro del Almirante"
+- waitForAnimationToEnd:
+    timeout: 4000
+- takeScreenshot: iap-04-dobroes_tesouro
+- tapOn:
+    text: "(?i)Cancel|Cancelar"
+    optional: true

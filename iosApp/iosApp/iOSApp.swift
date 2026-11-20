@@ -2,6 +2,9 @@ import SwiftUI
 import UIKit
 import UserNotifications
 import ComposeApp
+#if QA_STOREKIT
+import StoreKitTest
+#endif
 
 /// Push no iPhone (#14), sem SDK: o sistema entrega o token do APNs e o toque na notificação aqui.
 /// O Kotlin pede o registro (`PushMessaging.ios.kt`) e recebe o resultado pelo `PushBridge`.
@@ -15,6 +18,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         // compra de dobrões (#65): registra a ponte StoreKit 2 e já escuta Transaction.updates. A vitrine
         // só abre se a flag real_billing_ios_enabled estiver ligada no servidor.
         StoreKitBridge.shared.native = storeKit
+        #if QA_STOREKIT
+        QAStoreKit.start()
+        #endif
         return true
     }
 
@@ -75,3 +81,26 @@ struct iOSApp: App {
         }
     }
 }
+
+#if QA_STOREKIT
+/// Só no job de capturas de revisão (`ios-qa.yml`, modo `capturas-iap`, #65): compilado com
+/// `SWIFT_ACTIVE_COMPILATION_CONDITIONS=QA_STOREKIT`, nunca no build da loja. Liga uma sessão do StoreKitTest
+/// com os 4 produtos de `tools/ios-qa/NavalIAP.storekit` (copiado para dentro do .app pelo workflow), para a
+/// vitrine do simulador mostrar preço e folha de compra reais do StoreKit, sem conta de sandbox.
+enum QAStoreKit {
+    private static var session: SKTestSession?
+
+    static func start() {
+        guard let url = Bundle.main.url(forResource: "NavalIAP", withExtension: "storekit") else { return }
+        do {
+            let s = try SKTestSession(contentsOf: url)
+            s.resetToDefaultState()
+            s.clearTransactions()
+            s.disableDialogs = false
+            session = s
+        } catch {
+            NSLog("QAStoreKit: sessao nao iniciou: \(error)")
+        }
+    }
+}
+#endif

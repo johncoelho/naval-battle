@@ -303,6 +303,10 @@ e-mail, sem mudança nenhuma na base.
 
 Workflow manual (`gh workflow run ios-qa.yml --ref main`), `macos-15`, sem segredo e sem publicar: compila o app com `-sdk iphonesimulator -arch arm64`, cria o simulador (`SIM_DEVICE`, runtime iOS mais novo da imagem, en-US), instala `br.com.navalbattle` e roda o Maestro (`MAESTRO_VERSION`, baixado do release oficial) com `tools/ios-qa/vs-ia.yaml` e `local-controle.yaml`, gravando vídeo. O artefato `ios-qa-<run>` (7 dias) traz prints, `qa.mp4` e junit. Repositório público: minutos de macOS gratuitos. Não substitui o aparelho: Entrar com a Apple, push e compra seguem em [QA_IPHONE.md](QA_IPHONE.md).
 
+### Capturas de revisão da compra (`modo = capturas-iap`, #65)
+
+`gh workflow run ios-qa.yml --ref main -f modo=capturas-iap`. Pré-requisito: os secrets `IOS_REVIEW_EMAIL` e `IOS_REVIEW_PASSWORD` (conta de demonstração com e-mail e senha; o John grava com `gh secret set`, nunca no repositório) e a vitrine do iPhone aberta para essa conta no servidor. Compila com `QA_STOREKIT` (sessão do StoreKitTest com `tools/ios-qa/NavalIAP.storekit`, copiado para dentro do `.app` só no CI), usa o iPhone 16 Plus (1290x2796) em pt-BR e roda `tools/ios-qa/captura-iap.yaml`: login, Loja, aba Dobrões, uma captura por produto com a folha de compra aberta (cancela, não compra). Artefato `ios-qa-<run>`: só PNGs (`iap-*.png`) e uma tela de diagnóstico; sem vídeo nem junit porque guardariam a senha. O preço da vitrine vem do StoreKit (`Product.displayPrice`), não do servidor.
+
 ## iOS — em andamento
 
 O alvo iOS foi adicionado ao `composeApp/build.gradle.kts` (`iosX64`, `iosArm64`,

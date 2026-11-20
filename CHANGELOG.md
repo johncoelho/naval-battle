@@ -16,6 +16,16 @@ Sem App x.y.z, só `supabase/` e docs (`[skip ci]`, sem subir versão). Refs #65
 ### Banco
 - `dobroes_store_status().real_ios_enabled` passa a ser `flag real_billing_ios_enabled = 'true'` **OU** (`beta_eligible` **E** `beta_store_on()`). A conta de demonstração da revisão, as contas QA e a do John veem a aba e compram em Sandbox; o público continua sem a aba até o John ligar a flag. Nada muda no app (0.46.0 lê a coluna pelo nome) nem no Android. Arquivo `supabase/dobroes_ios_review.sql` (idempotente, rollback no cabeçalho), espelhado em `dobroes.sql` e `dobroes_ios_status.sql`. Ensaio `tests/dobroes_ios_review_ensaio.sql`.
 
+## CI — 2026-11-20 · Capturas de revisão da compra no simulador do iPhone (#65, #118)
+
+Sem App x.y.z (`[skip ci]`, sem subir versão): o binário da loja não muda. A Apple pede uma captura de revisão por produto (`dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro`) com a compra do app **no iOS**; o John não tem iPhone e gravação do Android ou montagem violaria a 2.3.10. Caminho legítimo: capturas reais do app no simulador do runner macOS.
+
+### Adicionado
+- `ios-qa.yml` ganha o input `modo` (`qa` padrão, `capturas-iap`). No modo novo: iPhone 16 Plus (1290x2796, 6,7 pol), pt-BR, barra de status padrão, login com a conta de demonstração (secrets `IOS_REVIEW_EMAIL` e `IOS_REVIEW_PASSWORD`), `tools/ios-qa/captura-iap.yaml` e artefato só com PNGs (sem vídeo, junit nem debug, para não guardar a senha digitada).
+- `tools/ios-qa/NavalIAP.storekit`: os 4 produtos com os preços da vitrine (R$ 4,90, 9,90, 24,90, 49,90), lidos por uma sessão do StoreKitTest ligada só quando o build é compilado com `QA_STOREKIT` (`iOSApp.swift`, compilado fora de qualquer build da loja).
+
+---
+
 ## Site — 2026-11-20 · Página de download `/baixar` (#120)
 
 Sem App x.y.z, só `site/` (`[skip ci]`, sem subir versão). Novo `site/baixar.html` (`https://johncoelho.github.io/naval-battle/baixar`), destino dos anúncios: iPhone/iPad (user agent iOS) vai direto para a App Store; Android vai para a Play repassando os `utm_*` da URL como `referrer` codificado (mesmo formato dos anúncios T01/T02); desktop e sem JavaScript veem os dois botões. Página leve (HTML e CSS inline, sem imagem, fonte externa, cookie, pixel nem coleta de dado).

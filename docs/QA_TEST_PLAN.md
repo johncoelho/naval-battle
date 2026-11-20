@@ -181,6 +181,8 @@ Telas grandes: AVD Pixel Tablet e Pixel 9 Pro Fold (API 36), mais o QA01 em retr
 | IOS-SIM-02 | P1 | `tools/ios-qa/local-controle.yaml`: 2 jogadores, posicionar, Confirmar | "Pass the device" aparece (controle positivo: o Maestro enxerga essa tela, então o IOS-SIM-01 vale) |
 | IOS-SIM-03 | P2 | Conferir o artefato `ios-qa-<run>` | Tem `qa.mp4`, prints e junit, mesmo com o job vermelho |
 
+| IOS-SIM-04 | P1 | `gh workflow run ios-qa.yml --ref main -f modo=capturas-iap` (secrets `IOS_REVIEW_*`) | Artefato com `iap-00-vitrine.png` e uma captura por produto, 1290x2796, pt-BR, sem "beta", Android nem Google Play; senha ausente de log e artefato |
+
 ### 6a. Aviso de retorno e prêmio de retorno (#42)
 
 Conta QA01 com "Lembrete diário" ligado e notificações permitidas. Ensaio do banco: `supabase/tests/daily_return_ensaio.sql`.

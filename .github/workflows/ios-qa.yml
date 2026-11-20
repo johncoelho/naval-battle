@@ -3,10 +3,20 @@ name: QA iOS no simulador
 # QA do iPhone sem aparelho (#116): compila o app para o simulador, instala e roda o roteiro de toques
 # do Maestro (tools/ios-qa/). Não publica nada, não usa segredo e não toca o app da loja: o Maestro é
 # ferramenta só deste job. Manual por enquanto; depois de estável pode seguir o "Build iOS framework".
+# Modo capturas-iap (#65): o mesmo app no simulador (iPhone 16 Plus, 1290x2796), logado com a conta de
+# demonstração dos secrets IOS_REVIEW_EMAIL / IOS_REVIEW_PASSWORD, e uma sessão do StoreKitTest com os 4
+# produtos (compilada só nesse modo: flag QA_STOREKIT). Sobe só os PNGs; nada de vídeo, junit nem debug
+# (guardariam a senha digitada). Ver tools/ios-qa/captura-iap.yaml.
 # Ver docs/BUILD.md (seção iOS), docs/QA_TEST_PLAN.md (IOS-SIM-*) e tools/ios-qa/README.md.
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "qa = roteiros de toque (#116); capturas-iap = capturas de revisão da compra, iPhone Plus 6,7 pol (#65)"
+        type: choice
+        options: [qa, capturas-iap]
+        default: qa
 
 permissions:
   contents: read
@@ -17,7 +27,9 @@ concurrency:
 
 env:
   MAESTRO_VERSION: "1.41.0"   # fixa; subir só com ensaio verde
-  SIM_DEVICE: "iPhone 16"     # modelo do simulador; conferir no 1o ensaio se a imagem tem
+  # modelo do simulador; conferir no 1o ensaio se a imagem tem. O Plus é 1290x2796 (6,7 pol), tamanho aceito pela Apple
+  SIM_DEVICE: ${{ inputs.modo == 'capturas-iap' && 'iPhone 16 Plus' || 'iPhone 16' }}
+  MODO: ${{ inputs.modo || 'qa' }}
   APP_ID: br.com.navalbattle
 
 jobs:
@@ -42,8 +54,28 @@ jobs:
           xcrun simctl list runtimes
           xcrun simctl list devicetypes | grep -i "iphone" | tail -5
 
+      - name: Confere os secrets das capturas
+        if: env.MODO == 'capturas-iap'
+        env:
+          IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
+          IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
+        run: |
+          if [ -z "$IOS_REVIEW_EMAIL" ] || [ -z "$IOS_REVIEW_PASSWORD" ]; then
+            echo "::error::Faltam os secrets IOS_REVIEW_EMAIL e IOS_REVIEW_PASSWORD (gh secret set)."
+            exit 1
+          fi
+
       - name: Compila o app para o simulador (arm64) sem assinatura
         run: |
+          EXTRA=()
+          if [ "$MODO" = "capturas-iap" ]; then
+            # StoreKitTest só neste modo; o framework vive na plataforma do Xcode, então entra no rpath absoluto
+            EXTRA=(
+              'SWIFT_ACTIVE_COMPILATION_CONDITIONS=DEBUG QA_STOREKIT'
+              'FRAMEWORK_SEARCH_PATHS=$(inherited) $(PLATFORM_DIR)/Developer/Library/Frameworks'
+              'OTHER_LDFLAGS=$(inherited) -framework StoreKitTest -Wl,-rpath,$(PLATFORM_DIR)/Developer/Library/Frameworks'
+            )
+          fi
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
             -target iosApp \
@@ -55,6 +87,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
             BUILD_DIR="$(pwd)/build/Products" \
+            "${EXTRA[@]}" \
             build
           ls build/Products/Debug-iphonesimulator/
 
@@ -66,8 +99,16 @@ jobs:
           echo "UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
-          xcrun simctl spawn "$UDID" defaults write -g AppleLanguages -array en
-          xcrun simctl spawn "$UDID" defaults write -g AppleLocale -string en_US
+          if [ "$MODO" = "capturas-iap" ]; then
+            LANG_SIM=pt-BR; LOC_SIM=pt_BR
+            # relógio e barras padrão da Apple (9:41, bateria cheia): é o mesmo simulador, só sem o ruído do runner
+            xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularMode active --cellularBars 4 --wifiBars 3
+            cp tools/ios-qa/NavalIAP.storekit build/Products/Debug-iphonesimulator/iosApp.app/NavalIAP.storekit
+          else
+            LANG_SIM=en; LOC_SIM=en_US
+          fi
+          xcrun simctl spawn "$UDID" defaults write -g AppleLanguages -array "$LANG_SIM"
+          xcrun simctl spawn "$UDID" defaults write -g AppleLocale -string "$LOC_SIM"
           xcrun simctl install "$UDID" build/Products/Debug-iphonesimulator/iosApp.app
           xcrun simctl listapps "$UDID" | grep -i "$APP_ID" || true
 
@@ -77,7 +118,35 @@ jobs:
           unzip -q maestro.zip -d "$HOME"
           echo "$HOME/maestro/bin" >> "$GITHUB_PATH"
 
+      - name: Capturas de revisão da compra (só PNGs)
+        if: env.MODO == 'capturas-iap'
+        env:
+          IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
+          IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
+        run: |
+          mkdir -p qa-out/capturas
+          ROTEIRO="$(pwd)/tools/ios-qa/captura-iap.yaml"
+          cd qa-out/capturas
+          RC=1
+          for tentativa in 1 2; do
+            # sem --debug-output, --format nem vídeo: nada que guarde o texto digitado
+            maestro --device "$UDID" test -e EMAIL="$IOS_REVIEW_EMAIL" -e PASSWORD="$IOS_REVIEW_PASSWORD" "$ROTEIRO" > /dev/null 2>&1
+            RC=$?
+            [ $RC -eq 0 ] && break
+            echo "tentativa $tentativa falhou (o driver do Maestro costuma falhar no 1o arranque)"
+          done
+          echo "maestro saiu com $RC"
+          # diagnóstico sem segredo: a tela final do simulador, mesmo se o roteiro caiu antes
+          xcrun simctl io "$UDID" screenshot "diagnostico-estado-final.png" || true
+          # mantém só PNGs; confere o tamanho em pixels (Apple: 1290x2796 para 6,7 pol)
+          find . -type f ! -name '*.png' -delete
+          for f in *.png; do
+            echo "$f $(sips -g pixelWidth -g pixelHeight "$f" | awk '/pixel/{printf $2 " "}')"
+          done
+          exit $RC
+
       - name: Roteiro de toques (grava vídeo)
+        if: env.MODO != 'capturas-iap'
         run: |
           mkdir -p qa-out/prints
           xcrun simctl io "$UDID" recordVideo --codec=h264 qa-out/qa.mp4 &
