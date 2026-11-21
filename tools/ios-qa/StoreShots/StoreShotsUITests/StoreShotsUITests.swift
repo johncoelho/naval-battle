@@ -171,7 +171,7 @@ final class StoreShotsUITests: XCTestCase {
         if loggedIn { shot("diagnostico-falha") }
         else {
             let textos = app.staticTexts.allElementsBoundByIndex.prefix(120).map { $0.label }
-            print("botoes na tela: (app.buttons.allElementsBoundByIndex.prefix(60).map { $0.label })")
+            print("botoes na tela: \(app.buttons.allElementsBoundByIndex.prefix(60).map { $0.label })")
             print("textos na tela (sem campos): \(textos)")
         }
         XCTFail(msg)
