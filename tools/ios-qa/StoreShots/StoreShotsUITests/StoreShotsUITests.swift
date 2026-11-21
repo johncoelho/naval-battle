@@ -118,20 +118,35 @@ final class StoreShotsUITests: XCTestCase {
 
         // --- Loja > Dobrões ---
         // conta nova: avisos cobrem a tela (alerta de notificações do sistema, presente de boas-vindas, temporada,
-        // oferta guiada), em ordem que varia. Trata os três tipos em laço.
-        let avisos = "VALEU|Thanks|Gracias|AGORA NÃO|Not now|Ahora no|Pular|Skip|Saltar"
+        // Diário de bordo, "Entendi" da rosa dos ventos), em ordem que varia. Laço único, só botões, por prioridade.
+        // O Diário fecha em FECHAR; só faz o check-in se não houver FECHAR.
+        let prioridade = [
+            "FECHAR|Close|Cerrar",
+            "VALEU|Thanks|Gracias",
+            "AGORA NÃO|Not now|Ahora no",
+            "ENTENDI|Got it|Entendido",
+            "PULAR|Skip|Saltar",
+            "FAZER CHECK-IN.*|Check in.*|Hacer check-in.*",
+        ]
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        for _ in 0..<8 {
+        var vazios = 0
+        var ciclos = 0
+        while ciclos < 14 && vazios < 2 {
+            ciclos += 1
             var feito = false
             for r in ["Allow", "Permitir"] where springboard.buttons[r].exists {
-                springboard.buttons[r].tap(); feito = true; sleep(2); break
+                springboard.buttons[r].tap(); feito = true; break
             }
-            if feito { continue }
-            let b = element(avisos)
-            guard b.waitForExistence(timeout: 4) else { break }
-            tocarSeguro(b)
-            sleep(2)
+            if !feito {
+                for regex in prioridade {
+                    let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(regex))[ !.]*(\n.*)?")
+                    let b = app.buttons.matching(p).firstMatch
+                    if b.exists { print("aviso: tocando \(regex.prefix(12))"); tocarSeguro(b); feito = true; break }
+                }
+            }
+            if feito { vazios = 0; sleep(2) } else { vazios += 1; sleep(3) }
         }
+        print("avisos fechados em \(ciclos) ciclos; botoes visiveis: \(app.buttons.allElementsBoundByIndex.prefix(40).map { $0.label })")
         try tap("Loja|Store|Tienda", timeout: 15)
         try tap("Dobrões|Doubloons|Doblones", timeout: 20)
         guard element("Bolsa|Pouch").waitForExistence(timeout: 25) else {
@@ -290,6 +305,7 @@ final class StoreShotsUITests: XCTestCase {
 
     /// Falha com diagnóstico: só depois do login a tela é capturada (antes dele há o e-mail digitado).
     private func fail(_ msg: String) {
+        print("botoes visiveis na falha: \(app.buttons.allElementsBoundByIndex.prefix(60).map { $0.label })")
         if loggedIn { shot("diagnostico-falha") }
         else {
             let textos = app.staticTexts.allElementsBoundByIndex.prefix(120).map { $0.label }
