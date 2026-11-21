@@ -41,23 +41,28 @@ final class StoreShotsUITests: XCTestCase {
 
         // --- login (nenhuma captura de tela nesta fase) ---
         try tap("Entrar ou criar conta|Sign in or create account|Entrar o crear cuenta", timeout: 60)
-        try tap("Entrar|Sign in", timeout: 15, index: 0)
+        try tap("Entrar(?! com| ou)|Sign in(?! with| or)", timeout: 15, index: 0)
+        sleep(2)
+        // diagnóstico ANTES de digitar (sem valores): tipo, rótulo e posição dos elementos da tela de login
+        let todos = app.descendants(matching: .any).allElementsBoundByIndex.prefix(80)
+        for e in todos { print("LOGIN-UI tipo=\(e.elementType.rawValue) rotulo=\(e.label) y=\(Int(e.frame.minY)) h=\(Int(e.frame.height))") }
         let campos = app.textFields
-        XCTAssertTrue(campos.firstMatch.waitForExistence(timeout: 10), "campo de e-mail ausente")
-        campos.firstMatch.tap()
-        campos.firstMatch.typeText(email)
-        let senha = app.secureTextFields.firstMatch
-        if senha.waitForExistence(timeout: 5) {
-            senha.tap()
-            senha.typeText(password)
+        if campos.firstMatch.exists {
+            campos.firstMatch.tap()
+            app.typeText(email)
+            let senha = app.secureTextFields.firstMatch
+            if senha.exists { senha.tap() } else { campos.element(boundBy: 1).tap() }
+            app.typeText(password)
         } else {
-            // campo de senha exposto como texto comum: é o segundo
-            campos.element(boundBy: 1).tap()
-            campos.element(boundBy: 1).typeText(password)
+            // Compose não expõe o campo como TextField: toca logo abaixo do rótulo e digita no foco
+            try tapBelow("E-?mail|Correo")
+            app.typeText(email)
+            try tapBelow("Senha|Password|Contraseña")
+            app.typeText(password)
         }
         // o 2º "Entrar" é o botão de enviar (o 1º é a aba)
         dismissKeyboard()
-        try tap("Entrar|Sign in", timeout: 10, index: 1)
+        try tap("Entrar(?! com| ou)|Sign in(?! with| or)", timeout: 10, index: 1)
         guard element("Loja|Store|Tienda").waitForExistence(timeout: 45) else {
             return fail("Loja não apareceu depois do login (conta sem acesso ou login recusado)")
         }
@@ -114,12 +119,24 @@ final class StoreShotsUITests: XCTestCase {
                 let ordenados = (0..<todos.count).map { todos.element(boundBy: $0) }
                     .filter { $0.exists && $0.isHittable }
                     .sorted { $0.frame.minY < $1.frame.minY }
-                if ordenados.count > index { ordenados[index].tap(); return }
+                var vistos = Set<String>()
+                let unicos = ordenados.filter { vistos.insert("\(Int($0.frame.minY / 8))-\(Int($0.frame.minX / 8))").inserted }
+                if unicos.count > index { unicos[index].tap(); return }
             }
             usleep(500_000)
         }
         fail("Não achei na tela: \(regex) (índice \(index))")
         throw NSError(domain: "StoreShots", code: 1)
+    }
+
+    /// Toca logo abaixo do rótulo (campos do Compose não aparecem como TextField).
+    private func tapBelow(_ regex: String) throws {
+        let p = NSPredicate(format: "label MATCHES[c] %@", "(?s).*(\(regex)).*")
+        let r = app.descendants(matching: .any).matching(p).firstMatch
+        guard r.waitForExistence(timeout: 10) else { fail("Rótulo não achado: \(regex)"); throw NSError(domain: "StoreShots", code: 2) }
+        let f = r.frame
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: app.frame.midX, dy: f.maxY + f.height * 1.6)).tap()
+        sleep(1)
     }
 
     private func dismissKeyboard() {
