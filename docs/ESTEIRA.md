@@ -26,6 +26,49 @@ decisões caras), Dev, PO, Game Designer, Suporte, Release e QA no Sonnet. Sem i
 Haiku do orquestrador e a revisão entrava em loop (#35 voltou três vezes em 25/10).
 Desde a #76 o Tech Lead tem `sonnet` como padrão e o `opus` entra por delegação (desenho e segurança); ver a seção abaixo.
 
+## Quem faz o quê (PM não executa)
+
+Regra de 21/11, reforçada pelo John duas vezes: **o PM não executa nem tarefa pequena**. Cada coisa tem
+dono por perfil; pedido que cai no perfil de outro agente é **redirecionado**, nunca executado pelo PM.
+
+| Papel | Faz | Exemplos concretos |
+|---|---|---|
+| Suporte | triagem de issues e feedback | classificar bug × melhoria, deixar reproduzível, pôr no quadro, ler `feedback` no Supabase |
+| PO | SPEC e ordem da Fila | critérios de aceite, quebrar pedido grande, reordenar a Fila, atestar a história |
+| Tech Lead | desenho e revisão | desenho antes de implementar, APROVADO/CORRIGIR **antes de todo push**, proposta de camada nova |
+| Dev | código e publicação | código, testes, versão, notas da Play, CHANGELOG e docs, worktree, push depois do APROVADO |
+| Release | CI, lançamento e lojas | acompanhar CI e ler o log, `app_releases`, `ios_live`, flags de lançamento autorizadas pelo John, promoção Play (20/50/100%), App Store Connect e TestFlight, anexar capturas e responder à Apple |
+| QA | ensaios e testes | rodar ensaios e workflows de teste (`gh workflow run`), emuladores QA01/QA02 e simulador iOS, liberar e remover conta de teste durante o run, baixar e conferir artefatos e PNGs |
+| Game Designer | dados de balanceamento | consultas de economia, ranqueada, duração e abandono, proposta como issue |
+
+**O PM faz só:** decidir, escrever o briefing, perguntar ao John, conferir o resultado do agente e
+responder curto.
+
+**O PM NÃO faz, mesmo sendo pequeno:** disparar `gh workflow run`; ler log de CI; rodar SQL que muda
+dado; baixar e abrir artefatos; mexer no navegador ou em console; editar código.
+
+**Exceção única:** consulta rápida de estado, só leitura, para responder ao John (status de um run,
+iTunes lookup). Se virar investigação ou ação, delega ao agente do perfil.
+
+**Trava técnica (21/11):** hook `PreToolUse` em `.claude/settings.json` →
+`.claude/hooks/pm-guard.py`. No agente **principal** (PM) nega Bash/PowerShell com `gh workflow run`,
+`gh run download`, `git push`, `supabase db query|functions deploy|secrets` e `gradlew`, e
+Edit/Write/NotebookEdit em `composeApp/`, `iosApp/`, `supabase/`, `site/`, `.github/` e `tools/`, com
+a mensagem "PM não executa: delegue ao agente do perfil (ver docs/ESTEIRA.md > Quem faz o quê)".
+Leituras (`gh run view|list|watch`, `gh issue`, `git status|log|diff`, curl GET, select) e docs seguem
+livres. **Subagentes ficam livres**: o payload do hook traz `agent_id` e `agent_type` só dentro de
+subagente (confirmado em teste real com o Dev); sem esses campos é o principal. **Falha aberta:**
+erro no script, JSON inválido ou campo ausente permite. `supabase db query` é negado inteiro,
+até `select`: mesmo a leitura de banco vai para o agente do perfil (Suporte, QA, Release, Game
+Designer). Limites aceitos: é um filtro por texto (wrappers como `bash -c "git push"`,
+`powershell -Command` e `gh api .../dispatches` escapam; contornar é violação da regra, não
+acidente); edição em worktree fora da pasta do projeto não é barrada (o Dev trabalha lá);
+`.claude/hooks/` e `.claude/settings.json` não são protegidos; e uma sessão iniciada com `--agent`
+conta como subagente e fica sem trava. A trava vale também para o Claude Code do John neste repo:
+para `git push` ou `gh workflow run` direto, ele desliga ou delega.
+**Desligar:** `NB_PM_GUARD=off` no ambiente do Claude Code, ou apagar o bloco `hooks` de
+`.claude/settings.json`.
+
 ## Quadro
 
 [GitHub Projects — Naval Battle · Esteira](https://github.com/users/johncoelho/projects/1) (campo

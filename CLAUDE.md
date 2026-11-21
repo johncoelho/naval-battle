@@ -39,6 +39,7 @@ tech-lead, dev, release, qa, game-designer), quadro no GitHub Projects, backlog 
 
 - **Todo pedido que altere algo segue a skill `ciclo-agentico`**: issue e cartão antes de começar, o agente
   principal (PM) delega e confere, não executa, e só devolve ao John com a cadeia validada (Tech Lead, CI, QA, PO).
+- **O PM não executa nem tarefa pequena**: quem faz o quê está na tabela de [docs/ESTEIRA.md](docs/ESTEIRA.md#quem-faz-o-quê-pm-não-executa).
 - Todo push na `main` publica: subir versão (Android e iOS) e escrever as notas da Play no mesmo commit.
 - Documentação (CHANGELOG sempre; HISTORY, MEMORY, README, docs, design system quando couber)
   no mesmo commit do código.
