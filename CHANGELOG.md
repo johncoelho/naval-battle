@@ -15,7 +15,7 @@ Só docs: sem versão do app, sem banco, sem flag, sem workflow. [skip ci].
 
 ### Adicionado
 - `docs/ESTEIRA.md`: seção "Quem faz o quê (PM não executa)" com papel, o que faz e exemplos; o que o PM faz, o que não faz mesmo sendo pequeno e a única exceção (consulta de estado só leitura).
-- Trava técnica: `.claude/settings.json` (hook `PreToolUse`) + `.claude/hooks/pm-guard.py` negam ao agente principal `gh workflow run`, `gh run download`, `git push`, `supabase db query|functions deploy|secrets`, `gradlew` e edição em `composeApp/`, `iosApp/`, `supabase/`, `site/`, `.github/` e `tools/`; subagentes livres (`agent_id` no payload), falha aberta, `NB_PM_GUARD=off` desliga.
+- Trava técnica: `.claude/settings.json` (hook `PreToolUse`) + `.claude/hooks/pm-guard.py` negam ao agente principal `gh workflow run`, `gh run download`, `git push`, `supabase db query` de escrita (SQL só leitura passa), `functions deploy|secrets|db push|db reset`, `gradlew` e edição em `composeApp/`, `iosApp/`, `supabase/`, `site/`, `.github/` e `tools/`; subagentes livres (`agent_id` no payload), falha aberta, `NB_PM_GUARD=off` desliga.
 - `.claude/skills/ciclo-agentico/SKILL.md`: "Mapa de papéis" e a checagem "qual agente faz isso? delegue". `CLAUDE.md` aponta para a tabela.
 ---
 

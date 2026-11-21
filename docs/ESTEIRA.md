@@ -52,20 +52,20 @@ iTunes lookup). Se virar investigação ou ação, delega ao agente do perfil.
 
 **Trava técnica (21/11):** hook `PreToolUse` em `.claude/settings.json` →
 `.claude/hooks/pm-guard.py`. No agente **principal** (PM) nega Bash/PowerShell com `gh workflow run`,
-`gh run download`, `git push`, `supabase db query|functions deploy|secrets` e `gradlew`, e
+`gh run download`, `git push`, `supabase db query` de escrita, `supabase functions deploy|secrets|db push|db reset` e `gradlew`, e
 Edit/Write/NotebookEdit em `composeApp/`, `iosApp/`, `supabase/`, `site/`, `.github/` e `tools/`, com
 a mensagem "PM não executa: delegue ao agente do perfil (ver docs/ESTEIRA.md > Quem faz o quê)".
 Leituras (`gh run view|list|watch`, `gh issue`, `git status|log|diff`, curl GET, select) e docs seguem
 livres. **Subagentes ficam livres**: o payload do hook traz `agent_id` e `agent_type` só dentro de
 subagente (confirmado em teste real com o Dev); sem esses campos é o principal. **Falha aberta:**
-erro no script, JSON inválido ou campo ausente permite. `supabase db query` é negado inteiro,
-até `select`: mesmo a leitura de banco vai para o agente do perfil (Suporte, QA, Release, Game
-Designer). Limites aceitos: é um filtro por texto (wrappers como `bash -c "git push"`,
-`powershell -Command` e `gh api .../dispatches` escapam; contornar é violação da regra, não
-acidente); edição em worktree fora da pasta do projeto não é barrada (o Dev trabalha lá);
-`.claude/hooks/` e `.claude/settings.json` não são protegidos; e uma sessão iniciada com `--agent`
-conta como subagente e fica sem trava. A trava vale também para o Claude Code do John neste repo:
-para `git push` ou `gh workflow run` direto, ele desliga ou delega.
+erro no script, JSON inválido ou campo ausente permite. `supabase db query` só passa se o SQL
+for **só leitura**: começa com `select` (ou `with ... select`), sem palavra de escrita (`insert`, `update`, `delete`, `drop`, `alter`, `create`, `grant`, `set`, `into` etc.), sem `;` encadeando outra instrução, sem `$`, e **só com funções de uma lista de leitura** (`count`, `sum`, `max`, `coalesce`, `date_trunc`, `jsonb_*`...); qualquer outra chamada (RPC, `purge_*`, `pg_*`, `net.*`) é negada. `-f arquivo` vale só se o conteúdo passar no mesmo teste (barras normais no caminho); `-o`, `--db-url` e `--linked` são aceitos. Em dúvida, nega, inclusive com aspa aberta ou escapada, e escrita no banco ou RPC vai para o agente do perfil. Também são negados `supabase db push|db reset`, mesmo com flags globais antes do subcomando, e `git` com opções antes do `push`. O filtro enxerga `bash -c "..."`, `powershell -Command "..."`, `eval`, `env`, `time` e `xargs` por fora.
+Limites aceitos: é um filtro por texto, não um parser; escapam `gh api .../dispatches`, scripts próprios,
+`$(...)` montado em variável, ofuscação por aspas (`git "push"`), `sudo` e shells exóticos (contornar é violação da regra, não acidente); edição em
+worktree fora da pasta do projeto não é barrada (o Dev trabalha lá); `.claude/hooks/` e
+`.claude/settings.json` não são protegidos; uma sessão iniciada com `--agent` conta como subagente e
+fica sem trava. A trava vale também para o Claude Code do John neste repo: para `git push` ou
+`gh workflow run` direto, ele desliga ou delega.
 **Desligar:** `NB_PM_GUARD=off` no ambiente do Claude Code, ou apagar o bloco `hooks` de
 `.claude/settings.json`.
 
