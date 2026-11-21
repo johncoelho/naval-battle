@@ -63,7 +63,12 @@ final class StoreShotsUITests: XCTestCase {
         }
         // o 2º "Entrar" é o botão de enviar (o 1º é a aba)
         dismissKeyboard()
-        try tap("Entrar(?! com| ou)|Sign in(?! with| or)", timeout: 10, index: 1)
+        // só botões com rótulo exatamente "Entrar": a aba é a de cima, o envio é o de baixo
+        let enviar = app.buttons.matching(NSPredicate(format: "label ==[c] 'Entrar' OR label ==[c] 'Sign in'"))
+        let envios = (0..<enviar.count).map { enviar.element(boundBy: $0) }.sorted { $0.frame.minY < $1.frame.minY }
+        print("botoes Entrar: \(envios.map { Int($0.frame.minY) })")
+        guard let envio = envios.last, envios.count >= 2 else { return fail("Botão de envio do login não achado") }
+        envio.tap()
         guard element("Loja|Store|Tienda").waitForExistence(timeout: 45) else {
             return fail("Loja não apareceu depois do login (conta sem acesso ou login recusado)")
         }
