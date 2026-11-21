@@ -184,7 +184,7 @@ final class StoreShotsUITests: XCTestCase {
     private func relatar(_ nome: String, _ pt: CGPoint, _ esperado: String) {
         for e in app.descendants(matching: .any).allElementsBoundByIndex where e.frame.contains(pt) && e.frame.height < 140 {
             let v = (e.value as? String) ?? ""
-            print("CAMPO \(nome): tipo=\(e.elementType.rawValue) rotulo.count=\(e.label.count) valor.count=\(v.count) igual=\(v == esperado) foco=\(e.hasKeyboardFocus)")
+            print("CAMPO \(nome): tipo=\(e.elementType.rawValue) rotulo.count=\(e.label.count) valor.count=\(v.count) igual=\(v == esperado) foco=\(e.hasFocus)")
         }
     }
 
