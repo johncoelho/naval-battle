@@ -71,8 +71,8 @@ final class StoreShotsUITests: XCTestCase {
         guard element("Bolsa|Pouch").waitForExistence(timeout: 25) else {
             return fail("Aba Dobrões sem pacotes (vitrine fechada para a conta ou StoreKit sem produtos)")
         }
-        XCTAssertTrue(element("R\$ ?4,90").exists, "preço de R$ 4,90 ausente: StoreKit Configuration não entrou")
-        XCTAssertTrue(element("R\$ ?49,90").exists, "preço de R$ 49,90 ausente")
+        XCTAssertTrue(element("R\\$.?4,90").exists, "preço de R$ 4,90 ausente: StoreKit Configuration não entrou")
+        XCTAssertTrue(element("R\\$.?49,90").exists, "preço de R$ 49,90 ausente")
         XCTAssertFalse(element("beta|android|google play").exists, "texto proibido na vitrine")
         shot("iap-00-vitrine")
 
@@ -96,7 +96,7 @@ final class StoreShotsUITests: XCTestCase {
 
     /// Primeiro elemento cujo rótulo casa (regex, sem diferenciar maiúsculas), preferindo botão e texto.
     private func element(_ regex: String) -> XCUIElement {
-        let p = NSPredicate(format: "label MATCHES[c] %@", ".*(\(regex)).*")
+        let p = NSPredicate(format: "label MATCHES[c] %@", "(?s).*(\(regex)).*")
         for q in [app.buttons, app.staticTexts, app.otherElements] as [XCUIElementQuery] {
             let e = q.matching(p).firstMatch
             if e.exists { return e }
@@ -105,7 +105,7 @@ final class StoreShotsUITests: XCTestCase {
     }
 
     private func tap(_ regex: String, timeout: TimeInterval, index: Int = 0) throws {
-        let p = NSPredicate(format: "label MATCHES[c] %@", ".*(\(regex)).*")
+        let p = NSPredicate(format: "label MATCHES[c] %@", "(?s).*(\(regex)).*")
         let todos = app.descendants(matching: .any).matching(p)
         let fim = Date().addingTimeInterval(timeout)
         while Date() < fim {
