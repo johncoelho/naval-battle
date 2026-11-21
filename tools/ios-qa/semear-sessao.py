@@ -13,13 +13,19 @@ url = re.search(r'const val URL = "([^"]+)"', src).group(1)
 anon_block = re.search(r'const val ANON_KEY = ((?:"[^"]*"\s*\+?\s*)+)', src).group(1)
 anon = "".join(re.findall(r'"([^"]*)"', anon_block))
 
-body = json.dumps({"email": os.environ["IOS_REVIEW_EMAIL"], "password": os.environ["IOS_REVIEW_PASSWORD"]}).encode()
+email = os.environ["IOS_REVIEW_EMAIL"].strip()
+password = os.environ["IOS_REVIEW_PASSWORD"].strip()
+raw_e, raw_p = os.environ["IOS_REVIEW_EMAIL"], os.environ["IOS_REVIEW_PASSWORD"]
+# só tamanhos e sinais, nunca os valores
+print(f"email: {len(raw_e)} caracteres ({len(raw_e) - len(email)} de espaço/quebra nas pontas), tem @: {'@' in email}")
+print(f"senha: {len(raw_p)} caracteres ({len(raw_p) - len(password)} de espaço/quebra nas pontas)")
+body = json.dumps({"email": email, "password": password}).encode()
 req = urllib.request.Request(url + "/auth/v1/token?grant_type=password", data=body,
                              headers={"apikey": anon, "Content-Type": "application/json"})
 try:
     r = json.load(urllib.request.urlopen(req, timeout=30))
 except urllib.error.HTTPError as e:
-    print("login pela API recusado: HTTP", e.code)
+    print("login pela API recusado: HTTP", e.code, "(credenciais do secret não conferem com a conta)" if e.code == 400 else "")
     sys.exit(1)
 
 for v in (r["access_token"], r["refresh_token"], r["user"]["id"]):
