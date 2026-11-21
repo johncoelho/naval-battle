@@ -132,7 +132,7 @@ jobs:
             > "$RUNNER_TEMP/shots.log" 2>&1
           RC=$?
           # o log vai só para o log do Actions (segredos mascarados), filtrado dos valores; nunca vira artefato
-          python3 -c "import os,sys; t=sys.stdin.read(); [t:=t.replace(os.environ[k],'***') for k in ('IOS_REVIEW_EMAIL','IOS_REVIEW_PASSWORD') if os.environ.get(k)]; print('\n'.join(t.splitlines()[-150:]))" < "$RUNNER_TEMP/shots.log"
+          python3 -c "import os,sys; t=sys.stdin.read(); [t:=t.replace(os.environ[k],'***') for k in ('IOS_REVIEW_EMAIL','IOS_REVIEW_PASSWORD') if os.environ.get(k)]; print('\n'.join(t.splitlines()[-500:]))" < "$RUNNER_TEMP/shots.log"
           rm -f "$RUNNER_TEMP/shots.log"
           echo "xcodebuild saiu com $RC"
           # o xcresult registra o texto digitado: nada dele sai do runner

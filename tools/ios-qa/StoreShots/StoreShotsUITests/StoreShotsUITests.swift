@@ -43,6 +43,7 @@ final class StoreShotsUITests: XCTestCase {
         try tap("Entrar ou criar conta|Sign in or create account|Entrar o crear cuenta", timeout: 60)
         try tap("Entrar(?! com| ou)|Sign in(?! with| or)", timeout: 15, index: 0)
         sleep(2)
+        shot("diagnostico-login-antes-de-digitar") // nada digitado ainda: sem credenciais na tela
         // diagnóstico ANTES de digitar (sem valores): tipo, rótulo e posição dos elementos da tela de login
         let todos = app.descendants(matching: .any).allElementsBoundByIndex.prefix(80)
         for e in todos { print("LOGIN-UI tipo=\(e.elementType.rawValue) rotulo=\(e.label) y=\(Int(e.frame.minY)) h=\(Int(e.frame.height))") }
@@ -169,7 +170,8 @@ final class StoreShotsUITests: XCTestCase {
     private func fail(_ msg: String) {
         if loggedIn { shot("diagnostico-falha") }
         else {
-            let textos = app.staticTexts.allElementsBoundByIndex.prefix(30).map { $0.label }
+            let textos = app.staticTexts.allElementsBoundByIndex.prefix(120).map { $0.label }
+            print("botoes na tela: (app.buttons.allElementsBoundByIndex.prefix(60).map { $0.label })")
             print("textos na tela (sem campos): \(textos)")
         }
         XCTFail(msg)
