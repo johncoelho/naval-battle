@@ -41,6 +41,14 @@ final class StoreShotsUITests: XCTestCase {
         app.launch()
 
         // --- login (nenhuma captura de tela nesta fase) ---
+        if env["SESSAO_SEMEADA"] == "1" {
+            // o workflow gravou a sessão no armazenamento do app (os campos do Compose não aceitam texto por XCUITest)
+            guard element("Loja|Store|Tienda").waitForExistence(timeout: 90) else {
+                let textos = app.staticTexts.allElementsBoundByIndex.prefix(60).map { $0.label }
+                print("sessao semeada, sem Loja; textos: \(textos)")
+                return fail("Loja não apareceu com a sessão semeada")
+            }
+        } else {
         try tap("Entrar ou criar conta|Sign in or create account|Entrar o crear cuenta", timeout: 60)
         try tap("Entrar(?! com| ou)|Sign in(?! with| or)", timeout: 15, index: 0)
         sleep(2)
@@ -96,6 +104,7 @@ final class StoreShotsUITests: XCTestCase {
         }
         guard element("Loja|Store|Tienda").waitForExistence(timeout: 40) else {
             return fail("Loja não apareceu depois do login (conta sem acesso ou login recusado)")
+        }
         }
         loggedIn = true
 

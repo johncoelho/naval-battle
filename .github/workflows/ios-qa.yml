@@ -109,12 +109,33 @@ jobs:
           unzip -q maestro.zip -d "$HOME"
           echo "$HOME/maestro/bin" >> "$GITHUB_PATH"
 
+      - name: Semeia a sessão da conta de revisão no app (login pela API, sem digitar)
+        if: env.MODO == 'capturas-iap'
+        env:
+          IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
+          IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
+        run: |
+          # o contêiner de dados só é certo depois de o app abrir uma vez
+          APPDATA=$(xcrun simctl get_app_container "$UDID" "$APP_ID" data 2>/dev/null || true)
+          if [ -z "$APPDATA" ]; then
+            xcrun simctl launch "$UDID" "$APP_ID" >/dev/null; sleep 8
+            xcrun simctl terminate "$UDID" "$APP_ID" || true
+            APPDATA=$(xcrun simctl get_app_container "$UDID" "$APP_ID" data)
+          fi
+          # desliga o simulador para o cfprefsd não segurar a versão antiga do plist
+          xcrun simctl shutdown "$UDID"
+          python3 tools/ios-qa/semear-sessao.py "$APPDATA/Library/Preferences/$APP_ID.plist"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularMode active --cellularBars 4 --wifiBars 3
+
       - name: Capturas de revisão da compra (XCUITest com StoreKit Configuration, só PNGs)
         if: env.MODO == 'capturas-iap'
         env:
           # TEST_RUNNER_* chega ao processo do teste sem o prefixo; nunca vai para arquivo
           TEST_RUNNER_IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
           TEST_RUNNER_IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
+          TEST_RUNNER_SESSAO_SEMEADA: "1"
           IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
           IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
         run: |
