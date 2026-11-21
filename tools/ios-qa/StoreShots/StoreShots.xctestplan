@@ -1,0 +1,33 @@
+{
+  "configurations" : [
+    {
+      "id" : "B2000000-0000-0000-0000-000000000001",
+      "name" : "pt-BR com StoreKit",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "language" : "pt-BR",
+    "region" : "BR",
+    "storeKitConfigurationFileReference" : {
+      "identifier" : "..\/NavalIAP.storekit",
+      "target" : {
+        "containerPath" : "container:StoreShots.xcodeproj",
+        "identifier" : "A10000000000000000000008",
+        "name" : "StoreShotsUITests"
+      }
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:StoreShots.xcodeproj",
+        "identifier" : "A10000000000000000000008",
+        "name" : "StoreShotsUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

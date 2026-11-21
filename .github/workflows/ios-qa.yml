@@ -4,9 +4,10 @@ name: QA iOS no simulador
 # do Maestro (tools/ios-qa/). Não publica nada, não usa segredo e não toca o app da loja: o Maestro é
 # ferramenta só deste job. Manual por enquanto; depois de estável pode seguir o "Build iOS framework".
 # Modo capturas-iap (#65): o mesmo app no simulador (iPhone 16 Plus, 1290x2796), logado com a conta de
-# demonstração dos secrets IOS_REVIEW_EMAIL / IOS_REVIEW_PASSWORD, e uma sessão do StoreKitTest com os 4
-# produtos (compilada só nesse modo: flag QA_STOREKIT). Sobe só os PNGs; nada de vídeo, junit nem debug
-# (guardariam a senha digitada). Ver tools/ios-qa/captura-iap.yaml.
+# demonstração dos secrets IOS_REVIEW_EMAIL / IOS_REVIEW_PASSWORD, por um alvo de teste de UI (XCUITest,
+# tools/ios-qa/StoreShots) que roda com um plano de teste do Xcode carregando tools/ios-qa/NavalIAP.storekit
+# como StoreKit Configuration (os 4 produtos). O app não muda. Sobe só os PNGs; o xcresult (que guardaria a
+# senha digitada) fica no RUNNER_TEMP e é apagado.
 # Ver docs/BUILD.md (seção iOS), docs/QA_TEST_PLAN.md (IOS-SIM-*) e tools/ios-qa/README.md.
 
 on:
@@ -67,15 +68,6 @@ jobs:
 
       - name: Compila o app para o simulador (arm64) sem assinatura
         run: |
-          EXTRA=()
-          if [ "$MODO" = "capturas-iap" ]; then
-            # StoreKitTest só neste modo; o framework vive na plataforma do Xcode, então entra no rpath absoluto
-            EXTRA=(
-              'SWIFT_ACTIVE_COMPILATION_CONDITIONS=DEBUG QA_STOREKIT'
-              'FRAMEWORK_SEARCH_PATHS=$(inherited) $(PLATFORM_DIR)/Developer/Library/Frameworks'
-              'OTHER_LDFLAGS=$(inherited) -framework StoreKitTest -Wl,-rpath,$(PLATFORM_DIR)/Developer/Library/Frameworks'
-            )
-          fi
           xcodebuild \
             -project iosApp/iosApp.xcodeproj \
             -target iosApp \
@@ -87,7 +79,6 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGN_ENTITLEMENTS="" \
             BUILD_DIR="$(pwd)/build/Products" \
-            "${EXTRA[@]}" \
             build
           ls build/Products/Debug-iphonesimulator/
 
@@ -103,34 +94,6 @@ jobs:
             LANG_SIM=pt-BR; LOC_SIM=pt_BR
             # relógio e barras padrão da Apple (9:41, bateria cheia): é o mesmo simulador, só sem o ruído do runner
             xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularMode active --cellularBars 4 --wifiBars 3
-            cp tools/ios-qa/NavalIAP.storekit build/Products/Debug-iphonesimulator/iosApp.app/NavalIAP.storekit
-            # dyld abortava na abertura (SIGABRT em /usr/lib/dyld): o rpath absoluto da plataforma do Xcode nao vale dentro do simulador.
-            # Embute o StoreKitTest.framework (so neste modo, so no .app de QA) e aponta o rpath para ele.
-            APP=build/Products/Debug-iphonesimulator/iosApp.app
-            BIN="$APP/iosApp"
-            echo "--- onde esta o StoreKitTest.framework no runner ---"
-            FW_SRC=""
-            # o framework real vive no RuntimeRoot do runtime iOS usado pelo simulador (os do tvOS/watchOS/xrOS nao servem)
-            RTNAME=$(echo "$RUNTIME" | sed -e 's/.*SimRuntime\.//' -e 's/-/ /' -e 's/-/./g')
-            echo "runtime do simulador: $RTNAME"
-            for d in /Library/Developer/CoreSimulator/Volumes/iOS_*/Library/Developer/CoreSimulator/Profiles/Runtimes/"$RTNAME".simruntime/Contents/Resources/RuntimeRoot/Developer/Library/Frameworks/StoreKitTest.framework; do
-              [ -d "$d" ] || continue
-              echo "achado: $d"; ls "$d" | head -5
-              if [ -z "$FW_SRC" ] && [ -f "$d/StoreKitTest" ] && file "$d/StoreKitTest" | grep -q "Mach-O"; then FW_SRC="$d"; fi
-            done
-            echo "escolhido: ${FW_SRC:-nenhum}"
-            echo "--- otool -L do binario (StoreKitTest) ---"; otool -L "$BIN" | grep -i -E "storekit" || true
-            if [ -n "$FW_SRC" ]; then
-              echo "--- otool -L do framework escolhido ---"; otool -L "$FW_SRC/StoreKitTest" | head -20 || true
-              mkdir -p "$APP/Frameworks"
-              cp -R "$FW_SRC" "$APP/Frameworks/"
-              # o binario aponta para /Developer/Library/Frameworks/..., caminho que so existe sob o Xcode: reaponta para o embutido
-              install_name_tool -change /Developer/Library/Frameworks/StoreKitTest.framework/StoreKitTest @rpath/StoreKitTest.framework/StoreKitTest "$BIN" || true
-              install_name_tool -add_rpath @executable_path/Frameworks "$BIN" || true
-              codesign --force --sign - "$APP/Frameworks/StoreKitTest.framework" || true
-              otool -L "$BIN" | grep -i -E "storekit" || true
-            fi
-            codesign --force --sign - "$APP" || true
           else
             LANG_SIM=en; LOC_SIM=en_US
           fi
@@ -140,49 +103,56 @@ jobs:
           xcrun simctl listapps "$UDID" | grep -i "$APP_ID" || true
 
       - name: Instala o Maestro (versão fixa)
+        if: env.MODO != 'capturas-iap'
         run: |
           curl -fsSL -o maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
           unzip -q maestro.zip -d "$HOME"
           echo "$HOME/maestro/bin" >> "$GITHUB_PATH"
 
-      - name: Capturas de revisão da compra (só PNGs)
+      - name: Capturas de revisão da compra (XCUITest com StoreKit Configuration, só PNGs)
         if: env.MODO == 'capturas-iap'
         env:
+          # TEST_RUNNER_* chega ao processo do teste sem o prefixo; nunca vai para arquivo
+          TEST_RUNNER_IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
+          TEST_RUNNER_IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
           IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
           IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
         run: |
           mkdir -p qa-out/capturas
-          ROTEIRO="$(pwd)/tools/ios-qa/captura-iap.yaml"
-          cd qa-out/capturas
+          export TEST_RUNNER_SHOTS_DIR="$(pwd)/qa-out/capturas"
+          RES="$RUNNER_TEMP/shots.xcresult"
           set +e
-          RC=1
-          for tentativa in 1 2; do
-            # sem --debug-output, --format nem vídeo: nada que guarde o texto digitado
-            maestro --device "$UDID" test -e EMAIL="$IOS_REVIEW_EMAIL" -e PASSWORD="$IOS_REVIEW_PASSWORD" "$ROTEIRO" > "$RUNNER_TEMP/maestro-iap.log" 2>&1
-            RC=$?
-            # o log do Maestro vai so para o log do Actions (segredos mascarados) e filtrado dos valores; nunca vira artefato
-            sed -e "s|$IOS_REVIEW_EMAIL|***|g" -e "s|$IOS_REVIEW_PASSWORD|***|g" "$RUNNER_TEMP/maestro-iap.log" | tail -n 60
-            rm -f "$RUNNER_TEMP/maestro-iap.log"
-            [ $RC -eq 0 ] && break
-            echo "tentativa $tentativa falhou (o driver do Maestro costuma falhar no 1o arranque)"
-          done
-          echo "maestro saiu com $RC"
+          xcodebuild test \
+            -project tools/ios-qa/StoreShots/StoreShots.xcodeproj \
+            -scheme StoreShots \
+            -testPlan StoreShots \
+            -destination "platform=iOS Simulator,id=$UDID" \
+            -resultBundlePath "$RES" \
+            CODE_SIGNING_ALLOWED=NO \
+            > "$RUNNER_TEMP/shots.log" 2>&1
+          RC=$?
+          # o log vai só para o log do Actions (segredos mascarados), filtrado dos valores; nunca vira artefato
+          sed -e "s|$IOS_REVIEW_EMAIL|***|g" -e "s|$IOS_REVIEW_PASSWORD|***|g" "$RUNNER_TEMP/shots.log" | tail -n 150
+          rm -f "$RUNNER_TEMP/shots.log"
+          echo "xcodebuild saiu com $RC"
+          # o xcresult registra o texto digitado: nada dele sai do runner
+          rm -rf "$RES"
           if [ $RC -ne 0 ]; then
-            # diagnóstico de abertura (sem login, sem segredo): console do app por 15 s e relatórios de queda
-            echo "--- launch --console ---"
-            (xcrun simctl launch --console-pty --terminate-running-process "$UDID" "$APP_ID" 2>&1 | head -n 80) & LP=$!
-            sleep 15; kill $LP 2>/dev/null
             echo "--- relatórios de queda ---"
             ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5
-            for r in $(ls -t ~/Library/Logs/DiagnosticReports/*.ips 2>/dev/null | head -2); do grep -m1 -E '"exception"|"termination"' "$r" | cut -c1-600; grep -m3 -E 'termination|Library not loaded|Reason|"asi"' "$r" | cut -c1-900; done
           fi
-          # diagnóstico sem segredo: a tela final do simulador, mesmo se o roteiro caiu antes
-          xcrun simctl io "$UDID" screenshot "diagnostico-estado-final.png" || true
-          # mantém só PNGs; confere o tamanho em pixels (Apple: 1290x2796 para 6,7 pol)
+          # mantém só PNGs, tira duplicatas por conteúdo e confere o tamanho (Apple: 1290x2796 para 6,7 pol)
+          cd qa-out/capturas
           find . -type f ! -name '*.png' -delete
+          seen=""
           for f in *.png; do
+            [ -f "$f" ] || continue
+            h=$(md5 -q "$f")
+            case " $seen " in *" $h "*) echo "duplicada de outra captura, removida: $f"; rm -f "$f"; continue;; esac
+            seen="$seen $h"
             echo "$f $(sips -g pixelWidth -g pixelHeight "$f" | awk '/pixel/{printf $2 " "}')"
           done
+          ls -l
           exit $RC
 
       - name: Roteiro de toques (grava vídeo)
