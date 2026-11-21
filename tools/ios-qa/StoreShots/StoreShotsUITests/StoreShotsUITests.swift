@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 /// Capturas de revisão da compra (Apple, #65): roda só no CI (`ios-qa.yml`, modo `capturas-iap`), com o plano
 /// `StoreShots.xctestplan` que carrega `tools/ios-qa/NavalIAP.storekit` como StoreKit Configuration. O app é o
@@ -21,8 +22,8 @@ final class StoreShotsUITests: XCTestCase {
 
     func testCapturasDosQuatroProdutos() throws {
         let env = ProcessInfo.processInfo.environment
-        guard let email = env["IOS_REVIEW_EMAIL"], !email.isEmpty,
-              let password = env["IOS_REVIEW_PASSWORD"], !password.isEmpty else {
+        guard let email = env["IOS_REVIEW_EMAIL"]?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty,
+              let password = env["IOS_REVIEW_PASSWORD"]?.trimmingCharacters(in: .whitespacesAndNewlines), !password.isEmpty else {
             XCTFail("Faltam IOS_REVIEW_EMAIL e IOS_REVIEW_PASSWORD no ambiente do teste")
             return
         }
@@ -47,6 +48,7 @@ final class StoreShotsUITests: XCTestCase {
         // diagnóstico ANTES de digitar (sem valores): tipo, rótulo e posição dos elementos da tela de login
         let todos = app.descendants(matching: .any).allElementsBoundByIndex.prefix(80)
         for e in todos { print("LOGIN-UI tipo=\(e.elementType.rawValue) rotulo=\(e.label) y=\(Int(e.frame.minY)) h=\(Int(e.frame.height))") }
+        var pe = CGPoint.zero, ps = CGPoint.zero
         let campos = app.textFields
         if campos.firstMatch.exists {
             campos.firstMatch.tap()
@@ -55,21 +57,44 @@ final class StoreShotsUITests: XCTestCase {
             if senha.exists { senha.tap() } else { campos.element(boundBy: 1).tap() }
             app.typeText(password)
         } else {
-            // Compose não expõe o campo como TextField: toca logo abaixo do rótulo e digita no foco
-            try tapBelow("E-?mail|Correo")
-            app.typeText(email)
-            try tapBelow("Senha|Password|Contraseña")
-            app.typeText(password)
+            // Compose não expõe o campo como TextField: toca logo abaixo do rótulo e digita no foco, caractere a caractere
+            pe = try pontoAbaixo("E-?mail|Correo")
+            ps = try pontoAbaixo("Senha|Password|Contraseña")
+            preencher(pe, email, nome: "email")
+            preencher(ps, password, nome: "senha")
+            relatar("email", pe, email)
+            relatar("senha", ps, password)
         }
-        // o 2º "Entrar" é o botão de enviar (o 1º é a aba)
-        dismissKeyboard()
         // só botões com rótulo exatamente "Entrar": a aba é a de cima, o envio é o de baixo
         let enviar = app.buttons.matching(NSPredicate(format: "label ==[c] 'Entrar' OR label ==[c] 'Sign in'"))
         let envios = (0..<enviar.count).map { enviar.element(boundBy: $0) }.sorted { $0.frame.minY < $1.frame.minY }
-        print("botoes Entrar: \(envios.map { Int($0.frame.minY) })")
+        print("botoes Entrar: \(envios.map { Int($0.frame.minY) }) teclados=\(app.keyboards.count)")
         guard let envio = envios.last, envios.count >= 2 else { return fail("Botão de envio do login não achado") }
         envio.tap()
-        guard element("Loja|Store|Tienda").waitForExistence(timeout: 45) else {
+        // espera até 8 s por mensagem do app ou pela Loja
+        _ = element("Loja|Store|Tienda").waitForExistence(timeout: 8)
+        if !element("Loja|Store|Tienda").exists {
+            let msgs = app.staticTexts.allElementsBoundByIndex.map { $0.label }.filter { !$0.isEmpty }
+            print("APOS-ENVIO textos: \(msgs)")
+            // limpa os dois campos (apagando) para a tela de diagnóstico não mostrar e-mail nem senha
+            for p in [pe, ps] where p != .zero { limpar(p) }
+            shot("diagnostico-apos-envio-campos-limpos")
+            // 2ª tentativa: cola pela área de transferência (long press + Colar), caso a digitação não chegue ao campo
+            if pe != .zero {
+                print("TENTATIVA 2: colar")
+                colar(pe, email); colar(ps, password)
+                relatar("email2", pe, email)
+                let envios2 = (0..<enviar.count).map { enviar.element(boundBy: $0) }.sorted { $0.frame.minY < $1.frame.minY }
+                if let e2 = envios2.last { e2.tap() }
+                _ = element("Loja|Store|Tienda").waitForExistence(timeout: 10)
+                if !element("Loja|Store|Tienda").exists {
+                    print("APOS-ENVIO 2 textos: \(app.staticTexts.allElementsBoundByIndex.map { $0.label }.filter { !$0.isEmpty })")
+                    for p in [pe, ps] { limpar(p) }
+                    shot("diagnostico-apos-envio2-campos-limpos")
+                }
+            }
+        }
+        guard element("Loja|Store|Tienda").waitForExistence(timeout: 40) else {
             return fail("Loja não apareceu depois do login (conta sem acesso ou login recusado)")
         }
         loggedIn = true
@@ -133,6 +158,58 @@ final class StoreShotsUITests: XCTestCase {
         }
         fail("Não achei na tela: \(regex) (índice \(index))")
         throw NSError(domain: "StoreShots", code: 1)
+    }
+
+    private func pontoAbaixo(_ regex: String) throws -> CGPoint {
+        let p = NSPredicate(format: "label MATCHES[c] %@", "(?s).*(\(regex)).*")
+        let r = app.descendants(matching: .any).matching(p).firstMatch
+        guard r.waitForExistence(timeout: 10) else { fail("Rótulo não achado: \(regex)"); throw NSError(domain: "StoreShots", code: 3) }
+        let f = r.frame
+        return CGPoint(x: app.frame.midX, y: f.maxY + f.height * 1.6)
+    }
+
+    private func tocar(_ pt: CGPoint) {
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: pt.x, dy: pt.y)).tap()
+    }
+
+    /// Toca o campo, confere o teclado e digita caractere a caractere (o Compose perdia o texto digitado de uma vez).
+    private func preencher(_ pt: CGPoint, _ texto: String, nome: String) {
+        tocar(pt)
+        sleep(1)
+        print("CAMPO \(nome): teclados=\(app.keyboards.count) tamanho do texto=\(texto.count)")
+        for c in texto { app.typeText(String(c)); usleep(80_000) }
+    }
+
+    /// Estado do campo sem mostrar valores: tipo, tamanho do valor e se é igual ao esperado.
+    private func relatar(_ nome: String, _ pt: CGPoint, _ esperado: String) {
+        for e in app.descendants(matching: .any).allElementsBoundByIndex where e.frame.contains(pt) && e.frame.height < 140 {
+            let v = (e.value as? String) ?? ""
+            print("CAMPO \(nome): tipo=\(e.elementType.rawValue) rotulo.count=\(e.label.count) valor.count=\(v.count) igual=\(v == esperado) foco=\(e.hasKeyboardFocus)")
+        }
+    }
+
+    private func colar(_ pt: CGPoint, _ texto: String) {
+        UIPasteboard.general.string = texto
+        tocar(pt)
+        sleep(1)
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: pt.x, dy: pt.y)).press(forDuration: 1.5)
+        sleep(1)
+        let sb = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for host in [app!, sb] {
+            for r in ["Paste", "Colar", "Pegar"] {
+                if host.menuItems[r].exists { host.menuItems[r].tap(); break }
+                if host.buttons[r].exists { host.buttons[r].tap(); break }
+            }
+            sleep(1)
+            for r in ["Allow Paste", "Permitir colar", "Permitir Colar", "Permitir pegar"] where host.buttons[r].exists { host.buttons[r].tap() }
+        }
+        sleep(1)
+    }
+
+    private func limpar(_ pt: CGPoint) {
+        tocar(pt)
+        sleep(1)
+        app.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 80))
     }
 
     /// Toca logo abaixo do rótulo (campos do Compose não aparecem como TextField).
