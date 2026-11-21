@@ -109,8 +109,12 @@ final class StoreShotsUITests: XCTestCase {
         loggedIn = true
 
         // --- Loja > Dobrões ---
-        let pular = element("Pular|Skip|Saltar")
-        if pular.waitForExistence(timeout: 5) { pular.tap() }
+        // conta nova: avisos cobrem a tela (presente de boas-vindas, temporada, oferta guiada). Fecha em laço.
+        let avisos = "VALEU|Thanks|Gracias|AGORA NÃO|Not now|Ahora no|Pular|Skip|Saltar"
+        for _ in 0..<4 {
+            let b = element(avisos)
+            if b.waitForExistence(timeout: 4) { b.tap(); sleep(2) } else { break }
+        }
         try tap("Loja|Store|Tienda", timeout: 15)
         try tap("Dobrões|Doubloons|Doblones", timeout: 20)
         guard element("Bolsa|Pouch").waitForExistence(timeout: 25) else {
