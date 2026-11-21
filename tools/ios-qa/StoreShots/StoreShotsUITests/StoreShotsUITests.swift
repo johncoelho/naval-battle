@@ -20,6 +20,14 @@ final class StoreShotsUITests: XCTestCase {
         try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
     }
 
+    /// Qualquer falha depois do login (inclusive as do XCTest, como "not hittable") deixa PNG e árvore na saída.
+    override func tearDownWithError() throws {
+        if loggedIn, let r = testRun, r.totalFailureCount > 0 {
+            shot("diagnostico-falha")
+            print("ARVORE: \(String(app.debugDescription.prefix(8000)))")
+        }
+    }
+
     func testCapturasDosQuatroProdutos() throws {
         let env = ProcessInfo.processInfo.environment
         guard let email = env["IOS_REVIEW_EMAIL"]?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty,
@@ -109,11 +117,20 @@ final class StoreShotsUITests: XCTestCase {
         loggedIn = true
 
         // --- Loja > Dobrões ---
-        // conta nova: avisos cobrem a tela (presente de boas-vindas, temporada, oferta guiada). Fecha em laço.
+        // conta nova: avisos cobrem a tela (alerta de notificações do sistema, presente de boas-vindas, temporada,
+        // oferta guiada), em ordem que varia. Trata os três tipos em laço.
         let avisos = "VALEU|Thanks|Gracias|AGORA NÃO|Not now|Ahora no|Pular|Skip|Saltar"
-        for _ in 0..<4 {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for _ in 0..<8 {
+            var feito = false
+            for r in ["Allow", "Permitir"] where springboard.buttons[r].exists {
+                springboard.buttons[r].tap(); feito = true; sleep(2); break
+            }
+            if feito { continue }
             let b = element(avisos)
-            if b.waitForExistence(timeout: 4) { b.tap(); sleep(2) } else { break }
+            guard b.waitForExistence(timeout: 4) else { break }
+            tocarSeguro(b)
+            sleep(2)
         }
         try tap("Loja|Store|Tienda", timeout: 15)
         try tap("Dobrões|Doubloons|Doblones", timeout: 20)
@@ -171,6 +188,16 @@ final class StoreShotsUITests: XCTestCase {
         }
         fail("Não achei na tela: \(regex) (índice \(index))")
         throw NSError(domain: "StoreShots", code: 1)
+    }
+
+    /// Espera o elemento ficar tocável (até 10 s); se não ficar, toca no centro do quadro por coordenada.
+    private func tocarSeguro(_ e: XCUIElement) {
+        let fim = Date().addingTimeInterval(10)
+        while Date() < fim && !e.isHittable { usleep(500_000) }
+        if e.isHittable { e.tap(); return }
+        let f = e.frame
+        print("elemento não tocável; toque por coordenada em (\(Int(f.midX)), \(Int(f.midY)))")
+        app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: f.midX, dy: f.midY)).tap()
     }
 
     private func pontoAbaixo(_ regex: String) throws -> CGPoint {
