@@ -84,6 +84,14 @@ $hits
 EOF_HITS
 fi
 
+# #118: a Apple lê o binário do iPhone inteiro (2.3.10). Quem mexe no código do app precisa da lista de termos proibidos,
+# da allowlist, da varredura do binário e do teste que lê a lista (BinaryTextTest). Falha fechada se algum sumir.
+if echo "$changed" | grep -E '^(composeApp/src/(commonMain|iosMain|androidMain|androidUnitTest|commonTest)/|tools/ios-)' >/dev/null; then
+  for f in tools/ios-forbidden-terms.txt tools/ios-binary-allowlist.txt tools/ios-binary-scan.py            composeApp/src/androidUnitTest/kotlin/br/com/navalbattle/i18n/BinaryTextTest.kt; do
+    git cat-file -e "$HEAD_REF:$f" 2>/dev/null || err "$f não existe: sem ele o binário do iPhone fica sem a trava de Google Play/Android/beta (Apple 2.3.10, #118)."
+  done
+fi
+
 # API só da JVM no commonMain (toSortedSet, String.format, java.*...) só quebrava no CI do iOS, depois
 # do push (0.34.9). A compilação de metadados do commonMain não precisa de Mac e pega esse erro.
 # Roda só quando o push mexe em código comum ou na configuração do build. Compila a árvore de trabalho

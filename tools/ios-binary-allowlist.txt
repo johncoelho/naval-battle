@@ -1,0 +1,7 @@
+# Linhas do binario iOS aprovadas pelo Tech Lead apesar de casarem tools/ios-forbidden-terms.txt (#118).
+# Um regex por linha (sem diferenciar maiusculas), conferido contra a LINHA inteira que o `strings` achou.
+# Cada regra leva um comentario com o motivo e quem aprovou. Comecou vazia: a 1a rodada da varredura e so relatorio
+# (tools/ios-binary-scan.py sem --enforce) e o Tech Lead fecha esta lista a partir dela, antes de ligar o reprovar.
+#
+# Exemplo (nao ativo): ruido do runtime Kotlin/Native que cita a plataforma "Android" em mensagem de erro da stdlib
+# ^kotlin\.android\.
