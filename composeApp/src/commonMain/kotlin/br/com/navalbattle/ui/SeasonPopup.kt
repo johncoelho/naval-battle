@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
@@ -136,6 +137,9 @@ fun SeasonPopup(state: AppState) {
 fun SeasonResultPopup(state: AppState) {
     val result = state.seasonResult ?: return
     val scope = rememberCoroutineScope()
+    // iPhone: o atalho para a loja de Dobrões só aparece com a venda aberta (iosSaleOpen), e o app só a consultava ao abrir a Loja; sem isto,
+    // quem toca o Passe antes de abrir a Loja via só "OK" (#118, achado do ensaio). Consulta ao mostrar "Dobrões insuficientes".
+    LaunchedEffect(result) { if (result is SeasonResult.NoFunds) state.refreshIosSaleGate() }
     val theme = SeasonTheme.ofKey(state.seasonPass?.seasonKey ?: state.currentSeason?.seasonKey ?: "")
     // iPhone: a aba Dobrões só existe com a venda aberta (#65); sem ela o atalho levaria a outra aba, então some
     val storeShortcut = result is SeasonResult.NoFunds &&

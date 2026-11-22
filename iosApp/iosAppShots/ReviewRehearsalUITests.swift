@@ -30,6 +30,9 @@ final class ReviewRehearsalUITests: XCTestCase {
     private var diag: [String] = []
     /// Passo em que o teste está (vai para o relatório se ele abortar) e passos obrigatórios que já tiveram resultado.
     private var obrigatoriosFaltando: [String] = []
+    private var atalhoPendente = false
+    private let insuficienteRx = "Dobrões insuficientes|Not enough doubloons|Doblones insuficientes"
+    private let atalhoRx = "Abrir a loja de Dobr|Open the Doubloon store|Abrir la tienda de Doblones"
     private var ultimoPasso = "abertura"
     private var concluidos = Set<String>()
     private var obrigatorios: Set<String> {
@@ -170,12 +173,20 @@ final class ReviewRehearsalUITests: XCTestCase {
             }
             concluidos.insert("passe-popup")
             registrar("Passe sem saldo", "popup \"Dobrões insuficientes\"", "visível sem rolar", 0, shotSeguro("passe-sem-saldo"))
-            if tocarEEsperar("Passe: atalho para a loja de Dobrões", "Abrir a loja de Dobr|Open the Doubloon store|Abrir la tienda de Doblones",
-                             esperado: "Bolsa|Pouch", estrito: true) != nil {
-                concluidos.insert("passe-atalho")
-                registrar("Passe sem saldo", "atalho \"Abrir a loja de Dobrões\"", "abriu a aba Dobrões", 0, shotSeguro("passe-atalho-loja"))
-                varrer("Loja > Dobrões (pelo atalho do Passe)")
-                voltarAoMenu()
+            if achar(atalhoRx, espera: 10) != nil {
+                if tocarEEsperar("Passe: atalho para a loja de Dobrões", atalhoRx, esperado: "Bolsa|Pouch", estrito: true) != nil {
+                    concluidos.insert("passe-atalho")
+                    registrar("Passe sem saldo", "atalho \"Abrir a loja de Dobrões\"", "abriu a aba Dobrões", 0, shotSeguro("passe-atalho-loja"))
+                    varrer("Loja > Dobrões (pelo atalho do Passe)")
+                    voltarAoMenu()
+                }
+            } else {
+                // o atalho só aparece com a venda do iPhone aberta (iosSaleOpen); o app agora a consulta ao abrir este popup, mas se ele
+                // não veio, o ensaio prova a vitrine primeiro e REPETE o toque (2ª tentativa): ausente com a vitrine presente é defeito do app
+                atalhoPendente = true
+                diag.append("atalho da loja ausente na 1ª tentativa; será exigido de novo depois de a vitrine ser provada")
+                shotSeguro("passe-sem-atalho-1a-tentativa")
+                registrarArvore("Passe: atalho ausente na 1ª tentativa")
             }
         } else {
             guard existe(sucesso) else {
@@ -188,6 +199,45 @@ final class ReviewRehearsalUITests: XCTestCase {
             _ = tocarEEsperar("Passe: OK da confirmação", "^OK$", esperado: nil, estrito: false)
         }
         fecharAvisosDoPasse()
+        fecharPasseForcado()
+    }
+
+    /// 2ª tentativa do atalho, depois de a vitrine ter sido provada: reabre o Passe, toca o CTA e exige o atalho.
+    private func retentarAtalho() {
+        ultimoPasso = "Passe (2ª tentativa do atalho)"
+        fecharPasseForcado()
+        voltarAoMenu()
+        guard abrirPasse() else { falhar("Passe: atalho", "o Passe não reabriu para a 2ª tentativa"); return }
+        guard tocarEEsperar("Passe: CTA (2ª tentativa)", ctaPasse, esperado: insuficienteRx, estrito: true, id: "season_join_cta") != nil else {
+            fecharPasseForcado()
+            return
+        }
+        guard achar(atalhoRx, espera: 10) != nil else {
+            shotSeguro("passe-sem-atalho-2a-tentativa")
+            falhar("Passe: atalho", "atalho ausente MESMO com a vitrine presente: defeito do app, abrir bug na #118 com a foto")
+            fecharAvisosDoPasse()
+            fecharPasseForcado()
+            return
+        }
+        if tocarEEsperar("Passe: atalho para a loja de Dobrões (2ª tentativa)", atalhoRx, esperado: "Bolsa|Pouch", estrito: true) != nil {
+            concluidos.insert("passe-atalho")
+            registrar("Passe sem saldo", "atalho \"Abrir a loja de Dobrões\" (2ª tentativa)", "abriu a aba Dobrões", 0, shotSeguro("passe-atalho-loja"))
+            voltarAoMenu()
+        }
+        fecharPasseForcado()
+    }
+
+    /// Garante que o Passe está fechado: botões (OK, Fechar, Agora não) e, se o botão estiver abaixo da dobra do cartão rolável,
+    /// um toque no véu (fora do cartão, na borda esquerda da janela), que fecha o popup.
+    private func fecharPasseForcado() {
+        for _ in 0..<3 {
+            if !(ctaPorId() || existe("NOVA TEMPORADA|NEW SEASON|NUEVA TEMPORADA|Passe de Temporada|Season Pass|Pase de Temporada")) { return }
+            fecharAvisosDoPasse()
+            if !(ctaPorId() || existe("NOVA TEMPORADA|NEW SEASON|NUEVA TEMPORADA")) { return }
+            app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5)).tap()
+            diag.append("Passe fechado por toque no véu (botão Agora não abaixo da dobra)")
+            sleep(1)
+        }
     }
 
     private func abrirPasse() -> Bool {
@@ -236,6 +286,7 @@ final class ReviewRehearsalUITests: XCTestCase {
     // MARK: - Dobrões: os 4 pacotes
 
     private func irParaDobroes() -> Bool {
+        fecharPasseForcado()
         limparAvisos()
         voltarAoMenu()
         shotSeguro("10-antes-da-loja")
@@ -265,6 +316,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             if r != nil { concluidos.insert("pacote-\(nome)"); fecharFolhaDeCompra() }
             sleep(2)
         }
+        if atalhoPendente && ["Bolsa", "Baú", "Cofre", "Tesouro do Almirante"].allSatisfy({ concluidos.contains("pacote-\($0)") }) { retentarAtalho() }
     }
 
     // MARK: - Milhas

@@ -27,6 +27,9 @@ App 0.47.1 (versionCode 134). Refs #118. A Apple recusou a 0.47.0 (iPad Air 11" 
 - **Trava ligada:** `IOS_SCAN_ENFORCE=true` (variável de repositório, conferida em 22/11; ligada com OK do John no chat em 22/11): a varredura `tools/ios-binary-scan.py` reprova o build do `ios.yml` e do `ios-release.yml` com achado fora da allowlist. Texto em `docs/ESTEIRA.md` e na skill `apple-review`.
 - Pendência P3, issue à parte (o Suporte abre): o `LaunchNoticePopup` (só Android) tem o mesmo véu sem consumo de toque que a "Primeira missão" tinha.
 
+### Atalho "Abrir a loja de Dobrões" no iPhone (achado do ensaio)
+- O popup "Dobrões insuficientes" só mostrava o atalho para a loja com `iosSaleOpen`, e o app só consultava a flag de venda ao abrir a Loja: quem tocava o Passe antes de abrir a Loja via só "OK". `SeasonResultPopup` agora chama `refreshIosSaleGate()` ao mostrar o popup (só iPhone, só quando a venda existe). Android sem mudança.
+
 ### Nomes que vão para o binário (varredura do 1º relatório, #118)
 - `AndroidOnlyKey`/`androidOnlyText` viraram `PlatformGatedKey`/`platformGatedText`; `Aviso.SoAndroid` virou `Aviso.PlatformGated`; `DOUBLOON_BETA_CHARGE`, `BADGE_BETA_TESTER` e `_DESC` viraram `DOUBLOON_CHARGE_NOTICE`, `BADGE_TESTER` e `BADGE_TESTER_DESC`; `DobroesStoreStatus.beta` virou `tester` (a chave JSON `"beta"` do servidor não muda); `premioState` perdeu o valor padrão `platform = "android"`; `AdRules` testa `"sdk built for"` (era `"android sdk built for"`). A varredura passou a aprovar só o trecho casado pela allowlist, deduplicar e listar tudo.
 
