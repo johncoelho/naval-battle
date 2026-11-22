@@ -19,3 +19,34 @@
 ^beta$
 # coluna "android_live" do servidor (app_releases); aprovado pelo Tech Lead, #118
 ^android_live$
+
+# --- 2a rodada (veredito do Tech Lead sobre o 2o relatorio; formas estreitas) ---
+# Skia (motor grafico do Compose): simbolos e nomes exatos; aprovado pelo Tech Lead, #118
+\b_*ZN?\w*SkAndroidCodec\w*
+\bandroid_utils_clipAsRgn\b
+\bandroidFramework_\w+
+\bandroid_only_reset\b
+\bgetAndroidPixels\b
+# Compose/lifecycle: caminhos de fonte (a extensao .kt e obrigatoria) e uma funcao de selecao de texto; aprovado pelo Tech Lead, #118
+\b[\w./-]+\.nonAndroid\.kt\b
+\b[\w./-]+\.android\.kt\b
+\bcalculateSelectionMagnifierCenterAndroid\b
+# kotlinx.coroutines (nenhum codigo nosso usa estes nomes: git grep em composeApp/src e iosApp vazio); aprovado pelo Tech Lead, #118
+\bkotlinx[./]coroutines[./]flow[./]\S*
+\bonSubscription\b
+\bSubscribedFlowCollector\b
+\bSubscriptionCountStateFlow\b
+\bsubscriptionCount\b
+# simbolo C++ mangled do unique_ptr do runtime Kotlin/Native; aprovado pelo Tech Lead, #118
+\b_*ZN?\S*unique_ptr\S*6kotlin\S*12Subscription\S*
+
+# --- linhas puras com origem identificada pela vizinhanca no binario (3o relatorio, offset e 5 strings antes e depois) ---
+# "android": tabela de tipos de teclado do ICU (vizinhas wubi, 101key, 102key, 600dpi, 768dpi / azerty, chromeos, colemak, dvorak),
+# em iosApp @0x241113d e ComposeApp @0x3b1cf5; nenhuma string nossa por perto; git grep nos nossos fontes: nada. Aprovado pelo Tech Lead, #118
+^android$
+# "beta-metsehaf": tabela de tipos/transliteracoes do ICU (vizinhas breakall, keepall, phrase, aethiopi, alaloc / buckwalt, es3842, ewts, gost, gurage),
+# iosApp @0x241121e e ComposeApp @0x3b1dd6; nao e nosso. Aprovado pelo Tech Lead, #118
+\bbeta-metsehaf\b
+# "subscription": kotlinx.coroutines broadcast (vizinhas main, immediate, scope, _channel, processed / $this$broadcast, subs, $this$launch,
+# onUndeliveredElement, firstSegment), ComposeApp @0x25fce4; nao e nosso. Aprovado pelo Tech Lead, #118
+^subscription$
