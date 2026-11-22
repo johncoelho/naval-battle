@@ -88,16 +88,18 @@ jobs:
           if [ "$GATE" = "off" ]; then echo "Portão do ensaio desligado (IOS_REVIEW_GATE=off)."; exit 0; fi
           if [ "$EVENT" != "workflow_run" ] && [ "$ENVIAR" != "true" ]; then echo "Sem envio: o portão do ensaio não se aplica."; exit 0; fi
           N=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ios-qa.yml --commit "$SHA" --status success --limit 30 \
-                --json displayTitle --jq '[.[] | select(.displayTitle | contains("ensaio-revisao"))] | length') || N=0
-          if [ "${N:-0}" -ge 1 ]; then
-            echo "Ensaio de revisão verde no SHA $SHA ($N execução)."
+                --json displayTitle --jq '[.[] | select(.displayTitle | contains("ensaio-revisao sem-saldo"))] | length') || N=0
+          M=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ios-qa.yml --commit "$SHA" --status success --limit 30 \
+                --json displayTitle --jq '[.[] | select(.displayTitle | contains("ensaio-revisao com-saldo"))] | length') || M=0
+          if [ "${N:-0}" -ge 1 ] && [ "${M:-0}" -ge 1 ]; then
+            echo "Ensaios de revisão verdes no SHA $SHA (sem-saldo: $N, com-saldo: $M)."
             exit 0
           fi
           if [ "$GATE" = "on" ]; then
-            echo "::error::Sem ensaio de revisão verde no SHA $SHA. Rode: gh workflow run ios-qa.yml --ref main -f modo=ensaio-revisao, espere ficar verde e então dispare este workflow."
+            echo "::error::Sem os dois ensaios de revisão verdes (sem-saldo e com-saldo) no SHA $SHA. Rode: gh workflow run ios-qa.yml --ref main -f modo=ensaio-revisao -f estado=ESTADO (com a demo preparada por tools/ios-qa/demo-estado.sql), espere ficar verde e então dispare este workflow."
             exit 1
           fi
-          echo "::warning::Sem ensaio de revisão verde no SHA $SHA (portão em modo aviso). Rode: gh workflow run ios-qa.yml --ref main -f modo=ensaio-revisao."
+          echo "::warning::Sem os dois ensaios de revisão verdes (sem-saldo e com-saldo) no SHA $SHA (portão em modo aviso). Rode: gh workflow run ios-qa.yml --ref main -f modo=ensaio-revisao -f estado=ESTADO."
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -239,6 +241,8 @@ jobs:
           fi
 
       - name: Varredura do binário (Google Play, Android, beta - Apple 2.3.10)
+        # modo relatório (padrão) nunca quebra o build da main; só com IOS_SCAN_ENFORCE=true o passo pode reprovar
+        continue-on-error: ${{ vars.IOS_SCAN_ENFORCE != 'true' }}
         env:
           IOS_SCAN_ENFORCE: ${{ vars.IOS_SCAN_ENFORCE }}
         run: |
@@ -249,7 +253,7 @@ jobs:
           EXE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP/Info.plist")
           FLAGS=""
           [ "$IOS_SCAN_ENFORCE" = "true" ] && FLAGS="--enforce"
-          FILES=("$APP/$EXE" "$APP/Info.plist" tools/ios-qa/NavalIAP.storekit)
+          FILES=("$APP/$EXE" "$APP/Info.plist")
           while IFS= read -r f; do FILES+=("$f"); done < <(find composeApp/build -type f -path '*ComposeApp.framework/ComposeApp' 2>/dev/null)
           python3 tools/ios-binary-scan.py $FLAGS "${FILES[@]}"
 

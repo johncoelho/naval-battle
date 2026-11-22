@@ -17,7 +17,7 @@ name: QA iOS no simulador
 # Ver docs/BUILD.md (seção iOS), docs/QA_TEST_PLAN.md (IOS-SIM-*) e tools/ios-qa/README.md.
 
 # o título da execução leva o modo: o portão do ios-release.yml procura "ensaio-revisao" no mesmo SHA
-run-name: "QA iOS (${{ inputs.modo || 'qa' }})"
+run-name: "QA iOS (${{ inputs.modo || 'qa' }}${{ inputs.modo == 'ensaio-revisao' && format(' {0}', inputs.estado) || '' }})"
 
 on:
   workflow_dispatch:
@@ -27,6 +27,11 @@ on:
         type: choice
         options: [qa, capturas-iap, ensaio-revisao]
         default: qa
+      estado:
+        description: "só no ensaio-revisao: estado da conta demo, preparado antes por tools/ios-qa/demo-estado.sql (sem-saldo = o Passe mostra Dobrões insuficientes e o atalho para a loja; com-saldo = o Passe entra e mostra Tudo certo). Rode os dois no mesmo SHA"
+        type: choice
+        options: [sem-saldo, com-saldo]
+        default: sem-saldo
 
 permissions:
   contents: read
@@ -195,6 +200,7 @@ jobs:
         env:
           # a sessão já foi semeada acima: o teste não recebe e-mail nem senha e nunca digita nada
           TEST_RUNNER_ENSAIO: "1"
+          TEST_RUNNER_ESTADO: ${{ inputs.estado }}
         run: |
           mkdir -p qa-out/ensaio
           export TEST_RUNNER_SHOTS_DIR="$(pwd)/qa-out/ensaio"

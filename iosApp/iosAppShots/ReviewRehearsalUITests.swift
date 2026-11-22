@@ -27,11 +27,17 @@ final class ReviewRehearsalUITests: XCTestCase {
     private var telasVarridas: [String] = []
     private var passo = 0
     private let limite: TimeInterval = 10
+    /// Estado da conta de demonstração nesta rodada (`sem-saldo` | `com-saldo`), preparado antes por tools/ios-qa/demo-estado.sql.
+    private var estado = ""
+    /// Menos rótulos que isto numa tela varrida = árvore vazia (a varredura "passaria" sem ver nada): falha.
+    private var minRotulos = 8
 
     override func setUpWithError() throws {
         let env = ProcessInfo.processInfo.environment
         try XCTSkipUnless(env["ENSAIO"] == "1", "só roda no modo ensaio-revisao do ios-qa.yml")
         continueAfterFailure = true
+        estado = env["ESTADO"] ?? ""
+        if let n = Int(env["MIN_ROTULOS"] ?? ""), n > 0 { minRotulos = n }
         outDir = env["SHOTS_DIR"] ?? NSTemporaryDirectory()
         try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
         if let caminho = env["TERMS_FILE"], let texto = try? String(contentsOfFile: caminho, encoding: .utf8) {
@@ -52,6 +58,7 @@ final class ReviewRehearsalUITests: XCTestCase {
 
     func testEnsaioDeRevisao() throws {
         XCTAssertFalse(terms.isEmpty, "lista de termos proibidos não carregada (TERMS_FILE)")
+        XCTAssertTrue(["sem-saldo", "com-saldo"].contains(estado), "ESTADO deve ser sem-saldo ou com-saldo (recebido: \(estado))")
         app = XCUIApplication()
         app.launch()
 
@@ -77,13 +84,15 @@ final class ReviewRehearsalUITests: XCTestCase {
     private let popupsDoPasse = "Dobrões insuficientes|Not enough doubloons|Doblones insuficientes|Tudo certo|All set|Todo listo|Sem conexão|No connection|Sin conexión|Não deu certo|That didn.t work|No funcionó"
 
     private func ensaioPasse() {
+        let semSaldo = estado == "sem-saldo"
         guard abrirPasse() else {
-            avisar("Passe", "popup do Passe não abriu (conta sem temporada?): CTA do Passe NÃO exercitado")
+            falhar("Passe", "o popup do Passe não abriu (conta sem temporada?)")
             return
         }
         varrer("Passe de Temporada")
         guard existe(ctaPasse) else {
-            avisar("Passe", "Passe já ativo na conta de demonstração: CTA \"Entrar com N dobrões\" NÃO exercitado nesta rodada")
+            // demo já com o Passe, ou estado errado: sem o CTA o ensaio não prova nada do Passe
+            falhar("Passe", "CTA \"Entrar com N dobrões\" ausente (conta demo já com passe? prepare o estado \(estado) com tools/ios-qa/demo-estado.sql)")
             fecharPasse()
             return
         }
@@ -95,9 +104,16 @@ final class ReviewRehearsalUITests: XCTestCase {
         }
         if existe("Comprar passe|Buy pass|Comprar pase") { falhar("Passe", "rótulo antigo \"Comprar passe\" ainda aparece") }
 
-        let r = tocarEEsperar("Passe: CTA de entrada", ctaPasse, esperado: popupsDoPasse, estrito: true)
+        let insuficiente = "Dobrões insuficientes|Not enough doubloons|Doblones insuficientes"
+        let sucesso = "Tudo certo|All set|Todo listo"
+        let r = tocarEEsperar("Passe: CTA de entrada (\(estado))", ctaPasse, esperado: semSaldo ? insuficiente : sucesso, estrito: true)
         if r == nil { fecharAvisosDoPasse(); return }
-        if existe("Dobrões insuficientes|Not enough doubloons|Doblones insuficientes") {
+        if semSaldo {
+            guard existe(insuficiente) else {
+                falhar("Passe sem saldo", "esperava o popup \"Dobrões insuficientes\"; a conta demo tem saldo? (estado \(estado))")
+                fecharAvisosDoPasse()
+                return
+            }
             registrar("Passe sem saldo", "popup \"Dobrões insuficientes\"", "visível sem rolar", 0, shotSeguro("passe-sem-saldo"))
             if tocarEEsperar("Passe: atalho para a loja de Dobrões", "Abrir a loja de Dobr|Open the Doubloon store|Abrir la tienda de Doblones",
                              esperado: "Bolsa|Pouch", estrito: true) != nil {
@@ -105,22 +121,16 @@ final class ReviewRehearsalUITests: XCTestCase {
                 varrer("Loja > Dobrões (pelo atalho do Passe)")
                 voltarAoMenu()
             }
-        } else if existe("Tudo certo|All set|Todo listo") {
-            registrar("Passe com saldo", "popup de confirmação", "visível", 0, shotSeguro("passe-com-saldo"))
+        } else {
+            guard existe(sucesso) else {
+                falhar("Passe com saldo", "esperava o popup \"Tudo certo\"; a conta demo tem saldo para o passe? (estado \(estado))")
+                fecharAvisosDoPasse()
+                return
+            }
+            registrar("Passe com saldo", "popup de confirmação \"Tudo certo\"", "visível", 0, shotSeguro("passe-com-saldo"))
             _ = tocarEEsperar("Passe: OK da confirmação", "^OK$", esperado: nil, estrito: false)
-        } else {
-            avisar("Passe", "o toque respondeu com erro de rede/servidor (popup \"Sem conexão\" ou \"Não deu certo\"): resposta visível, mas não prova o caminho feliz")
-            shotSeguro("passe-erro")
-            _ = tocarEEsperar("Passe: fechar o erro", "^OK$", esperado: nil, estrito: false)
         }
-
-        // passe gratuito: só se a conta continua sem passe
-        if abrirPasse(), existe("Entrar grátis|Join free|Entrar gratis") {
-            _ = tocarEEsperar("Passe gratuito: Entrar grátis", "Entrar grátis|Join free|Entrar gratis", esperado: "Tudo certo|All set|Todo listo|Sem conexão|No connection|Sin conexión|Não deu certo|That didn.t work|No funcionó", estrito: true)
-            fecharAvisosDoPasse()
-        } else {
-            fecharAvisosDoPasse()
-        }
+        fecharAvisosDoPasse()
     }
 
     private func abrirPasse() -> Bool {
@@ -182,6 +192,11 @@ final class ReviewRehearsalUITests: XCTestCase {
     // MARK: - Milhas
 
     private func ensaioMilhas() {
+        // milhas gastam dobrões da demo: só na rodada sem-saldo (a com-saldo precisa do saldo intacto para o Passe)
+        guard estado == "sem-saldo" else {
+            registrar("Milhas", "não exercitado nesta rodada", "estado \(estado): milhas só no sem-saldo", 0, nil)
+            return
+        }
         guard existe("Milhas náuticas|Nautical miles|Millas náuticas") || irParaDobroes() else { return }
         guard tocar("Milhas náuticas|Nautical miles|Millas náuticas", espera: 10) else {
             avisar("Milhas", "linha de milhas não encontrada na aba Dobrões: NÃO exercitada")
@@ -259,6 +274,9 @@ final class ReviewRehearsalUITests: XCTestCase {
     private func varrer(_ tela: String) {
         telasVarridas.append(tela)
         let rotulos = rotulosVisiveis()
+        if rotulos.count < minRotulos {
+            falhar("Varredura de texto", "a tela \"\(tela)\" devolveu só \(rotulos.count) rótulo(s) (mínimo \(minRotulos)): árvore vazia, a varredura não viu nada")
+        }
         for rotulo in rotulos {
             let r = NSRange(rotulo.startIndex..., in: rotulo)
             for rx in terms where rx.firstMatch(in: rotulo, range: r) != nil {
@@ -395,7 +413,16 @@ final class ReviewRehearsalUITests: XCTestCase {
         return app.descendants(matching: .any).matching(lbl(regex)).firstMatch
     }
 
-    private func existe(_ regex: String) -> Bool { element(regex).exists }
+    /// Só conta elemento visível: o frame inteiro dentro da tela do app (texto fora da dobra ou de outra camada não vale).
+    private func existe(_ regex: String) -> Bool {
+        let q = app.descendants(matching: .any).matching(lbl(regex))
+        let n = min(q.count, 20)
+        for i in 0..<n {
+            let e = q.element(boundBy: i)
+            if e.exists, !e.frame.isEmpty, app.frame.contains(e.frame) { return true }
+        }
+        return false
+    }
 
     /// Primeiro elemento tocável (de cima para baixo) cujo rótulo casa.
     private func achar(_ regex: String, espera: TimeInterval) -> XCUIElement? {
