@@ -19,6 +19,15 @@ sealed interface SeasonResult {
     data class Joined(val tier: String) : SeasonResult
 }
 
+/** Altura (dp) do banner da temporada em tela baixa; em tela alta ele segue 16:9. */
+const val SEASON_BANNER_COMPACT_DP = 120
+
+/** Abaixo desta altura disponível (dp) o banner do Passe encolhe, para o CTA aparecer sem rolar (#118). */
+private const val SEASON_COMPACT_BELOW_DP = 700f
+
+/** Tela baixa: janela de iPhone 375x667 (inclusive dentro do iPad) e iPhones pequenos. */
+fun seasonBannerCompact(availableHeightDp: Float): Boolean = availableHeightDp < SEASON_COMPACT_BELOW_DP
+
 /**
  * Preço em dobrões do toque: o passe gratuito é de graça; o de Temporada custa a adesão ou, para quem já está
  * no gratuito, o upgrade.

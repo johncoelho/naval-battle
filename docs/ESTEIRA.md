@@ -37,7 +37,7 @@ dono por perfil; pedido que cai no perfil de outro agente é **redirecionado**, 
 | PO | SPEC e ordem da Fila | critérios de aceite, quebrar pedido grande, reordenar a Fila, atestar a história |
 | Tech Lead | desenho e revisão | desenho antes de implementar, APROVADO/CORRIGIR **antes de todo push**, proposta de camada nova |
 | Dev | código e publicação | código, testes, versão, notas da Play, CHANGELOG e docs, worktree, push depois do APROVADO |
-| Release | CI, lançamento e lojas | acompanhar CI e ler o log, `app_releases`, `ios_live`, flags de lançamento autorizadas pelo John, promoção Play (20/50/100%), App Store Connect e TestFlight, anexar capturas e responder à Apple, **ensaio de revisão verde antes de todo envio** (skill `apple-review`) |
+| Release | CI, lançamento e lojas | acompanhar CI e ler o log, `app_releases`, `ios_live`, flags de lançamento autorizadas pelo John, promoção Play (20/50/100%), App Store Connect e TestFlight, anexar capturas e responder à Apple, **ensaio de revisão verde antes de todo envio** (skill `apple-review`) e trava do binário ligada (ver abaixo) |
 | QA | ensaios e testes | rodar ensaios e workflows de teste (`gh workflow run`), emuladores QA01/QA02 e simulador iOS, liberar e remover conta de teste durante o run, baixar e conferir artefatos e PNGs |
 | Game Designer | dados de balanceamento | consultas de economia, ranqueada, duração e abandono, proposta como issue |
 
@@ -240,3 +240,7 @@ gh project item-add 1 --owner johncoelho --url https://github.com/johncoelho/nav
 # mover um cartão
 gh project item-edit --project-id PVT_kwHOACzJk84Bme7c --id <ID-DO-CARTAO> --field-id PVTSSF_lAHOACzJk84Bme7czhlHyVE --single-select-option-id <ID-DA-ETAPA>
 ```
+
+## Trava do binário do iPhone (#118)
+
+A trava da varredura do binário (`tools/ios-binary-scan.py`) está **ligada**: a variável de repositório `IOS_SCAN_ENFORCE=true` (valor conferido por `gh variable list` em 22/11, criada às 18:50 UTC; OK do John informado pelo coordenador) faz o passo reprovar o build do `ios.yml` e do `ios-release.yml` quando sobra achado fora de `tools/ios-binary-allowlist.txt`. Achado novo = ou o texto sai do `commonMain` (`platformGatedText`), ou o Tech Lead aprova uma regra estreita na allowlist com o motivo. Para desligar em emergência: `gh variable set IOS_SCAN_ENFORCE --body false` (só com OK do John).
