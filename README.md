@@ -71,6 +71,20 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   partida guiada** não paga de novo. Servidor: `supabase/welcome.sql`, `claim_welcome_gift()` (não conta no teto de
   500/dia online).
 
+### Gancho do fim da primeira partida (#135, 0.48.0)
+
+- Ao terminar a **1ª partida contra o adversário virtual** (carreira com 0 partidas concluídas e nenhuma exibição anterior
+  neste aparelho; abandono, partida contra humano e aparelho de teste não mostram), a tela de resultado ganha um cartão
+  com três ações: **Desafio de amanhã** (liga o lembrete diário que já existe e pede a permissão de notificação nessa hora,
+  só no Android, só com conta), **Revanche agora** (o mesmo caminho da revanche, sem tela extra) e **Chamar um amigo** (texto
+  e código de convite de sempre; sem conta, o link da loja). Vitória: Desafio, Revanche, Chamar amigo; derrota: Revanche,
+  Desafio, Chamar amigo. **Sem recompensa nova.** No iPhone só Revanche e, com conta, Chamar amigo (sem pedido novo de
+  permissão). Regras puras em `game/FirstMatchHook.kt`; marca `hook_first_bot_seen` no aparelho, gravada ao exibir.
+- **Pedido de avaliação** (#45, #136): só após vitória, nunca na 1ª partida (precisa de 2 partidas concluídas), a 1ª vez
+  com 2 vitórias seguidas ou 3 na carreira (ou ao subir de patente), depois só ao subir de patente; no máximo 1 a cada 30
+  dias e 3 por instalação; derrota zera a sequência. No iPhone vale a partir da App Store (`SKStoreReviewController`;
+  dormente no TestFlight).
+
 ### Convide um amigo
 
 - Amigos → **Convidar amigo** mostra o código da conta (6 caracteres, sem 0/O/1/I) e **Compartilhar**, que abre o seletor
@@ -589,7 +603,7 @@ docs/               BUILD, DESIGN_SYSTEM, QA_TEST_PLAN
 | `RewardedAds` | anúncio premiado opcional (#29) | AdMob + UMP, só depois do toque; recebe o `AdAudience` da faixa (`setAgeRestrictedTreatment` UNSPECIFIED/CHILD/TEEN, `npa`, classificação máxima; as marcas TFUA/TFCD são obsoletas e não se usam; a do UMP deriva do tratamento) (`supported = true`) | vazio (`supported = false`) |
 | `AgeSignals` | faixa etária da loja (#49): `read()` devolve `AgeBand`, nunca lança | Play Age Signals; `-PageFake` troca pelo `FakeAgeSignalsManager` no debug | sem leitura (`supported = false`, `UNKNOWN`) |
 | `GameServices` | conquistas e placar do Play Games (#48): `start`, `unlock`, `increment`, `setSteps`, `submitRanked`, `showAchievements`; nunca lança; a regra de quando desbloquear é `game/Achievements` | Play Games Services v2; só liga com `supported` (app_id e IDs preenchidos) | `supported = false`, sem chamada |
-| `StoreReview` | pedido de avaliação na Play (#45): `request(onDone)` nunca lança; a regra de quando pedir é `game/ReviewPrompt` | Play In-App Review; `-PreviewFake=true` troca pelo `FakeReviewManager` no debug | `supported = false`, sem pedido |
+| `StoreReview` | pedido de avaliação da loja (#45, #136): `request(onDone)` nunca lança; a regra de quando pedir é `game/ReviewPrompt` | Play In-App Review; `-PreviewFake=true` troca pelo `FakeReviewManager` no debug | `SKStoreReviewController.requestReviewInScene`; `supported` só com o recibo de produção (`receipt`), dormente no TestFlight e no simulador |
 | `isTestLabDevice` | aparelho dos testes automáticos do Google | `Settings.System` `firebase.test.lab` | sempre falso |
 | `DailyReminder` | lembrete diário local | `AlarmManager` | `UNUserNotificationCenter` |
 | `openStoreListing`, `shareStoreListing` | loja e compartilhar | Play Store | página `#ios` do site |
@@ -748,6 +762,16 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   leitura do que é seu). Números em `app_config` (`referral_*`). Ensaio: `supabase/tests/referral_ensaio.sql`. App:
   `game/Referral.kt`, `AppState.redeemReferral/loadReferralStatus` e o `referral_settle` em `flushOnlineAwards`.
 - Registro diário de atividade (`supabase/behavior.sql`, #97): `activity_days(user_id, day)`, uma linha por conta por dia, gravada pela `touch_presence` na primeira batida do dia (Brasília) por `log_activity_day`, em melhor esforço. **Tem `user_id`**: RLS sem política, `revoke all` de anon e authenticated, só service_role lê; retenção de 90 dias por `purge_activity()` na rodada diária; cascata em `auth.users`. Grava todas as contas; as views privadas `behavior_ativos_diarios`, `behavior_ativos_semanais` e `behavior_retorno_semanal` (D1/D7/D30 por coorte) excluem `is_test` e contas internas na leitura e anulam célula com menos de 5 contas (`activity_min_cell`). Início da série em `app_config.activity_series_start`. Mede "abriu o app com conta e com rede" (IA conta; convidado não). Partidas contra bot (#105): `bot_matches` (`supabase/bots.sql`) também **tem `user_id`**: RLS sem política, só RPC (definer) e service_role, retenção de 90 dias por `purge_bots()` na rodada diária, cascata em `auth.users`; grava as contas elegíveis (conta de teste não joga contra bot) e a leitura exclui teste e internas; persona só para medição (padrão `[[:alnum:]_ .-]`, até 40). Inventário em `site/privacy.html` (linha própria nas 3 línguas desde 15/11, com nome fictício da persona, força sorteada e, com o 0.45.0, tiros, acertos, afundados, turnos e o que foi pago; termos em `site/terms.html`, seção "Adversário virtual e pontos"). Consulta: `docs/medicao-retorno.sql`. Ensaio: `supabase/tests/behavior_ensaio.sql`.
+- Funil de uso (`supabase/funnel.sql`, #137, 0.48.0): **contadores diários sem identificador de pessoa**. `funnel_counters(day, event,
+  origin, platform, interno, n)` (sem `user_id`, hora, aparelho nem texto), vocabulário fechado em `funnel_catalog` (evento ou origem
+  fora da lista é descartado em silêncio; **evento novo = migração do catálogo + entrada em `data/Funnel.kt` + linha no `FunnelTest`**).
+  RPC `log_funnel_event(p_event, p_origin, p_platform)`, `security definer`, só `authenticated`; o servidor vê `auth.uid()` só no instante
+  da chamada (para marcar `interno` quando a conta é `is_test` ou interna) e **não o guarda**; erro engolido, instrumentação nunca derruba
+  o jogo. RLS sem política; só `service_role` lê e apaga; `purge_funnel()` (365 dias) na rodada diária. Views só `service_role`
+  (`security_invoker`, semana de Brasília, `interno = false`, célula menor que `activity_min_cell` (5) anulada, sem linha de total):
+  `funnel_eventos_semanais`, `funnel_convites_semanais` (lê `referrals`) e `funnel_salas_fim_semanais` (lê `online_matches`; retroativas, valem
+  para todas as versões). Convidado e aparelho offline: o app não chama. App: `data/Funnel.kt` (`FunnelAction`, `Funnel.log`), `CloudApi.logFunnelEvent`
+  e `AppState.logFunnel`. Ensaio: `supabase/tests/funnel_ensaio.sql`. Inventário na linha "Contadores de uso" de `site/privacy.html`.
 - Segurança entre jogadores (`supabase/safety.sql`, #58): `player_blocks`, `player_reports`, `name_terms`/`name_allow`, `name_resets`, `moderation_push_log` e
   `profiles.suspended_until`. Filtro de nome no servidor (`name_is_offensive`, que nunca dá erro: mantém o nome anterior, para o app antigo não perder a carreira);
   bloqueio nos dois sentidos dentro da política de leitura das salas, de `join_online_match`, `find_quick_offer`, `search_commander` e das políticas de convite e

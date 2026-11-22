@@ -9,6 +9,28 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.0] — 2026-11-22 · Funil medido, gancho do fim da 1ª partida, pedido de avaliação e quatro correções (#137, #135, #136, #159, #162, #163, #164)
+
+App 0.48.0 (versionCode 136). Refs #137, #135, #136, #159, #162, #163, #164 (plano de engajamento #132, aprovado pelo John em 22/11: "aprovo o lote 0.48.0 e a linha na política"). **Sem dependência nova.** **Banco: aplicar `supabase/funnel.sql` (migração `funnel_counters`) ANTES de publicar o app** (app novo contra banco sem a migração recebe 404 no RPC e ignora; nada quebra, mas o evento se perde). Sobe depois da 0.47.1 e da 0.47.2 (o `versionCode` se ajusta se a ordem mudar).
+
+### Adicionado
+- **Funil de uso, só contadores (#137):** `supabase/funnel.sql` com `funnel_catalog` (vocabulário fechado), `funnel_counters` (dia, evento, origem, plataforma, interno, n; **sem `user_id`, hora, aparelho nem texto**), RPC `log_funnel_event` (só `authenticated`; conta de teste ou interna cai em `interno` na gravação; erro engolido), `purge_funnel()` (365 dias, rodada diária) e três views só `service_role` (`funnel_eventos_semanais`, `funnel_convites_semanais`, `funnel_salas_fim_semanais`; semana de Brasília, célula menor que 5 anulada, sem linha de total; as duas últimas leem `referrals` e `online_matches` e valem para todas as versões, retroativas). Ensaio que desfaz tudo em `supabase/tests/funnel_ensaio.sql`. Cliente: `data/Funnel.kt` (`FunnelAction`, um par evento/origem por entrada, e `Funnel.log` que dispara sem esperar e engole erro), `CloudApi.logFunnelEvent` (Android e iPhone). Eventos: `store_viewed` (`AppState.openStore`, origem pelo chamador), `invite_shared` (cartão de convite, Ajustes e gancho), `first_match_end` (uma vez por aparelho), `hook_*`, `review_requested` e `push_opened` (Android, `kind` do toque).
+- **Gancho do fim da 1ª partida contra o adversário virtual (#135):** cartão na tela de resultado com **Desafio de amanhã** (liga o lembrete diário que já existe e pede a permissão na hora, no Android), **Revanche agora** (o mesmo caminho da revanche de sempre) e **Chamar um amigo** (texto e código de convite de sempre, ou o link da loja sem conta). Vitória: Desafio, Revanche, Chamar amigo; derrota: Revanche, Desafio, Chamar amigo. Só quando a carreira tinha 0 partidas concluídas e o aparelho não exibiu o gancho (marca gravada ao exibir); abandono, partida contra humano e aparelho de teste não mostram. **Sem recompensa nova** e sem a palavra "bot" nos textos (pt, en, es). Convidado sem conta perde o desafio e mantém revanche e convite da loja. **No iPhone só Revanche e, com conta, Chamar amigo; nenhum pedido novo de permissão de notificação.** Um popup por vez: o cartão entra em `otherPopupShowing`. `game/FirstMatchHook.kt` (regras puras) + `FirstMatchHookTest`.
+- Linha nova de **contadores de uso** em `site/privacy.html` (pt, en, es), com a data da política (22/11/2026) e o histórico de mudanças. Aprovada pelo John.
+
+### Alterado
+- **Pedido de avaliação (#136):** a 1ª vez vale com **2 vitórias seguidas OU 3 na carreira** (ou ao subir de patente), sempre com **2 ou mais partidas concluídas** (nunca na 1ª partida, que é do gancho); intervalo de 30 dias e teto de 3 mantidos; derrota zera a sequência (`review_win_streak` no Prefs, do aparelho). **iPhone:** `SKStoreReviewController` (sem biblioteca), **dormente até a App Store**: `StoreReview.supported` só é verdadeiro com o recibo de produção, então no TestFlight nada muda. Conta o pedido feito (`review_requested`).
+- `BoardLayout`: no celular em retrato, no modo Tático, o alvo cede altura (piso de 250 dp) para a faixa de habilidades ter os 340 dp (#159).
+
+### Corrigido
+- **#159** 4ª habilidade (fumaça) cortada na batalha Tática em celular 1080x2400: o `ABILITY_STRIP_MIN_DP` (340 dp, #66) só valia para tela grande; agora vale também no celular em retrato.
+- **#162** Selo ligado/desligado dos Ajustes quebrava em duas linhas em espanhol ("ACTIVA/DO"): o rótulo da esquerda ganhou `weight(1f)` e o selo `maxLines = 1`, `softWrap = false` (todas as linhas de `SettingsToggleRow`).
+- **#163** Aviso de nova versão: as novidades de `app_releases` nunca mais caem em português para quem joga em inglês ou espanhol (`UpdatePrompt.releaseNotes`: en e es trocam entre si; sem nenhuma, só a versão). **A parte de dado (`notes_en`/`notes_es` preenchidos em toda linha publicada) é do Release.**
+- **#164** O véu escuro de oito popups engolia o toque só no desenho: o toque fora do painel atravessava e acionava a tela de baixo. Novo `Modifier.consumeVeilTouch()` (`LaunchNoticePopup`, boas-vindas, feedback e recompensa de feedback, convite aceito, atualização, procurando adversário e adversário encontrado).
+
+### Testes
+- `FunnelTest`, `FirstMatchHookTest`, `ReviewPromptTest` ampliado, `BoardLayoutTest` (celular tático) e `UpdatePromptTest`. QA: FUN-01 a 06, HOOK-01 a 09, REV-01 a 05, SET-16, UPD-13 e 14, BIG-12. O ensaio SQL (`funnel_ensaio.sql`) é do Release rodar antes da migração.
+
 ## [0.47.2] — 2026-11-22 · O jogo abre no idioma do aparelho (#131)
 
 App 0.47.2 (versionCode 135). Refs #131 (a #130 foi fechada como duplicada). **Sem dependência nova, sem banco.** Só vale para quem **não tem idioma gravado** (instalação nova ou que nunca trocou o idioma); quem escolheu nos Ajustes ou veio da nuvem com `lang_code` mantém a escolha. Quem nunca trocou o idioma passa a ver o do aparelho; conta antiga na nuvem com `lang_code = "pt"` continua em português ao entrar em aparelho em inglês, porque a nuvem manda (não é regressão). Sobe depois da 0.47.1.

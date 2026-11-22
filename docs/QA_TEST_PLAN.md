@@ -150,6 +150,7 @@ Telas grandes: AVD Pixel Tablet e Pixel 9 Pro Fold (API 36), mais o QA01 em retr
 | R8-06 | P2 | Play Console → App bundle explorer → versão → Downloads | Arquivo de desofuscação (mapping) presente |
 | BIG-01 | P0 | Pixel Tablet em paisagem: percorrer Menu, Loja, Perfil, Ajustes, Estaleiro, Amigos, Placar, Feedback | Conteúdo centralizado em até 600 dp, fundo até a borda, rolagem onde faltar altura, nada cortado |
 | BIG-10 | P0 | Pixel Tablet em paisagem (1280x800 dp): Posicionamento | Tabuleiro menor que a largura, legenda, Aleatório/Voltar e **Confirmar visíveis sem rolar**; dá para confirmar e começar |
+| BIG-12 | P1 | Celular comum em retrato (1080x2400, ~411x914 dp) e estreito (360x640 dp): batalha **Tática** contra a IA em PT, EN e ES (#159) | As 4 habilidades inteiras, com nome, sem rolar a coluna; o tabuleiro alvo cede altura, mas nunca fica menor que ~250 dp |
 | BIG-11 | P1 | QA01 com `wm size 1640x1400` + `wm density 320` (820x700 dp) e com `wm size 1640x1800` (820x900 dp); batalha contra a IA no Clássico e no Tático. No fim: `wm size reset` e `wm density reset` (#66) | **820x900:** tabuleiro da frota com **200 dp ou mais** de lado (print + régua: 400 px a 320 dpi) e, no Tático, as 4 habilidades e a dica inteiras **sem rolar**. **820x700:** tabuleiro da frota com ~200 dp (**195 dp ou mais**); o alvo pode ficar no piso de 160 dp e as habilidades do Tático podem rolar. Se em 820x700 o alvo ficar menor que a frota, registrar no relatório para o Game Designer, **sem reprovar**. Regressão: BIG-02 (1280x800 lado a lado), celular comum (alvo igual à largura), guiada (`GuidedTip` embaixo, sem cobrir o alvo). Print de evidência |
 | BIG-02 | P0 | Pixel Tablet em paisagem: partida contra a IA (clássico e tático) | Alvo e frota própria lado a lado (no tático, habilidades à direita); tiro, vez da IA e fim de partida normais |
 | BIG-03 | P0 | Dobrável: desdobrar e dobrar no meio de uma partida | A Activity não recria; turno, tiros e relógio continuam; o layout troca entre lado a lado e coluna |
@@ -302,6 +303,8 @@ Em contas de QA o prêmio paga (conta real, não `is_test`). O ensaio WEK-01 vem
 | UPD-10 | P1 | App aberto em segundo plano; sai versão nova (`app_releases` e Play); voltar | Popup aparece sem reabrir o app (consulta no máximo a cada 5 min) |
 | UPD-11 | P1 | "Depois", sair e voltar | Não reaparece para a mesma versão; com outra versão maior reaparece |
 | UPD-12 | P2 | Voltar durante uma partida | Só aparece ao voltar ao menu |
+| UPD-13 | P1 | Jogo em **EN** e em **ES** com versão publicada mais nova; abrir a faixa do menu e o popup (#163) | Faixa, título, botões e novidades no idioma do jogo; sem tradução da nota, o popup mostra só a versão (nunca texto em português) |
+| UPD-14 | P1 | Popups com véu (aviso de lançamento, atualização, boas-vindas, feedback, convite aceito, procurando adversário): tocar fora do painel (#164) | Nada acontece por baixo; "Entendi"/botões e o voltar do sistema continuam fechando |
 Nota do QA (04/11): no Android o aviso só aparece se a **Play** confirmar versão mais nova (`checkUpdateAvailable`); linha falsa em `app_releases` não basta. Os emuladores precisam estar numa versão **anterior** à última publicada: com a 0.43.4 (117) na Play, QA01 e QA02 em 0.43.3 (116) servem. No iPhone o aviso vem só de `app_releases` com `ios_live`; `ios_live` só é marcado quando a App Store já oferece a versão, e o botão leva à página do jogo na App Store ("Atualizar na loja", dica "Atualize pela App Store."); ver [QA_IPHONE.md](QA_IPHONE.md), grupo H.
 
 ## 8b. Rede local (A × B)
@@ -419,6 +422,36 @@ servidor: `supabase/tests/bots_ensaio.sql` (bloco que desfaz).
 | GHOST-01 | P0 | Sala `waiting` rápida de 5 dias sem presença do anfitrião; QA02 toca em Partida rápida | A sala não aparece nem aceita QA02; ele cria a própria sala ou cai no balão; nenhum WO falso |
 | GHOST-02 | P0 | Sala `waiting` de código ou convite com mais de 2 dias | Fecha na limpeza; salas `7ebaf69c` e `bdabaaf2` aparecem como `abandoned` depois da migração |
 | GHOST-03 | P1 | WO legítimo: anfitrião some depois de aceitar | Vitória por ausência com o texto do WO e a milha devolvida |
+
+### 11c. Funil, gancho do fim da 1ª partida e pedido de avaliação (#137, #135, #136)
+
+Pré-requisito: migração `funnel_counters` aplicada **antes** do app 0.48.0 (Release). Contagem pelo SQL de leitura
+`select * from public.funnel_counters where day = public.brt_today() and not interno order by event, origin;` (service_role),
+**antes e depois** de cada ação. Conta QA e de teste cai em `interno = true`: conferir a linha com `interno` verdadeiro, e que a
+view `funnel_eventos_semanais` não a mostra. Evidência só em contagem; nunca e-mail ou id em issue.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| FUN-01 | P1 | Abrir a Loja pelo atalho do menu e pela moeda do topo | `store_viewed`/`menu` sobe 1 por abertura |
+| FUN-02 | P1 | Convite: Amigos → "Compartilhar"; Ajustes → "Compartilhar o jogo" | `invite_shared`/`referral_card` e `invite_shared`/`settings_store` sobem 1 no toque (mesmo cancelando a folha do sistema) |
+| FUN-03 | P1 | Tocar numa notificação de amigo online com o app fechado | `push_opened`/`friend_online` sobe 1 (Android) |
+| FUN-04 | P1 | Convidado e aparelho sem rede executam as ações acima | Nada quebra; nada é contado |
+| FUN-05 | P1 | Servidor sem a migração (ou evento fora da lista) | O app segue normal; nenhuma linha nova |
+| FUN-06 | P2 | Célula com menos de 5 na view | `n` nulo; `funnel_convites_semanais` e `funnel_salas_fim_semanais` respondem ao service_role e não a anon nem authenticated |
+| HOOK-01 | P1 | Conta nova, 1ª partida contra o adversário virtual, **vitória** | Cartão no resultado com "Vitória, comandante!"; ordem Desafio de amanhã, Revanche agora, Chamar um amigo; `first_match_end`/`bot_win` e `hook_shown`/`win` sobem 1 |
+| HOOK-02 | P1 | Idem, **derrota** | Título "Frota afundada. A guerra não acabou."; ordem Revanche agora, Desafio de amanhã, Chamar um amigo; `bot_loss` e `hook_shown`/`loss` |
+| HOOK-03 | P1 | Terminar uma 2ª partida (ou reabrir o app) | O cartão não volta; o botão de revanche é o de sempre |
+| HOOK-04 | P1 | Tocar "Revanche agora" | Mesmo fluxo da revanche (espera, "saiu da sala" ou nova partida), sem tela extra; `hook_rematch` sobe 1 |
+| HOOK-05 | P1 | Tocar "Desafio de amanhã" | O lembrete diário fica ligado (Ajustes), a permissão de notificação é pedida nessa hora (Android 13+) e o botão vira "Lembrete ligado…"; `hook_challenge` sobe 1; **sem recompensa nova** |
+| HOOK-06 | P1 | Tocar "Chamar um amigo" (com conta) | Folha do sistema com o texto e o código de convite; `hook_invite` e `invite_shared`/`hook` sobem 1 |
+| HOOK-07 | P2 | Sair no meio da 1ª partida contra o adversário virtual | Sem cartão; `first_match_end`/`bot_abandon` sobe 1 uma vez só por aparelho |
+| HOOK-08 | P2 | Textos em PT, EN e ES | Nenhum texto do cartão usa a palavra "bot" nem promete valor de recompensa |
+| HOOK-09 | P1 | iPhone: 1ª partida contra o adversário virtual | Cartão só com Revanche e, com conta, Chamar um amigo; **nenhum** pedido de permissão de notificação novo; `ios_live` não muda |
+| REV-01 | P1 | Android: vitória nº 1 e nº 2 seguidas (a 2ª com 2 partidas concluídas) e voltar ao menu sem popup | Pedido de avaliação sai (a Play pode não mostrar o diálogo); `review_requested`/`win` sobe 1 |
+| REV-02 | P1 | Vitória seguida de derrota e de vitória | Não pede (a derrota zera a sequência); com 3 vitórias na carreira pede |
+| REV-03 | P1 | 1ª partida da conta, mesmo vencendo | Nunca pede na 1ª partida |
+| REV-04 | P2 | Voltar ao menu com popup aberto (aviso, check-in) | Não pede; a vitória seguinte tenta de novo |
+| REV-05 | P2 | iPhone (TestFlight) | **Não testado** pela regra da esteira (o diálogo do sistema não registra no TestFlight; `supported` só vale com o recibo de produção) |
 
 ## 12. Economia, loja e personalização
 
@@ -663,6 +696,7 @@ publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
 | SET-12 | P1 | Aparelho em English, jogador que **já escolheu PT** nos Ajustes (ou atualizou o app com PT gravado); fechar e abrir | Segue em PT |
 | SET-13 | P1 | Aparelho em English, entrar em conta da nuvem com `lang_code = es` | O app mostra ES |
 | SET-14 | P1 | Abrir em EN pela detecção, trocar para PT nos Ajustes, fechar e reabrir | Segue em PT (a detecção não sobrescreve) |
+| SET-16 | P1 | Ajustes em **Español**, **English** e **Português**, em 1080x1920 e num aparelho estreito (360 dp): todas as linhas com selo ligado/desligado (#162) | O selo ("ACTIVADO", "DESACTIVADO", "DESLIGADO") fica numa linha, sem cortar palavra; o rótulo da esquerda é que quebra por palavras |
 | SET-15 | P1 | SET-08 a SET-11 no **iPhone** (Ajustes → Geral → Idioma e região) | Mesmos resultados do Android; "não testado" só se não houver aparelho |
 | SET-03 | P1 | Testar notificação | Notificação chega em ~5s com o app em segundo plano |
 | SET-04 | P1 | Bloquear notificações no sistema | Ajustes mostra aviso com atalho para o sistema |

@@ -11,7 +11,7 @@ Fale em português do Brasil. Você é o orquestrador: chama cada agente com o A
 
 ## Passos
 
-0. **Manutenção diária e denúncias (#58):** `select * from public.purge_moderation();` (retenção de 12 meses), `select public.purge_activity();` (#97), `select public.purge_bots();` (#105, 90 dias) e `select * from public.reports_pending();`
+0. **Manutenção diária e denúncias (#58):** `select * from public.purge_moderation();` (retenção de 12 meses), `select public.purge_activity();` (#97), `select public.purge_funnel();` (#137, 365 dias), `select public.purge_bots();` (#105, 90 dias) e `select * from public.reports_pending();`
    no SQL; se houver denúncias abertas, avise o John com a lista (a skill `feedback-triage` tem o passo). Nada é aplicado sem o OK dele.
 1. **Estado:** `git -C D:/sourcecode/batalha-naval fetch origin`, issues abertas e cartões do quadro
    (comandos no `docs/ESTEIRA.md`).
