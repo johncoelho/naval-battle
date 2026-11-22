@@ -50,7 +50,7 @@ env:
 jobs:
   qa:
     runs-on: macos-15
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -217,12 +217,17 @@ jobs:
               -only-testing:iosAppShots/ReviewRehearsalUITests \
               -destination "platform=iOS Simulator,id=$UDID" \
               -resultBundlePath "$RES" \
+              -test-timeouts-enabled YES \
+              -default-test-execution-time-allowance 1200 \
+              -maximum-test-execution-time-allowance 1200 \
               CODE_SIGNING_ALLOWED=NO \
               > "$RUNNER_TEMP/ensaio.log" 2>&1
             RC=$?
             tail -n 120 "$RUNNER_TEMP/ensaio.log"
             echo "xcodebuild saiu com $RC (tentativa $tentativa)"
             [ $RC -eq 0 ] && break
+            # falha do ensaio (relatorio com RESULTADO) nao e flakiness de infraestrutura: nao repete; so repete se o teste nem escreveu o relatorio
+            if grep -q "RESULTADO:" qa-out/ensaio/ensaio-revisao.md 2>/dev/null; then break; fi
             # a 1a tentativa fica no artefato (flakiness não pode esconder um botão mudo)
             [ -f qa-out/ensaio/ensaio-revisao.md ] && cp qa-out/ensaio/ensaio-revisao.md "qa-out/ensaio/ensaio-revisao-tentativa$tentativa.md"
           done
