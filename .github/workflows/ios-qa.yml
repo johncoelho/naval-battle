@@ -8,15 +8,24 @@ name: QA iOS no simulador
 # iosApp/iosAppShots, esquema iosApp-Shots) que roda com um plano de teste do Xcode carregando tools/ios-qa/NavalIAP.storekit
 # como StoreKit Configuration (os 4 produtos). O app não muda. Sobe só os PNGs; o xcresult (que guardaria a
 # senha digitada) fica no RUNNER_TEMP e é apagado.
+# Modo ensaio-revisao (#118): o que o revisor da Apple faz, antes de enviar. Simulador de iPad (iPad Air 11" M3, ou o iPad
+# mais próximo da imagem), mesma sessão semeada da conta de demonstração, teste de UI iosApp/iosAppShots/ReviewRehearsalUITests.swift:
+# toca os 4 pacotes, o Passe de Temporada, as milhas e os botões de compra (cada toque exige resposta em até 10 s) e varre o
+# texto das telas contra tools/ios-forbidden-terms.txt. Saída: PNGs e ensaio-revisao.md (RESULTADO: VERDE ou VERMELHO).
+# Ensaio vermelho = não enviar. Nunca digita senha nem fotografa a folha de login do Apple ID. O ios-release.yml confere se há
+# ensaio verde no mesmo SHA antes de enviar (portão, ver a variável IOS_REVIEW_GATE).
 # Ver docs/BUILD.md (seção iOS), docs/QA_TEST_PLAN.md (IOS-SIM-*) e tools/ios-qa/README.md.
+
+# o título da execução leva o modo: o portão do ios-release.yml procura "ensaio-revisao" no mesmo SHA
+run-name: "QA iOS (${{ inputs.modo || 'qa' }})"
 
 on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "qa = roteiros de toque (#116); capturas-iap = capturas de revisão da compra, iPhone Plus 6,7 pol (#65)"
+        description: "qa = roteiros de toque (#116); capturas-iap = capturas de revisão da compra, iPhone Plus 6,7 pol (#65); ensaio-revisao = ensaio da revisão da Apple no iPad (#118)"
         type: choice
-        options: [qa, capturas-iap]
+        options: [qa, capturas-iap, ensaio-revisao]
         default: qa
 
 permissions:
@@ -29,7 +38,7 @@ concurrency:
 env:
   MAESTRO_VERSION: "1.41.0"   # fixa; subir só com ensaio verde
   # modelo do simulador; conferir no 1o ensaio se a imagem tem. O Plus é 1290x2796 (6,7 pol), tamanho aceito pela Apple
-  SIM_DEVICE: ${{ inputs.modo == 'capturas-iap' && 'iPhone 16 Plus' || 'iPhone 16' }}
+  SIM_DEVICE: ${{ inputs.modo == 'capturas-iap' && 'iPhone 16 Plus' || inputs.modo == 'ensaio-revisao' && 'iPad Air 11-inch (M3)' || 'iPhone 16' }}
   MODO: ${{ inputs.modo || 'qa' }}
   APP_ID: br.com.navalbattle
 
@@ -53,10 +62,10 @@ jobs:
         run: |
           xcodebuild -version
           xcrun simctl list runtimes
-          xcrun simctl list devicetypes | grep -i "iphone" | tail -5
+          xcrun simctl list devicetypes | grep -iE "iphone|ipad" | tail -12
 
-      - name: Confere os secrets das capturas
-        if: env.MODO == 'capturas-iap'
+      - name: Confere os secrets das capturas e do ensaio
+        if: env.MODO == 'capturas-iap' || env.MODO == 'ensaio-revisao'
         env:
           IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
           IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
@@ -86,11 +95,16 @@ jobs:
         run: |
           RUNTIME=$(xcrun simctl list runtimes -j | python3 -c "import json,sys; r=[x for x in json.load(sys.stdin)['runtimes'] if x['isAvailable'] and x['identifier'].split('.')[-1].startswith('iOS')]; print(r[-1]['identifier'])")
           echo "runtime: $RUNTIME"
+          if [ "$MODO" = "ensaio-revisao" ]; then
+            # o revisor usou o iPad Air 11" (M3); se a imagem do runner não tiver, o iPad mais próximo (a escolha vai para o relatório)
+            SIM_DEVICE=$(xcrun simctl list devicetypes -j | python3 tools/ios-qa/escolher-ipad.py)
+            echo "::notice::Ensaio no simulador: $SIM_DEVICE"
+          fi
           UDID=$(xcrun simctl create nb-qa "$SIM_DEVICE" "$RUNTIME")
           echo "UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl boot "$UDID"
           xcrun simctl bootstatus "$UDID" -b
-          if [ "$MODO" = "capturas-iap" ]; then
+          if [ "$MODO" = "capturas-iap" ] || [ "$MODO" = "ensaio-revisao" ]; then
             LANG_SIM=pt-BR; LOC_SIM=pt_BR
             # relógio e barras padrão da Apple (9:41, bateria cheia): é o mesmo simulador, só sem o ruído do runner
             xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularMode active --cellularBars 4 --wifiBars 3
@@ -103,14 +117,14 @@ jobs:
           xcrun simctl listapps "$UDID" | grep -i "$APP_ID" || true
 
       - name: Instala o Maestro (versão fixa)
-        if: env.MODO != 'capturas-iap'
+        if: env.MODO == 'qa'
         run: |
           curl -fsSL -o maestro.zip "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
           unzip -q maestro.zip -d "$HOME"
           echo "$HOME/maestro/bin" >> "$GITHUB_PATH"
 
       - name: Semeia a sessão da conta de revisão no app (login pela API, sem digitar)
-        if: env.MODO == 'capturas-iap'
+        if: env.MODO == 'capturas-iap' || env.MODO == 'ensaio-revisao'
         env:
           IOS_REVIEW_EMAIL: ${{ secrets.IOS_REVIEW_EMAIL }}
           IOS_REVIEW_PASSWORD: ${{ secrets.IOS_REVIEW_PASSWORD }}
@@ -176,8 +190,51 @@ jobs:
           ls -l
           exit $RC
 
+      - name: Ensaio de revisão da Apple (XCUITest no iPad, só PNGs e relatório)
+        if: env.MODO == 'ensaio-revisao'
+        env:
+          # a sessão já foi semeada acima: o teste não recebe e-mail nem senha e nunca digita nada
+          TEST_RUNNER_ENSAIO: "1"
+        run: |
+          mkdir -p qa-out/ensaio
+          export TEST_RUNNER_SHOTS_DIR="$(pwd)/qa-out/ensaio"
+          export TEST_RUNNER_TERMS_FILE="$(pwd)/tools/ios-forbidden-terms.txt"
+          RES="$RUNNER_TEMP/ensaio.xcresult"
+          set +e
+          RC=1
+          for tentativa in 1 2; do
+            rm -rf "$RES"
+            xcodebuild test \
+              -project iosApp/iosApp.xcodeproj \
+              -scheme iosApp-Shots \
+              -testPlan iosApp-Shots \
+              -only-testing:iosAppShots/ReviewRehearsalUITests \
+              -destination "platform=iOS Simulator,id=$UDID" \
+              -resultBundlePath "$RES" \
+              CODE_SIGNING_ALLOWED=NO \
+              > "$RUNNER_TEMP/ensaio.log" 2>&1
+            RC=$?
+            tail -n 120 "$RUNNER_TEMP/ensaio.log"
+            echo "xcodebuild saiu com $RC (tentativa $tentativa)"
+            [ $RC -eq 0 ] && break
+            # a 1a tentativa fica no artefato (flakiness não pode esconder um botão mudo)
+            [ -f qa-out/ensaio/ensaio-revisao.md ] && cp qa-out/ensaio/ensaio-revisao.md "qa-out/ensaio/ensaio-revisao-tentativa$tentativa.md"
+          done
+          rm -f "$RUNNER_TEMP/ensaio.log"
+          # o xcresult guarda a árvore e os textos da tela: nada dele sai do runner
+          rm -rf "$RES"
+          cd qa-out/ensaio
+          find . -type f ! -name '*.png' ! -name '*.md' -delete
+          ls -l
+          if [ -f ensaio-revisao.md ]; then cat ensaio-revisao.md >> "$GITHUB_STEP_SUMMARY"; fi
+          if ! grep -q "RESULTADO: VERDE" ensaio-revisao.md 2>/dev/null; then
+            echo "::error::Ensaio VERMELHO (ou sem relatório): não enviar à Apple. Veja ensaio-revisao.md no artefato."
+            exit 1
+          fi
+          [ $RC -eq 0 ]
+
       - name: Roteiro de toques (grava vídeo)
-        if: env.MODO != 'capturas-iap'
+        if: env.MODO == 'qa'
         run: |
           mkdir -p qa-out/prints
           xcrun simctl io "$UDID" recordVideo --codec=h264 qa-out/qa.mp4 &

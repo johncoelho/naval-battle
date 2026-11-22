@@ -45,3 +45,18 @@ jobs:
             CODE_SIGN_ENTITLEMENTS="" \
             BUILD_DIR="$(pwd)/build/Products" \
             build
+
+      - name: Varredura do binário (Google Play, Android, beta - Apple 2.3.10)
+        env:
+          IOS_SCAN_ENFORCE: ${{ vars.IOS_SCAN_ENFORCE }}
+        run: |
+          # #118: a Apple lê o binário inteiro. Só relatório até o Tech Lead fechar tools/ios-binary-allowlist.txt;
+          # a variável de repositório IOS_SCAN_ENFORCE=true liga o reprovar (sem mudar o workflow).
+          APP=$(find build/Products -maxdepth 3 -name 'iosApp.app' | head -1)
+          [ -n "$APP" ] || { echo "::error::iosApp.app não encontrado em build/Products"; exit 1; }
+          EXE=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$APP/Info.plist")
+          FLAGS=""
+          [ "$IOS_SCAN_ENFORCE" = "true" ] && FLAGS="--enforce"
+          FILES=("$APP/$EXE" "$APP/Info.plist" tools/ios-qa/NavalIAP.storekit)
+          while IFS= read -r f; do FILES+=("$f"); done < <(find composeApp/build -type f -path '*ComposeApp.framework/ComposeApp' 2>/dev/null)
+          python3 tools/ios-binary-scan.py $FLAGS "${FILES[@]}"
