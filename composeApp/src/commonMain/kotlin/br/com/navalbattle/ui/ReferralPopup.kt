@@ -33,6 +33,7 @@ fun ReferralPopup(state: AppState) {
         Modifier
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.86f))
+            .consumeVeilTouch()
             .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.Center

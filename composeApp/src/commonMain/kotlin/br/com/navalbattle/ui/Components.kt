@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,14 @@ import br.com.navalbattle.i18n.t
 import br.com.navalbattle.game.Callout
 import br.com.navalbattle.game.Tone
 import kotlinx.coroutines.delay
+
+/**
+ * Véu de popup que engole o toque (#164): sem isto o toque fora do painel atravessa o véu escuro e aciona o botão da
+ * tela de baixo. Não faz nada ao tocar (sem efeito visual); o fechamento fica nos botões e no voltar do sistema.
+ */
+@Composable
+fun Modifier.consumeVeilTouch(): Modifier =
+    clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
 
 /**
  * Área segura de toda tela e popup (edge-to-edge, Android 15+): recua o conteúdo das barras do
