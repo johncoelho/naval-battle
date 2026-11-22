@@ -9,12 +9,15 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
-## [0.48.1] — 2026-11-22 · Batalha do Dia, bandeira no perfil e mais três correções (#165, #166, #138, #124)
+## [0.48.1] — 2026-11-22 · Batalha do Dia e duas correções (#165, #166, #138)
 
-App 0.48.1 (versionCode 137). Refs #165, #166, #138, #124. **Publica junto a 0.47.1 (#118), a 0.47.2 (#131) e a 0.48.0**: as quatro entram na `main` num push só e a Play e o TestFlight recebem só esta (137); 134, 135 e 136 nunca são enviados. **Sem dependência nova.**
+App 0.48.1 (versionCode 137). Refs #165, #166, #138. A #124 (bandeira) saiu do lote: espera o OK do John na linha nova da política de privacidade (branch `esteira/issue-124-bandeira`). **Publica junto a 0.47.1 (#118), a 0.47.2 (#131) e a 0.48.0**: as quatro entram na `main` num push só e a Play e o TestFlight recebem só esta (137); 134, 135 e 136 nunca são enviados. **Sem dependência nova.**
 
 ### Adicionado
 - **Batalha do Dia (#138):** botão no menu com o mesmo mar para todo mundo no dia de Brasília (UTC-3 fixo), contra a IA, no Clássico; vence quem afunda com menos tiros. Uma tentativa por dia (entrar na batalha gasta a vez), gravada só no aparelho; depois o botão mostra o placar e compartilha só número do dia, resultado e tiros (sem grade, link ou dado pessoal). Sem servidor, sem prêmio novo, funciona offline. `game/DailyBattle.kt` (sorteio SplitMix64 próprio) e `DailyBattleTest`. Textos pt/en/es do Marketing (plano #132).
+
+### Alterado
+- Versão 0.48.1 (137) no Android e no iPhone; notas da Play cobrem tudo desde a 0.47.0 (Batalha do Dia, idioma do aparelho, Passe, gancho e véus), porque só esta versão chega à loja. `RN_V0480` (tela Novidades) ganhou a Batalha do Dia.
 
 ### Corrigido
 - **#165** Os véus que ainda usavam `clickable(enabled = false) {}` deixavam o toque atravessar (um `clickable` desligado não consome o toque): saída da partida (`QuitOverlay`), painel do grito de guerra, convite recebido (`InviteBanner`), oferta de partida rápida (`QuickOfferBanner`), as três confirmações do Perfil (apagar carreira, sair sem salvar, "Já joga com Google?") e o véu da vitória na rede local (`VictoryCard`, que não tinha nada) passam a usar o `Modifier.consumeVeilTouch()` da #164. O relatório e o "jogar de novo" da rede local ficam por cima do véu e continuam respondendo.
