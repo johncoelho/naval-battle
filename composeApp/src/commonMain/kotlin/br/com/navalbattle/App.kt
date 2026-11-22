@@ -279,6 +279,7 @@ private const val AGE_BAND_KEY = ProfileKeys.AGE_BAND
 private const val AGE_CHECKED_KEY = ProfileKeys.AGE_CHECKED_AT
 private const val REVIEW_LAST_KEY = ProfileKeys.REVIEW_LAST_ASK
 private const val REVIEW_COUNT_KEY = ProfileKeys.REVIEW_ASK_COUNT
+private const val REVIEW_STREAK_KEY = ProfileKeys.REVIEW_WIN_STREAK
 private const val REVIEW_SETTLE_MS = 800L
 
 /** Espera da confirmação do Google depois do anúncio (#29): 10 consultas a cada 2 s, cerca de 20 s. */
@@ -708,9 +709,15 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         reviewCandidate = null
     }
 
-    /** A tela de resultado avisa: a vitória já entrou na carreira (e se subiu de patente). */
+    /** A tela de resultado avisa: a vitória já entrou na carreira (e se subiu de patente). Soma à sequência de vitórias (#136). */
     fun noteReviewCandidate(rankedUp: Boolean) {
         reviewCandidate = rankedUp
+        reviewPrefs.putInt(REVIEW_STREAK_KEY, reviewPrefs.getInt(REVIEW_STREAK_KEY, 0) + 1)
+    }
+
+    /** Derrota (ou saída) numa partida que conta: a sequência de vitórias do pedido de avaliação volta a zero (#136). */
+    fun noteReviewDefeat() {
+        if (reviewPrefs.getInt(REVIEW_STREAK_KEY, 0) != 0) reviewPrefs.putInt(REVIEW_STREAK_KEY, 0)
     }
 
     /**
@@ -735,13 +742,17 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                 lastAskMillis = reviewPrefs.getString(REVIEW_LAST_KEY, "").toLongOrNull() ?: 0L,
                 askCount = reviewPrefs.getInt(REVIEW_COUNT_KEY, 0),
                 now = now,
-                isTest = isTestLabDevice()
+                isTest = isTestLabDevice(),
+                winStreak = reviewPrefs.getInt(REVIEW_STREAK_KEY, 0),
+                careerMatches = profile.matches
             )
             if (!ask) return@launch
             reviewPrefs.putBatch(PrefsBatch().apply {
                 putString(REVIEW_LAST_KEY, now.toString())
                 putInt(REVIEW_COUNT_KEY, reviewPrefs.getInt(REVIEW_COUNT_KEY, 0) + 1)
             })
+            // conta PEDIDOS feitos, nao dialogos exibidos (a loja nao avisa se mostrou)
+            logFunnel(if (rankedUp) FunnelAction.REVIEW_REQUESTED_RANKUP else FunnelAction.REVIEW_REQUESTED_WIN)
             StoreReview.request {}
         }
     }

@@ -133,6 +133,8 @@ fun ResultScreen(state: AppState, match: Match) {
         }
         // avaliação na Play (#45): vitória já contada na carreira; o pedido sai ao voltar ao menu
         if (victory) award?.let { state.noteReviewCandidate(rankedUp = it.rankUp != null) }
+        // derrota numa partida que conta zera a sequencia de vitorias do pedido (#136)
+        else if (award != null || bot || online) state.noteReviewDefeat()
         // conquistas do Play Games (#48): só partida que valeu carreira (a mesma regra do registerMatch)
         award?.let { a ->
             state.reportMatchAchievements(

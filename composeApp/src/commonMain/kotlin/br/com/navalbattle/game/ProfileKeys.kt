@@ -72,6 +72,9 @@ internal object ProfileKeys {
     const val REVIEW_LAST_ASK = "review_last_ask"
     const val REVIEW_ASK_COUNT = "review_ask_count"
 
+    /** Vitórias seguidas para o pedido de avaliação (#136): zera em derrota; é do aparelho como a cota. */
+    const val REVIEW_WIN_STREAK = "review_win_streak"
+
     /** Aviso de lançamento já visto pelo convidado ([launchNoticeKey] com id nulo): não volta ao sair. */
     const val LAUNCH_NOTICE_GUEST = "launch_notice_seen_guest"
 
