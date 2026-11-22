@@ -49,6 +49,14 @@ class SeasonJoinTest {
     }
 
     @Test
+    fun bannerDoPasseEncolheEmTelaBaixa() {
+        assertEquals(true, seasonBannerCompact(619f))   // janela 375x667 menos safe area e margens
+        assertEquals(true, seasonBannerCompact(699f))
+        assertEquals(false, seasonBannerCompact(700f))
+        assertEquals(false, seasonBannerCompact(780f))  // telefone alto: segue 16:9
+    }
+
+    @Test
     fun comSaldoEntra() {
         assertEquals(SeasonResult.Joined("premium"), seasonJoinOutcome(walletOk = true, joinedTier = "premium"))
         assertEquals(SeasonResult.Joined("free"), seasonJoinOutcome(walletOk = true, joinedTier = "free"))

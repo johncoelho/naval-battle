@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -48,7 +51,9 @@ import br.com.navalbattle.design.drawSeasonBanner
 import br.com.navalbattle.design.drawSeasonIcon
 import br.com.navalbattle.design.drawShip
 import br.com.navalbattle.data.platformName
+import br.com.navalbattle.game.SEASON_BANNER_COMPACT_DP
 import br.com.navalbattle.game.SeasonResult
+import br.com.navalbattle.game.seasonBannerCompact
 import br.com.navalbattle.game.ShipClass
 import br.com.navalbattle.game.dobroesAisleDisponivel
 import br.com.navalbattle.i18n.K
@@ -190,7 +195,7 @@ fun SeasonResultPopup(state: AppState) {
 /** Fundo escurecido + cartão rolável; tocar fora fecha. */
 @Composable
 private fun Overlay(onDismiss: () -> Unit, content: @Composable () -> Unit) {
-    Box(
+    BoxWithConstraints(
         Modifier
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.88f))
@@ -199,21 +204,30 @@ private fun Overlay(onDismiss: () -> Unit, content: @Composable () -> Unit) {
             .padding(horizontal = 18.dp, vertical = 24.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            Modifier
-                .navalPanelWidth()
-                .background(Naval.surface2)
-                .border(1.dp, Naval.line)
-                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-                .verticalScroll(rememberScrollState())
-        ) { content() }
+        // janela baixa (iPhone pequeno, ou app de iPhone na janela 375x667 do iPad em modo de compatibilidade, #118): o banner encolhe
+        // para o botão "Entrar com N dobrões" e a linha "pago com dobrões" aparecerem sem rolar
+        CompositionLocalProvider(LocalBannerCompacto provides seasonBannerCompact(maxHeight.value)) {
+            Column(
+                Modifier
+                    .navalPanelWidth()
+                    .background(Naval.surface2)
+                    .border(1.dp, Naval.line)
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+                    .verticalScroll(rememberScrollState())
+            ) { content() }
+        }
     }
 }
+
+/** Verdadeiro dentro do [Overlay] quando a altura disponível é pequena: o [SeasonBanner] usa a faixa baixa. */
+private val LocalBannerCompacto = compositionLocalOf { false }
 
 /** A arte da estação com o título por cima, na faixa escura de baixo. */
 @Composable
 fun SeasonBanner(theme: SeasonTheme, eyebrow: String, title: String, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
+    // tela alta: 16:9; tela baixa: faixa de 120 dp (height direto, sem depender de aspectRatio com limite)
+    val base = if (LocalBannerCompacto.current) modifier.fillMaxWidth().height(SEASON_BANNER_COMPACT_DP.dp) else modifier.fillMaxWidth().aspectRatio(16f / 9f)
+    Box(base) {
         Canvas(Modifier.fillMaxSize()) { drawSeasonBanner(theme) }
         Column(
             Modifier
