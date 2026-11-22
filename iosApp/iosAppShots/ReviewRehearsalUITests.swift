@@ -28,6 +28,15 @@ final class ReviewRehearsalUITests: XCTestCase {
     private var passo = 0
     /// Diagnóstico para o relatório: limites da tela, e a árvore de acessibilidade resumida quando algo não é achado.
     private var diag: [String] = []
+    /// Passo em que o teste está (vai para o relatório se ele abortar) e passos obrigatórios que já tiveram resultado.
+    private var obrigatoriosFaltando: [String] = []
+    private var ultimoPasso = "abertura"
+    private var concluidos = Set<String>()
+    private var obrigatorios: Set<String> {
+        var s: Set<String> = ["passe-cta", "passe-popup", "pacote-Bolsa", "pacote-Baú", "pacote-Cofre", "pacote-Tesouro do Almirante"]
+        if estado == "sem-saldo" { s.insert("passe-atalho") }
+        return s
+    }
     private var arvores: [String] = []
     private let limite: TimeInterval = 10
     /// Estado da conta de demonstração nesta rodada (`sem-saldo` | `com-saldo`), preparado antes por tools/ios-qa/demo-estado.sql.
@@ -54,6 +63,14 @@ final class ReviewRehearsalUITests: XCTestCase {
 
     override func tearDownWithError() throws {
         guard ProcessInfo.processInfo.environment["ENSAIO"] == "1" else { return }
+        // o XCUITest pode abortar o teste (ex.: "Failed to not hittable") sem passar por falhar(): isso nunca pode virar VERDE
+        if let r = testRun, r.totalFailureCount > 0, falhas.isEmpty {
+            falhas.append("o teste terminou por falha do XCUITest (\(r.totalFailureCount)) no passo \"\(ultimoPasso)\"")
+        }
+        // passo obrigatório sem resultado é falha (CTA do Passe, popup, atalho da loja, os 4 pacotes)
+        let faltam = obrigatorios.subtracting(concluidos).sorted()
+        for f in faltam { falhas.append("passo obrigatório sem resultado: \(f) (parou em \"\(ultimoPasso)\")") }
+        obrigatoriosFaltando = faltam
         escreverRelatorio()
     }
 
@@ -111,13 +128,14 @@ final class ReviewRehearsalUITests: XCTestCase {
             let b = app.buttons.matching(p).firstMatch
             guard b.exists else { break }
             shotSeguro("passe-primeira-missao")
-            b.tap()
+            tocarElemento(b)
             sleep(2)
         }
     }
 
     private func ensaioPasse() {
         let semSaldo = estado == "sem-saldo"
+        ultimoPasso = "Passe"
         pularPrimeiraMissao()
         guard abrirPasse() else {
             falhar("Passe", "o popup do Passe não abriu (conta sem temporada?)")
@@ -143,15 +161,18 @@ final class ReviewRehearsalUITests: XCTestCase {
         pularPrimeiraMissao()
         let r = tocarEEsperar("Passe: CTA de entrada (\(estado))", ctaPasse, esperado: semSaldo ? insuficiente : sucesso, estrito: true, id: "season_join_cta")
         if r == nil { fecharAvisosDoPasse(); return }
+        concluidos.insert("passe-cta")
         if semSaldo {
             guard existe(insuficiente) else {
                 falhar("Passe sem saldo", "esperava o popup \"Dobrões insuficientes\"; a conta demo tem saldo? (estado \(estado))")
                 fecharAvisosDoPasse()
                 return
             }
+            concluidos.insert("passe-popup")
             registrar("Passe sem saldo", "popup \"Dobrões insuficientes\"", "visível sem rolar", 0, shotSeguro("passe-sem-saldo"))
             if tocarEEsperar("Passe: atalho para a loja de Dobrões", "Abrir a loja de Dobr|Open the Doubloon store|Abrir la tienda de Doblones",
                              esperado: "Bolsa|Pouch", estrito: true) != nil {
+                concluidos.insert("passe-atalho")
                 registrar("Passe sem saldo", "atalho \"Abrir a loja de Dobrões\"", "abriu a aba Dobrões", 0, shotSeguro("passe-atalho-loja"))
                 varrer("Loja > Dobrões (pelo atalho do Passe)")
                 voltarAoMenu()
@@ -162,6 +183,7 @@ final class ReviewRehearsalUITests: XCTestCase {
                 fecharAvisosDoPasse()
                 return
             }
+            concluidos.insert("passe-popup")
             registrar("Passe com saldo", "popup de confirmação \"Tudo certo\"", "visível", 0, shotSeguro("passe-com-saldo"))
             _ = tocarEEsperar("Passe: OK da confirmação", "^OK$", esperado: nil, estrito: false)
         }
@@ -194,7 +216,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             let b = host.alerts.buttons.matching(p).firstMatch
             if b.exists { b.tap(); sleep(1); return true }
             let solto = host.buttons.matching(p).firstMatch
-            if solto.exists && solto.isHittable { solto.tap(); sleep(1); return true }
+            if tocavel(solto) { tocarElemento(solto); sleep(1); return true }
         }
         return false
     }
@@ -238,8 +260,9 @@ final class ReviewRehearsalUITests: XCTestCase {
         ]
         let mensagem = "indisponíve|unavailable|no disponible|Não foi possível|Couldn.t|No se pudo|pendente|pending|pendiente"
         for (nome, regex, png) in pacotes {
+            ultimoPasso = "Pacote \(nome)"
             let r = tocarEEsperar("Pacote \(nome)", regex, esperado: mensagem, estrito: false, png: png)
-            if r != nil { fecharFolhaDeCompra() }
+            if r != nil { concluidos.insert("pacote-\(nome)"); fecharFolhaDeCompra() }
             sleep(2)
         }
     }
@@ -247,6 +270,7 @@ final class ReviewRehearsalUITests: XCTestCase {
     // MARK: - Milhas
 
     private func ensaioMilhas() {
+        ultimoPasso = "Milhas"
         // milhas gastam dobrões da demo: só na rodada sem-saldo (a com-saldo precisa do saldo intacto para o Passe)
         guard estado == "sem-saldo" else {
             registrar("Milhas", "não exercitado nesta rodada", "estado \(estado): milhas só no sem-saldo", 0, nil)
@@ -270,6 +294,7 @@ final class ReviewRehearsalUITests: XCTestCase {
     // MARK: - Botões de compra da Loja (cascos, camuflagens, habilidades)
 
     private func ensaioCompraDaLoja() {
+        ultimoPasso = "Loja (botões de preço)"
         voltarAoMenu()
         guard tocar("Loja|Store|Tienda", espera: 15) else { falhar("Loja", "botão da Loja não encontrado"); return }
         sleep(2)
@@ -285,7 +310,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             // botão de preço de um item que ainda não é da conta: abre o cartão de confirmação ou explica o que falta
             guard let botao = primeiroPreco() else { avisar("Loja", "nenhum botão de preço visível em \(aba): NÃO exercitado"); continue }
             let antes = assinatura()
-            botao.tap()
+            tocarElemento(botao)
             if esperarMudar(antes) != nil || confirmacaoAberta() {
                 registrar("Loja \(aba)", "botão de preço do primeiro item à venda", confirmacaoAberta() ? "cartão de confirmação" : "tela mudou", 0, nil)
                 if confirmacaoAberta() { _ = tocar("Cancelar|Cancel", espera: 5) }
@@ -298,7 +323,7 @@ final class ReviewRehearsalUITests: XCTestCase {
     private func primeiroPreco() -> XCUIElement? {
         let p = NSPredicate(format: "label MATCHES %@", "(?s)^[0-9][0-9.,]*$")
         let candidatos = app.descendants(matching: .any).matching(p).allElementsBoundByIndex
-            .filter { $0.exists && $0.isHittable && $0.frame.minY > app.frame.height * 0.25 }
+            .filter { tocavel($0) && $0.frame.minY > app.windows.firstMatch.frame.height * 0.25 }
             .sorted { $0.frame.minY < $1.frame.minY }
         return candidatos.first
     }
@@ -308,6 +333,7 @@ final class ReviewRehearsalUITests: XCTestCase {
     // MARK: - varredura de texto das telas
 
     private func varreduraDasTelas() {
+        ultimoPasso = "Varredura das telas"
         voltarAoMenu()
         let telas: [(String, String)] = [
             ("Perfil", "Perfil|Profile"),
@@ -385,7 +411,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         }
         let antes = assinatura()
         let inicio = Date()
-        alvo.tap()
+        tocarElemento(alvo)
         var resposta: String?
         while Date().timeIntervalSince(inicio) < limite {
             if let esperado = esperado, existe(esperado) { resposta = "mensagem/popup esperado"; break }
@@ -448,7 +474,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         for host in hostsDoSistema() + [app!] {
             for rotulo in ["Cancel", "Cancelar", "Fechar", "Close", "Not Now", "Agora não"] {
                 let b = host.buttons[rotulo]
-                if b.exists && b.isHittable { b.tap(); sleep(1); return }
+                if tocavel(b) { tocarElemento(b); sleep(1); return }
             }
         }
     }
@@ -482,7 +508,7 @@ final class ReviewRehearsalUITests: XCTestCase {
                 for regex in prioridade {
                     let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(regex))[ !.]*(\n.*)?")
                     let b = app.buttons.matching(p).firstMatch
-                    if b.exists && b.isHittable { b.tap(); feito = true; break }
+                    if tocavel(b) { tocarElemento(b); feito = true; break }
                 }
             }
             if feito { vazios = 0; sleep(2) } else { vazios += 1; sleep(3) }
@@ -499,7 +525,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         for regex in prioridade where regex != excluindo {
             let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(regex))[ !.]*(\n.*)?")
             let b = app.buttons.matching(p).firstMatch
-            if b.exists && b.isHittable { b.tap(); sleep(1); return }
+            if tocavel(b) { tocarElemento(b); sleep(1); return }
         }
     }
 
@@ -548,7 +574,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         let fim = Date().addingTimeInterval(espera)
         while Date() < fim {
             let ordenados = (0..<todos.count).map { todos.element(boundBy: $0) }
-                .filter { $0.exists && $0.isHittable }
+                .filter { tocavel($0) }
                 .sorted { $0.frame.minY < $1.frame.minY }
             if let e = ordenados.first { return e }
             usleep(500_000)
@@ -559,8 +585,31 @@ final class ReviewRehearsalUITests: XCTestCase {
     @discardableResult
     private func tocar(_ regex: String, espera: TimeInterval) -> Bool {
         guard let e = achar(regex, espera: espera) else { return false }
-        e.tap()
+        tocarElemento(e)
         return true
+    }
+
+    /// App só de iPhone no iPad (modo de compatibilidade): o app.frame é 375x667 e a janela 663x1180 em tela 820x1180; os frames dos
+    /// elementos vêm em coordenadas de tela, então o XCUITest acha "não tocável" um botão que está visível na janela. Para esse caso
+    /// toca por coordenada normalizada na JANELA (nunca pelo app.frame) e anota no diagnóstico.
+    private func tocarElemento(_ e: XCUIElement) {
+        if e.isHittable { e.tap(); return }
+        let jan = app.windows.firstMatch
+        let wf = jan.frame
+        let f = e.frame
+        guard wf.width > 0, wf.height > 0, !f.isEmpty else { e.tap(); return }
+        let dx = (f.midX - wf.minX) / wf.width
+        let dy = (f.midY - wf.minY) / wf.height
+        diag.append("toque por coordenada da janela (\(String(format: "%.3f", dx)), \(String(format: "%.3f", dy))): \(e.identifier.isEmpty ? String(e.label.prefix(30)) : e.identifier) não é tocável pela API (frame \(f), janela \(wf))")
+        jan.coordinate(withNormalizedOffset: CGVector(dx: dx, dy: dy)).tap()
+    }
+
+    /// Tocável de fato: a API diz que sim, ou o frame está dentro da janela do app (a API erra no modo de compatibilidade do iPad).
+    private func tocavel(_ e: XCUIElement) -> Bool {
+        guard e.exists, !e.frame.isEmpty else { return false }
+        if e.isHittable { return true }
+        let jan = app.windows.firstMatch
+        return jan.exists && jan.frame.insetBy(dx: -2, dy: -2).contains(e.frame)
     }
 
     // MARK: - relatório e capturas
@@ -598,7 +647,8 @@ final class ReviewRehearsalUITests: XCTestCase {
     private func escreverRelatorio() {
         let verde = falhas.isEmpty
         var md = "# Ensaio de revisão (#118)\n\n"
-        md += "RESULTADO: \(verde ? "VERDE" : "VERMELHO")\n\n"
+        md += "RESULTADO: \(verde ? "VERDE" : "VERMELHO")\n"
+        md += obrigatoriosFaltando.isEmpty ? "OBRIGATORIOS: OK (\(obrigatorios.count) passos)\n\n" : "OBRIGATORIOS: FALTAM \(obrigatoriosFaltando.joined(separator: ", "))\n\n"
         md += "Simulador: \(UIDevice.current.model), iOS \(UIDevice.current.systemVersion). Regra: cada toque exige resposta em até \(Int(limite)) s.\n"
         md += "Nada foi digitado; a folha de login do Apple ID nunca é fotografada.\n\n"
         md += "| # | Passo | Ação | Resposta | Tempo | PNG |\n|---|---|---|---|---|---|\n"
