@@ -55,6 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
+import br.com.navalbattle.data.FunnelAction
 import br.com.navalbattle.Screen
 import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.design.Naval
@@ -172,7 +173,7 @@ private fun MenuActions(state: AppState) {
                     tag = if (offer != null) "-${Paint.DAILY_OFFER_OFF}%" else null,
                     modifier = Modifier.weight(1f),
                     icon = { drawDoubloon(Offset(size.width / 2f, size.height / 2f), size.minDimension * 0.85f) }
-                ) { state.openStore(if (offer != null) 1 else 0) }
+                ) { state.openStore(if (offer != null) 1 else 0, FunnelAction.STORE_VIEWED_MENU) }
                 // Perfil já abre pelo avatar do topo — o 4º atalho vira o feedback, que rende dobrões
                 Shortcut(t(K.MENU_SHORT_FEEDBACK), modifier = Modifier.weight(1f), icon = { drawFeedbackIcon(it) }) {
                     state.openFeedback(Screen.MENU)
@@ -222,7 +223,7 @@ private fun CommanderHeader(state: AppState) {
                 )
                 Spacer(Modifier.width(4.dp))
             }
-            CoinLabel(profile.credits.toString(), modifier = Modifier.clickable { state.openStore(3) }.padding(4.dp))
+            CoinLabel(profile.credits.toString(), modifier = Modifier.clickable { state.openStore(3, FunnelAction.STORE_VIEWED_MENU) }.padding(4.dp))
             Spacer(Modifier.width(6.dp))
             GearButton { state.screen = Screen.SETTINGS }
         }

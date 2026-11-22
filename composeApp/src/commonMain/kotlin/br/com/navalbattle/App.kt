@@ -31,6 +31,8 @@ import br.com.navalbattle.audio.Music
 import br.com.navalbattle.audio.MusicPlayer
 import br.com.navalbattle.audio.THEME_PLAYLIST
 import br.com.navalbattle.data.BuyOutcome
+import br.com.navalbattle.data.Funnel
+import br.com.navalbattle.data.FunnelAction
 import br.com.navalbattle.data.DobroesStoreStatus
 import br.com.navalbattle.data.StoreBilling
 import br.com.navalbattle.data.verifyThenSettle
@@ -301,9 +303,20 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     val dailyOffer: Paint?
         get() = Paint.dailyOffer(brtDay) { profile.owns(it) }
 
-    fun openStore(aisle: Int = 0) {
+    fun openStore(aisle: Int = 0, origin: FunnelAction = FunnelAction.STORE_VIEWED_OTHER) {
         storeAisle = aisle
         screen = Screen.STORE
+        logFunnel(origin)
+    }
+
+    /**
+     * Conta uma acao do funil (#137): so um contador diario no servidor, sem esperar e sem erro para o jogador.
+     * Convidado e aparelho sem sessao: descartado.
+     */
+    fun logFunnel(action: FunnelAction) {
+        Funnel.log(uiScope, profile.currentSession() != null) {
+            authed { s -> cloud.logFunnelEvent(s, action.event, action.origin, platformName) }
+        }
     }
     var mode by mutableStateOf(GameMode.entries.firstOrNull { it.name == profile.lastMode } ?: GameMode.CLASSIC)
 
@@ -1957,7 +1970,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         seasonResult = null
         seasonPassOpen = false
         seasonPopupDismissed = true
-        openStore(3)
+        openStore(3, FunnelAction.STORE_VIEWED_POPUP)
     }
 
     fun closeSeasonPopup() {
@@ -4101,6 +4114,7 @@ fun App() {
         val kind = openedPush ?: return@LaunchedEffect
         if (state.screen == Screen.SPLASH) return@LaunchedEffect
         PushInbox.consumeOpened()
+        state.logFunnel(FunnelAction.pushOpened(kind))
         val target = screenForPushKind(kind) ?: return@LaunchedEffect
         if (state.match == null && state.profile.signedIn) {
             state.screen = target

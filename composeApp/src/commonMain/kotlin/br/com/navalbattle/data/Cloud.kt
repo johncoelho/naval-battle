@@ -648,6 +648,13 @@ expect class CloudApi() {
     /** Fecha a partida casual contra bot. */
     suspend fun botMatchReport(session: Session, botId: String, won: Boolean): CloudResult<Unit>
 
+    /**
+     * Conta uma acao do funil (`log_funnel_event`, supabase/funnel.sql, #137): so um contador diario por evento,
+     * origem e plataforma, sem identificador de pessoa. Evento fora do catalogo e descartado no servidor; servidor
+     * sem a funcao (404) e erro de rede sao ignorados por quem chama (`Funnel.log`).
+     */
+    suspend fun logFunnelEvent(session: Session, event: String, origin: String, platform: String): CloudResult<Unit>
+
     /** Relata a ranqueada contra bot; o servidor decide os pontos (tetos, duracao minima, cotas). */
     suspend fun recordRankedBotResult(session: Session, botId: String, won: Boolean): CloudResult<BotRankedResult?>
 

@@ -664,6 +664,15 @@ actual class CloudApi actual constructor() {
         CloudResult.Ok(Unit)
     }
 
+    actual suspend fun logFunnelEvent(session: Session, event: String, origin: String, platform: String): CloudResult<Unit> = call {
+        post(
+            "/rest/v1/rpc/log_funnel_event",
+            mapOf("p_event" to event, "p_origin" to origin, "p_platform" to platform),
+            token = session.accessToken
+        )
+        CloudResult.Ok(Unit)
+    }
+
     actual suspend fun recordRankedBotResult(session: Session, botId: String, won: Boolean): CloudResult<BotRankedResult?> = call {
         val json = post(
             "/rest/v1/rpc/record_ranked_bot_result",

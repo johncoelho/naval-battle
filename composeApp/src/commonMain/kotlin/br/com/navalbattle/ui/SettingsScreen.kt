@@ -28,6 +28,7 @@ import br.com.navalbattle.audio.AppForeground
 import br.com.navalbattle.data.DailyReminder
 import br.com.navalbattle.data.TEST_DELAY_SECONDS
 import br.com.navalbattle.data.appVersionLabel
+import br.com.navalbattle.data.FunnelAction
 import br.com.navalbattle.data.shareStoreListing
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
@@ -223,7 +224,10 @@ fun SettingsScreen(state: AppState) {
             Gap(8)
             SecondaryButton(t(K.GUIDED_REPLAY), t(K.GUIDED_REPLAY_SUB)) { state.startGuidedMatch(replay = true) }
             Gap(8)
-            SecondaryButton(t(K.SETTINGS_SHARE_STORE), t(K.SETTINGS_SHARE_STORE_SUB)) { shareStoreListing() }
+            SecondaryButton(t(K.SETTINGS_SHARE_STORE), t(K.SETTINGS_SHARE_STORE_SUB)) {
+                state.logFunnel(FunnelAction.INVITE_SHARED_SETTINGS_STORE)
+                shareStoreListing()
+            }
             Gap(8)
             SecondaryButton(t(K.SETTINGS_FEEDBACK), t(K.SETTINGS_FEEDBACK_SUB)) { state.openFeedback(Screen.SETTINGS) }
             // anúncio premiado (#29): reabre o consentimento do Google (UMP); só com anúncio ligado

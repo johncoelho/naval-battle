@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
+import br.com.navalbattle.data.FunnelAction
 import br.com.navalbattle.data.shareText
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
@@ -97,7 +98,10 @@ fun ReferralCard(state: AppState) {
             }
             if (code != null) {
                 Gap(10)
-                PrimaryButton(t(K.REFERRAL_SHARE)) { shareText(referralShareText(code, I18n.lang)) }
+                PrimaryButton(t(K.REFERRAL_SHARE)) {
+                    state.logFunnel(FunnelAction.INVITE_SHARED_REFERRAL_CARD)
+                    shareText(referralShareText(code, I18n.lang))
+                }
             }
             Gap(8)
             if (!typing) {
