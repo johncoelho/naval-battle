@@ -44,6 +44,12 @@ internal const val ABILITY_STRIP_MIN_DP = 340f
 /** Menor lado do alvo empilhado, mesmo em janela muito baixa. */
 internal const val STACKED_MIN_TARGET_DP = 160f
 
+/**
+ * Menor lado do alvo no CELULAR em retrato no modo tático (#159): o alvo cede altura às 4 habilidades até aqui
+ * (células de 25 dp); abaixo disso o tabuleiro fica pequeno demais para tocar e a coluna de habilidades rola.
+ */
+internal const val PHONE_TACTICAL_MIN_TARGET_DP = 250f
+
 /** Altura do posicionamento fora o tabuleiro: barra, dica, legenda mínima, dois botões e "encerrar". */
 internal const val PLACEMENT_RESERVED_DP = 330f
 
@@ -91,12 +97,20 @@ internal fun stackedContentWidthDp(widthDp: Float): Float = minOf(widthDp, STACK
  * Lado do alvo no arranjo empilhado, a partir da altura **medida** da área abaixo do topo da batalha (#66).
  * Sobra para a faixa de frota/habilidades o que o alvo e o anúncio não tomam; o alvo encolhe até a faixa
  * ter o mínimo (frota: cabeçalho + 200 dp de tabuleiro; tático: o maior entre isso e as habilidades inteiras).
- * Celular (< 600 dp): a largura útil, sem mudança. Nunca passa de [contentWidthDp], nunca abaixo do piso
+ * Celular (< 600 dp): a largura útil no clássico; no tático cede altura às habilidades (#159, [PHONE_TACTICAL_MIN_TARGET_DP]
+ * de piso). Nunca passa de [contentWidthDp], nunca abaixo do piso
  * (a não ser que a própria largura seja menor) e nunca negativo.
  */
 fun stackedTargetSideDp(contentWidthDp: Float, areaHeightDp: Float, phone: Boolean, tactical: Boolean): Float {
     val content = contentWidthDp.coerceAtLeast(0f)
-    if (phone) return content
+    if (phone) {
+        // clássico: a largura útil, sem mudança. Tático (#159): o alvo cede o que for preciso para as 4 habilidades
+        // caberem inteiras (1080x2400 cortava a 4a); só encolhe quando a faixa ficaria abaixo do mínimo e nunca
+        // passa do piso de celular
+        if (!tactical) return content
+        val fitPhone = areaHeightDp.coerceAtLeast(0f) - BATTLE_CALLOUT_DP - ABILITY_STRIP_MIN_DP
+        return minOf(content, maxOf(fitPhone, PHONE_TACTICAL_MIN_TARGET_DP))
+    }
     val fleetMin = FLEET_HEADER_DP + MIN_FLEET_BOARD_DP
     val stripMin = if (tactical) maxOf(fleetMin, ABILITY_STRIP_MIN_DP) else fleetMin
     val fit = areaHeightDp.coerceAtLeast(0f) - BATTLE_CALLOUT_DP - stripMin

@@ -6,6 +6,7 @@ import br.com.navalbattle.ui.BoardArrangement
 import br.com.navalbattle.ui.ABILITY_STRIP_MIN_DP
 import br.com.navalbattle.ui.FLEET_HEADER_DP
 import br.com.navalbattle.ui.MIN_FLEET_BOARD_DP
+import br.com.navalbattle.ui.PHONE_TACTICAL_MIN_TARGET_DP
 import br.com.navalbattle.ui.STACKED_MIN_TARGET_DP
 import br.com.navalbattle.ui.stackedContentWidthDp
 import br.com.navalbattle.ui.stackedTargetSideDp
@@ -146,9 +147,35 @@ class BoardLayoutTest {
     }
 
     @Test
-    fun celularFicaComALarguraUtilSemMudar() {
-        assertEquals(380f, stackedTargetSideDp(stackedContentWidthDp(412f), 300f, phone = true, tactical = true))
+    fun celularClassicoFicaComALarguraUtilSemMudar() {
+        assertEquals(380f, stackedTargetSideDp(stackedContentWidthDp(412f), 300f, phone = true, tactical = false))
         assertEquals(328f, stackedTargetSideDp(stackedContentWidthDp(360f), 500f, phone = true, tactical = false))
+    }
+
+    // ---- #159: celular em retrato no tatico (1080x2400, ~411x914 dp) cortava a 4a habilidade ----
+
+    @Test
+    fun celularTaticoAltoNaoMudaQuandoAsHabilidadesJaCabem() {
+        // area alta: sobram 340 dp para a faixa mesmo com o alvo na largura util
+        assertEquals(380f, stackedTargetSideDp(stackedContentWidthDp(412f), 800f, phone = true, tactical = true))
+    }
+
+    @Test
+    fun celularTaticoCedeAlturaParaAsQuatroHabilidades() {
+        val content = stackedContentWidthDp(411f)
+        listOf(600f, 640f, 660f, 700f).forEach { area ->
+            val alvo = stackedTargetSideDp(content, area, phone = true, tactical = true)
+            val faixa = area - BATTLE_CALLOUT_DP - alvo
+            assertTrue(alvo < content, "o alvo devia ceder em area $area")
+            assertTrue(alvo >= PHONE_TACTICAL_MIN_TARGET_DP, "abaixo do piso de celular em area $area")
+            if (alvo > PHONE_TACTICAL_MIN_TARGET_DP) assertTrue(faixa >= ABILITY_STRIP_MIN_DP, "faixa de $faixa dp em area $area")
+        }
+    }
+
+    @Test
+    fun celularTaticoNuncaFicaAbaixoDoPiso() {
+        assertEquals(PHONE_TACTICAL_MIN_TARGET_DP, stackedTargetSideDp(stackedContentWidthDp(360f), 300f, phone = true, tactical = true))
+        assertEquals(PHONE_TACTICAL_MIN_TARGET_DP, stackedTargetSideDp(stackedContentWidthDp(360f), 0f, phone = true, tactical = true))
     }
 
     @Test
