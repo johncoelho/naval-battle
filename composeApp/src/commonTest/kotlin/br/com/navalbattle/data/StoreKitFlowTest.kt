@@ -17,7 +17,10 @@ class StoreKitFlowTest {
         var finishOk = true
         var lastToken: String? = null
 
-        override suspend fun products(ids: List<String>) = ids.map { StoreProduct(it, "R$ 9,90") }
+        /** Ids que a "Apple" devolve; nulo = todos. Lista vazia imita o StoreKit sem produtos (#122). */
+        var available: Set<String>? = null
+
+        override suspend fun products(ids: List<String>) = ids.filter { available?.contains(it) ?: true }.map { StoreProduct(it, "R$ 9,90") }
 
         override suspend fun purchase(productId: String, accountToken: String): StoreKitItem {
             lastToken = accountToken
@@ -112,6 +115,19 @@ class StoreKitFlowTest {
         flow.settle(token)
         flow.settle(token) // ja finalizada: nao repete
         assertEquals(listOf("2000000111", "2000000111"), port.finished)
+    }
+
+    @Test
+    fun listaDeProdutosVaziaComTresOuComQuatro() = runNow {
+        val ids = listOf("dobroes_bolsa", "dobroes_bau", "dobroes_cofre", "dobroes_tesouro")
+        val port = FakePort()
+        val flow = StoreKitFlow(port)
+        port.available = emptySet()
+        assertEquals(emptyList(), flow.products(ids))
+        port.available = ids.take(3).toSet()
+        assertEquals(ids.take(3), flow.products(ids).map { it.productId })
+        port.available = null
+        assertEquals(ids, flow.products(ids).map { it.productId })
     }
 
     @Test

@@ -9,7 +9,9 @@
       "familyShareable" : false,
       "internalID" : "6A000001",
       "localizations" : [
-        { "description" : "500 dobrões", "displayName" : "Bolsa de Dobrões", "locale" : "pt_BR" }
+        { "description" : "500 dobrões", "displayName" : "Bolsa de Dobrões", "locale" : "pt_BR" },
+        { "description" : "500 doubloons", "displayName" : "Pouch of Doubloons", "locale" : "en_US" },
+        { "description" : "500 doblones", "displayName" : "Bolsa de Doblones", "locale" : "es_ES" }
       ],
       "productID" : "dobroes_bolsa",
       "referenceName" : "Bolsa de Dobrões",
@@ -20,7 +22,9 @@
       "familyShareable" : false,
       "internalID" : "6A000002",
       "localizations" : [
-        { "description" : "1.100 dobrões", "displayName" : "Baú de Dobrões", "locale" : "pt_BR" }
+        { "description" : "1.100 dobrões", "displayName" : "Baú de Dobrões", "locale" : "pt_BR" },
+        { "description" : "1,100 doubloons", "displayName" : "Chest of Doubloons", "locale" : "en_US" },
+        { "description" : "1.100 doblones", "displayName" : "Baúl de Doblones", "locale" : "es_ES" }
       ],
       "productID" : "dobroes_bau",
       "referenceName" : "Baú de Dobrões",
@@ -31,7 +35,9 @@
       "familyShareable" : false,
       "internalID" : "6A000003",
       "localizations" : [
-        { "description" : "3.000 dobrões", "displayName" : "Cofre de Dobrões", "locale" : "pt_BR" }
+        { "description" : "3.000 dobrões", "displayName" : "Cofre de Dobrões", "locale" : "pt_BR" },
+        { "description" : "3,000 doubloons", "displayName" : "Strongbox of Doubloons", "locale" : "en_US" },
+        { "description" : "3.000 doblones", "displayName" : "Caja fuerte de Doblones", "locale" : "es_ES" }
       ],
       "productID" : "dobroes_cofre",
       "referenceName" : "Cofre de Dobrões",
@@ -42,7 +48,9 @@
       "familyShareable" : false,
       "internalID" : "6A000004",
       "localizations" : [
-        { "description" : "6.500 dobrões", "displayName" : "Tesouro do Almirante", "locale" : "pt_BR" }
+        { "description" : "6.500 dobrões", "displayName" : "Tesouro do Almirante", "locale" : "pt_BR" },
+        { "description" : "6,500 doubloons", "displayName" : "Admiral's Treasure", "locale" : "en_US" },
+        { "description" : "6.500 doblones", "displayName" : "Tesoro del Almirante", "locale" : "es_ES" }
       ],
       "productID" : "dobroes_tesouro",
       "referenceName" : "Tesouro do Almirante",

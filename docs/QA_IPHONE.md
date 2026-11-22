@@ -234,16 +234,18 @@ Fim do grupo E: o QA apaga a amizade com o QA01 e os tokens de teste.
 | ID | Preparar | Passos | Esperado | Resultado |
 |---|---|---|---|---|
 | DOBIOS-04 | Conta de testador/demonstração, **0.45.2** | 1. Abra a Loja. 2. No convite de amigo marque Ranqueada. | Abas Cascos, Camuflagens e Habilidades, **sem Dobrões**; nenhum texto com "beta", "teste fechado" ou "Google Play"; sem Prêmio Beta | |
-| DOBIOS-01 | Conta que **não** é testador: a **QA03** (o QA confere `beta_eligible` dela) | 1. Loja → aba **Dobrões**. 2. Espere 10 s. | Mostra **"A compra de dobrões chega em breve."**. **Nunca** em branco nem preso em "Abrindo o cofre…" | |
+| DOBIOS-01 | **Vale só até a 0.45.1** (substituído pelo DOBIOS-04 na 0.45.2 e pelo DOBIOS-28 na 0.47.0). Conta que **não** é testador: a **QA03** | 1. Loja → aba **Dobrões**. 2. Espere 10 s. | Mostra **"A compra de dobrões chega em breve."**. **Nunca** em branco nem preso em "Abrindo o cofre…" | |
 | DOBIOS-02 | Conta **principal** (testador) com o Prêmio Beta ligado (`beta_store_enabled` já está `true`; o QA confere `beta_eligible` da conta) | 1. Aba Dobrões. 2. Toque para pegar o **Prêmio Beta**. 3. Toque de novo no mesmo dia. | Só o cartão do Prêmio (nenhum pacote pago); ao pegar, aviso **"+N"** e o saldo sobe; de novo no mesmo dia mostra o retorno à meia-noite | |
 | DOBIOS-03 | Qualquer conta | 1. **Modo avião**. 2. Aba Dobrões. 3. Desligue o modo avião. 4. **Tentar de novo**. | "Não consegui abrir o cofre…" com **Tentar de novo**; com a rede, carrega | |
 
 **Na 0.45.2 (#118) DOBIOS-01 a 03 não se aplicam: a aba Dobrões some no iPhone.**
 
-**#65 (StoreKit, compras reais) não tem caso aqui:** continua na Fila e **não há compra no iPhone nesta versão**.
-Pré-requisitos antes de testar: aprovar a stack (StoreKit 2 + App Store Server API); Paid Apps Agreement, impostos e
-conta bancária no App Store Connect; chave In-App Purchase (.p8) no Supabase; 4 consumíveis iguais aos da Play
-(Bolsa, Baú, Cofre, Tesouro); sandbox tester. Quando houver build, este arquivo ganha um grupo novo.
+**#65 (StoreKit, compras reais):** a ponte e as Edges existem desde a 0.46.0 e a aba só abre com a flag
+`real_billing_ios_enabled` ou para a conta de revisão (`beta_eligible` + `beta_store_enabled`). Na 0.47.0 (#122) os
+casos são os **DOBIOS-28 a 35** e o **IOS-SIM-04** do `docs/QA_TEST_PLAN.md` (compra em Sandbox com a conta de revisão,
+lista vazia com "Tentar de novo", estorno por notificação de teste). Pré-requisitos no App Store Connect: Paid Apps
+Agreement, impostos e banco ativos; chave In-App Purchase (.p8) e secrets no Supabase; os 4 consumíveis anexados à versão;
+sandbox tester. Nenhum caso liga a flag: quem liga é o John.
 
 ## G. Anúncios · issue #40
 
@@ -292,7 +294,7 @@ instale a 0.43.4; o grupo H fica para a **próxima** versão.
 | #62 Aba Dobrões no iPhone | DOBIOS-01 a 03 | Liberado para testes | **Em produção** |
 | #40 Anúncios para todos | ADS-18 (iPhone); o resto no Android | Liberado para testes | Só o lado do iPhone fecha aqui; o cartão espera o QA do Android |
 | #46 Atualização ao voltar | UPD-10 a 12 (Android pela Play e iPhone) | Liberado para testes | **Em produção** (o Android pode ir antes: a 0.43.4 já está na Play) |
-| #65 StoreKit | DOBIOS-21 a 25 (e 10 a 20 no servidor) | Fila | A 0.46.0 chega com a vitrine **desligada**: só DOBIOS-21 vale até ligar a flag; 22 a 24 só em Sandbox/TestFlight com a flag ligada |
+| #65 StoreKit | DOBIOS-21 a 35 (e 10 a 20 no servidor), IOS-SIM-04 | Fila | A 0.47.0 (#122) chega com a vitrine **desligada** para o público: DOBIOS-21 e 28 valem já; 22, 23, 24, 29 a 35 só em Sandbox/TestFlight com a conta de revisão ou a flag ligada |
 
 Regra: o cartão só vai para Em produção se **todos** os casos dele estiverem "Passou" ou com falha já explicada como bug
 conhecido (#72, #70 e #71) que o PO aceitou. Falha nova vira bug na Fila. Caso só de iPhone que o John não conseguir

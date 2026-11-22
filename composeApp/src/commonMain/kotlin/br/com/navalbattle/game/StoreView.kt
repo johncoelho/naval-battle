@@ -32,6 +32,13 @@ fun dobroesAisleDisponivel(platform: String, iosVendaAberta: Boolean = false): B
  */
 fun vitrineIosVisivel(storeKitPronto: Boolean, realIosEnabled: Boolean): Boolean = storeKitPronto && realIosEnabled
 
+/**
+ * Lista de produtos do StoreKit vazia no iPhone (#122): a Apple pode não devolver os produtos (rede, produto sem
+ * estar pronto no App Store Connect). A aba mostra "indisponível" e o botão "Tentar de novo", nunca tela em branco
+ * nem preço de reserva (preço que não vem da Apple fere 2.3.10 e 3.1.1). No Android segue só o aviso.
+ */
+fun tentarDeNovoLista(platform: String, produtos: Int): Boolean = platform == "ios" && produtos == 0
+
 /** O que a aba Dobrões mostra (#62), em ordem de prioridade. */
 enum class DoubloonAisleView { SIGN_IN, LOADING, FAILED, CLOSED, PREMIO, JA_PEGOU, VITRINE }
 

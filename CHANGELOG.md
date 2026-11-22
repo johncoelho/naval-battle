@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.47.0] — 2026-11-21 · iPhone: ajustes da compra de dobrões e capturas com o StoreKit Configuration de verdade (#122, fatia da #65)
+
+App 0.47.0 (versionCode 133). Refs #122, #65. **Sem dependência nova** (StoreKit 2 e Edges já aprovados em 18/11). Android: nada visível. Flags desligadas: `real_billing_ios_enabled` não muda; quem liga é o John.
+
+### Adicionado
+- `DoubloonStore.kt`: `Modifier.testTag("pack_<id>")` em cada cartão de pacote (alvo estável para o teste de UI). Lista StoreKit vazia no iPhone mostra "Dobrões indisponíveis agora…" **e o botão "Tentar de novo"**, que relê a lista (`loadDobroesStore()`); decisão pura `tentarDeNovoLista(platform, produtos)` em `game/StoreView.kt`. No Android segue só o aviso.
+- Novidades: `RN_V0470` (pt, en, es), neutra: sem iPhone, compra, beta nem Android. Notas da Play neutras.
+- Testes: `StoreViewTest` (botão só no iPhone com 0 produtos), `StoreKitFlowTest` (lista com 0, 3 e 4 produtos); `IosVisibleTextTest` já varre o texto novo.
+
+### CI / tools (QA iOS, sem tocar o app da loja)
+- **Alvo de UI `iosAppShots` dentro de `iosApp.xcodeproj`** (só acréscimos no `project.pbxproj`; o esquema `iosApp` e o archive do `ios-release` não mudam) com esquema compartilhado **`iosApp-Shots`** e plano `iosApp/iosApp-Shots.xctestplan` (pt-BR, região BR, `tools/ios-qa/NavalIAP.storekit` como StoreKit Configuration). O teste usa `XCUIApplication()` sem bundle id para o Xcode injetar a configuração no processo do app (antes ela ficava num projeto à parte e não valia para o app instalado).
+- **Portão antes de qualquer captura:** o teste espera na vitrine o texto `R$ 4,90` (vem do `.storekit`); se aparecer `$0,99` (preço do App Store Connect), falha e despeja a árvore, sem credenciais. Também barra "beta", "android", "google play" e "restaurar" na vitrine.
+- `ios-qa.yml` (modo `capturas-iap`): `xcodebuild test -scheme iosApp-Shots -testPlan iosApp-Shots` no simulador, sessão da conta de revisão semeada por `tools/ios-qa/semear-sessao.py` (login pela API, sem digitar), laço único de avisos (FECHAR do Diário, VALEU, AGORA NÃO, ENTENDI, alerta do sistema) trazido da branch `esteira/issue-65-shots`. Sai o bloco de `QA_STOREKIT`/StoreKitTest/rpath e o roteiro `captura-iap.yaml`. `QAStoreKit` do `iOSApp.swift` fica como plano B.
+- `NavalIAP.storekit` ganha en-US e es (mesmos IDs).
+
+### Docs
+- QA: DOBIOS-28 a 35, IOS-SIM-04 com o portão, DOBIOS-21/22/27 na 0.47.0; `QA_IPHONE.md` (DOBIOS-01 e a nota da #65 estavam velhas); `BUILD.md`, README e HISTORY.
+
 ## [Docs/esteira] — 2026-11-21 · PM não executa: tabela de papéis na esteira
 
 Só docs: sem versão do app, sem banco, sem flag, sem workflow. [skip ci].

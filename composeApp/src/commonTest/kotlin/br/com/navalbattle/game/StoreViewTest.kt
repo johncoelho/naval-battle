@@ -121,6 +121,14 @@ class StoreViewTest {
     }
 
     @Test
+    fun listaVaziaNoIphoneOfereceTentarDeNovoENoAndroidNao() {
+        assertEquals(true, tentarDeNovoLista("ios", 0))
+        assertEquals(false, tentarDeNovoLista("ios", 3))
+        assertEquals(false, tentarDeNovoLista("ios", 4))
+        assertEquals(false, tentarDeNovoLista("android", 0))
+    }
+
+    @Test
     fun semContaPedeParaEntrar() {
         assertEquals(DoubloonAisleView.SIGN_IN, aisle(signedIn = false, loaded = false))
     }

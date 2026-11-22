@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
@@ -36,6 +37,7 @@ import br.com.navalbattle.design.drawDoubloonPack
 import br.com.navalbattle.game.DoubloonAisleView
 import br.com.navalbattle.game.DoubloonPack
 import br.com.navalbattle.game.doubloonAisleView
+import br.com.navalbattle.game.tentarDeNovoLista
 import br.com.navalbattle.game.PremioState
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -109,7 +111,7 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -
             Text(t(K.DOUBLOON_BETA_CHARGE), style = NavalType.mono, color = Naval.amberStrong, textAlign = TextAlign.Center)
             Gap(8)
         }
-        Vitrine(state, onPick)
+        Vitrine(state, onPick, onRetry = { scope.launch { state.loadDobroesStore() } })
     }
 
     state.dobroesNotice?.let { HudLabel(it, Naval.amberStrong) }
@@ -186,11 +188,16 @@ private fun PremioCard(onClaim: () -> Unit) {
 
 /** Vitrine paga: os quatro pacotes com o preço que a Play devolve. */
 @Composable
-private fun Vitrine(state: AppState, onPick: (DoubloonPack) -> Unit) {
+private fun Vitrine(state: AppState, onPick: (DoubloonPack) -> Unit, onRetry: () -> Unit) {
     val products: List<StoreProduct> = state.dobroesProducts
     if (products.isEmpty()) {
         InfoCard {
             Text(t(K.DOUBLOON_UNAVAILABLE), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+            // iPhone (#122): a Apple pode não ter devolvido os produtos; o botão relê a lista em vez de deixar a aba parada
+            if (tentarDeNovoLista(platformName, products.size)) {
+                Gap(12)
+                SecondaryButton(t(K.TRY_AGAIN)) { onRetry() }
+            }
         }
         return
     }
@@ -216,6 +223,7 @@ private fun PackCard(pack: DoubloonPack, price: String?, busy: Boolean, modifier
     val best = pack == DoubloonPack.TREASURE
     Column(
         modifier
+            .testTag("pack_${pack.code}")
             .alpha(if (price == null) 0.45f else 1f)
             .background(Naval.surface)
             .border(if (best) 2.dp else 1.dp, if (best) Naval.amberStrong else Naval.amber)
