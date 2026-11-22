@@ -21,12 +21,12 @@
 ^android_live$
 
 # --- 2a rodada (veredito do Tech Lead sobre o 2o relatorio; formas estreitas) ---
-# Skia (motor grafico do Compose): simbolos e nomes exatos; aprovado pelo Tech Lead, #118
-\b_*ZN?\w*SkAndroidCodec\w*
-\bandroid_utils_clipAsRgn\b
-\bandroidFramework_\w+
-\bandroid_only_reset\b
-\bgetAndroidPixels\b
+# Skia (motor grafico do Compose): nomes mangled; sem barra-b porque o mangling cola digitos e letras (IZN14SkAndroidCodec, 29android_utils_);
+# \w*SkAndroidCodec\w* cobre getAndroidPixels e AndroidOptions da mesma palavra; aprovado pelo Tech Lead, #118
+\w*SkAndroidCodec\w*
+\d+android_utils_\w+
+\d+androidFramework_\w+
+\d+android_only_reset
 # Compose/lifecycle: caminhos de fonte (a extensao .kt e obrigatoria) e uma funcao de selecao de texto; aprovado pelo Tech Lead, #118
 \b[\w./-]+\.nonAndroid\.kt\b
 \b[\w./-]+\.android\.kt\b
@@ -34,6 +34,7 @@
 # kotlinx.coroutines (nenhum codigo nosso usa estes nomes: git grep em composeApp/src e iosApp vazio); aprovado pelo Tech Lead, #118
 \bkotlinx[./]coroutines[./]flow[./]\S*
 \bonSubscription\b
+onSubscription__at__kotlinx\.coroutines\.flow\.SharedFlow
 \bSubscribedFlowCollector\b
 \bSubscriptionCountStateFlow\b
 \bsubscriptionCount\b

@@ -40,4 +40,23 @@ confere("beta" not in todas_achadas, "a regra ^beta$ aprova a linha 'beta'")
 confere(scan.total(achados.get(r"android", {})) == 0, "android: tudo aprovado (so androidx)")
 confere(scan.total(aprovados.get(r"android", {})) == 2, "android: 2 aprovados")
 confere(scan.total(achados.get(r"google play", {})) == 1, "google play: 1 achado")
+
+# --- casos com a allowlist e a lista de termos REAIS (tools/) ---
+reais_termos = scan.regexes(os.path.join(aqui, "ios-forbidden-terms.txt"))
+reais_allow = scan.regexes(os.path.join(aqui, "ios-binary-allowlist.txt"))
+
+
+def estado(linha):
+    a, p, _ = scan.analisar([linha], reais_termos, reais_allow)
+    return "achado" if a else ("aprovado" if p else "limpo")
+
+
+confere(estado("__ZN10SkPixelRef18android_only_resetEiim") == "aprovado", "android_only_reset do Skia aprovado")
+confere(estado("L?NSt3__110__function6__funcIZN14SkAndroidCodec16getAndroidPixelsERK11SkImageInfoPvmPKNS2_14AndroidOptionsEE3$_0NS_9allocatorISA_EEFN7SkCodec6ResultES5_S6_mRKNSD_7OptionsEiEEE") == "aprovado", "SkAndroidCodec/getAndroidPixels aprovado")
+confere(estado("_kfun:kotlinx.coroutines.flow#onSubscription__at__kotlinx.coroutines.flow.SharedFlow<0:0>(kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.flow.FlowCollector<0:0>,kotlin.Unit>){0") == "aprovado", "onSubscription__at__ aprovado")
+confere(estado("__ZNK16SkNoPixelsDevice23android_utils_clipAsRgnEP8SkRegion") == "aprovado", "android_utils_clipAsRgn aprovado")
+confere(estado("__ZNK8SkCanvas25androidFramework_isClipAAEv") == "aprovado", "androidFramework_ aprovado")
+confere(estado("Google Play abre 23android_utils_clipAsRgn") == "achado", "Google Play junto de android_utils_ continua achado")
+confere(estado("android") == "aprovado", "linha pura android (ICU) aprovada")
+confere(estado("Entrar com Google Play e android") == "achado", "texto nosso com android/Google Play continua achado")
 sys.exit(0 if ok else 1)
