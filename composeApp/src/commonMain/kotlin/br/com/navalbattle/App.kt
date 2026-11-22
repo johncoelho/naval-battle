@@ -48,6 +48,8 @@ import br.com.navalbattle.data.isNewerVersion
 import br.com.navalbattle.data.DailyReminder
 import br.com.navalbattle.data.ReminderMessage
 import br.com.navalbattle.data.ReminderTexts
+import br.com.navalbattle.game.FirstMatchHook
+import br.com.navalbattle.game.HookAction
 import br.com.navalbattle.game.ProfileKeys
 import br.com.navalbattle.game.AwardFlushReport
 import br.com.navalbattle.game.SignOutDecision
@@ -280,6 +282,8 @@ private const val AGE_CHECKED_KEY = ProfileKeys.AGE_CHECKED_AT
 private const val REVIEW_LAST_KEY = ProfileKeys.REVIEW_LAST_ASK
 private const val REVIEW_COUNT_KEY = ProfileKeys.REVIEW_ASK_COUNT
 private const val REVIEW_STREAK_KEY = ProfileKeys.REVIEW_WIN_STREAK
+private const val HOOK_SEEN_KEY = ProfileKeys.HOOK_FIRST_BOT_SEEN
+private const val FUNNEL_FIRST_MATCH_KEY = ProfileKeys.FUNNEL_FIRST_MATCH
 private const val REVIEW_SETTLE_MS = 800L
 
 /** Espera da confirmação do Google depois do anúncio (#29): 10 consultas a cada 2 s, cerca de 20 s. */
@@ -688,8 +692,17 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
         // adversario virtual (#105): sair antes do fim e derrota (na ranqueada, o servidor aplica o Elo)
         botSession?.let { bs ->
-            if (match?.phase != Phase.RESULT && !botReported) uiScope?.launch { reportBotResultFor(bs, false) }
+            if (match?.phase != Phase.RESULT && !botReported) {
+                uiScope?.launch { reportBotResultFor(bs, false) }
+                logAbandonedFirstMatch(vsBot = true)
+                noteReviewDefeat()
+            }
         }
+        if (match?.opponent == Opponent.ONLINE && match?.phase != Phase.RESULT) {
+            logAbandonedFirstMatch(vsBot = false)
+            noteReviewDefeat()
+        }
+        firstMatchHookFor = null
         match = null
         guidedStep = null
         guidedReplay = false
@@ -755,6 +768,64 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             logFunnel(if (rankedUp) FunnelAction.REVIEW_REQUESTED_RANKUP else FunnelAction.REVIEW_REQUESTED_WIN)
             StoreReview.request {}
         }
+    }
+
+    // ---------------- gancho do fim da 1ª partida (#135) e funil (#137) ----------------
+
+    /** Partida cujo cartão do gancho está na tela de resultado (nula = nenhum). Marca gravada ao exibir. */
+    var firstMatchHookFor by mutableStateOf<Match?>(null)
+        private set
+
+    /** O "Desafio de amanhã" do cartão já foi tocado nesta exibição (o lembrete ficou ligado). */
+    var hookChallengeDone by mutableStateOf(false)
+        private set
+
+    /** O cartão está na tela: conta como popup aberto, então o pedido de avaliação e o check-in diário esperam. */
+    val firstMatchHookOpen: Boolean get() = firstMatchHookFor != null && screen == Screen.RESULT
+
+    /**
+     * Chamada pela tela de resultado ANTES de a partida entrar na carreira ([careerMatches] = partidas concluídas
+     * até aqui). Decide o gancho ([FirstMatchHook.shouldShow]) e conta o `first_match_end` do funil, uma vez por
+     * aparelho. [vsBot] só vale com o adversário virtual; [online] é partida contra humano pela internet.
+     */
+    fun onMatchResult(match: Match, careerMatches: Int, vsBot: Boolean, online: Boolean, victory: Boolean, abandoned: Boolean) {
+        if ((vsBot || online) && careerMatches == 0 && reviewPrefs.getInt(FUNNEL_FIRST_MATCH_KEY, 0) == 0) {
+            reviewPrefs.putInt(FUNNEL_FIRST_MATCH_KEY, 1)
+            logFunnel(FunnelAction.firstMatchEnd(vsBot, victory, abandoned))
+        }
+        val seen = reviewPrefs.getInt(HOOK_SEEN_KEY, 0) == 1
+        if (!FirstMatchHook.shouldShow(careerMatches, seen, vsBot, abandoned, isTestLabDevice())) return
+        reviewPrefs.putInt(HOOK_SEEN_KEY, 1)
+        hookChallengeDone = false
+        firstMatchHookFor = match
+        logFunnel(if (victory) FunnelAction.HOOK_SHOWN_WIN else FunnelAction.HOOK_SHOWN_LOSS)
+    }
+
+    /** Toque numa das ações do cartão: conta o evento (origem = resultado) e roda a ação. */
+    fun onHookAction(action: HookAction, victory: Boolean) {
+        when (action) {
+            HookAction.REMATCH -> {
+                logFunnel(if (victory) FunnelAction.HOOK_REMATCH_WIN else FunnelAction.HOOK_REMATCH_LOSS)
+            }
+            HookAction.CHALLENGE -> {
+                logFunnel(if (victory) FunnelAction.HOOK_CHALLENGE_WIN else FunnelAction.HOOK_CHALLENGE_LOSS)
+                // o "desafio de amanha" e o lembrete diario que ja existe: liga e pede a permissao agora, em contexto,
+                // depois do toque (no iPhone o cartao nem oferece a acao)
+                setReminder(true)
+                hookChallengeDone = true
+            }
+            HookAction.INVITE -> {
+                logFunnel(if (victory) FunnelAction.HOOK_INVITE_WIN else FunnelAction.HOOK_INVITE_LOSS)
+                logFunnel(FunnelAction.INVITE_SHARED_HOOK)
+            }
+        }
+    }
+
+    /** Conta um fim de partida abandonada (saiu no meio) como `first_match_end`, uma vez por aparelho e só com carreira zerada. */
+    private fun logAbandonedFirstMatch(vsBot: Boolean) {
+        if (profile.matches != 0 || reviewPrefs.getInt(FUNNEL_FIRST_MATCH_KEY, 0) != 0) return
+        reviewPrefs.putInt(FUNNEL_FIRST_MATCH_KEY, 1)
+        logFunnel(FunnelAction.firstMatchEnd(vsBot, won = false, abandoned = true))
     }
 
     // ---------------- partida na rede local ----------------
@@ -1744,7 +1815,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * eles (mesmas condições que cada popup usa para se mostrar).
      */
     private val otherPopupShowing: Boolean
-        get() = blockingPopupShowing || dailyPopupShowing
+        get() = blockingPopupShowing || dailyPopupShowing || firstMatchHookOpen
 
     /** Os popups que sempre têm a vez — o Diário de bordo espera eles saírem. */
     private val blockingPopupShowing: Boolean

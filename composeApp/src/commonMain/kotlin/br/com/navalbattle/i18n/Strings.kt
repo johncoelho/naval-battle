@@ -361,6 +361,39 @@ enum class K(val pt: String, val en: String, val es: String) {
     RESULT_XP_THIS_MATCH("+%s nesta partida", "+%s this battle", "+%s en esta partida"),
     RESULT_NEW_MATCH("Nova partida", "New match", "Nueva partida"),
     RESULT_REMATCH("Revanche", "Rematch", "Revancha"),
+    // gancho do fim da 1a partida contra o adversario virtual (#135): sem recompensa e sem a palavra "bot"
+    HOOK_WIN_TITLE("Vitória, comandante!", "Victory, commander!", "¡Victoria, comandante!"),
+    HOOK_WIN_BODY("Você afundou a frota inimiga.", "You sank the enemy fleet.", "Hundiste la flota enemiga."),
+    HOOK_LOSS_TITLE(
+        "Frota afundada. A guerra não acabou.",
+        "Fleet sunk. The war is not over.",
+        "Flota hundida. La guerra no ha terminado."
+    ),
+    HOOK_LOSS_BODY(
+        "O inimigo venceu esta. A próxima é sua.",
+        "The enemy won this one. The next is yours.",
+        "El enemigo ganó esta. La próxima es tuya."
+    ),
+    HOOK_CHALLENGE("Desafio de amanhã", "Tomorrow's challenge", "Desafío de mañana"),
+    HOOK_CHALLENGE_SUB_WIN("Novo mar, nova frota.", "New sea, new fleet.", "Nuevo mar, nueva flota."),
+    HOOK_CHALLENGE_SUB_LOSS(
+        "Volte amanhã e tente de novo.",
+        "Come back tomorrow and try again.",
+        "Vuelve mañana e inténtalo de nuevo."
+    ),
+    HOOK_CHALLENGE_DONE(
+        "Lembrete ligado: te aviso amanhã.",
+        "Reminder on: I will let you know tomorrow.",
+        "Recordatorio activado: te aviso mañana."
+    ),
+    HOOK_REMATCH("Revanche agora", "Rematch now", "Revancha ya"),
+    HOOK_INVITE("Chamar um amigo", "Invite a friend", "Invitar a un amigo"),
+    HOOK_INVITE_SUB_WIN("Mostre que você sabe jogar.", "Show them what you can do.", "Muestra que sabes jugar."),
+    HOOK_INVITE_SUB_LOSS(
+        "Convide alguém para a próxima.",
+        "Invite someone for the next one.",
+        "Invita a alguien a la próxima."
+    ),
     RESULT_REMATCH_WAITING("Aguardando o adversário aceitar…", "Waiting for the opponent to accept…", "Esperando a que el adversario acepte…"),
     RESULT_REMATCH_INVITE("%s quer uma revanche", "%s wants a rematch", "%s quiere la revancha"),
     RESULT_COMPARE("Comparativo", "Head to head", "Comparativa"),

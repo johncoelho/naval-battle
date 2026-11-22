@@ -75,6 +75,12 @@ internal object ProfileKeys {
     /** Vitórias seguidas para o pedido de avaliação (#136): zera em derrota; é do aparelho como a cota. */
     const val REVIEW_WIN_STREAK = "review_win_streak"
 
+    /** Gancho do fim da 1ª partida contra adversário virtual (#135) já exibido neste aparelho. */
+    const val HOOK_FIRST_BOT_SEEN = "hook_first_bot_seen"
+
+    /** O `first_match_end` do funil (#137) já foi contado neste aparelho: uma vez por instalação. */
+    const val FUNNEL_FIRST_MATCH = "funnel_first_match"
+
     /** Aviso de lançamento já visto pelo convidado ([launchNoticeKey] com id nulo): não volta ao sair. */
     const val LAUNCH_NOTICE_GUEST = "launch_notice_seen_guest"
 
@@ -83,7 +89,7 @@ internal object ProfileKeys {
         K_MUSIC, K_SFX, K_REMINDER, K_THEME_TRACK, K_CURRENCY_TIP, K_GUIDED_DONE, K_WELCOME_DONE,
         K_LAST_OPEN_DAY, K_RETURN_NOTICE_DAY, K_RETURN_BONUS_DAY, K_RETURN_PENDING_DAY,
         K_FEEDBACK_OPT_OUT, K_FEEDBACK_NEXT_AT, K_QUICK_OFFER, K_ACCEPT_INVITES, K_FRIEND_ONLINE_PUSH,
-        REVIEW_ASK_COUNT, LAUNCH_NOTICE_GUEST
+        REVIEW_ASK_COUNT, REVIEW_WIN_STREAK, HOOK_FIRST_BOT_SEEN, FUNNEL_FIRST_MATCH, LAUNCH_NOTICE_GUEST
     )
 
     /** O que fica como texto ao voltar a convidado. */

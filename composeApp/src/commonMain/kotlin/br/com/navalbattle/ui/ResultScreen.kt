@@ -78,6 +78,10 @@ fun ResultScreen(state: AppState, match: Match) {
         state.clearReviewCandidate()
         state.clearAdNotice(AdPlace.WIN)
         state.resetOnlineAward()
+        // fim da 1a partida: funil e gancho (#135, #137), ANTES de a partida entrar na carreira (registerMatch abaixo)
+        if (bot || online) {
+            state.onMatchResult(match, state.profile.matches, bot, online, victory, match.forfeitedBySelf)
+        }
         // números que o servidor confere para pagar a partida online (contra a IA não há dobrões)
         var onlineArgs: IntArray? = null
         if (match.opponent == Opponent.AI) {
@@ -293,7 +297,7 @@ fun ResultScreen(state: AppState, match: Match) {
         Gap(12)
         if (match.opponent.isNetwork() || bot) {
             // contra o adversario virtual a jornada e a da partida online (#112): revanche e "voltar ao convés" iguais
-            RematchSection(state, match)
+            if (state.firstMatchHookFor === match) FirstMatchHookCard(state, match, victory) else RematchSection(state, match)
         } else {
             PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
         }
@@ -562,7 +566,13 @@ private fun signed(value: Int): String = if (value > 0) "+$value" else value.toS
  * dois ficaria parado numa tela de posicionamento vazia esperando o outro.
  */
 @Composable
-private fun RematchSection(state: AppState, match: Match) {
+internal fun RematchSection(
+    state: AppState,
+    match: Match,
+    label: K = K.RESULT_REMATCH,
+    primary: Boolean = true,
+    onTap: () -> Unit = {}
+) {
     // cada transporte guarda o próprio estado de ligação (linkState pra LAN,
     // onlineLinkState pra internet) — usar sempre linkState fazia toda partida
     // online cair aqui achando que a ligação tinha caído, mesmo conectada
@@ -576,7 +586,8 @@ private fun RematchSection(state: AppState, match: Match) {
             HudLabel(t(if (state.opponentQuit) K.RESULT_OPPONENT_QUIT else K.RESULT_REMATCH_LOST_LINK), Naval.danger)
 
         state.rematchRequestedByMe ->
-            PrimaryButton(t(K.RESULT_REMATCH_WAITING), enabled = false) {}
+            if (primary) PrimaryButton(t(K.RESULT_REMATCH_WAITING), enabled = false) {}
+            else SecondaryButton(t(K.RESULT_REMATCH_WAITING), enabled = false) {}
 
         else -> {
             if (state.rematchRequestedByOpponent) {
@@ -586,7 +597,8 @@ private fun RematchSection(state: AppState, match: Match) {
                 )
                 Gap(8)
             }
-            PrimaryButton(t(K.RESULT_REMATCH)) { state.requestRematch() }
+            if (primary) PrimaryButton(t(label)) { onTap(); state.requestRematch() }
+            else SecondaryButton(t(label)) { onTap(); state.requestRematch() }
         }
     }
 }
