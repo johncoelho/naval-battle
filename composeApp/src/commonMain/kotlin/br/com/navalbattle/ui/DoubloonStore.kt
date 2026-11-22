@@ -116,7 +116,7 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -
         Vitrine(state, onPick, onRetry = { scope.launch { state.loadDobroesStore() } })
     }
 
-    state.dobroesNotice?.let { HudLabel(it, Naval.amberStrong) }
+    // o aviso da compra (cancelada, pendente, falha, "ja pegou") fica fixo no pe da Loja, fora da coluna rolavel (#118)
 
     // milhas náuticas também se compram com dobrões
     state.miles?.let { m ->
@@ -212,7 +212,8 @@ private fun Vitrine(state: AppState, onPick: (DoubloonPack) -> Unit, onRetry: ()
                     price = prices[pack.code],
                     busy = state.dobroesBusy,
                     modifier = Modifier.weight(1f),
-                    onClick = { onPick(pack) }
+                    // pacote sem preco da loja: o toque explica em vez de ficar mudo (#118)
+                    onClick = { if (prices[pack.code] == null) state.notifyPackUnavailable() else onPick(pack) }
                 )
             }
         }
@@ -229,7 +230,7 @@ private fun PackCard(pack: DoubloonPack, price: String?, busy: Boolean, modifier
             .alpha(if (price == null) 0.45f else 1f)
             .background(Naval.surface)
             .border(if (best) 2.dp else 1.dp, if (best) Naval.amberStrong else Naval.amber)
-            .clickable(enabled = price != null && !busy, onClick = onClick),
+            .clickable(enabled = !busy, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box(
