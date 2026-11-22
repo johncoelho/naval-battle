@@ -152,24 +152,41 @@ final class StoreShotsUITests: XCTestCase {
         guard element("Bolsa|Pouch").waitForExistence(timeout: 25) else {
             return fail("Aba Dobrões sem pacotes (vitrine fechada para a conta ou StoreKit sem produtos)")
         }
-        // PORTÃO: nenhuma captura antes de a vitrine mostrar o preço do .storekit (R$ 4,90). Se vier o preço da loja
-        // dos EUA ($0,99, produtos do App Store Connect), a configuração não entrou no processo do app: falha e despeja a árvore.
+        // PORTÃO (preço da Apple): nenhuma captura antes de a vitrine mostrar os 4 pacotes, cada um com preço
+        // formatado como moeda vindo do StoreKit ("$0.99" a "$7.99" da loja dos EUA do simulador, ou "R$"). Lista vazia,
+        // pacote sem preço ou "Tentar de novo" na tela: falha e despeja a árvore (sem credenciais), sem captura.
+        // A StoreKit Configuration do plano não é aplicada pelo xcodebuild (ensaio 11): o preço real da Apple é o que vale.
+        // O preço pode vir sozinho ou no mesmo label do nome (Compose junta os textos do cartão): conta os preços
+        // distintos achados em qualquer elemento, com `.*` ao redor, sem afrouxar a exigência de 4 nomes e 4 preços.
+        let precoToken = "(?:R\\$|US\\$|\\$)\\s?\\d{1,3}(?:[.,]\\d{3})*[.,]\\d{2}"
+        let precoPred = NSPredicate(format: "label MATCHES[c] %@", "(?s).*(\(precoToken)).*")
+        let precoRx = try NSRegularExpression(pattern: precoToken)
+        func precosDistintos() -> Set<String> {
+            var achados = Set<String>()
+            for e in app.descendants(matching: .any).matching(precoPred).allElementsBoundByIndex {
+                let l = e.label
+                for m in precoRx.matches(in: l, range: NSRange(l.startIndex..., in: l)) {
+                    if let r = Range(m.range, in: l) { achados.insert(String(l[r]).replacingOccurrences(of: " ", with: "")) }
+                }
+            }
+            return achados
+        }
+        let nomes = ["Bolsa|Pouch", "Baú|Chest|Baúl", "Cofre|Strongbox|Caja fuerte", "Tesouro do Almirante|Admiral.s Treasure|Tesoro del Almirante"]
         let portaoAte = Date().addingTimeInterval(40)
         var portaoOk = false
         while Date() < portaoAte {
-            if element("R\\$\\s?4,90").exists { portaoOk = true; break }
-            if element("\\$\\s?0[.,]99").exists { break }
+            let nomesOk = nomes.allSatisfy { element($0).exists }
+            if nomesOk && precosDistintos().count >= 4 { portaoOk = true; break }
             sleep(2)
         }
         guard portaoOk else {
             let vistos = app.staticTexts.allElementsBoundByIndex.prefix(80).map { $0.label }.filter { !$0.isEmpty }
-            print("PORTAO R$ 4,90 falhou. textos: \(vistos)")
+            print("PORTAO preco da Apple falhou. textos: \(vistos)")
             print("ARVORE: \(String(app.debugDescription.prefix(8000)))")
-            XCTFail("Portão: a vitrine não mostra R$ 4,90. StoreKit Configuration não foi aplicada ao app (ou a lista veio vazia)")
+            XCTFail("Portão: a vitrine não mostra os 4 pacotes com preço do StoreKit (lista vazia ou pacote sem preço)")
             return
         }
-        XCTAssertFalse(element("\\$\\s?0[.,]99").exists, "preço da loja dos EUA na vitrine: configuração StoreKit ausente")
-        XCTAssertTrue(element("R\\$\\s?49,90").exists, "preço de R$ 49,90 ausente")
+        XCTAssertFalse(element("Tentar de novo|Try again|Intentar de nuevo").exists, "vitrine com 'Tentar de novo': lista StoreKit vazia")
         XCTAssertFalse(element("beta|android|google play|restaurar|restore").exists, "texto proibido na vitrine")
         shot("iap-00-vitrine")
 

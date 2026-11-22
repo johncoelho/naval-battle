@@ -181,7 +181,7 @@ Telas grandes: AVD Pixel Tablet e Pixel 9 Pro Fold (API 36), mais o QA01 em retr
 | IOS-SIM-02 | P1 | `tools/ios-qa/local-controle.yaml`: 2 jogadores, posicionar, Confirmar | "Pass the device" aparece (controle positivo: o Maestro enxerga essa tela, então o IOS-SIM-01 vale) |
 | IOS-SIM-03 | P2 | Conferir o artefato `ios-qa-<run>` | Tem `qa.mp4`, prints e junit, mesmo com o job vermelho |
 
-| IOS-SIM-04 | P1 | `gh workflow run ios-qa.yml --ref main -f modo=capturas-iap` (secrets `IOS_REVIEW_*`) | Esquema `iosApp-Shots` (`xcodebuild test`): **portão** na vitrine: o teste só captura se aparecer **R$ 4,90** (preço do `tools/ios-qa/NavalIAP.storekit`); com **$0,99** (preço do App Store Connect) falha e despeja a árvore, sem captura. Verde: artefato com `iap-00-vitrine.png` e uma captura por produto, 1290x2796, pt-BR, sem "beta", Android, Google Play nem "Restaurar"; senha ausente de log e artefato (#122) |
+| IOS-SIM-04 | P1 | `gh workflow run ios-qa.yml --ref main -f modo=capturas-iap` (secrets `IOS_REVIEW_*`) | Esquema `iosApp-Shots` (`xcodebuild test`): **portão** na vitrine: o teste só captura com os 4 pacotes (Bolsa, Baú, Cofre, Tesouro do Almirante) cada um com **preço da Apple** formatado como moeda (StoreKit real: "$0.99" a "$7.99" ou "R$"); lista vazia, pacote sem preço ou "Tentar de novo" falham e despejam a árvore, sem captura. Verde: artefato com `iap-00-vitrine.png` e uma captura por produto, 1290x2796, pt-BR, sem "beta", Android, Google Play nem "Restaurar"; senha ausente de log e artefato (#122) |
 
 ### 6a. Aviso de retorno e prêmio de retorno (#42)
 

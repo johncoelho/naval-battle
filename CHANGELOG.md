@@ -9,6 +9,14 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## CI — 2026-11-21 · Capturas com o preço real da Apple (#122)
+
+Sem App x.y.z (`[skip ci]`, sem subir versão): só teste e docs. O ensaio 11 do `ios-qa` mostrou que o `xcodebuild test` não aplica a StoreKit Configuration do plano `iosApp-Shots`: a vitrine veio com $0.99, $1.99, $3.99 e $7.99 (produtos do App Store Connect na loja dos EUA do simulador). Decisão do PM: seguir com o preço real do StoreKit, que é o que a Apple precisa ver.
+
+### Alterado
+- `StoreShotsUITests.swift`: o portão exige os 4 pacotes (Bolsa, Baú, Cofre, Tesouro do Almirante) cada um com preço formatado como moeda; falha se a lista vier vazia, sem preço ou com "Tentar de novo". Mantém a barra de "beta", "android", "google play" e "restaurar", as 5 capturas e o 1290x2796.
+- Docs: `QA_TEST_PLAN` (IOS-SIM-04), `BUILD.md`, `tools/ios-qa/README.md`, HISTORY e MEMORY.
+
 ## [0.47.0] — 2026-11-21 · iPhone: ajustes da compra de dobrões e capturas com o StoreKit Configuration de verdade (#122, fatia da #65)
 
 App 0.47.0 (versionCode 133). Refs #122, #65. **Sem dependência nova** (StoreKit 2 e Edges já aprovados em 18/11). Android: nada visível. Flags desligadas: `real_billing_ios_enabled` não muda; quem liga é o John.
@@ -20,7 +28,7 @@ App 0.47.0 (versionCode 133). Refs #122, #65. **Sem dependência nova** (StoreKi
 
 ### CI / tools (QA iOS, sem tocar o app da loja)
 - **Alvo de UI `iosAppShots` dentro de `iosApp.xcodeproj`** (só acréscimos no `project.pbxproj`; o esquema `iosApp` e o archive do `ios-release` não mudam) com esquema compartilhado **`iosApp-Shots`** e plano `iosApp/iosApp-Shots.xctestplan` (pt-BR, região BR, `tools/ios-qa/NavalIAP.storekit` como StoreKit Configuration). O teste usa `XCUIApplication()` sem bundle id para o Xcode injetar a configuração no processo do app (antes ela ficava num projeto à parte e não valia para o app instalado).
-- **Portão antes de qualquer captura:** o teste espera na vitrine o texto `R$ 4,90` (vem do `.storekit`); se aparecer `$0,99` (preço do App Store Connect), falha e despeja a árvore, sem credenciais. Também barra "beta", "android", "google play" e "restaurar" na vitrine.
+- **Portão antes de qualquer captura:** o teste espera na vitrine os 4 pacotes, cada um com o preço do StoreKit (ver "CI — 21/11" acima: o `.storekit` do plano não é aplicado e vale o preço real da Apple); lista vazia ou sem preço falha e despeja a árvore, sem credenciais. Também barra "beta", "android", "google play" e "restaurar" na vitrine.
 - `ios-qa.yml` (modo `capturas-iap`): `xcodebuild test -scheme iosApp-Shots -testPlan iosApp-Shots` no simulador, sessão da conta de revisão semeada por `tools/ios-qa/semear-sessao.py` (login pela API, sem digitar), laço único de avisos (FECHAR do Diário, VALEU, AGORA NÃO, ENTENDI, alerta do sistema) trazido da branch `esteira/issue-65-shots`. Sai o bloco de `QA_STOREKIT`/StoreKitTest/rpath e o roteiro `captura-iap.yaml`. `QAStoreKit` do `iOSApp.swift` fica como plano B.
 - `NavalIAP.storekit` ganha en-US e es (mesmos IDs).
 
