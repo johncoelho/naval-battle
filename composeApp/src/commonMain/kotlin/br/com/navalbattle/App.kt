@@ -789,6 +789,8 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * aparelho. [vsBot] só vale com o adversário virtual; [online] é partida contra humano pela internet.
      */
     fun onMatchResult(match: Match, careerMatches: Int, vsBot: Boolean, online: Boolean, victory: Boolean, abandoned: Boolean) {
+        // cartao da partida anterior nunca fica velho (revanche): so este caminho volta a exibi-lo
+        firstMatchHookFor = null
         if ((vsBot || online) && careerMatches == 0 && reviewPrefs.getInt(FUNNEL_FIRST_MATCH_KEY, 0) == 0) {
             reviewPrefs.putInt(FUNNEL_FIRST_MATCH_KEY, 1)
             logFunnel(FunnelAction.firstMatchEnd(vsBot, victory, abandoned))

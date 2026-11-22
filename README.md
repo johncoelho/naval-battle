@@ -771,7 +771,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   (`security_invoker`, semana de Brasília, `interno = false`, célula menor que `activity_min_cell` (5) anulada, sem linha de total):
   `funnel_eventos_semanais`, `funnel_convites_semanais` (lê `referrals`) e `funnel_salas_fim_semanais` (lê `online_matches`; retroativas, valem
   para todas as versões). Convidado e aparelho offline: o app não chama. App: `data/Funnel.kt` (`FunnelAction`, `Funnel.log`), `CloudApi.logFunnelEvent`
-  e `AppState.logFunnel`. Ensaio: `supabase/tests/funnel_ensaio.sql`. Inventário na linha "Contadores de uso" de `site/privacy.html`.
+  e `AppState.logFunnel`. Ensaio: `supabase/tests/funnel_ensaio.sql`. Inventário na linha "Contadores de uso" de `site/privacy.html`. Limites conhecidos: a origem `hook` de `store_viewed` está **reservada** (sem emissor); `push_opened` só existe no Android; `first_match_end` conta também o abandono na fase de posicionamento e gasta a marca do aparelho; convidado (sem sessão) é descartado (evento perdido). Follow-up (não feito): o botão "Compartilhar o jogo" dos Ajustes no iPhone não faz nada (`shareStoreListing` vazio) e já conta `invite_shared/settings_store` lá.
 - Segurança entre jogadores (`supabase/safety.sql`, #58): `player_blocks`, `player_reports`, `name_terms`/`name_allow`, `name_resets`, `moderation_push_log` e
   `profiles.suspended_until`. Filtro de nome no servidor (`name_is_offensive`, que nunca dá erro: mantém o nome anterior, para o app antigo não perder a carreira);
   bloqueio nos dois sentidos dentro da política de leitura das salas, de `join_online_match`, `find_quick_offer`, `search_commander` e das políticas de convite e

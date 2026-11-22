@@ -447,6 +447,7 @@ view `funnel_eventos_semanais` não a mostra. Evidência só em contagem; nunca 
 | HOOK-07 | P2 | Sair no meio da 1ª partida contra o adversário virtual | Sem cartão; `first_match_end`/`bot_abandon` sobe 1 uma vez só por aparelho |
 | HOOK-08 | P2 | Textos em PT, EN e ES | Nenhum texto do cartão usa a palavra "bot" nem promete valor de recompensa |
 | HOOK-09 | P1 | iPhone: 1ª partida contra o adversário virtual | Cartão só com Revanche e, com conta, Chamar um amigo; **nenhum** pedido de permissão de notificação novo; `ios_live` não muda |
+| HOOK-10 | P1 | Terminar a 1ª partida (cartão aparece), tocar "Revanche agora" e, na revanche, terminar a partida | Sem cartão na 2ª partida; ao voltar ao menu o pedido de avaliação e o check-in diário não ficam travados (`firstMatchHookOpen` falso) |
 | REV-01 | P1 | Android: vitória nº 1 e nº 2 seguidas (a 2ª com 2 partidas concluídas) e voltar ao menu sem popup | Pedido de avaliação sai (a Play pode não mostrar o diálogo); `review_requested`/`win` sobe 1 |
 | REV-02 | P1 | Vitória seguida de derrota e de vitória | Não pede (a derrota zera a sequência); com 3 vitórias na carreira pede |
 | REV-03 | P1 | 1ª partida da conta, mesmo vencendo | Nunca pede na 1ª partida |

@@ -75,7 +75,7 @@ fun FirstMatchHookCard(state: AppState, match: Match, victory: Boolean) {
                     val tap: () -> Unit = {
                         state.onHookAction(HookAction.INVITE, victory)
                         scope.launch {
-                            // com conta: o texto e o codigo de convite de sempre (sem valor de premio); sem conta, o link da loja
+                            // com conta: o texto e o codigo de convite de sempre (o texto compartilhado com a tela Amigos cita dobroes sem valor; a recompensa existe, mas so paga se o amigo terminar a 1a partida online, 1 por dia, com teto); sem conta, o link da loja
                             if (signedIn) state.loadReferralCode()
                             val code = state.referralCode
                             if (signedIn && code != null) shareText(referralShareText(code, I18n.lang)) else shareStoreListing()
