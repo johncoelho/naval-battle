@@ -92,8 +92,22 @@ final class ReviewRehearsalUITests: XCTestCase {
     private let ctaPasse = "Entrar com [0-9]|Join with [0-9]|Entrar con [0-9]|Fazer upgrade com|Upgrade with|Mejorar con"
     private let popupsDoPasse = "Dobrões insuficientes|Not enough doubloons|Doblones insuficientes|Tudo certo|All set|Todo listo|Sem conexão|No connection|Sin conexión|Não deu certo|That didn.t work|No funcionó"
 
+    /// "Primeira missão" (COMEÇAR / PULAR): sempre PULAR, nunca COMEÇAR (iniciaria o tutorial). Com o app 0.47.1 ela cede a vez ao Passe;
+    /// aqui fecha se aparecer, para não cobrir o que o ensaio toca.
+    private func pularPrimeiraMissao() {
+        for _ in 0..<3 where existe("Primeira missão|First mission|Primera misión") {
+            let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(PULAR|Skip|Saltar)[ !.]*")
+            let b = app.buttons.matching(p).firstMatch
+            guard b.exists else { break }
+            shotSeguro("passe-primeira-missao")
+            b.tap()
+            sleep(2)
+        }
+    }
+
     private func ensaioPasse() {
         let semSaldo = estado == "sem-saldo"
+        pularPrimeiraMissao()
         guard abrirPasse() else {
             falhar("Passe", "o popup do Passe não abriu (conta sem temporada?)")
             return
@@ -115,6 +129,7 @@ final class ReviewRehearsalUITests: XCTestCase {
 
         let insuficiente = "Dobrões insuficientes|Not enough doubloons|Doblones insuficientes"
         let sucesso = "Tudo certo|All set|Todo listo"
+        pularPrimeiraMissao()
         let r = tocarEEsperar("Passe: CTA de entrada (\(estado))", ctaPasse, esperado: semSaldo ? insuficiente : sucesso, estrito: true)
         if r == nil { fecharAvisosDoPasse(); return }
         if semSaldo {
@@ -425,7 +440,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         ]
         var vazios = 0
         var ciclos = 0
-        while ciclos < 14 && vazios < 2 {
+        while ciclos < 8 && vazios < 2 {
             ciclos += 1
             var feito = false
             for r in ["Allow", "Permitir"] where springboard.buttons[r].exists {
@@ -523,7 +538,9 @@ final class ReviewRehearsalUITests: XCTestCase {
     private func shotSeguro(_ nome: String) -> String? {
         if folhaDoSistema() == .login { return nil }
         let png = XCUIScreen.main.screenshot().pngRepresentation
-        let arquivo = "\(nome).png"
+        // nome do arquivo sempre ASCII (sem acento): o artefato precisa abrir em qualquer sistema
+        let limpo = String(nome.folding(options: .diacriticInsensitive, locale: nil).filter { $0.isASCII })
+        let arquivo = "\(limpo).png"
         do { try png.write(to: URL(fileURLWithPath: outDir).appendingPathComponent(arquivo)) } catch { return nil }
         return arquivo
     }
@@ -536,7 +553,7 @@ final class ReviewRehearsalUITests: XCTestCase {
     private func falhar(_ nome: String, _ motivo: String) {
         passo += 1
         falhas.append("\(nome): \(motivo)")
-        let png = shotSeguro("falha-\(passo)-" + nome.lowercased().filter { $0.isLetter || $0.isNumber })
+        let png = shotSeguro("falha-\(passo)-" + nome.lowercased().filter { $0.isASCII && ($0.isLetter || $0.isNumber) })
         registrarArvore("\(nome): \(motivo)")
         linhas.append("| \(passo) | \(nome) | - | **FALHA**: \(motivo) | - | \(png ?? "-") |")
         XCTFail("\(nome): \(motivo)")

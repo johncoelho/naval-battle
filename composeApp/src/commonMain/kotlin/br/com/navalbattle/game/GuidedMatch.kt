@@ -16,6 +16,16 @@ fun nextGuidedStep(current: GuidedStep, event: GuidedEvent): GuidedStep = when {
     else -> current
 }
 
+/**
+ * A "Primeira missão" só aparece no menu, sem partida e SEM outro popup do Passe na tela (#118). Antes ela era desenhada por cima do
+ * Passe de Temporada (ordem de composição) e o botão "Entrar com N dobrões" ficava atrás de um popup que o revisor da Apple não esperava;
+ * agora o Passe tem a vez, e a missão volta quando ele fecha ("Agora não" ou OK).
+ */
+fun guidedOfferVisible(
+    offer: Boolean, onMenu: Boolean, hasMatch: Boolean,
+    seasonPopup: Boolean, seasonEnd: Boolean, rankedLocked: Boolean, seasonResult: Boolean
+): Boolean = offer && onMenu && !hasMatch && !seasonPopup && !seasonEnd && !rankedLocked && !seasonResult
+
 /** Oferece a guiada só a quem nunca jogou (0 partidas) e ainda não a fez nem pulou. */
 fun shouldOfferGuided(matchesPlayed: Int, guidedDone: Boolean): Boolean = matchesPlayed <= 0 && !guidedDone
 
