@@ -9,6 +9,21 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.47.2] — 2026-11-22 · O jogo abre no idioma do aparelho (#131)
+
+App 0.47.2 (versionCode 135). Refs #131 (a #130 foi fechada como duplicada). **Sem dependência nova, sem banco.** Só vale para quem **não tem idioma gravado** (instalação nova ou que nunca trocou o idioma); quem escolheu nos Ajustes ou veio da nuvem com `lang_code` mantém a escolha. Sobe depois da 0.47.1.
+
+### Corrigido
+- Instalação nova abria sempre em português, também para jogador dos EUA e do México. Agora a primeira abertura usa o idioma do aparelho: `pt`, `en` e `es` direto (es-MX, es-419 e es-ES viram espanhol; pt-BR e pt-PT, português); **qualquer outro idioma abre em inglês**. O idioma detectado é gravado na hora, então a detecção nunca sobrescreve uma troca feita depois nos Ajustes.
+
+### Adicionado
+- `expect fun deviceLanguage()` (`i18n/DeviceLanguage.kt`): `Locale.getDefault()` no Android, `NSLocale.preferredLanguages` no iPhone. `Lang.fromDevice` e `Lang.initial` (função pura) escolhem o idioma; `Profile` usa só sem `K_LANG` gravado.
+- `Info.plist`: `CFBundleLocalizations` (pt, en, es), para o iPhone informar o idioma do jogo.
+- `DeviceLanguageTest` (`commonTest`): pt, en, es, es-MX, es-419, es-Latn-MX, fr, zh-Hans-CN, vazio e nulo; idioma gravado manda sobre o aparelho. Casos SET-08 a SET-15 no `docs/QA_TEST_PLAN.md`.
+
+### Fora do escopo
+- Notificações push de convite e amizade seguem em português (texto gerado no banco); issue separada.
+
 ## [0.47.1] — 2026-11-22 · Em definitivo: Passe com resposta visível, nada de Google Play no binário do iPhone e ensaio de revisão (#118)
 
 App 0.47.1 (versionCode 134). Refs #118. A Apple recusou a 0.47.0 (iPad Air 11" M3, iPadOS 27.2.1) por **2.1(b)** ("Comprar Passe" não respondia) e **2.3.10** (o binário citava Google Play). Causa raiz: só corrigíamos o que a Apple citava e nunca rodávamos o que o revisor roda. **Sem dependência nova, sem banco.** **Muda também no Android** (além do Passe): o aviso da compra de pacote (cancelada, pendente, falha) sai do fim da coluna rolável e fica fixo no pé da Loja; pacote sem preço da loja agora avisa "indisponível" ao toque; `FLEET_GHO_SUB` (pt) "baixa assinatura" virou "quase não aparecem no radar"; a medalha de testador some só no iPhone. Textos de Google Play/beta do Android idênticos (travados por teste). **Swift ainda não rodou no CI: o primeiro ensaio e a primeira varredura estão pendentes** (o `ReviewRehearsalUITests.swift` nunca foi compilado; o limiar de rótulos e as heurísticas se calibram no 1º run).
