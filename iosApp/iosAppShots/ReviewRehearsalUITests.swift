@@ -62,9 +62,20 @@ final class ReviewRehearsalUITests: XCTestCase {
     func testEnsaioDeRevisao() throws {
         XCTAssertFalse(terms.isEmpty, "lista de termos proibidos não carregada (TERMS_FILE)")
         XCTAssertTrue(["sem-saldo", "com-saldo"].contains(estado), "ESTADO deve ser sem-saldo ou com-saldo (recebido: \(estado))")
+        // alerta do sistema de notificações: é do SpringBoard (não está na árvore do app) e engole os toques; sempre "Não Permitir"
+        addUIInterruptionMonitor(withDescription: "notificacoes") { [weak self] alerta in
+            let p = NSPredicate(format: "label MATCHES[c] %@", "(?s).*(Não permitir|Don.t Allow|No permitir).*")
+            let b = alerta.buttons.matching(p).firstMatch
+            if b.exists { b.tap(); self?.diag.append("alerta de notificações negado pelo monitor"); return true }
+            return false
+        }
         app = XCUIApplication()
         app.launch()
         shotSeguro("00-abertura")
+        for _ in 0..<6 {
+            if negarNotificacao() { shotSeguro("03-apos-alerta-notificacoes"); break }
+            sleep(2)
+        }
 
         // sessão semeada pelo workflow: sem login, sem digitação
         guard element("Loja|Store|Tienda|Estaleiro|Shipyard").waitForExistence(timeout: 90) else {
@@ -130,7 +141,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         let insuficiente = "Dobrões insuficientes|Not enough doubloons|Doblones insuficientes"
         let sucesso = "Tudo certo|All set|Todo listo"
         pularPrimeiraMissao()
-        let r = tocarEEsperar("Passe: CTA de entrada (\(estado))", ctaPasse, esperado: semSaldo ? insuficiente : sucesso, estrito: true)
+        let r = tocarEEsperar("Passe: CTA de entrada (\(estado))", ctaPasse, esperado: semSaldo ? insuficiente : sucesso, estrito: true, id: "season_join_cta")
         if r == nil { fecharAvisosDoPasse(); return }
         if semSaldo {
             guard existe(insuficiente) else {
@@ -159,6 +170,7 @@ final class ReviewRehearsalUITests: XCTestCase {
 
     private func abrirPasse() -> Bool {
         for ciclo in 0..<12 {
+            negarNotificacao()
             if ciclo == 3 || ciclo == 8 { shotSeguro("passe-procura-\(ciclo)"); registrarArvore("Passe: ciclo \(ciclo) sem o CTA") }
             if ctaPorId() || existe(ctaPasse) || existe("Passe de Temporada|Season Pass|Pase de Temporada") && existe("Agora não|Not now|Ahora no|Fechar|Close|Cerrar") { return true }
             // o convite abre sozinho em conta sem passe; senão, o chip "Temporada de..." do menu
@@ -173,6 +185,19 @@ final class ReviewRehearsalUITests: XCTestCase {
 
     /// O CTA do Passe tem `testTag("season_join_cta")` no Compose (identificador estável, não depende do idioma).
     private func ctaPorId() -> Bool { app.descendants(matching: .any)["season_join_cta"].exists }
+
+    /// Alerta de notificações do sistema (SpringBoard): toca em "Não Permitir" / "Don't Allow". Devolve se havia o alerta.
+    @discardableResult
+    private func negarNotificacao() -> Bool {
+        let p = NSPredicate(format: "label MATCHES[c] %@", "(?s).*(Não permitir|Don.t Allow|No permitir).*")
+        for host in [springboard, app!] {
+            let b = host.alerts.buttons.matching(p).firstMatch
+            if b.exists { b.tap(); sleep(1); return true }
+            let solto = host.buttons.matching(p).firstMatch
+            if solto.exists && solto.isHittable { solto.tap(); sleep(1); return true }
+        }
+        return false
+    }
 
     private func fecharPasse() {
         _ = tocar("Fechar|Close|Cerrar|Agora não|Not now|Ahora no", espera: 3)
@@ -344,9 +369,18 @@ final class ReviewRehearsalUITests: XCTestCase {
     /// Toca o elemento e exige resposta em até 10 s. `estrito`: só vale `esperado` (ou folha da Apple); senão vale também
     /// qualquer mudança na árvore. Devolve a descrição da resposta, ou nil (e registra a falha) se ficou mudo.
     @discardableResult
-    private func tocarEEsperar(_ nome: String, _ regex: String, esperado: String?, estrito: Bool, png: String? = nil) -> String? {
-        guard let alvo = achar(regex, espera: 10) else {
-            falhar(nome, "não encontrei na tela: \(regex)")
+    private func tocarEEsperar(_ nome: String, _ regex: String, esperado: String?, estrito: Bool, png: String? = nil, id: String? = nil) -> String? {
+        negarNotificacao()
+        let alvoOpt: XCUIElement?
+        if let id = id {
+            // pelo identificador (testTag do Compose): não depende do idioma nem do formato do rótulo ("ENTRAR COM 1.200 DOBRÕES")
+            let e = app.descendants(matching: .any)[id]
+            alvoOpt = e.waitForExistence(timeout: 10) ? e : achar(regex, espera: 5)
+        } else {
+            alvoOpt = achar(regex, espera: 10)
+        }
+        guard let alvo = alvoOpt else {
+            falhar(nome, "não encontrei na tela: \(id ?? regex)")
             return nil
         }
         let antes = assinatura()
@@ -443,9 +477,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         while ciclos < 8 && vazios < 2 {
             ciclos += 1
             var feito = false
-            for r in ["Allow", "Permitir"] where springboard.buttons[r].exists {
-                springboard.buttons[r].tap(); feito = true; break
-            }
+            if negarNotificacao() { feito = true }
             if !feito {
                 for regex in prioridade {
                     let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(regex))[ !.]*(\n.*)?")
@@ -463,7 +495,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         let prioridade = [
             "FECHAR|Close|Cerrar", "VALEU|Thanks|Gracias", "AGORA NÃO|Not now|Ahora no", "ENTENDI|Got it|Entendido", "PULAR|Skip|Saltar",
         ]
-        for r in ["Allow", "Permitir"] where springboard.buttons[r].exists { springboard.buttons[r].tap(); return }
+        if negarNotificacao() { return }
         for regex in prioridade where regex != excluindo {
             let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(regex))[ !.]*(\n.*)?")
             let b = app.buttons.matching(p).firstMatch
