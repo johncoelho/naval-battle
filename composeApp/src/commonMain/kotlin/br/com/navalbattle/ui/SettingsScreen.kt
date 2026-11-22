@@ -289,16 +289,21 @@ private fun SettingsToggleRow(label: String, on: Boolean, enabled: Boolean = tru
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = NavalType.mono, color = if (enabled) Naval.ink else Naval.muted)
+        // o rotulo toma a largura que sobra e quebra por palavras; o selo nunca quebra (#162: "ACTIVA/DO" em espanhol)
+        Text(label, style = NavalType.mono, color = if (enabled) Naval.ink else Naval.muted, modifier = Modifier.weight(1f))
+        GapW(12)
         Box(
             Modifier
                 .background(if (on) Naval.surface3 else Naval.surface)
                 .border(1.dp, if (on) Naval.amber else Naval.line)
                 .padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
-            HudLabel(
-                if (on) t(K.SETTINGS_ON).uppercase() else t(K.SETTINGS_OFF).uppercase(),
-                if (on) Naval.greenBright else Naval.muted
+            Text(
+                (if (on) t(K.SETTINGS_ON) else t(K.SETTINGS_OFF)).uppercase(),
+                style = NavalType.monoSmall,
+                color = if (on) Naval.greenBright else Naval.muted,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
