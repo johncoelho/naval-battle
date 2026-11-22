@@ -62,4 +62,4 @@ a decisão humana do revisor. É portão **necessário, não suficiente**: a App
 Variável de repositório `IOS_REVIEW_GATE`: `off`, `warn` (padrão, só avisa) ou `on` (reprova o envio sem ensaio verde no mesmo SHA).
 **Ligar `on` depende do OK do John**, depois do primeiro ensaio verde; com `on` o envio automático (`IOS_APPSTORE_LIVE`) nunca passa, porque o ensaio ainda
 não existe para o SHA recém-publicado: dispare o ensaio e depois o `ios-release.yml` com `enviar=true`.
-Varredura do binário: `IOS_SCAN_ENFORCE=true` está ligada desde 22/11 (valor conferido por `gh variable list`): achado fora da allowlist reprova o build; só o Tech Lead altera a allowlist.
+Varredura do binário: `IOS_SCAN_ENFORCE=true` está ligada desde 22/11 (ligada com OK do John no chat em 22/11; valor conferido por `gh variable list`): achado fora da allowlist reprova o build; só o Tech Lead altera a allowlist.
