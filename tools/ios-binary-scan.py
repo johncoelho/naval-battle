@@ -35,13 +35,21 @@ def regexes(path):
 
 
 def strings_de(path):
+    """Lista de (offset, texto) das strings do arquivo, na ordem em que estao no binario."""
     try:
-        r = subprocess.run(["strings", "-a", path], capture_output=True, text=True, errors="replace", timeout=300)
-        return r.stdout.splitlines()
+        r = subprocess.run(["strings", "-a", "-t", "x", path], capture_output=True, text=True, errors="replace", timeout=300)
+        out = []
+        for l in r.stdout.splitlines():
+            m = re.match(r"^\s*([0-9a-fA-F]+) (.*)$", l)
+            if m:
+                out.append((int(m.group(1), 16), m.group(2)))
+        if out or r.returncode == 0:
+            return out
     except (OSError, subprocess.SubprocessError):
-        with open(path, "rb") as f:  # sem `strings` (ex.: fora do macOS): extrai ASCII imprimivel na mao
-            dados = f.read()
-        return [m.decode("latin-1") for m in re.findall(rb"[\x20-\x7e]{4,}", dados)]
+        pass
+    with open(path, "rb") as f:  # sem `strings` (ex.: fora do macOS): extrai ASCII imprimivel na mao
+        dados = f.read()
+    return [(m.start(), m.group(0).decode("latin-1")) for m in re.finditer(rb"[\x20-\x7e]{4,}", dados)]
 
 
 def arquivos(caminhos):
@@ -83,6 +91,38 @@ def analisar(linhas, termos, allow):
                     if regra.search(linha):
                         regras[regra.pattern] = regras.get(regra.pattern, 0) + 1
     return achados, aprovados, regras
+
+
+# linhas "puras" (a linha inteira e so o termo): o contexto no binario mostra quem as traz
+LINHAS_PURAS = {"android", "subscription", "beta-metsehaf"}
+VIZINHAS = 5
+MAX_OCORRENCIAS = 6
+
+
+def contexto(por_arquivo, achados):
+    """Para cada achado sem allowlist que e linha pura: arquivo, offset e as VIZINHAS strings antes e depois.
+    Fica fora do total de linhas (so ajuda a achar a origem: o runtime agrupa strings do mesmo modulo)."""
+    puras = {l for grupos in achados.values() for ls in grupos.values() for l in ls if l.strip().lower() in LINHAS_PURAS}
+    saida = []
+    for pura in sorted(puras):
+        saida.append(f"### Contexto da linha pura `{pura}`")
+        n = 0
+        for arq, itens in por_arquivo.items():
+            for i, (off, txt) in enumerate(itens):
+                if txt.strip() != pura:
+                    continue
+                if n >= MAX_OCORRENCIAS:
+                    break
+                n += 1
+                saida.append(f"- {os.path.basename(arq)} @0x{off:x}")
+                for off2, txt2 in itens[max(0, i - VIZINHAS):i]:
+                    saida.append(f"    antes  0x{off2:x}: `{txt2[:120]}`")
+                saida.append(f"    >>>    0x{off:x}: `{txt[:120]}`")
+                for off2, txt2 in itens[i + 1:i + 1 + VIZINHAS]:
+                    saida.append(f"    depois 0x{off2:x}: `{txt2[:120]}`")
+        if n == 0:
+            saida.append("- (nao achada com este texto exato nas strings lidas)")
+    return "\n".join(saida)
 
 
 def total(grupo):
@@ -135,12 +175,17 @@ def main():
         print("::error::lista de termos vazia ou ausente:", args.terms)
         return 1
 
-    lidos, todas = 0, []
+    lidos, todas, por_arquivo = 0, [], {}
     for arq in arquivos(args.caminhos):
         lidos += 1
-        todas.extend(strings_de(arq))
+        itens = strings_de(arq)
+        por_arquivo[arq] = itens
+        todas.extend(t for _, t in itens)
     achados, aprovados, regras = analisar(todas, termos, allow)
     texto = relatorio(termos, achados, aprovados, regras, lidos, len(allow), args.enforce)
+    ctx = contexto(por_arquivo, achados)
+    if ctx:
+        texto += "\n" + ctx
     print(texto)
     resumo = os.environ.get("GITHUB_STEP_SUMMARY")
     if resumo:
