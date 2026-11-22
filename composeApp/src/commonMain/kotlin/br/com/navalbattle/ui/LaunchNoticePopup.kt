@@ -17,7 +17,9 @@ import br.com.navalbattle.AppState
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.game.LaunchVariant
+import br.com.navalbattle.i18n.AndroidOnlyKey
 import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.androidOnlyText
 import br.com.navalbattle.i18n.t
 
 /**
@@ -51,7 +53,7 @@ fun LaunchNoticePopup(state: AppState) {
             HudLabel(t(K.LAUNCH_EYEBROW), Naval.muted)
             Gap(8)
             Text(
-                t(K.LAUNCH_TITLE),
+                androidOnlyText(AndroidOnlyKey.LAUNCH_TITLE),
                 style = NavalType.title,
                 color = Naval.ink,
                 textAlign = TextAlign.Center,
@@ -59,7 +61,7 @@ fun LaunchNoticePopup(state: AppState) {
             )
             Gap(10)
             Text(
-                t(if (variant == LaunchVariant.TESTER) K.LAUNCH_BODY_TESTER else K.LAUNCH_BODY_NEW),
+                androidOnlyText(if (variant == LaunchVariant.TESTER) AndroidOnlyKey.LAUNCH_BODY_TESTER else AndroidOnlyKey.LAUNCH_BODY_NEW),
                 style = NavalType.body,
                 color = Naval.inkSoft,
                 textAlign = TextAlign.Center,

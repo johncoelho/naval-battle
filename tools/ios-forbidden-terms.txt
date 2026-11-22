@@ -1,0 +1,17 @@
+# Termos que o binario e as telas do iPhone nao podem ter (#118, Apple 2.2 e 2.3.10).
+# Uma expressao regular por linha, sem diferenciar maiusculas de minusculas (sintaxe comum a Kotlin, Python e Swift).
+# Linhas em branco e as que comecam com # sao ignoradas.
+# Usada por: BinaryTextTest (K.*), tools/ios-binary-scan.py (strings do binario) e ReviewRehearsalUITests (telas).
+\bbeta\b
+teste fechado
+closed test
+prueba cerrada
+android
+google play
+play store
+play games
+play[.]google
+(da|na|pela|à|de la|en la) play[ ,.!)]
+assinatura
+subscription
+suscripci[oó]n

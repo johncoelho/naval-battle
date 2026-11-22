@@ -611,37 +611,10 @@ enum class K(val pt: String, val en: String, val es: String) {
 
     // ---------------------------------------------------------------- aviso de lançamento (#36)
     LAUNCH_EYEBROW("Lançamento", "Launch", "Lanzamiento"),
-    LAUNCH_TITLE(
-        "Naval Battle Classic chegou à Google Play!",
-        "Naval Battle Classic is now on Google Play!",
-        "¡Naval Battle Classic llegó a Google Play!"
-    ),
-    LAUNCH_BODY_TESTER(
-        "Obrigado a você que testou o jogo no beta: cada partida, bug relatado e ideia ajudou a chegar aqui. " +
-            "Todos os dobrões e brindes que você ganhou continuam na sua conta. " +
-            "A partir de agora, pacotes, passe e itens da loja passam a ser pagos para todos.",
-        "Thank you for testing the game in the beta: every match, reported bug and idea helped get here. " +
-            "All the doubloons and gifts you earned stay in your account. " +
-            "From now on, packs, pass and store items are paid for everyone.",
-        "Gracias por probar el juego en la beta: cada partida, error reportado e idea ayudó a llegar hasta aquí. " +
-            "Todos los doblones y regalos que ganaste siguen en tu cuenta. " +
-            "A partir de ahora, paquetes, pase y artículos de la tienda son de pago para todos."
-    ),
-    LAUNCH_BODY_NEW(
-        "Bem-vindo a bordo! Jogue contra a IA, com amigos no mesmo aparelho, na rede local ou online. Bons combates, comandante.",
-        "Welcome aboard! Play against the AI, with friends on the same device, on the local network or online. Good hunting, commander.",
-        "¡Bienvenido a bordo! Juega contra la IA, con amigos en el mismo dispositivo, en la red local u online. Buenos combates, comandante."
-    ),
     LAUNCH_OK("Entendi", "Got it", "Entendido"),
 
     // ---------------------------------------------------------------- badges
     PROFILE_BADGES("Condecorações", "Badges", "Condecoraciones"),
-    BADGE_BETA_TESTER("Beta Tester", "Beta Tester", "Beta Tester"),
-    BADGE_BETA_TESTER_DESC(
-        "Jogou durante os testes fechados",
-        "Played during the closed testing",
-        "Jugó durante las pruebas cerradas"
-    ),
     BADGE_FEEDBACK_CONTRIBUTOR("Colaborador", "Contributor", "Colaborador"),
     BADGE_FEEDBACK_CONTRIBUTOR_DESC(
         "Teve um feedback aprovado",
@@ -1031,7 +1004,7 @@ enum class K(val pt: String, val en: String, val es: String) {
     FLEET_ATL("Linha Atlântica", "Atlantic Line", "Línea Atlántica"),
     FLEET_ATL_SUB("Cascos largos, proa bulbosa e superestrutura em bloco.", "Wide hulls, bulbous bow and block superstructure.", "Cascos anchos, proa bulbosa y superestructura en bloque."),
     FLEET_GHO("Linha Fantasma", "Ghost Line", "Línea Fantasma"),
-    FLEET_GHO_SUB("Cascos facetados de baixa assinatura, sem chaminés.", "Faceted low-signature hulls, no funnels.", "Cascos facetados de baja firma, sin chimeneas."),
+    FLEET_GHO_SUB("Cascos facetados que quase não aparecem no radar, sem chaminés.", "Faceted low-signature hulls, no funnels.", "Cascos facetados de baja firma, sin chimeneas."),
     PRICE_DOUBLOONS("%s dobrões", "%s doubloons", "%s doblones"),
     STORE_DOUBLOONS("Dobrões", "Doubloons", "Doblones"),
     STORE_DOUBLOONS_SUB("Pacotes de dobrões para cascos, camuflagens, habilidades e milhas náuticas.", "Doubloon packs for hulls, camouflages, abilities and nautical miles.", "Paquetes de doblones para cascos, camuflajes, habilidades y millas náuticas."),
@@ -1052,12 +1025,6 @@ enum class K(val pt: String, val en: String, val es: String) {
     DOUBLOON_UNAVAILABLE("Dobrões indisponíveis agora. Tente de novo mais tarde.", "Doubloons unavailable right now. Try again later.", "Doblones no disponibles ahora. Inténtalo más tarde."),
     DOUBLOON_PENDING("Compra pendente: a loja confirma quando o pagamento cair.", "Purchase pending: the store confirms when the payment clears.", "Compra pendiente: la tienda confirma cuando se acredite el pago."),
     DOUBLOON_PENDING_IOS("Compra pendente: os dobrões entram quando a aprovação sair.", "Purchase pending: the doubloons arrive once it is approved.", "Compra pendiente: los doblones llegan cuando se apruebe."),
-    PREMIO_TITLE("Prêmio Beta", "Beta prize", "Premio Beta"),
-    PREMIO_BODY("Um pacote de dobrões por dia para quem testa o jogo. Pegue uma vez por dia; o prêmio volta à meia-noite de Brasília.", "One doubloon pack a day for those testing the game. Claim it once a day; it resets at midnight in Brasilia.", "Un paquete de doblones al día para quienes prueban el juego. Reclámalo una vez al día; se reinicia a medianoche en Brasilia."),
-    PREMIO_TAKE("Pegar o Prêmio", "Claim the prize", "Reclamar el premio"),
-    PREMIO_TAKEN("Você já pegou o Prêmio de hoje. Volta em %s.", "You already claimed today's prize. It comes back in %s.", "Ya reclamaste el premio de hoy. Vuelve en %s."),
-    PREMIO_DONE_NOTICE("Você já pegou o Prêmio de hoje. Ele volta amanhã.", "You already claimed today's prize. It comes back tomorrow.", "Ya reclamaste el premio de hoy. Vuelve mañana."),
-    PREMIO_UNAVAILABLE("Prêmio indisponível agora.", "Prize unavailable right now.", "Premio no disponible ahora."),
 
     // anúncio premiado opcional (#29): sempre a partir de um toque, só para dobrar prêmio ou ganhar milha
     AD_DOUBLE_WIN("Dobrar dobrões", "Double doubloons", "Duplicar doblones"),
@@ -1077,7 +1044,6 @@ enum class K(val pt: String, val en: String, val es: String) {
     AD_PRIVACY_SUB("Consentimento do Google", "Google consent", "Consentimiento de Google"),
     AD_PRIVACY_NONE("Sem ajuste de privacidade de anúncios na sua região.", "No ad privacy settings needed in your region.", "No hay ajustes de privacidad de anuncios en tu región."),
     DOUBLOON_PACKS_SECTION("Pacotes pagos", "Paid packs", "Paquetes pagados"),
-    DOUBLOON_BETA_CHARGE("Pacotes pagos podem cobrar de verdade no seu Google Play. Só compre se quiser testar a cobrança.", "Paid packs may charge your real Google Play account. Only buy if you want to test the charge.", "Los paquetes pagados pueden cobrar de verdad en tu Google Play. Compra solo si quieres probar el cobro."),
     MILES_TITLE("Milhas náuticas", "Nautical miles", "Millas náuticas"),
     MILES_EXPLAIN("Cada partida online custa 1 milha. Todo dia sua reserva volta a %1 milhas grátis. Vitória ranqueada rende +%2 e vitória casual +%3.", "Each online match costs 1 mile. Every day your reserve refills to %1 free miles. A ranked win gives +%2 and a casual win +%3.", "Cada partida en línea cuesta 1 milla. Cada día tu reserva vuelve a %1 millas gratis. Una victoria clasificatoria da +%2 y una casual +%3."),
     MILES_OFFLINE_FREE("Contra a IA, no mesmo aparelho e na rede local é sempre grátis.", "Against the AI, on the same device and on the local network it is always free.", "Contra la IA, en el mismo dispositivo y en la red local siempre es gratis."),

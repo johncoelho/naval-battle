@@ -39,7 +39,9 @@ import br.com.navalbattle.game.DoubloonPack
 import br.com.navalbattle.game.doubloonAisleView
 import br.com.navalbattle.game.tentarDeNovoLista
 import br.com.navalbattle.game.PremioState
+import br.com.navalbattle.i18n.AndroidOnlyKey
 import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.androidOnlyText
 import br.com.navalbattle.i18n.t
 import br.com.navalbattle.i18n.tMilesBalance
 import kotlinx.coroutines.launch
@@ -91,7 +93,7 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -
         PremioState.PEGAR -> PremioCard(onClaim)
         PremioState.JA_PEGOU -> InfoCard {
             Text(
-                t(K.PREMIO_TAKEN, countdown(status.premioResetsInSeconds)),
+                androidOnlyText(AndroidOnlyKey.PREMIO_TAKEN, countdown(status.premioResetsInSeconds)),
                 style = NavalType.body,
                 color = Naval.inkSoft,
                 textAlign = TextAlign.Center
@@ -108,7 +110,7 @@ fun DoubloonAisle(state: AppState, onPick: (DoubloonPack) -> Unit, onClaim: () -
         // aviso de cobrança da Play: só Android (no iPhone a compra é de verdade e sem texto de beta, #118)
         if (status.beta && platformName != "ios") {
             // testador: a vitrine cobra de verdade (exceto na compra de teste da Play)
-            Text(t(K.DOUBLOON_BETA_CHARGE), style = NavalType.mono, color = Naval.amberStrong, textAlign = TextAlign.Center)
+            Text(androidOnlyText(AndroidOnlyKey.DOUBLOON_BETA_CHARGE), style = NavalType.mono, color = Naval.amberStrong, textAlign = TextAlign.Center)
             Gap(8)
         }
         Vitrine(state, onPick, onRetry = { scope.launch { state.loadDobroesStore() } })
@@ -176,13 +178,13 @@ private fun PremioCard(onClaim: () -> Unit) {
             }
         }
         Gap(10)
-        Text(t(K.PREMIO_TITLE).uppercase(), style = NavalType.mono, color = Naval.amberStrong, textAlign = TextAlign.Center)
+        Text(androidOnlyText(AndroidOnlyKey.PREMIO_TITLE).uppercase(), style = NavalType.mono, color = Naval.amberStrong, textAlign = TextAlign.Center)
         Gap(6)
-        Text(t(K.PREMIO_BODY), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
+        Text(androidOnlyText(AndroidOnlyKey.PREMIO_BODY), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
         Gap(10)
         CoinLabel(formatThousands(pack.doubloons), style = NavalType.title, iconSize = 22.dp)
         Gap(12)
-        PrimaryButton(t(K.PREMIO_TAKE), modifier = Modifier.fillMaxWidth()) { onClaim() }
+        PrimaryButton(androidOnlyText(AndroidOnlyKey.PREMIO_TAKE), modifier = Modifier.fillMaxWidth()) { onClaim() }
     }
 }
 
