@@ -21,6 +21,7 @@ Supabase. Dono: **John Coelho** (GitHub `johncoelho`). **Fale com ele em portugu
 | Tela, popup, componente, cor, texto de interface, ícone | `design-system` |
 | SQL, RPC, RLS, regra de pontos/moeda/milhas, `app_config` | `supabase-change` |
 | Detalhes do pipeline Android → Play Console | `play-store-release` |
+| Enviar o iPhone à revisão da Apple, ou a Apple recusou | `apple-review` |
 | "Bateria de testes completa" / teste de ponta a ponta | `qa-full-test` |
 | "Temos bugs?" / feedback de jogador | `feedback-triage` |
 | Testadores novos, liberar na Play, contagem para produção | `beta-testers` |

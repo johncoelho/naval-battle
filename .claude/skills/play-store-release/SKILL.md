@@ -240,6 +240,7 @@ chave da API do App Store Connect; o `ios.yml` só testa e compila. Secrets `ASC
 (do John), variável `APPLE_TEAM_ID`, trava `IOS_APPSTORE_LIVE` (liga só depois do primeiro `enviar=true` que der certo). Passo a passo,
 ensaio e plano B em `docs/BUILD.md` ("iPhone na App Store"). Tocou em `iosApp/`: `CFBundleShortVersionString` segue o `versionName`.
 O Release sobe o iPhone na esteira só depois desse primeiro envio.
+**Antes de enviar à revisão da Apple:** skill `apple-review` (ensaio `ios-qa.yml -f modo=ensaio-revisao` verde no mesmo SHA, varredura do binário, Paid Apps Agreement, 4 produtos anexados, notas só com o que o ensaio provou; #118).
 
 ## 8. Docs
 

@@ -37,7 +37,7 @@ dono por perfil; pedido que cai no perfil de outro agente é **redirecionado**, 
 | PO | SPEC e ordem da Fila | critérios de aceite, quebrar pedido grande, reordenar a Fila, atestar a história |
 | Tech Lead | desenho e revisão | desenho antes de implementar, APROVADO/CORRIGIR **antes de todo push**, proposta de camada nova |
 | Dev | código e publicação | código, testes, versão, notas da Play, CHANGELOG e docs, worktree, push depois do APROVADO |
-| Release | CI, lançamento e lojas | acompanhar CI e ler o log, `app_releases`, `ios_live`, flags de lançamento autorizadas pelo John, promoção Play (20/50/100%), App Store Connect e TestFlight, anexar capturas e responder à Apple |
+| Release | CI, lançamento e lojas | acompanhar CI e ler o log, `app_releases`, `ios_live`, flags de lançamento autorizadas pelo John, promoção Play (20/50/100%), App Store Connect e TestFlight, anexar capturas e responder à Apple, **ensaio de revisão verde antes de todo envio** (skill `apple-review`) |
 | QA | ensaios e testes | rodar ensaios e workflows de teste (`gh workflow run`), emuladores QA01/QA02 e simulador iOS, liberar e remover conta de teste durante o run, baixar e conferir artefatos e PNGs |
 | Game Designer | dados de balanceamento | consultas de economia, ranqueada, duração e abandono, proposta como issue |
 
