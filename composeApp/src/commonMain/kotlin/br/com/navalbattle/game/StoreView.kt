@@ -1,8 +1,8 @@
 package br.com.navalbattle.game
 
-import br.com.navalbattle.i18n.AndroidOnlyKey
+import br.com.navalbattle.i18n.PlatformGatedKey
 import br.com.navalbattle.i18n.K
-import br.com.navalbattle.i18n.androidOnlyText
+import br.com.navalbattle.i18n.platformGatedText
 import br.com.navalbattle.i18n.t
 
 /** Prêmio Beta na aba Dobrões (#28): escondido, pronto para pegar ou já pego hoje. */
@@ -13,10 +13,10 @@ enum class PremioState { ESCONDIDO, PEGAR, JA_PEGOU }
  * `premio_beta_enabled` ligado no servidor. O Prêmio não passa pela Play. No iPhone nunca aparece
  * (#118: a Apple recusou a 0.44.6 por "beta" visível, guideline 2.2).
  */
-fun premioState(beta: Boolean, premioEnabled: Boolean, premioClaimed: Boolean, platform: String = "android"): PremioState =
+fun premioState(tester: Boolean, premioEnabled: Boolean, premioClaimed: Boolean, platform: String): PremioState =
     when {
         platform == "ios" -> PremioState.ESCONDIDO
-        !beta || !premioEnabled -> PremioState.ESCONDIDO
+        !tester || !premioEnabled -> PremioState.ESCONDIDO
         premioClaimed -> PremioState.JA_PEGOU
         else -> PremioState.PEGAR
     }
@@ -74,18 +74,18 @@ fun vitrineVisivel(vendaPelaPlay: Boolean, realEnabled: Boolean, vitrineBeta: Bo
     vendaPelaPlay && (realEnabled || vitrineBeta)
 
 /**
- * Texto de um aviso: uma chave comum ([K]) ou um texto só do Android ([AndroidOnlyKey], vazio no iPhone,
+ * Texto de um aviso: uma chave comum ([K]) ou um texto só do Android ([PlatformGatedKey], vazio no iPhone,
  * #118). Em [avisoTexto] o vazio cai na mensagem de falha comum.
  */
 sealed interface Aviso {
     data class Comum(val key: K) : Aviso
-    data class SoAndroid(val key: AndroidOnlyKey) : Aviso
+    data class PlatformGated(val key: PlatformGatedKey) : Aviso
 }
 
 /** O texto do aviso no idioma atual; texto só do Android que não existe nesta plataforma vira "falha". */
 fun avisoTexto(aviso: Aviso): String = when (aviso) {
     is Aviso.Comum -> t(aviso.key)
-    is Aviso.SoAndroid -> androidOnlyText(aviso.key).ifEmpty { t(K.DOUBLOON_BUY_FAILED) }
+    is Aviso.PlatformGated -> platformGatedText(aviso.key).ifEmpty { t(K.DOUBLOON_BUY_FAILED) }
 }
 
 /**
@@ -94,7 +94,7 @@ fun avisoTexto(aviso: Aviso): String = when (aviso) {
  */
 fun avisoCompra(status: String): Aviso? = when (status) {
     "credited", "premio", "already" -> null
-    "premio_done" -> Aviso.SoAndroid(AndroidOnlyKey.PREMIO_DONE_NOTICE)
+    "premio_done" -> Aviso.PlatformGated(PlatformGatedKey.PREMIO_DONE_NOTICE)
     "billing_off", "premio_off", "premio_only" -> Aviso.Comum(K.DOUBLOON_CLOSED)
     else -> Aviso.Comum(K.DOUBLOON_BUY_FAILED)
 }
@@ -102,7 +102,7 @@ fun avisoCompra(status: String): Aviso? = when (status) {
 /** Aviso do resgate do Prêmio Beta (RPC `claim_premio_beta`): premio | already | off | not_beta. */
 fun avisoPremio(status: String): Aviso? = when (status) {
     "premio" -> null
-    "already" -> Aviso.SoAndroid(AndroidOnlyKey.PREMIO_DONE_NOTICE)
-    "off", "not_beta" -> Aviso.SoAndroid(AndroidOnlyKey.PREMIO_UNAVAILABLE)
+    "already" -> Aviso.PlatformGated(PlatformGatedKey.PREMIO_DONE_NOTICE)
+    "off", "not_beta" -> Aviso.PlatformGated(PlatformGatedKey.PREMIO_UNAVAILABLE)
     else -> Aviso.Comum(K.DOUBLOON_BUY_FAILED)
 }

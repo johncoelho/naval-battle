@@ -6,15 +6,20 @@ Roda `strings -a` em cada arquivo dado (executavel do .app e Info.plist), confer
 `tools/ios-forbidden-terms.txt` (um regex por linha, sem diferenciar maiusculas) e separa o que a allowlist
 (`tools/ios-binary-allowlist.txt`, um regex por linha, aprovado pelo Tech Lead) ja aprovou.
 
+A allowlist remove SO o trecho que ela casa: a linha so e aprovada se, depois de tirar os trechos aprovados, o termo
+proibido nao casar mais. Assim "androidx ... Google Play" continua achado (o `androidx` some, o `Google Play` fica).
+Achados sao deduplicados por (termo, linha) entre os arquivos e agrupados pelo trecho que casou.
+
 Uso: ios-binary-scan.py [--terms ARQ] [--allow ARQ] [--enforce] CAMINHO [CAMINHO...]
-  CAMINHO pode ser arquivo ou pasta (varre todos os arquivos de dentro; passe o executavel e o Info.plist, nao a pasta do .app inteira).
-Sem --enforce so relata (saida 0): primeira rodada, para fechar a allowlist. Com --enforce, achado sem allowlist = saida 1.
+Sem --enforce so relata (saida 0). Com --enforce, achado sem allowlist = saida 1.
 O relatorio vai para o log e, se existir, para $GITHUB_STEP_SUMMARY. Nada aqui usa segredo nem rede."""
 import argparse
 import os
 import re
 import subprocess
 import sys
+
+TETO_POR_TERMO = 200
 
 
 def regexes(path):
@@ -51,6 +56,71 @@ def arquivos(caminhos):
             print(f"::warning::caminho nao encontrado: {c}")
 
 
+def aprovado(linha, termo, allow):
+    """True se, tirando so os trechos da allowlist, o termo proibido nao casa mais na linha."""
+    resto = linha
+    for regra in allow:
+        resto = regra.sub(" ", resto)
+    return termo.search(resto) is None
+
+
+def analisar(linhas, termos, allow):
+    """linhas: iteravel de strings (de todos os arquivos). Devolve (achados, aprovados, regras):
+    achados/aprovados = {termo.pattern: {trecho_casado: set(linhas)}}; regras = {regra.pattern: n de linhas aprovadas que ela tocou}."""
+    achados, aprovados, regras = {}, {}, {}
+    for linha in set(l.strip() for l in linhas):
+        if not linha:
+            continue
+        for t in termos:
+            m = t.search(linha)
+            if not m:
+                continue
+            ok = aprovado(linha, t, allow)
+            alvo = aprovados if ok else achados
+            alvo.setdefault(t.pattern, {}).setdefault(m.group(0).lower(), set()).add(linha[:200])
+            if ok:
+                for regra in allow:
+                    if regra.search(linha):
+                        regras[regra.pattern] = regras.get(regra.pattern, 0) + 1
+    return achados, aprovados, regras
+
+
+def total(grupo):
+    return sum(len(v) for v in grupo.values())
+
+
+def relatorio(termos, achados, aprovados, regras, lidos, n_allow, enforce):
+    linhas = [f"## Varredura do binario iOS ({'ENFORCE' if enforce else 'so relatorio'})",
+              f"{lidos} arquivo(s) lidos, {len(termos)} termos, {n_allow} regras de allowlist. Linhas distintas por (termo, linha).",
+              "",
+              "| termo | bruto | aprovado | sem allowlist |", "|---|---|---|---|"]
+    for t in termos:
+        a, p = total(achados.get(t.pattern, {})), total(aprovados.get(t.pattern, {}))
+        if a or p:
+            linhas.append(f"| `{t.pattern}` | {a + p} | {p} | {a} |")
+    linhas.append("")
+    if not achados:
+        linhas.append("### Achados sem allowlist (0)")
+    for termo, grupos in sorted(achados.items()):
+        linhas.append(f"### Achados sem allowlist: `{termo}` ({total(grupos)})")
+        n = 0
+        for trecho, ls in sorted(grupos.items()):
+            for l in sorted(ls):
+                if n >= TETO_POR_TERMO:
+                    break
+                linhas.append(f"- [{trecho}] `{l}`")
+                n += 1
+        if total(grupos) > n:
+            linhas.append(f"- ... e mais {total(grupos) - n}")
+    if aprovados:
+        linhas.append("### Aprovados pela allowlist (so totais)")
+        for termo, grupos in sorted(aprovados.items()):
+            linhas.append(f"- `{termo}`: {total(grupos)}")
+        for regra, n in sorted(regras.items()):
+            linhas.append(f"- regra `{regra}`: tocou {n} linha(s) aprovada(s)")
+    return "\n".join(linhas)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--terms", default="tools/ios-forbidden-terms.txt")
@@ -65,50 +135,24 @@ def main():
         print("::error::lista de termos vazia ou ausente:", args.terms)
         return 1
 
-    achados, aprovados, lidos = [], [], 0
+    lidos, todas = 0, []
     for arq in arquivos(args.caminhos):
         lidos += 1
-        vistos = set()
-        for linha in strings_de(arq):
-            for t in termos:
-                if t.search(linha):
-                    chave = (arq, t.pattern, linha)
-                    if chave in vistos:
-                        continue
-                    vistos.add(chave)
-                    ok = any(a.search(linha) for a in allow)
-                    (aprovados if ok else achados).append((arq, t.pattern, linha.strip()[:200]))
-
-    def bloco(titulo, itens):
-        out = [f"### {titulo} ({len(itens)})"]
-        por_termo = {}
-        for arq, termo, linha in itens:
-            por_termo.setdefault(termo, []).append((arq, linha))
-        for termo, ocorr in sorted(por_termo.items()):
-            out.append(f"- `{termo}`: {len(ocorr)} ocorrencia(s)")
-            for arq, linha in ocorr[:15]:
-                out.append(f"    - {os.path.basename(arq)}: `{linha}`")
-            if len(ocorr) > 15:
-                out.append(f"    - ... e mais {len(ocorr) - 15}")
-        return out
-
-    linhas = [f"## Varredura do binario iOS ({'ENFORCE' if args.enforce else 'so relatorio'})",
-              f"{lidos} arquivo(s) lidos, {len(termos)} termos, {len(allow)} regras de allowlist."]
-    linhas += bloco("Achados sem allowlist", achados) if achados else ["### Achados sem allowlist (0)"]
-    if aprovados:
-        linhas += bloco("Aprovados pela allowlist", aprovados)
-    texto = "\n".join(linhas)
+        todas.extend(strings_de(arq))
+    achados, aprovados, regras = analisar(todas, termos, allow)
+    texto = relatorio(termos, achados, aprovados, regras, lidos, len(allow), args.enforce)
     print(texto)
     resumo = os.environ.get("GITHUB_STEP_SUMMARY")
     if resumo:
         with open(resumo, "a", encoding="utf-8") as f:
             f.write(texto + "\n")
 
-    if achados and args.enforce:
-        print(f"::error::{len(achados)} texto(s) proibido(s) no binario iOS (Apple 2.3.10). Tire do commonMain (androidOnlyText) ou, se for do runtime, aprove na allowlist.")
+    n = sum(total(g) for g in achados.values())
+    if n and args.enforce:
+        print(f"::error::{n} texto(s) proibido(s) no binario iOS (Apple 2.3.10). Tire do commonMain (platformGatedText) ou, se for do runtime, aprove na allowlist.")
         return 1
-    if achados:
-        print(f"::warning::{len(achados)} texto(s) proibido(s) no binario iOS (modo relatorio: nao reprova). Feche a allowlist antes de ligar --enforce.")
+    if n:
+        print(f"::warning::{n} texto(s) proibido(s) no binario iOS (modo relatorio: nao reprova). Feche a allowlist antes de ligar --enforce.")
     return 0
 
 

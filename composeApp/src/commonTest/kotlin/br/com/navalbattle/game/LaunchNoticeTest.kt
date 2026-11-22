@@ -63,7 +63,7 @@ class LaunchNoticeTest {
             Lang.entries.forEach { lang ->
                 I18n.lang = lang
                 listOf(K.LAUNCH_EYEBROW, K.LAUNCH_OK).forEach { assertTrue(t(it).isNotBlank(), "$lang $it vazio") }
-                // os textos de Google Play/beta moram no androidOnlyText (vazio no iPhone, #118): ver AndroidOnlyTextTest
+                // os textos de Google Play/beta moram no platformGatedText (vazio no iPhone, #118): ver PlatformGatedTextTest
             }
         } finally {
             I18n.lang = original

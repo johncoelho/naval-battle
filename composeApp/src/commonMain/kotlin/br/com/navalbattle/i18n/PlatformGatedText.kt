@@ -5,15 +5,15 @@ package br.com.navalbattle.i18n
  * inteiro (guideline 2.3.10), então esses termos não podem estar numa string do `commonMain`: o texto mora
  * no `actual` do `androidMain`, e o do iPhone devolve vazio. Quem usa só mostra o texto quando ele existe.
  */
-enum class AndroidOnlyKey {
+enum class PlatformGatedKey {
     LAUNCH_TITLE, LAUNCH_BODY_TESTER, LAUNCH_BODY_NEW,
-    DOUBLOON_BETA_CHARGE,
+    DOUBLOON_CHARGE_NOTICE,
     PREMIO_TITLE, PREMIO_BODY, PREMIO_TAKE, PREMIO_TAKEN, PREMIO_DONE_NOTICE, PREMIO_UNAVAILABLE,
-    BADGE_BETA_TESTER, BADGE_BETA_TESTER_DESC
+    BADGE_TESTER, BADGE_TESTER_DESC
 }
 
 /** O texto no idioma atual; vazio no iPhone. */
-expect fun androidOnlyText(key: AndroidOnlyKey): String
+expect fun platformGatedText(key: PlatformGatedKey): String
 
 /** Com um valor no lugar de `%s`. */
-fun androidOnlyText(key: AndroidOnlyKey, arg: Any): String = androidOnlyText(key).replace("%s", arg.toString())
+fun platformGatedText(key: PlatformGatedKey, arg: Any): String = platformGatedText(key).replace("%s", arg.toString())

@@ -768,7 +768,7 @@ actual class CloudApi actual constructor() {
         val o = firstRow(json)
         CloudResult.Ok(
             DobroesStoreStatus(
-                beta = (o["beta"] as? Boolean) ?: false,
+                tester = (o["beta"] as? Boolean) ?: false,
                 realEnabled = (o["real_enabled"] as? Boolean) ?: false,
                 premioEnabled = (o["premio_enabled"] as? Boolean) ?: false,
                 premioClaimed = (o["premio_claimed"] as? Boolean) ?: false,

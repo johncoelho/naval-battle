@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
 /**
  * #118: a Apple le o BINARIO, nao so o que aparece na tela (2.3.10 recusou a 0.47.0 por "Google Play"). Todo
  * texto de [K] vai para o framework iOS, entao nenhuma chave, de nenhum idioma, pode casar `tools/ios-forbidden-terms.txt`.
- * Sem excecao e sem filtro de "visivel": o que e so do Android mora em [androidOnlyText] (vazio no iPhone).
+ * Sem excecao e sem filtro de "visivel": o que e so do Android mora em [platformGatedText] (vazio no iPhone).
  * Substitui o IosVisibleTextTest, que isentava as chaves "so Android" e todas as LAUNCH_*.
  * Roda na JVM porque le a lista do repositorio (a mesma que o CI e o ensaio de revisao usam).
  */
@@ -55,8 +55,8 @@ class BinaryTextTest {
     @Test
     fun oTextoDoAndroidNaoVoltouParaOCommonMain() {
         val movidas = listOf(
-            "LAUNCH_TITLE", "LAUNCH_BODY_TESTER", "LAUNCH_BODY_NEW", "DOUBLOON_BETA_CHARGE", "PREMIO_TITLE", "PREMIO_BODY",
-            "PREMIO_TAKE", "PREMIO_TAKEN", "PREMIO_DONE_NOTICE", "PREMIO_UNAVAILABLE", "BADGE_BETA_TESTER", "BADGE_BETA_TESTER_DESC"
+            "LAUNCH_TITLE", "LAUNCH_BODY_TESTER", "LAUNCH_BODY_NEW", "DOUBLOON_CHARGE_NOTICE", "PREMIO_TITLE", "PREMIO_BODY",
+            "PREMIO_TAKE", "PREMIO_TAKEN", "PREMIO_DONE_NOTICE", "PREMIO_UNAVAILABLE", "BADGE_TESTER", "BADGE_TESTER_DESC"
         )
         val nomes = K.entries.map { it.name }.toSet()
         movidas.forEach { assertFalse(it in nomes, "$it voltou para o K") }
