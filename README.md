@@ -399,7 +399,7 @@ Todo o texto vive em `i18n/Strings.kt`, com as três versões de cada frase na m
 `Locale` no Android, `NSLocale.preferredLanguages` no iPhone; escolha em `Lang.fromDevice`). `pt`, `en` e `es`
 entram direto, com qualquer região (es-MX, es-419 e es-ES viram espanhol); qualquer outro idioma cai em
 **inglês**. Quem já escolheu (Ajustes ou `lang_code` da nuvem) mantém a escolha; o valor detectado é gravado
-na hora. O `Info.plist` declara `CFBundleLocalizations` (pt, en, es) para o iPhone informar o idioma do jogo.
+na hora. O `Info.plist` declara `CFBundleLocalizations` (pt, en, es) para declarar os idiomas do jogo à Apple (o código lê o primeiro idioma da lista do usuário, sem filtro). Quem nunca trocou o idioma passa a ver o do aparelho; conta antiga na nuvem com `lang_code = "pt"` segue em português, porque a nuvem manda.
 
 A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado — mostra só
 as linhas de casco e as pinturas que o comandante já tem, com um cartão que leva direto à
