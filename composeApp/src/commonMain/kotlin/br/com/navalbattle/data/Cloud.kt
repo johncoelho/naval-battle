@@ -214,7 +214,7 @@ data class SeasonEnd(
  * [premioResetsInSeconds]) e se a vitrine paga beta está ligada para esta conta ([vitrineBeta]).
  */
 data class DobroesStoreStatus(
-    val beta: Boolean,
+    val tester: Boolean,
     val realEnabled: Boolean,
     val premioEnabled: Boolean,
     val premioClaimed: Boolean,

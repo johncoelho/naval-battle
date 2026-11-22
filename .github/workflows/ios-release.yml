@@ -255,6 +255,7 @@ jobs:
           [ "$IOS_SCAN_ENFORCE" = "true" ] && FLAGS="--enforce"
           FILES=("$APP/$EXE" "$APP/Info.plist")
           while IFS= read -r f; do FILES+=("$f"); done < <(find composeApp/build -type f -path '*ComposeApp.framework/ComposeApp' 2>/dev/null)
+          python3 tools/ios-binary-scan-test.py
           python3 tools/ios-binary-scan.py $FLAGS "${FILES[@]}"
 
       - name: Exporta assinado (assinatura em nuvem), sem enviar

@@ -2770,7 +2770,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     val premioView: PremioState?
         get() {
             val s = dobroesStatus ?: return null
-            return premioState(s.beta, s.premioEnabled, s.premioClaimed, platformName)
+            return premioState(s.tester, s.premioEnabled, s.premioClaimed, platformName)
         }
 
     /**

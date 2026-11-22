@@ -1,6 +1,6 @@
 package br.com.navalbattle.game
 
-import br.com.navalbattle.i18n.AndroidOnlyKey
+import br.com.navalbattle.i18n.PlatformGatedKey
 import br.com.navalbattle.i18n.K
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -10,18 +10,18 @@ class StoreViewTest {
 
     @Test
     fun testadorComPremioLigadoPegaOPremio() {
-        assertEquals(PremioState.PEGAR, premioState(beta = true, premioEnabled = true, premioClaimed = false))
+        assertEquals(PremioState.PEGAR, premioState(tester = true, premioEnabled = true, premioClaimed = false, platform = "android"))
     }
 
     @Test
     fun testadorQuePegouOPremioHojeVeQueVoltaAmanha() {
-        assertEquals(PremioState.JA_PEGOU, premioState(beta = true, premioEnabled = true, premioClaimed = true))
+        assertEquals(PremioState.JA_PEGOU, premioState(tester = true, premioEnabled = true, premioClaimed = true, platform = "android"))
     }
 
     @Test
     fun premioEscondidoSemTesterOuSemInterruptor() {
-        assertEquals(PremioState.ESCONDIDO, premioState(beta = false, premioEnabled = true, premioClaimed = false))
-        assertEquals(PremioState.ESCONDIDO, premioState(beta = true, premioEnabled = false, premioClaimed = false))
+        assertEquals(PremioState.ESCONDIDO, premioState(tester = false, premioEnabled = true, premioClaimed = false, platform = "android"))
+        assertEquals(PremioState.ESCONDIDO, premioState(tester = true, premioEnabled = false, premioClaimed = false, platform = "android"))
     }
 
     @Test
@@ -75,7 +75,7 @@ class StoreViewTest {
     fun avisoDaCompraRecusadaOuFechada() {
         assertEquals(Aviso.Comum(K.DOUBLOON_CLOSED), avisoCompra("billing_off"))
         assertEquals(Aviso.Comum(K.DOUBLOON_CLOSED), avisoCompra("premio_only"))
-        assertEquals(Aviso.SoAndroid(AndroidOnlyKey.PREMIO_DONE_NOTICE), avisoCompra("premio_done"))
+        assertEquals(Aviso.PlatformGated(PlatformGatedKey.PREMIO_DONE_NOTICE), avisoCompra("premio_done"))
         assertEquals(Aviso.Comum(K.DOUBLOON_BUY_FAILED), avisoCompra("account_mismatch"))
         assertEquals(Aviso.Comum(K.DOUBLOON_BUY_FAILED), avisoCompra("not_beta"))
     }
@@ -83,9 +83,9 @@ class StoreViewTest {
     @Test
     fun avisoDoPremioPorStatusDaRpc() {
         assertEquals(null, avisoPremio("premio"))
-        assertEquals(Aviso.SoAndroid(AndroidOnlyKey.PREMIO_DONE_NOTICE), avisoPremio("already"))
-        assertEquals(Aviso.SoAndroid(AndroidOnlyKey.PREMIO_UNAVAILABLE), avisoPremio("off"))
-        assertEquals(Aviso.SoAndroid(AndroidOnlyKey.PREMIO_UNAVAILABLE), avisoPremio("not_beta"))
+        assertEquals(Aviso.PlatformGated(PlatformGatedKey.PREMIO_DONE_NOTICE), avisoPremio("already"))
+        assertEquals(Aviso.PlatformGated(PlatformGatedKey.PREMIO_UNAVAILABLE), avisoPremio("off"))
+        assertEquals(Aviso.PlatformGated(PlatformGatedKey.PREMIO_UNAVAILABLE), avisoPremio("not_beta"))
         assertEquals(Aviso.Comum(K.DOUBLOON_BUY_FAILED), avisoPremio("erro_qualquer"))
     }
 
@@ -97,7 +97,7 @@ class StoreViewTest {
 
     @Test
     fun iphoneDeQuemNaoETestadorVeChegaEmBreve() {
-        val premio = premioState(beta = false, premioEnabled = true, premioClaimed = false)
+        val premio = premioState(tester = false, premioEnabled = true, premioClaimed = false, platform = "android")
         val vitrine = vitrineVisivel(vendaPelaPlay = false, realEnabled = true, vitrineBeta = false)
         assertEquals(DoubloonAisleView.CLOSED, aisle(premio = premio, vitrine = vitrine))
     }

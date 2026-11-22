@@ -749,7 +749,7 @@ actual class CloudApi actual constructor() {
         val o = JSONArray(json).getJSONObject(0)
         CloudResult.Ok(
             DobroesStoreStatus(
-                beta = o.optBoolean("beta", false),
+                tester = o.optBoolean("beta", false),
                 realEnabled = o.optBoolean("real_enabled", false),
                 premioEnabled = o.optBoolean("premio_enabled", false),
                 premioClaimed = o.optBoolean("premio_claimed", false),

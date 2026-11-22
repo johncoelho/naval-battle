@@ -1,8 +1,8 @@
 package br.com.navalbattle.game
 
-import br.com.navalbattle.i18n.AndroidOnlyKey
+import br.com.navalbattle.i18n.PlatformGatedKey
 import br.com.navalbattle.i18n.K
-import br.com.navalbattle.i18n.androidOnlyText
+import br.com.navalbattle.i18n.platformGatedText
 import br.com.navalbattle.i18n.t
 
 /**
@@ -15,8 +15,8 @@ enum class Badge(val code: String, private val titulo: () -> String, private val
     // texto só do Android (#118): no iPhone fica vazio e a medalha nem aparece
     BETA_TESTER(
         "beta_tester",
-        { androidOnlyText(AndroidOnlyKey.BADGE_BETA_TESTER) },
-        { androidOnlyText(AndroidOnlyKey.BADGE_BETA_TESTER_DESC) }
+        { platformGatedText(PlatformGatedKey.BADGE_TESTER) },
+        { platformGatedText(PlatformGatedKey.BADGE_TESTER_DESC) }
     ),
     FEEDBACK_CONTRIBUTOR(
         "feedback_contributor",

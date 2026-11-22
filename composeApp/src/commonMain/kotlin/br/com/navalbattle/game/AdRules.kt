@@ -71,7 +71,7 @@ object AdRules {
         val mf = manufacturer.lowercase()
         return hw == "goldfish" || hw == "ranchu" ||
             fp.startsWith("generic") || fp.startsWith("unknown") ||
-            md.contains("sdk_gphone") || md.contains("emulator") || md.contains("android sdk built for") ||
+            md.contains("sdk_gphone") || md.contains("emulator") || md.contains("sdk built for") ||
             pr.startsWith("sdk") || pr == "google_sdk" || pr == "vbox86p" ||
             mf == "genymotion"
     }

@@ -7,17 +7,17 @@ import kotlin.test.assertTrue
 
 /**
  * #118: os textos de Google Play/beta saem do binario do iPhone. No iPhone todos devolvem vazio; no Android todos
- * existem nos tres idiomas (o conteudo exato esta travado em AndroidOnlyTextAndroidTest).
+ * existem nos tres idiomas (o conteudo exato esta travado em PlatformGatedTextAndroidTest).
  */
-class AndroidOnlyTextTest {
+class PlatformGatedTextTest {
     @Test
     fun vazioNoIphoneEPreenchidoNoAndroidNosTresIdiomas() {
         val original = I18n.lang
         try {
             Lang.entries.forEach { lang ->
                 I18n.lang = lang
-                AndroidOnlyKey.entries.forEach { key ->
-                    val texto = androidOnlyText(key)
+                PlatformGatedKey.entries.forEach { key ->
+                    val texto = platformGatedText(key)
                     if (platformName == "ios") assertEquals("", texto, "$lang $key deveria ser vazio no iPhone")
                     else assertTrue(texto.isNotBlank(), "$lang $key vazio no Android")
                 }
@@ -30,7 +30,7 @@ class AndroidOnlyTextTest {
     @Test
     fun valorSubstituiOPorcentoS() {
         if (platformName == "ios") return
-        val texto = androidOnlyText(AndroidOnlyKey.PREMIO_TAKEN, "2h")
+        val texto = platformGatedText(PlatformGatedKey.PREMIO_TAKEN, "2h")
         assertTrue("2h" in texto)
         assertTrue("%s" !in texto)
     }
