@@ -188,6 +188,9 @@ fun BattleScreen(state: AppState, match: Match) {
         }
     }
 
+    // Batalha do Dia (#138): entrar na batalha gasta a tentativa do dia
+    LaunchedEffect(match) { state.noteDailyBattleStarted(match) }
+
     LaunchedEffect(match.phase) {
         if (match.phase == Phase.RESULT) {
             state.guidedEvent(GuidedEvent.FINISHED)

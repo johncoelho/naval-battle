@@ -102,6 +102,20 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
 - Ao completar, **Resgatar** paga ◆250 + 5 milhas (até o teto de milhas), uma vez por semana. O prêmio é fixo e aparece
   antes do resgate; não entra no teto de dobrões das partidas online. Conta `is_test` não recebe.
 
+### Batalha do Dia (#138, 0.48.1)
+
+- Botão **Batalha do Dia #N** no menu, abaixo das formas de jogar: o **mesmo mar para todo mundo** no mesmo dia, contra a
+  IA, no Clássico. Vence quem afunda a frota com **menos tiros**. O número do dia começa em 1 (23/11/2026).
+- O dia vira à **meia-noite de Brasília (UTC-3 fixo)**, pelo relógio do aparelho e nunca pelo fuso dele: viajante joga o
+  mesmo mar de quem está no Brasil. Funciona offline e sem conta. Sem servidor e **sem prêmio novo**: a partida conta como
+  qualquer partida contra a IA (XP, desafio do dia), e só uma vez por dia.
+- **Uma tentativa por dia**, gravada só no aparelho (`day_battle`, fica ao sair da conta): entrar na batalha gasta a vez
+  (abandonar ou fechar o app no meio não dá outra). Depois de terminar, o botão mostra o placar e compartilha.
+- **Compartilhar** abre a folha do sistema só com o placar: número do dia, resultado e tiros. Sem grade (o mar é o mesmo
+  para todos e a grade entregaria a posição dos navios), sem link, sem apelido, e-mail ou id.
+- Regras puras em `game/DailyBattle.kt` (dia, semente, sorteio SplitMix64 próprio para o mar não depender do `Random` da
+  biblioteca, registro e texto) com `DailyBattleTest`, que trava os primeiros números do sorteio de um dia.
+
 ### Formas de jogar
 
 - **Partida rápida** — contra a IA, que caça em padrão de paridade e persegue contatos.

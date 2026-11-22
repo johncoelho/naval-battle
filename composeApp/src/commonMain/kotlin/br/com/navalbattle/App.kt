@@ -48,6 +48,7 @@ import br.com.navalbattle.data.isNewerVersion
 import br.com.navalbattle.data.DailyReminder
 import br.com.navalbattle.data.ReminderMessage
 import br.com.navalbattle.data.ReminderTexts
+import br.com.navalbattle.game.DailyBattle
 import br.com.navalbattle.game.FirstMatchHook
 import br.com.navalbattle.game.HookAction
 import br.com.navalbattle.game.ProfileKeys
@@ -96,6 +97,7 @@ import br.com.navalbattle.data.SeasonInfo
 import br.com.navalbattle.data.SeasonTrophy
 import br.com.navalbattle.data.AgeSignals
 import br.com.navalbattle.data.Prefs
+import br.com.navalbattle.data.shareText
 import br.com.navalbattle.data.PrefsBatch
 import br.com.navalbattle.data.Protocol
 import br.com.navalbattle.data.FriendPresence
@@ -708,6 +710,60 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         guidedReplay = false
         screen = Screen.MENU
         askReviewSoon()
+    }
+
+    // ---------------- Batalha do Dia (#138) ----------------
+
+    private val dailyBattlePrefs = Prefs()
+
+    /** Último dia jogado e o resultado, só do aparelho. Nulo = nunca jogou. */
+    var dailyBattleRecord by mutableStateOf(DailyBattle.decode(dailyBattlePrefs.getString(ProfileKeys.DAILY_BATTLE, "")))
+        private set
+
+    /** A partida em curso é a Batalha do Dia (identidade da partida) e de que dia (fixo ao começar, vale virar a meia-noite). */
+    var dailyBattleMatch by mutableStateOf<Match?>(null)
+        private set
+    private var dailyBattleDay = 0L
+
+    val dailyBattleToday: Long get() = DailyBattle.dayOf(nowMillis())
+
+    val dailyBattlePlayedToday: Boolean get() = DailyBattle.playedToday(dailyBattleRecord, dailyBattleToday)
+
+    private fun saveDailyBattle(r: DailyBattle.Record) {
+        dailyBattleRecord = r
+        dailyBattlePrefs.putString(ProfileKeys.DAILY_BATTLE, DailyBattle.encode(r))
+    }
+
+    /** Abre o posicionamento da Batalha do Dia: Clássico contra a IA com o sorteio do dia (frota inimiga igual para todos). */
+    fun startDailyBattle() {
+        val today = dailyBattleToday
+        if (DailyBattle.playedToday(dailyBattleRecord, today)) return
+        botSession = null
+        opponentProfile = null
+        val m = Match(GameMode.CLASSIC, Opponent.AI, random = DailyBattle.random(today))
+        dailyBattleDay = today
+        dailyBattleMatch = m
+        match = m
+        screen = Screen.PLACEMENT
+    }
+
+    /** A batalha começou: gasta a tentativa do dia (abandonar ou fechar o app no meio não dá outra). */
+    fun noteDailyBattleStarted(m: Match) {
+        if (m !== dailyBattleMatch || DailyBattle.playedToday(dailyBattleRecord, dailyBattleDay)) return
+        saveDailyBattle(DailyBattle.started(dailyBattleDay))
+    }
+
+    /** Fim da Batalha do Dia: grava o placar (vitória e tiros) para o menu e o compartilhamento. */
+    fun noteDailyBattleFinished(m: Match) {
+        if (m !== dailyBattleMatch || m.winner == null) return
+        val won = m.winner == m.mySide && !m.forfeitedBySelf
+        saveDailyBattle(DailyBattle.finished(dailyBattleDay, won, m.shotsOf(m.mySide)))
+    }
+
+    /** Compartilha só o placar do dia (número, resultado e tiros) pela folha do sistema. */
+    fun shareDailyBattle() {
+        val r = dailyBattleRecord ?: return
+        DailyBattle.shareText(r, I18n.lang)?.let { shareText(it) }
     }
 
     // ---------------- avaliação na Play (#45) ----------------

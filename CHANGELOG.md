@@ -13,6 +13,9 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 App 0.48.1 (versionCode 137). Refs #165, #166, #138, #124. **Publica junto a 0.47.1 (#118), a 0.47.2 (#131) e a 0.48.0**: as quatro entram na `main` num push só e a Play e o TestFlight recebem só esta (137); 134, 135 e 136 nunca são enviados. **Sem dependência nova.**
 
+### Adicionado
+- **Batalha do Dia (#138):** botão no menu com o mesmo mar para todo mundo no dia de Brasília (UTC-3 fixo), contra a IA, no Clássico; vence quem afunda com menos tiros. Uma tentativa por dia (entrar na batalha gasta a vez), gravada só no aparelho; depois o botão mostra o placar e compartilha só número do dia, resultado e tiros (sem grade, link ou dado pessoal). Sem servidor, sem prêmio novo, funciona offline. `game/DailyBattle.kt` (sorteio SplitMix64 próprio) e `DailyBattleTest`. Textos pt/en/es do Marketing (plano #132).
+
 ### Corrigido
 - **#165** Os véus que ainda usavam `clickable(enabled = false) {}` deixavam o toque atravessar (um `clickable` desligado não consome o toque): saída da partida (`QuitOverlay`), painel do grito de guerra, convite recebido (`InviteBanner`), oferta de partida rápida (`QuickOfferBanner`), as três confirmações do Perfil (apagar carreira, sair sem salvar, "Já joga com Google?") e o véu da vitória na rede local (`VictoryCard`, que não tinha nada) passam a usar o `Modifier.consumeVeilTouch()` da #164. O relatório e o "jogar de novo" da rede local ficam por cima do véu e continuam respondendo.
 - **#166** No iPhone, "Compartilhar o jogo" (Ajustes) e o "Chamar um amigo" do gancho sem código de convite chamavam o `shareStoreListing` do iOS, que é vazio: o toque não fazia nada. Regra pura `StoreLink.available(platform)` (só Android tem link de loja por enquanto): sem link, o botão dos Ajustes some e o "Chamar um amigo" só aparece com o código de convite carregado. Android igual.

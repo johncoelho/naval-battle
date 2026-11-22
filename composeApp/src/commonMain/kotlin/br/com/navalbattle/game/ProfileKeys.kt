@@ -81,6 +81,9 @@ internal object ProfileKeys {
     /** O `first_match_end` do funil (#137) já foi contado neste aparelho: uma vez por instalação. */
     const val FUNNEL_FIRST_MATCH = "funnel_first_match"
 
+    /** Batalha do Dia (#138): o dia jogado e o resultado (`DailyBattle.encode`); é do aparelho, uma vez por dia. */
+    const val DAILY_BATTLE = "day_battle"
+
     /** Aviso de lançamento já visto pelo convidado ([launchNoticeKey] com id nulo): não volta ao sair. */
     const val LAUNCH_NOTICE_GUEST = "launch_notice_seen_guest"
 
@@ -95,7 +98,7 @@ internal object ProfileKeys {
     /** O que fica como texto ao voltar a convidado. */
     val KEEP_STRINGS: List<String> = listOf(
         K_LANG, K_LAST_MODE, K_QUICK_OFFER_KIND, K_DEVICE_CHECK,
-        DOBROES_DELIVERED, AGE_BAND, AGE_CHECKED_AT, REVIEW_LAST_ASK
+        DOBROES_DELIVERED, AGE_BAND, AGE_CHECKED_AT, REVIEW_LAST_ASK, DAILY_BATTLE
     )
 
     /** Tudo o que fica quando a conta sai (a permissão; o resto é carreira e vai embora). */

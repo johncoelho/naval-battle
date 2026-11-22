@@ -33,6 +33,7 @@ import br.com.navalbattle.AppState
 import br.com.navalbattle.OnlineAwardUi
 import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.design.Naval
+import br.com.navalbattle.game.DailyBattle
 import br.com.navalbattle.game.ReportContext
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
@@ -74,8 +75,11 @@ fun ResultScreen(state: AppState, match: Match) {
     val bot = match.bot != null
     // referência desta vitória para o "dobrar dobrões" (#29), fotografada antes de a sala fechar
     val adRef = remember(match) { state.adWinRef(match) }
+    // Batalha do Dia (#138): placar do dia para o menu e o compartilhamento
+    val daily = state.dailyBattleMatch === match
     LaunchedEffect(match) {
         state.clearReviewCandidate()
+        if (daily) state.noteDailyBattleFinished(match)
         state.clearAdNotice(AdPlace.WIN)
         state.resetOnlineAward()
         // fim da 1a partida: funil e gancho (#135, #137), ANTES de a partida entrar na carreira (registerMatch abaixo)
@@ -298,6 +302,11 @@ fun ResultScreen(state: AppState, match: Match) {
         if (match.opponent.isNetwork() || bot) {
             // contra o adversario virtual a jornada e a da partida online (#112): revanche e "voltar ao convés" iguais
             if (state.firstMatchHookFor === match) FirstMatchHookCard(state, match, victory) else RematchSection(state, match)
+        } else if (daily) {
+            // um mar por dia: no lugar de "Nova partida", o placar para compartilhar (sem grade nem dado pessoal)
+            state.dailyBattleRecord?.let { r -> HudLabel(t(K.DAILY_BATTLE, DailyBattle.number(r.day)).uppercase(), Naval.amberStrong) }
+            Gap(8)
+            PrimaryButton(t(K.DAILY_BATTLE_SHARE)) { state.shareDailyBattle() }
         } else {
             PrimaryButton(t(K.RESULT_NEW_MATCH)) { state.newMatch(match.opponent) }
         }

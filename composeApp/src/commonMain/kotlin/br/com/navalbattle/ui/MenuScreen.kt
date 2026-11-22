@@ -68,6 +68,7 @@ import br.com.navalbattle.design.drawCompassRose
 import br.com.navalbattle.design.drawDoubloon
 import br.com.navalbattle.design.drawSeasonIcon
 import br.com.navalbattle.design.drawShip
+import br.com.navalbattle.game.DailyBattle
 import br.com.navalbattle.game.GameMode
 import br.com.navalbattle.game.Opponent
 import br.com.navalbattle.game.Rank
@@ -156,6 +157,8 @@ private fun MenuActions(state: AppState) {
                 ModeTile(t(K.MENU_TILE_LOCAL), t(K.MENU_TILE_LOCAL_SUB), Modifier.weight(1f).fillMaxHeight()) { state.pickMode(ModePick.Local) }
                 ModeTile(t(K.MENU_TILE_LAN), t(K.MENU_TILE_LAN_SUB), Modifier.weight(1f).fillMaxHeight()) { state.pickMode(ModePick.LAN) }
             }
+            Gap(8)
+            DailyBattleButton(state)
 
             Gap(12)
             val signedIn = state.profile.signedIn
@@ -184,6 +187,23 @@ private fun MenuActions(state: AppState) {
                 HudLabel("v$appVersionLabel", Naval.line)
             }
         }
+}
+
+/**
+ * Batalha do Dia (#138): o mesmo mar para todo mundo hoje. Antes de jogar abre o posicionamento; depois de terminar o
+ * toque compartilha o placar; quem começou e não terminou espera o mar de amanhã.
+ */
+@Composable
+private fun DailyBattleButton(state: AppState) {
+    val today = state.dailyBattleToday
+    val title = t(K.DAILY_BATTLE, DailyBattle.number(today))
+    val r = state.dailyBattleRecord?.takeIf { DailyBattle.playedToday(it, today) }
+    when {
+        r == null -> SecondaryButton(title, t(K.DAILY_BATTLE_SUB)) { state.startDailyBattle() }
+        r.won == true -> SecondaryButton(title, t(K.DAILY_BATTLE_WON, r.shots ?: 0)) { state.shareDailyBattle() }
+        r.won == false -> SecondaryButton(title, t(K.DAILY_BATTLE_LOST)) { state.shareDailyBattle() }
+        else -> SecondaryButton(title, t(K.DAILY_BATTLE_PLAYED), enabled = false) {}
+    }
 }
 
 // ------------------------------------------------------------------ cabeçalho

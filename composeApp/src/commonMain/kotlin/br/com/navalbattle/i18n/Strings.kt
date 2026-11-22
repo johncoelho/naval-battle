@@ -386,6 +386,39 @@ enum class K(val pt: String, val en: String, val es: String) {
         "Reminder on: I will let you know tomorrow.",
         "Recordatorio activado: te aviso mañana."
     ),
+    // ---------------------------------------------------------------- Batalha do Dia (#138)
+    DAILY_BATTLE("Batalha do Dia #%s", "Daily Battle #%s", "Batalla del Día #%s"),
+    DAILY_BATTLE_SUB(
+        "O mesmo mar para todo mundo. Afunde a frota com o menor número de tiros.",
+        "Same sea for everyone. Sink the fleet in the fewest shots.",
+        "El mismo mar para todos. Hunde la flota con la menor cantidad de disparos."
+    ),
+    DAILY_BATTLE_WON(
+        "Você afundou a frota em %s tiros. Toque para compartilhar. Novo mar à meia-noite de Brasília.",
+        "You sank the fleet in %s shots. Tap to share. New sea at midnight, Brasília time.",
+        "Hundiste la flota en %s disparos. Toca para compartir. Nuevo mar a la medianoche de Brasilia."
+    ),
+    DAILY_BATTLE_LOST(
+        "A frota do dia resistiu. Toque para compartilhar. Novo mar à meia-noite de Brasília.",
+        "Today's fleet held on. Tap to share. New sea at midnight, Brasília time.",
+        "La flota del día resistió. Toca para compartir. Nuevo mar a la medianoche de Brasilia."
+    ),
+    DAILY_BATTLE_PLAYED(
+        "Você já jogou hoje. A próxima Batalha do Dia chega à meia-noite de Brasília.",
+        "You already played today. The next Daily Battle arrives at midnight, Brasília time.",
+        "Ya jugaste hoy. La próxima Batalla del Día llega a la medianoche de Brasilia."
+    ),
+    DAILY_BATTLE_SHARE("Compartilhar resultado", "Share result", "Compartir resultado"),
+    DAILY_BATTLE_SHARE_WIN(
+        "Naval Battle · Batalha do Dia #%1 · %2 tiros\nAfundei a frota do dia em %2 tiros. Consegue em menos?",
+        "Naval Battle · Daily Battle #%1 · %2 shots\nI sank today's fleet in %2 shots. Can you do it in fewer?",
+        "Naval Battle · Batalla del Día #%1 · %2 disparos\nHundí la flota del día en %2 disparos. ¿Puedes en menos?"
+    ),
+    DAILY_BATTLE_SHARE_LOSS(
+        "Naval Battle · Batalha do Dia #%1\nA frota do dia resistiu aos meus %2 tiros. Consegue afundá-la?",
+        "Naval Battle · Daily Battle #%1\nToday's fleet survived my %2 shots. Can you sink it?",
+        "Naval Battle · Batalla del Día #%1\nLa flota del día resistió mis %2 disparos. ¿Puedes hundirla?"
+    ),
     HOOK_REMATCH("Revanche agora", "Rematch now", "Revancha ya"),
     HOOK_INVITE("Chamar um amigo", "Invite a friend", "Invitar a un amigo"),
     HOOK_INVITE_SUB_WIN("Mostre que você sabe jogar.", "Show them what you can do.", "Muestra que sabes jugar."),
