@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Naval Battle — download the game</title>
+<meta name="description" content="Download Naval Battle, the online naval battle game for Android (Google Play) and iPhone (App Store).">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://johncoelho.github.io/naval-battle/baixar/en/">
+<link rel="alternate" hreflang="pt-BR" href="https://johncoelho.github.io/naval-battle/baixar">
+<link rel="alternate" hreflang="en" href="https://johncoelho.github.io/naval-battle/baixar/en/">
+<link rel="alternate" hreflang="es" href="https://johncoelho.github.io/naval-battle/baixar/es/">
+<link rel="alternate" hreflang="x-default" href="https://johncoelho.github.io/naval-battle/baixar">
+<meta property="og:title" content="Naval Battle — download the game">
+<meta property="og:description" content="Download Naval Battle, the online naval battle game for Android (Google Play) and iPhone (App Store).">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://johncoelho.github.io/naval-battle/baixar/en/">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://johncoelho.github.io/naval-battle/media/feature-graphic-1024x500.png">
+<meta name="theme-color" content="#080B07">
+<link rel="icon" href="../../media/icon-512.png" type="image/png">
+<script>
+/* Redireciona na hora conforme o aparelho. Sem cookie, sem armazenamento, sem pixel:
+   só repassa os utm_* e o src da URL como referrer da Play. Sem JS ou desktop, os botões abaixo valem. */
+(function () {
+  var APPLE = 'https://apps.apple.com/app/id6827258132';
+  var PLAY = 'https://play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic';
+  var ua = navigator.userAgent || '';
+  var ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var android = /Android/i.test(ua);
+  var parts = [];
+  var DEFAULT_SRC = 'meta-en'; /* origem da campanha quando a URL não traz src */
+  try {
+    new URLSearchParams(location.search).forEach(function (v, k) {
+      if (/^(utm_[a-z0-9_]+|src)$/i.test(k)) parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    });
+  } catch (e) {}
+  if (!/(^|&)src=/.test(parts.join('&'))) parts.push('src=' + DEFAULT_SRC);
+  var play = parts.length ? PLAY + '&referrer=' + encodeURIComponent(parts.join('&')) : PLAY;
+  window.__nbPlay = play;
+  if (ios) location.replace(APPLE);
+  else if (android) location.replace(play);
+})();
+</script>
+<style>
+  :root{--bg:#080B07;--surface2:#161C10;--line:#2B3520;--ink:#EFF2E4;--inkSoft:#B4C0A4;--muted:#6B7760;
+    --amber:#E6AC3F;--amberStrong:#FFC95C;--amberInk:#1A1204;
+    --sans:'Chakra Petch',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:var(--bg) radial-gradient(1200px 700px at 50% -15%,#0d1a0f 0%,var(--bg) 60%);
+    color:var(--ink);font-family:var(--sans)}
+  .wrap{width:100%;max-width:440px;padding:32px 20px;text-align:center}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--muted);text-transform:uppercase;margin:0 0 10px}
+  h1{font-size:clamp(28px,7vw,36px);line-height:1.1;margin:0 0 12px;font-weight:700}
+  p{color:var(--inkSoft);line-height:1.6;font-size:15px;margin:0 0 24px}
+  .btn{display:block;text-decoration:none;font-weight:700;padding:15px 18px;border:1px solid var(--line);
+    margin:0 0 12px;color:var(--ink);background:var(--surface2);letter-spacing:.04em}
+  .btn-primary{background:var(--amber);border-color:var(--amber);color:var(--amberInk)}
+  .btn:hover{border-color:var(--amberStrong)}
+  small{display:block;margin-top:20px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  small a{color:var(--inkSoft)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <p class="eyebrow">Naval Battle</p>
+  <h1>Download the game</h1>
+  <p>Online naval battle, on Android and iPhone.</p>
+  <a class="btn btn-primary" id="play" href="https://play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic">Android · Google Play</a>
+  <a class="btn" href="https://apps.apple.com/app/id6827258132">iPhone · App Store</a>
+  <small><a href="../../privacy.html">Privacy policy</a> · <a href="../../">naval-battle</a></small>
+</main>
+<script>if (window.__nbPlay) document.getElementById('play').href = window.__nbPlay;</script>
+</body>
+</html>

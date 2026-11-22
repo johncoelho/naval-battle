@@ -9,6 +9,17 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## Site — 2026-11-22 · Páginas de destino /baixar/en e /baixar/es (#123, item 10)
+
+Sem App x.y.z (`[skip ci]`, sem subir versão): só `site/`. A Meta não aceita link direto do App Store em campanha de Tráfego, então os anúncios EN/ES vão para estas páginas.
+
+### Adicionado
+- `site/baixar/en/index.html` (inglês dos EUA) e `site/baixar/es/index.html` (espanhol neutro latino): mesmo desenho, tokens e botões da `/baixar`; `lang`, `<title>`, descrição e Open Graph por idioma; redirecionam iPhone para a App Store e Android para a Play. Política de privacidade existente linkada no rodapé.
+- Origem da campanha: além dos `utm_*`, repassam `src` como referrer da Play; sem `src` na URL, usam `meta-en` / `meta-es`. Sem cookie, sem armazenamento, sem pixel.
+
+### Alterado
+- `site/baixar.html`: `canonical` e `hreflang` entre pt-BR, en, es e x-default.
+
 ## CI — 2026-11-21 · Capturas com o preço real da Apple (#122)
 
 Sem App x.y.z (`[skip ci]`, sem subir versão): só teste e docs. O ensaio 11 do `ios-qa` mostrou que o `xcodebuild test` não aplica a StoreKit Configuration do plano `iosApp-Shots`: a vitrine veio com $0.99, $1.99, $3.99 e $7.99 (produtos do App Store Connect na loja dos EUA do simulador). Decisão do PM: seguir com o preço real do StoreKit, que é o que a Apple precisa ver.
