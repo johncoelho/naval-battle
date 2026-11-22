@@ -11,7 +11,7 @@ tocando em cada botão). Agora o ensaio roda antes, e **nada vai à Apple sem el
 
 ## Checklist (nesta ordem, cada item com prova)
 
-1. **Ensaio de revisão verde no SHA enviado.** `gh workflow run ios-qa.yml --ref main -f modo=ensaio-revisao`; espere o fim
+1. **Ensaios de revisão verdes (`sem-saldo` e `com-saldo`) no SHA enviado.** `gh workflow run ios-qa.yml --ref main -f modo=ensaio-revisao -f estado=<estado>`, com a demo preparada (item 5); espere o fim
    (`gh run watch <id> --exit-status`) e confira no artefato `ios-qa-<run>`: `ensaio-revisao.md` com `RESULTADO: VERDE`. Link do run no cartão.
    Ensaio vermelho = **não enviar**: o relatório diz qual toque ficou mudo ou qual texto casou a lista; volta para o Dev como bug.
 2. **Varredura do binário** do `ios.yml` e do `ios-release.yml` sem achado novo (resumo do job): nenhum termo de
@@ -20,9 +20,18 @@ tocando em cada botão). Agora o ensaio roda antes, e **nada vai à Apple sem el
    Active, pede ao John (banco e impostos são dele) e **não envia**.
 4. **Os 4 produtos** (`dobroes_bolsa`, `dobroes_bau`, `dobroes_cofre`, `dobroes_tesouro`) **Ready to Submit e anexados à versão**
    (seção "In-App Purchases and Subscriptions" da página da versão), com as **capturas de revisão** (`modo=capturas-iap`) anexadas.
-5. **Conta demo** (App Review Information) com **saldo de dobrões para o Passe**, **não `beta_eligible`** e sem medalha beta. O Release
-   confere por SQL de **leitura** (`supabase db query`); se faltar saldo, crédito de teste pela skill `supabase-change` (dado, não arquivo; OK do PM).
-   Atenção: o Passe é comprado uma vez por temporada; se a demo já tiver o Passe, o ensaio registra "CTA não exercitado" e a nota não pode afirmar o passo.
+5. **Conta demo** (App Review Information): **`beta_eligible` enquanto `real_billing_ios_enabled` estiver desligado** (é o que faz a
+   vitrine abrir para ela; ligada a flag, deixa de precisar). O estado dela é preparado e conferido por `tools/ios-qa/demo-estado.sql`
+   (QA/Release rodam, com acesso de escrita; o workflow não tem `service_role`; primeiro em dry run, que desfaz tudo, depois com `aplicar := true`).
+   Três estados, todos sem passe na temporada corrente:
+   - a) **`sem-saldo`**: saldo abaixo do preço de entrada do Passe. Ensaio `-f estado=sem-saldo`: o CTA tem de abrir "Dobrões insuficientes" e o atalho
+     tem de abrir a aba Dobrões (milhas só nesta rodada).
+   - b) **`com-saldo`**: saldo >= preço de entrada. Ensaio `-f estado=com-saldo`: o CTA tem de abrir "Tudo certo". Essa rodada **gasta** o saldo e cria o passe.
+   - c) **estado de entrega**: saldo suficiente, sem passe, `beta_eligible`, milhas baixas. É o que a Apple vai encontrar; conferido por **leitura**
+     (`demo-estado.sql` com `e_estado := 'verificar'`/`'entrega'` em dry run) imediatamente antes do envio.
+   **Regra: nunca rodar ensaio depois do envio** (ele muda a demo; o revisor precisa do estado c). Os ensaios `a` e `b` têm de ser **verdes no mesmo
+   SHA**, e os **dois links** vão no cartão; depois deles, voltar a demo ao estado c e conferir.
+   O ensaio não tem "não exercitado" para o Passe: CTA ausente ou resultado diferente do estado pedido é falha.
 6. **Notas de revisão geradas do que o ensaio provou** (abaixo). Frase sem PNG ou linha do relatório não entra.
 7. **Resposta no Resolution Center** cita os dois itens da recusa e o que mudou (versão e build), em inglês, curta.
 8. **Depois do envio:** registrar no HISTORY o que o ensaio **não** pegou (se a Apple recusar de novo, é lacuna do ensaio: vira item do teste antes do próximo envio).
@@ -41,6 +50,8 @@ ensaio só viu a mensagem da vitrine: a StoreKit Configuration não é aplicada 
 Evite a palavra "subscription" fora de "não é assinatura" (a 0.45.3 já nos custou por ela); no app o Passe nunca é chamado de assinatura.
 
 ## O que o ensaio cobre e o que não cobre
+
+**Swift ainda não rodou no CI: o primeiro ensaio e a primeira varredura estão pendentes** (o `ReviewRehearsalUITests.swift` nunca foi compilado; o limiar de rótulos e as heurísticas se calibram no 1º run).
 
 Cobre: 4 pacotes, Passe (sem saldo, com saldo, atalho para a loja), milhas, botões de preço da Loja, varredura de texto das telas, resposta em até 10 s.
 Não cobre: o iPadOS do revisor (pode diferir do runtime do runner), a folha de login do Apple ID (nunca fotografada nem registrada, nunca se digita senha),

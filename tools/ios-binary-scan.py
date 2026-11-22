@@ -2,7 +2,7 @@
 """Varredura do binario iOS contra os termos proibidos (#118, Apple 2.3.10).
 
 A Apple le o binario inteiro, nao so a tela: "Google Play" numa string do app foi a causa da recusa da 0.47.0.
-Roda `strings -a` em cada arquivo dado (executavel do .app, Info.plist, .storekit...), confere cada linha contra
+Roda `strings -a` em cada arquivo dado (executavel do .app e Info.plist), confere cada linha contra
 `tools/ios-forbidden-terms.txt` (um regex por linha, sem diferenciar maiusculas) e separa o que a allowlist
 (`tools/ios-binary-allowlist.txt`, um regex por linha, aprovado pelo Tech Lead) ja aprovou.
 
