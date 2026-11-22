@@ -1,5 +1,6 @@
 package br.com.navalbattle.game
 
+import br.com.navalbattle.i18n.AndroidOnlyKey
 import br.com.navalbattle.i18n.K
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -72,20 +73,20 @@ class StoreViewTest {
 
     @Test
     fun avisoDaCompraRecusadaOuFechada() {
-        assertEquals(K.DOUBLOON_CLOSED, avisoCompra("billing_off"))
-        assertEquals(K.DOUBLOON_CLOSED, avisoCompra("premio_only"))
-        assertEquals(K.PREMIO_DONE_NOTICE, avisoCompra("premio_done"))
-        assertEquals(K.DOUBLOON_BUY_FAILED, avisoCompra("account_mismatch"))
-        assertEquals(K.DOUBLOON_BUY_FAILED, avisoCompra("not_beta"))
+        assertEquals(Aviso.Comum(K.DOUBLOON_CLOSED), avisoCompra("billing_off"))
+        assertEquals(Aviso.Comum(K.DOUBLOON_CLOSED), avisoCompra("premio_only"))
+        assertEquals(Aviso.SoAndroid(AndroidOnlyKey.PREMIO_DONE_NOTICE), avisoCompra("premio_done"))
+        assertEquals(Aviso.Comum(K.DOUBLOON_BUY_FAILED), avisoCompra("account_mismatch"))
+        assertEquals(Aviso.Comum(K.DOUBLOON_BUY_FAILED), avisoCompra("not_beta"))
     }
 
     @Test
     fun avisoDoPremioPorStatusDaRpc() {
         assertEquals(null, avisoPremio("premio"))
-        assertEquals(K.PREMIO_DONE_NOTICE, avisoPremio("already"))
-        assertEquals(K.PREMIO_UNAVAILABLE, avisoPremio("off"))
-        assertEquals(K.PREMIO_UNAVAILABLE, avisoPremio("not_beta"))
-        assertEquals(K.DOUBLOON_BUY_FAILED, avisoPremio("erro_qualquer"))
+        assertEquals(Aviso.SoAndroid(AndroidOnlyKey.PREMIO_DONE_NOTICE), avisoPremio("already"))
+        assertEquals(Aviso.SoAndroid(AndroidOnlyKey.PREMIO_UNAVAILABLE), avisoPremio("off"))
+        assertEquals(Aviso.SoAndroid(AndroidOnlyKey.PREMIO_UNAVAILABLE), avisoPremio("not_beta"))
+        assertEquals(Aviso.Comum(K.DOUBLOON_BUY_FAILED), avisoPremio("erro_qualquer"))
     }
 
     // aba Dobrões nunca fica vazia (#62)

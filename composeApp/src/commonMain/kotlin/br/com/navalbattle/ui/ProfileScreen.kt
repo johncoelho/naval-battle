@@ -513,9 +513,9 @@ fun ProfileScreen(state: AppState) {
                         drawBadgeIcon(earned.badge, Offset(size.width / 2f, size.height / 2f), size.minDimension, Naval.amberStrong)
                     }
                     Gap(12)
-                    Text(t(earned.badge.key).uppercase(), style = NavalType.title, color = Naval.ink)
+                    Text(earned.badge.label.uppercase(), style = NavalType.title, color = Naval.ink)
                     Gap(6)
-                    HudLabel(t(earned.badge.descKey), Naval.inkSoft)
+                    HudLabel(earned.badge.blurb, Naval.inkSoft)
                     if (earned.earnedDate.isNotEmpty()) {
                         Gap(4)
                         HudLabel(t(K.BADGE_EARNED_ON, earned.earnedDate), Naval.muted)
@@ -997,7 +997,7 @@ private fun BadgeChip(earned: EarnedBadge, onClick: () -> Unit) {
             drawBadgeIcon(earned.badge, Offset(size.width / 2f, size.height / 2f), size.minDimension, Naval.amberStrong)
         }
         Spacer(Modifier.width(6.dp))
-        HudLabel(t(earned.badge.key).uppercase(), Naval.amberStrong)
+        HudLabel(earned.badge.label.uppercase(), Naval.amberStrong)
     }
 }
 

@@ -188,6 +188,7 @@ import br.com.navalbattle.game.Wallet
 import br.com.navalbattle.game.PremioState
 import br.com.navalbattle.game.avisoCompra
 import br.com.navalbattle.game.avisoPremio
+import br.com.navalbattle.game.avisoTexto
 import br.com.navalbattle.game.premioState
 import br.com.navalbattle.game.vitrineIosVisivel
 import br.com.navalbattle.game.vitrineVisivel
@@ -2792,7 +2793,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
                     verifyThenSettle(outcome.token, { cloud.dobroesVerify(s, outcome.productId, outcome.token, "vitrine") }, { billing.settle(it) })
                 }) {
                     // o saldo entra em recoverPending (aviso "dobrões entraram")
-                    is CloudResult.Ok -> dobroesNotice = avisoCompra(v.value.status)?.let { t(it) }
+                    is CloudResult.Ok -> dobroesNotice = avisoCompra(v.value.status)?.let { avisoTexto(it) }
                     is CloudResult.Fail -> dobroesNotice = t(K.DOUBLOON_BUY_FAILED)
                 }
                 BuyOutcome.Cancelled -> Unit
@@ -2816,7 +2817,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         dobroesNotice = null
         try {
             dobroesNotice = when (val r = authed { s -> cloud.dobroesClaimPremio(s) }) {
-                is CloudResult.Ok -> avisoPremio(r.value)?.let { t(it) }
+                is CloudResult.Ok -> avisoPremio(r.value)?.let { avisoTexto(it) }
                 is CloudResult.Fail -> t(K.DOUBLOON_BUY_FAILED)
             }
         } finally {
