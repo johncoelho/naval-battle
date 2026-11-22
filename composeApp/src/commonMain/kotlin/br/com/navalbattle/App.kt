@@ -2821,8 +2821,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * só entra por [recoverPending] (uma vez por token).
      */
     suspend fun buyDobroesPack(pack: DoubloonPack) {
-        val session = profile.currentSession() ?: return
         if (dobroesBusy) return
+        val session = profile.currentSession() ?: run {
+            dobroesNotice = t(K.DOUBLOON_BUY_FAILED)
+            return
+        }
         dobroesBusy = true
         dobroesNotice = null
         try {
@@ -2844,6 +2847,11 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         }
         recoverPending()
         refreshDobroesStatus()
+    }
+
+    /** Toque num pacote para o qual a loja não devolveu preço (#118): avisa em vez de ficar mudo. */
+    fun notifyPackUnavailable() {
+        dobroesNotice = t(K.DOUBLOON_UNAVAILABLE)
     }
 
     /**

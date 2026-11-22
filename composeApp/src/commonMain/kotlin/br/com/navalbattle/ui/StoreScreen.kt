@@ -250,6 +250,11 @@ fun StoreScreen(state: AppState) {
                 Gap(8)
                 HudLabel(it, Naval.amberStrong)
             }
+            // resultado da compra de pacote (folha da loja, pendente, falha): fixo aqui, visivel sem rolar (#118)
+            if (aisle == Aisle.DOUBLOONS) state.dobroesNotice?.let {
+                Gap(8)
+                HudLabel(it, Naval.amberStrong)
+            }
 
             Gap(10)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
