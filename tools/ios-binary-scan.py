@@ -114,7 +114,7 @@ def contexto(por_arquivo, achados):
                 if n >= MAX_OCORRENCIAS:
                     break
                 n += 1
-                saida.append(f"- {os.path.basename(arq)} @0x{off:x}")
+                saida.append(f"- {arq} @0x{off:x}")
                 for off2, txt2 in itens[max(0, i - VIZINHAS):i]:
                     saida.append(f"    antes  0x{off2:x}: `{txt2[:120]}`")
                 saida.append(f"    >>>    0x{off:x}: `{txt[:120]}`")

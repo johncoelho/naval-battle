@@ -254,6 +254,8 @@ jobs:
           FLAGS=""
           [ "$IOS_SCAN_ENFORCE" = "true" ] && FLAGS="--enforce"
           FILES=("$APP/$EXE" "$APP/Info.plist")
+          # recursos de texto empacotados no .app (strings, plists, json, txt, html, xml): Localizable e afins também são lidos pela Apple
+          while IFS= read -r f; do FILES+=("$f"); done < <(find "$APP" -type f \( -name '*.strings' -o -name '*.stringsdict' -o -name '*.xcstrings' -o -name '*.plist' -o -name '*.json' -o -name '*.txt' -o -name '*.html' -o -name '*.xml' \) ! -path "$APP/Info.plist" 2>/dev/null)
           while IFS= read -r f; do FILES+=("$f"); done < <(find composeApp/build -type f -path '*ComposeApp.framework/ComposeApp' 2>/dev/null)
           python3 tools/ios-binary-scan-test.py
           python3 tools/ios-binary-scan.py $FLAGS "${FILES[@]}"
