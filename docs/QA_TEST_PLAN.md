@@ -699,6 +699,7 @@ publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
 | SET-13 | P1 | Aparelho em English, entrar em conta da nuvem com `lang_code = es` | O app mostra ES |
 | SET-14 | P1 | Abrir em EN pela detecção, trocar para PT nos Ajustes, fechar e reabrir | Segue em PT (a detecção não sobrescreve) |
 | SET-16 | P1 | Ajustes em **Español**, **English** e **Português**, em 1080x1920 e num aparelho estreito (360 dp): todas as linhas com selo ligado/desligado (#162) | O selo ("ACTIVADO", "DESACTIVADO", "DESLIGADO") fica numa linha, sem cortar palavra; o rótulo da esquerda é que quebra por palavras |
+| SET-17 | P2 | iPhone (TestFlight): Ajustes; conta nova sem convite carregado, fim da 1ª partida contra o adversário virtual (#166) | Ajustes **sem** "Compartilhar o jogo"; no cartão do gancho, "Chamar um amigo" só aparece com conta e código de convite e abre a folha do sistema; nenhum botão fica mudo. Android: "Compartilhar o jogo" continua nos Ajustes e abre a folha com o link da Play |
 | SET-15 | P1 | SET-08 a SET-11 no **iPhone** (Ajustes → Geral → Idioma e região) | Mesmos resultados do Android; "não testado" só se não houver aparelho |
 | SET-03 | P1 | Testar notificação | Notificação chega em ~5s com o app em segundo plano |
 | SET-04 | P1 | Bloquear notificações no sistema | Ajustes mostra aviso com atalho para o sistema |

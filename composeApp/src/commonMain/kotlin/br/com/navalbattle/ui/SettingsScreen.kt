@@ -29,6 +29,8 @@ import br.com.navalbattle.data.DailyReminder
 import br.com.navalbattle.data.TEST_DELAY_SECONDS
 import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.data.FunnelAction
+import br.com.navalbattle.data.StoreLink
+import br.com.navalbattle.data.platformName
 import br.com.navalbattle.data.shareStoreListing
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
@@ -224,11 +226,14 @@ fun SettingsScreen(state: AppState) {
             Gap(8)
             SecondaryButton(t(K.GUIDED_REPLAY), t(K.GUIDED_REPLAY_SUB)) { state.startGuidedMatch(replay = true) }
             Gap(8)
-            SecondaryButton(t(K.SETTINGS_SHARE_STORE), t(K.SETTINGS_SHARE_STORE_SUB)) {
-                state.logFunnel(FunnelAction.INVITE_SHARED_SETTINGS_STORE)
-                shareStoreListing()
+            // sem link de loja (iPhone fora da App Store) o botão some em vez de ficar mudo (#166)
+            if (StoreLink.available(platformName)) {
+                SecondaryButton(t(K.SETTINGS_SHARE_STORE), t(K.SETTINGS_SHARE_STORE_SUB)) {
+                    state.logFunnel(FunnelAction.INVITE_SHARED_SETTINGS_STORE)
+                    shareStoreListing()
+                }
+                Gap(8)
             }
-            Gap(8)
             SecondaryButton(t(K.SETTINGS_FEEDBACK), t(K.SETTINGS_FEEDBACK_SUB)) { state.openFeedback(Screen.SETTINGS) }
             // anúncio premiado (#29): reabre o consentimento do Google (UMP); só com anúncio ligado
             if (state.adPrivacyShows) {

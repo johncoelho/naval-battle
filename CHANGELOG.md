@@ -15,6 +15,7 @@ App 0.48.1 (versionCode 137). Refs #165, #166, #138, #124. **Publica junto a 0.4
 
 ### Corrigido
 - **#165** Os véus que ainda usavam `clickable(enabled = false) {}` deixavam o toque atravessar (um `clickable` desligado não consome o toque): saída da partida (`QuitOverlay`), painel do grito de guerra, convite recebido (`InviteBanner`), oferta de partida rápida (`QuickOfferBanner`), as três confirmações do Perfil (apagar carreira, sair sem salvar, "Já joga com Google?") e o véu da vitória na rede local (`VictoryCard`, que não tinha nada) passam a usar o `Modifier.consumeVeilTouch()` da #164. O relatório e o "jogar de novo" da rede local ficam por cima do véu e continuam respondendo.
+- **#166** No iPhone, "Compartilhar o jogo" (Ajustes) e o "Chamar um amigo" do gancho sem código de convite chamavam o `shareStoreListing` do iOS, que é vazio: o toque não fazia nada. Regra pura `StoreLink.available(platform)` (só Android tem link de loja por enquanto): sem link, o botão dos Ajustes some e o "Chamar um amigo" só aparece com o código de convite carregado. Android igual.
 
 ## [0.48.0] — 2026-11-22 · Funil medido, gancho do fim da 1ª partida, pedido de avaliação e quatro correções (#137, #135, #136, #159, #162, #163, #164)
 

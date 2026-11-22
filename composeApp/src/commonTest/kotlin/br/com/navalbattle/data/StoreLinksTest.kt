@@ -2,6 +2,7 @@ package br.com.navalbattle.data
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class StoreLinksTest {
@@ -16,5 +17,12 @@ class StoreLinksTest {
     @Test
     fun ambosApontamParaOMesmoApp() {
         assertTrue(appStoreUrls().all { it.endsWith("id6827258132") })
+    }
+
+    @Test
+    fun soOAndroidTemLinkDeLojaParaCompartilhar() {
+        assertTrue(StoreLink.available("android"))
+        assertFalse(StoreLink.available("ios"))
+        assertFalse(StoreLink.available(""))
     }
 }

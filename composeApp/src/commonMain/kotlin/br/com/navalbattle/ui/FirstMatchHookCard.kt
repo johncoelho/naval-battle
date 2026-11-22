@@ -12,6 +12,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
+import br.com.navalbattle.data.StoreLink
 import br.com.navalbattle.data.platformName
 import br.com.navalbattle.data.shareStoreListing
 import br.com.navalbattle.data.shareText
@@ -35,7 +36,10 @@ import kotlinx.coroutines.launch
 fun FirstMatchHookCard(state: AppState, match: Match, victory: Boolean) {
     val scope = rememberCoroutineScope()
     val signedIn = state.profile.signedIn
+    val storeShare = StoreLink.available(platformName)
+    // sem link de loja (iPhone), "Chamar um amigo" só aparece com o código de convite já carregado; nunca fica mudo (#166)
     val actions = FirstMatchHook.actions(victory, signedIn, ios = platformName == "ios")
+        .filter { it != HookAction.INVITE || storeShare || state.referralCode != null }
 
     LaunchedEffect(signedIn) { if (signedIn) state.loadReferralCode() }
 
@@ -78,7 +82,7 @@ fun FirstMatchHookCard(state: AppState, match: Match, victory: Boolean) {
                             // com conta: o texto e o codigo de convite de sempre (o texto compartilhado com a tela Amigos cita dobroes sem valor; a recompensa existe, mas so paga se o amigo terminar a 1a partida online, 1 por dia, com teto); sem conta, o link da loja
                             if (signedIn) state.loadReferralCode()
                             val code = state.referralCode
-                            if (signedIn && code != null) shareText(referralShareText(code, I18n.lang)) else shareStoreListing()
+                            if (signedIn && code != null) shareText(referralShareText(code, I18n.lang)) else if (storeShare) shareStoreListing()
                         }
                     }
                     if (primary) PrimaryButton(title, sub, onClick = tap) else SecondaryButton(title, sub, onClick = tap)
