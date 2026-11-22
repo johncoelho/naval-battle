@@ -1066,8 +1066,14 @@ enum class K(val pt: String, val en: String, val es: String) {
     SEASON_NOT_NOW("Agora não", "Not now", "Ahora no"),
     SEASON_PREMIUM_NAME("Passe de Temporada", "Season Pass", "Pase de Temporada"),
     SEASON_RECOMMENDED("Recomendado", "Recommended", "Recomendado"),
-    SEASON_PREMIUM_CTA("Comprar passe", "Buy pass", "Comprar pase"),
-    SEASON_UPGRADE_CTA("Fazer upgrade", "Upgrade", "Mejorar"),
+    SEASON_JOIN_CTA("Entrar com %s dobrões", "Join with %s doubloons", "Entrar con %s doblones"),
+    SEASON_UPGRADE_CTA("Fazer upgrade com %s dobrões", "Upgrade with %s doubloons", "Mejorar con %s doblones"),
+    SEASON_PAID_WITH_DOUBLOONS(
+        "Pago com os dobrões do jogo. Sem cobrança em dinheiro e sem renovação.",
+        "Paid with in-game doubloons. No real-money charge and no renewal.",
+        "Se paga con los doblones del juego. Sin cobro en dinero real y sin renovación."
+    ),
+    SEASON_JOINING("Entrando…", "Joining…", "Entrando…"),
     SEASON_UPGRADE_NOTE("Na adesão custava %s", "At sign-up it cost %s", "Al unirte costaba %s"),
     SEASON_PERK_CAMO("Camuflagem exclusiva: %s", "Exclusive camouflage: %s", "Camuflaje exclusivo: %s"),
     SEASON_PERK_DOUBLOONS("+%s dobrões na hora", "+%s doubloons right away", "+%s doblones al instante"),
@@ -1079,7 +1085,22 @@ enum class K(val pt: String, val en: String, val es: String) {
     SEASON_FREE_CTA("Entrar grátis", "Join free", "Entrar gratis"),
     SEASON_FREE_OWNED("Você está no Passe Gratuito. Faça upgrade para levar a camuflagem da estação, dobrões e milhas.", "You're on the Free Pass. Upgrade to get the season camouflage, doubloons and miles.", "Estás en el Pase Gratuito. Mejora para llevarte el camuflaje de la estación, doblones y millas."),
     SEASON_PREMIUM_OWNED("Você tem o Passe de Temporada desta temporada.", "You have this season's Season Pass.", "Tienes el Pase de Temporada de esta temporada."),
-    SEASON_NO_DOUBLOONS("Faltam %s dobrões para o passe", "%s doubloons short for the pass", "Faltan %s doblones para el pase"),
+    SEASON_RESULT_NO_FUNDS_TITLE("Dobrões insuficientes", "Not enough doubloons", "Doblones insuficientes"),
+    SEASON_RESULT_NO_FUNDS_BODY(
+        "Faltam %s dobrões para o Passe de Temporada.",
+        "You are %s doubloons short for the Season Pass.",
+        "Faltan %s doblones para el Pase de Temporada."
+    ),
+    SEASON_OPEN_DOUBLOON_STORE("Abrir a loja de Dobrões", "Open the Doubloon store", "Abrir la tienda de Doblones"),
+    SEASON_RESULT_OFFLINE_TITLE("Sem conexão", "No connection", "Sin conexión"),
+    SEASON_RESULT_OFFLINE_BODY(
+        "Não consegui falar com o servidor. Nada foi cobrado. Verifique a conexão e tente de novo.",
+        "Couldn't reach the server. Nothing was charged. Check your connection and try again.",
+        "No pude hablar con el servidor. No se cobró nada. Revisa la conexión e inténtalo de nuevo."
+    ),
+    SEASON_RESULT_FAILED_TITLE("Não deu certo", "That didn't work", "No funcionó"),
+    SEASON_RESULT_JOINED_TITLE("Tudo certo", "All set", "Todo listo"),
+    SEASON_RESULT_OK("OK", "OK", "OK"),
     SEASON_JOIN_FAILED("Não foi possível entrar agora. Tente de novo.", "Couldn't join now. Try again.", "No se pudo entrar ahora. Inténtalo de nuevo."),
     SEASON_JOINED_FREE("Você entrou na temporada — a ranqueada está liberada", "You've joined the season — ranked is unlocked", "Entraste en la temporada — la clasificatoria está desbloqueada"),
     SEASON_JOINED_PREMIUM("Passe de Temporada ativo — recompensas entregues", "Season Pass active — rewards delivered", "Pase de Temporada activo — recompensas entregadas"),

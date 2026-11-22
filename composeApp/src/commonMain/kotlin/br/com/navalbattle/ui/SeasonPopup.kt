@@ -46,7 +46,10 @@ import br.com.navalbattle.design.accent
 import br.com.navalbattle.design.drawSeasonBanner
 import br.com.navalbattle.design.drawSeasonIcon
 import br.com.navalbattle.design.drawShip
+import br.com.navalbattle.data.platformName
+import br.com.navalbattle.game.SeasonResult
 import br.com.navalbattle.game.ShipClass
+import br.com.navalbattle.game.dobroesAisleDisponivel
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 import kotlinx.coroutines.launch
@@ -93,7 +96,7 @@ fun SeasonPopup(state: AppState) {
                         theme = theme,
                         price = pass.upgradePrice,
                         priceNote = t(K.SEASON_UPGRADE_NOTE, formatThousands(pass.entryPrice)),
-                        cta = t(K.SEASON_UPGRADE_CTA),
+                        cta = t(K.SEASON_UPGRADE_CTA, formatThousands(pass.upgradePrice)),
                         busy = state.seasonBusy
                     ) { scope.launch { state.joinSeason(premium = true) } }
                 }
@@ -105,19 +108,80 @@ fun SeasonPopup(state: AppState) {
                         theme = theme,
                         price = pass.entryPrice,
                         priceNote = null,
-                        cta = t(K.SEASON_PREMIUM_CTA),
+                        cta = t(K.SEASON_JOIN_CTA, formatThousands(pass.entryPrice)),
                         busy = state.seasonBusy
                     ) { scope.launch { state.joinSeason(premium = true) } }
                     Gap(10)
                     FreeOffer(busy = state.seasonBusy) { scope.launch { state.joinSeason(premium = false) } }
                 }
             }
-            state.seasonNotice?.let {
-                Gap(10)
-                HudLabel(it, theme.accent)
-            }
             Gap(14)
             SecondaryButton(if (pass.joined) t(K.MILES_CLOSE) else t(K.SEASON_NOT_NOW)) { state.closeSeasonPopup() }
+        }
+    }
+}
+
+/**
+ * Resposta de todo toque em "Entrar" do passe (#118): popup por cima de tudo e fora da coluna rolável do
+ * [Overlay], para o revisor (iPad) ver sem rolar. Sem saldo: dobrões que faltam e o atalho para a loja de
+ * Dobrões. Sem rede ou falha: tentar de novo. Sucesso: confirmação.
+ */
+@Composable
+fun SeasonResultPopup(state: AppState) {
+    val result = state.seasonResult ?: return
+    val scope = rememberCoroutineScope()
+    val theme = SeasonTheme.ofKey(state.seasonPass?.seasonKey ?: state.currentSeason?.seasonKey ?: "")
+    // iPhone: a aba Dobrões só existe com a venda aberta (#65); sem ela o atalho levaria a outra aba, então some
+    val storeShortcut = result is SeasonResult.NoFunds &&
+        dobroesAisleDisponivel(platformName, state.iosSaleOpen)
+
+    SystemBackHandler { state.dismissSeasonResult() }
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Naval.bg.copy(alpha = 0.9f))
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { state.dismissSeasonResult() }
+            .navalSafeArea()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            Modifier
+                .navalPanelWidth()
+                .background(Naval.surface2)
+                .border(1.dp, theme.accent)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            val (title, body) = when (result) {
+                is SeasonResult.NoFunds -> t(K.SEASON_RESULT_NO_FUNDS_TITLE) to t(K.SEASON_RESULT_NO_FUNDS_BODY, formatThousands(result.missing))
+                SeasonResult.Offline -> t(K.SEASON_RESULT_OFFLINE_TITLE) to t(K.SEASON_RESULT_OFFLINE_BODY)
+                SeasonResult.Failed -> t(K.SEASON_RESULT_FAILED_TITLE) to t(K.SEASON_JOIN_FAILED)
+                is SeasonResult.Joined -> t(K.SEASON_RESULT_JOINED_TITLE) to
+                    t(if (result.tier == "premium") K.SEASON_JOINED_PREMIUM else K.SEASON_JOINED_FREE)
+            }
+            Text(title.uppercase(), style = NavalType.title, color = Naval.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Gap(10)
+            Text(body, style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Gap(18)
+            when (result) {
+                is SeasonResult.NoFunds -> {
+                    if (storeShortcut) {
+                        PrimaryButton(t(K.SEASON_OPEN_DOUBLOON_STORE)) { state.openDoubloonStoreFromSeason() }
+                        Gap(8)
+                        SecondaryButton(t(K.SEASON_NOT_NOW)) { state.dismissSeasonResult() }
+                    } else {
+                        PrimaryButton(t(K.SEASON_RESULT_OK)) { state.dismissSeasonResult() }
+                    }
+                }
+                SeasonResult.Offline, SeasonResult.Failed -> {
+                    PrimaryButton(t(K.TRY_AGAIN)) { scope.launch { state.retrySeasonJoin() } }
+                    Gap(8)
+                    SecondaryButton(t(K.SEASON_RESULT_OK)) { state.dismissSeasonResult() }
+                }
+                is SeasonResult.Joined -> PrimaryButton(t(K.SEASON_RESULT_OK)) { state.dismissSeasonResult() }
+            }
         }
     }
 }
@@ -223,19 +287,27 @@ private fun PremiumOffer(
         Perk(t(K.SEASON_PERK_MILES, pass.passMiles), theme.accent)
         Perk(t(K.SEASON_PERK_RANKED), theme.accent)
         Gap(10)
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                CoinLabel(formatThousands(price), style = NavalType.title, iconSize = 20.dp)
-                priceNote?.let { HudLabel(it, Naval.muted) }
-            }
-            Box(
-                Modifier
-                    .background(if (busy) Naval.surface3 else theme.accent)
-                    .clickable(enabled = !busy, onClick = onBuy)
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-            ) {
-                Text(cta.uppercase(), style = NavalType.mono, color = Naval.amberInk)
-            }
+        CoinLabel(formatThousands(price), style = NavalType.title, iconSize = 20.dp)
+        priceNote?.let { HudLabel(it, Naval.muted) }
+        // o passe é pago com a moeda do jogo, não com dinheiro (#118, Apple 2.1b): dito junto do preço
+        Gap(4)
+        Text(t(K.SEASON_PAID_WITH_DOUBLOONS), style = NavalType.body, color = Naval.inkSoft)
+        Gap(10)
+        // botão na largura toda: o rótulo "Entrar com N dobrões" não quebra em tela estreita
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .background(if (busy) Naval.surface3 else theme.accent)
+                .clickable(enabled = !busy, onClick = onBuy)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                (if (busy) t(K.SEASON_JOINING) else cta).uppercase(),
+                style = NavalType.mono,
+                color = if (busy) Naval.inkSoft else Naval.amberInk,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -261,7 +333,7 @@ private fun FreeOffer(busy: Boolean, onJoin: () -> Unit) {
                     .clickable(enabled = !busy, onClick = onJoin)
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
-                Text(t(K.SEASON_FREE_CTA).uppercase(), style = NavalType.mono, color = Naval.ink)
+                Text((if (busy) t(K.SEASON_JOINING) else t(K.SEASON_FREE_CTA)).uppercase(), style = NavalType.mono, color = Naval.ink)
             }
         }
     }

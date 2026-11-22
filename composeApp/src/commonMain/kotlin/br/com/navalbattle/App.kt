@@ -186,9 +186,13 @@ import br.com.navalbattle.game.BotRules
 import br.com.navalbattle.game.UpdatePrompt
 import br.com.navalbattle.game.Wallet
 import br.com.navalbattle.game.PremioState
+import br.com.navalbattle.game.SeasonResult
 import br.com.navalbattle.game.avisoCompra
 import br.com.navalbattle.game.avisoPremio
 import br.com.navalbattle.game.avisoTexto
+import br.com.navalbattle.game.seasonJoinOutcome
+import br.com.navalbattle.game.seasonJoinPrecheck
+import br.com.navalbattle.game.seasonJoinPrice
 import br.com.navalbattle.game.premioState
 import br.com.navalbattle.game.vitrineIosVisivel
 import br.com.navalbattle.game.vitrineVisivel
@@ -236,6 +240,7 @@ import br.com.navalbattle.ui.SettingsScreen
 import br.com.navalbattle.ui.ReleaseNotesScreen
 import br.com.navalbattle.ui.ResultScreen
 import br.com.navalbattle.ui.SeasonPopup
+import br.com.navalbattle.ui.SeasonResultPopup
 import br.com.navalbattle.ui.ShipyardScreen
 import br.com.navalbattle.ui.StoreScreen
 import br.com.navalbattle.ui.SplashScreen
@@ -1856,8 +1861,16 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
 
     var seasonBusy by mutableStateOf(false)
         private set
-    var seasonNotice by mutableStateOf<String?>(null)
+
+    /**
+     * Resultado do último toque em "Entrar" do passe (#118): sem saldo, sem rede, falha ou sucesso. Vira um popup
+     * por cima de tudo ([br.com.navalbattle.ui.SeasonResultPopup]), nunca uma linha no fim do cartão rolável.
+     */
+    var seasonResult by mutableStateOf<SeasonResult?>(null)
         private set
+
+    /** Qual passe o último toque pedia (para "Tentar de novo" repetir o mesmo). */
+    private var seasonLastPremium = true
 
     /** Fechamento da temporada que acabou (posição e prêmio) — vira o popup de fim de temporada. */
     var seasonEnd by mutableStateOf<SeasonEnd?>(null)
@@ -1883,25 +1896,31 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
      * O passe pago é cobrado no servidor (carteira, #34): ele debita o preço, credita os dobrões
      * extras, põe a camuflagem da estação nos itens e soma as milhas bônus. Sem saldo ou sem rede
      * nada muda; o aparelho só mostra o que o servidor devolve.
+     * Todo toque termina em [seasonResult] (#118): nenhum retorno mudo. Sem o passe carregado, busca de novo
+     * antes de desistir.
      */
     suspend fun joinSeason(premium: Boolean) {
-        val pass = seasonPass ?: return
         if (seasonBusy) return
-        val price = when {
-            !premium -> 0
-            pass.joined -> pass.upgradePrice
-            else -> pass.entryPrice
+        seasonLastPremium = premium
+        seasonResult = null
+        seasonBusy = true
+        var pass = seasonPass
+        if (pass == null) {
+            loadSeason()
+            pass = seasonPass
         }
-        if (price > 0 && profile.credits < price) {
-            seasonNotice = t(K.SEASON_NO_DOUBLOONS, price - profile.credits)
+        val price = seasonJoinPrice(premium, pass?.joined == true, pass?.entryPrice ?: 0, pass?.upgradePrice ?: 0)
+        val blocked = seasonJoinPrecheck(price, profile.credits, pass != null)
+        if (blocked != null || pass == null) {
+            seasonBusy = false
+            seasonResult = blocked ?: SeasonResult.Offline
             return
         }
-        seasonBusy = true
-        seasonNotice = null
         // o passe pago mexe em dobrões: a carteira precisa estar aberta (senão o servidor não cobraria)
-        if (premium && !ensureWallet()) {
+        val walletOk = !premium || ensureWallet()
+        if (!walletOk) {
             seasonBusy = false
-            seasonNotice = t(K.WALLET_OFFLINE)
+            seasonResult = seasonJoinOutcome(walletOk = false, joinedTier = null)
             return
         }
         val r = authed { session -> cloud.joinSeason(session, if (premium) "premium" else "free") }
@@ -1909,27 +1928,47 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val joined = (r as? CloudResult.Ok)?.value
         if (joined == null) {
             refreshBalance()
-            seasonNotice = t(K.SEASON_JOIN_FAILED)
+            seasonResult = seasonJoinOutcome(walletOk = true, joinedTier = null)
             return
         }
         // saldo e a pintura da estação vêm do servidor (ele cobrou, creditou e entregou)
         if (premium) refreshBalance()
         miles = miles?.copy(miles = joined.miles)
         seasonPass = pass.copy(tier = joined.tier)
-        seasonNotice = if (joined.tier == "premium") t(K.SEASON_JOINED_PREMIUM) else t(K.SEASON_JOINED_FREE)
+        seasonResult = seasonJoinOutcome(walletOk = true, joinedTier = joined.tier)
         seasonPopupDismissed = true
+    }
+
+    /** "Tentar de novo" do popup de resultado: repete o mesmo toque. */
+    suspend fun retrySeasonJoin() {
+        seasonResult = null
+        joinSeason(seasonLastPremium)
+    }
+
+    fun dismissSeasonResult() {
+        seasonResult = null
+    }
+
+    /**
+     * "Abrir a loja de Dobrões" do popup de dobrões insuficientes: fecha o passe e leva à aba Dobrões. No iPhone
+     * a aba só existe com a venda aberta; sem ela o popup nem oferece o atalho (ver SeasonResultPopup).
+     */
+    fun openDoubloonStoreFromSeason() {
+        seasonResult = null
+        seasonPassOpen = false
+        seasonPopupDismissed = true
+        openStore(3)
     }
 
     fun closeSeasonPopup() {
         seasonPassOpen = false
         seasonPopupDismissed = true
-        seasonNotice = null
     }
 
     /** Ranqueada sem adesão: em vez de travar calado, explica e oferece o passe. */
     fun openSeasonFromRanked() {
         rankedLockedPrompt = false
-        seasonNotice = null
+        seasonResult = null
         seasonPassOpen = true
         // passe ainda não carregado (rede lenta, login recente): busca agora — o banner
         // abre assim que ele chegar, em vez de o botão não fazer nada
@@ -4181,6 +4220,8 @@ fun App() {
             LaunchNoticePopup(state)
             // por último: abre por cima do convite quando falta milha para aceitar
             MilesPopup(state)
+            // resultado do passe (sem saldo, sem rede, falha, sucesso): por cima de tudo, fora da coluna rolável (#118)
+            SeasonResultPopup(state)
             // denunciar e bloquear (#58) abre por cima de qualquer tela; o aviso de nome trocado, por cima de tudo
             PlayerSafetyHost(state)
             NameResetPopup(state)
