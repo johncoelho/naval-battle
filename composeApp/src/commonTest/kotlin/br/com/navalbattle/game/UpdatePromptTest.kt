@@ -1,5 +1,6 @@
 package br.com.navalbattle.game
 
+import br.com.navalbattle.i18n.Lang
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -51,5 +52,20 @@ class UpdatePromptTest {
         assertTrue(UpdatePrompt.shouldRecheck(t0, t0 + 5 * 60_000L))
         // relógio voltou atrás: consulta de novo em vez de travar
         assertTrue(UpdatePrompt.shouldRecheck(t0, t0 - 1))
+    }
+
+    // #163: as novidades nunca aparecem em portugues para quem joga em ingles ou espanhol
+    @Test fun novidadesNoIdiomaDoJogo() {
+        assertEquals("pt", UpdatePrompt.releaseNotes(Lang.PT, "pt", "en", "es"))
+        assertEquals("en", UpdatePrompt.releaseNotes(Lang.EN, "pt", "en", "es"))
+        assertEquals("es", UpdatePrompt.releaseNotes(Lang.ES, "pt", "en", "es"))
+    }
+
+    @Test fun traducaoFaltandoTrocaEntreInglesEEspanholENuncaVaiParaPortugues() {
+        assertEquals("es", UpdatePrompt.releaseNotes(Lang.EN, "pt", "", "es"))
+        assertEquals("en", UpdatePrompt.releaseNotes(Lang.ES, "pt", "en", " "))
+        assertEquals("", UpdatePrompt.releaseNotes(Lang.EN, "pt", "", ""))
+        assertEquals("", UpdatePrompt.releaseNotes(Lang.ES, "pt", "", ""))
+        assertEquals("pt", UpdatePrompt.releaseNotes(Lang.PT, "pt", "", ""))
     }
 }

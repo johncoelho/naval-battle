@@ -23,19 +23,15 @@ import br.com.navalbattle.data.LinkState
 import br.com.navalbattle.data.AppRelease
 import br.com.navalbattle.data.openStoreListing
 import br.com.navalbattle.data.platformName
+import br.com.navalbattle.game.UpdatePrompt
 import br.com.navalbattle.i18n.I18n
-import br.com.navalbattle.i18n.Lang
 import br.com.navalbattle.design.Naval
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.i18n.K
 import br.com.navalbattle.i18n.t
 
-/** Texto da novidade no idioma do jogo, caindo para o português quando faltar tradução. */
-private fun AppRelease.localizedNotes(): String = when (I18n.lang) {
-    Lang.EN -> notesEn.ifBlank { notesPt }
-    Lang.ES -> notesEs.ifBlank { notesPt }
-    Lang.PT -> notesPt
-}
+/** Texto da novidade no idioma do jogo; nunca em português para quem joga em inglês ou espanhol (#163). */
+private fun AppRelease.localizedNotes(): String = UpdatePrompt.releaseNotes(I18n.lang, notesPt, notesEn, notesEs)
 
 /**
  * Aviso de atualização como popup de verdade — a faixa fina no menu já existia,
@@ -99,8 +95,11 @@ fun UpdatePopup(state: AppState) {
                     state.updateNotes.forEach { release ->
                         Column {
                             Text("v${release.versionName}", style = NavalType.mono, color = Naval.amberStrong)
-                            Gap(4)
-                            Text(release.localizedNotes(), style = NavalType.body, color = Naval.inkSoft)
+                            val notes = release.localizedNotes()
+                            if (notes.isNotBlank()) {
+                                Gap(4)
+                                Text(notes, style = NavalType.body, color = Naval.inkSoft)
+                            }
                         }
                     }
                 }

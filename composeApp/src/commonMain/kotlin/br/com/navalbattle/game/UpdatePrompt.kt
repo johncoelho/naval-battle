@@ -1,6 +1,7 @@
 package br.com.navalbattle.game
 
 import br.com.navalbattle.data.isNewerVersion
+import br.com.navalbattle.i18n.Lang
 
 /**
  * Regras do aviso de atualização (#46): quando o popup volta depois de um "Depois" e de quanto em
@@ -35,4 +36,15 @@ object UpdatePrompt {
     /** Primeira consulta (nunca feita) ou já passaram 5 minutos da última. */
     fun shouldRecheck(lastCheckMillis: Long, now: Long): Boolean =
         lastCheckMillis <= 0L || now - lastCheckMillis >= RECHECK_MILLIS || now < lastCheckMillis
+
+    /**
+     * Texto da novidade de uma versão (`app_releases`) no idioma do jogo (#163). Português só para quem joga em
+     * português: com a tradução faltando, inglês e espanhol trocam entre si e, sem nenhuma das duas, devolve vazio
+     * (o aviso mostra só a versão), nunca o texto em português para quem não lê português.
+     */
+    fun releaseNotes(lang: Lang, pt: String, en: String, es: String): String = when (lang) {
+        Lang.PT -> pt
+        Lang.EN -> en.ifBlank { es }
+        Lang.ES -> es.ifBlank { en }
+    }
 }
