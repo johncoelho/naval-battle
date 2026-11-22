@@ -4,6 +4,13 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>pt_BR</string>
+	<!-- Idiomas do jogo: sem esta lista o iPhone pode devolver só o idioma de desenvolvimento (#131). -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>pt</string>
+		<string>en</string>
+		<string>es</string>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

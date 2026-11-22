@@ -656,6 +656,14 @@ publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
 |---|---|---|---|
 | SET-01 | P1 | Trilha e efeitos | Toggles separados funcionam na hora |
 | SET-02 | P1 | Idioma EN e ES | Todas as telas visitadas trocam na hora, sem texto cortado; voltar para PT |
+| SET-08 | P1 | Instalação nova (sem dados) com o aparelho em **English**; abrir o jogo (#131) | Menu, Ajustes e telas em EN; chip EN selecionado em Ajustes → Idioma |
+| SET-09 | P1 | Instalação nova com o aparelho em **Español (México)**; depois repetir com **Español (Latinoamérica, es-419)** | Tudo em ES; chip ES selecionado |
+| SET-10 | P1 | Instalação nova com o aparelho em **Português (Brasil)** | Tudo em PT; chip PT selecionado |
+| SET-11 | P1 | Instalação nova com o aparelho em **Français** (ou outro idioma fora de pt, en, es) | Tudo em EN |
+| SET-12 | P1 | Aparelho em English, jogador que **já escolheu PT** nos Ajustes (ou atualizou o app com PT gravado); fechar e abrir | Segue em PT |
+| SET-13 | P1 | Aparelho em English, entrar em conta da nuvem com `lang_code = es` | O app mostra ES |
+| SET-14 | P1 | Abrir em EN pela detecção, trocar para PT nos Ajustes, fechar e reabrir | Segue em PT (a detecção não sobrescreve) |
+| SET-15 | P1 | SET-08 a SET-11 no **iPhone** (Ajustes → Geral → Idioma e região) | Mesmos resultados do Android; "não testado" só se não houver aparelho |
 | SET-03 | P1 | Testar notificação | Notificação chega em ~5s com o app em segundo plano |
 | SET-04 | P1 | Bloquear notificações no sistema | Ajustes mostra aviso com atalho para o sistema |
 | SET-06 | P1 | Ajustes → Online (conta nova ou existente) | "Avisar quando um amigo ficar online" aparece ligado; com "Receber convites" desligado fica inativo (#19) |

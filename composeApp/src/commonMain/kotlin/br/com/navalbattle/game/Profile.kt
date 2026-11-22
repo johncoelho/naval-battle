@@ -58,6 +58,8 @@ import br.com.navalbattle.game.ProfileKeys.K_WELCOME_PENDING
 import br.com.navalbattle.game.ProfileKeys.K_WINS
 import br.com.navalbattle.game.ProfileKeys.K_XP
 import br.com.navalbattle.i18n.K
+import br.com.navalbattle.i18n.Lang
+import br.com.navalbattle.i18n.deviceLanguage
 import br.com.navalbattle.i18n.t
 
 /** Patente do comandante. A carreira sobe por XP ganho em combate. */
@@ -711,8 +713,20 @@ class Profile(private val prefs: Prefs) {
     }
 
     /** Idioma escolhido — acompanha a carreira na nuvem, igual ao resto do perfil. */
-    var langCode: String by mutableStateOf(prefs.getString(K_LANG, "pt"))
+    var langCode: String by mutableStateOf(loadLangCode())
         private set
+
+    /**
+     * Sem idioma gravado (instalação nova), vale o do aparelho: pt, en, es; qualquer outro, inglês (#131).
+     * O valor escolhido é gravado na hora, para a detecção nunca sobrescrever uma troca feita depois.
+     */
+    private fun loadLangCode(): String {
+        val saved = prefs.getString(K_LANG, "")
+        if (saved.isNotBlank()) return saved
+        val detected = Lang.initial("", deviceLanguage()).code
+        prefs.putString(K_LANG, detected)
+        return detected
+    }
 
     fun setLang(code: String) {
         langCode = code

@@ -395,6 +395,12 @@ joga; o changelog técnico completo continua só em `CHANGELOG.md`.
 Português do Brasil, inglês e espanhol, trocáveis em Configurações e aplicados na hora.
 Todo o texto vive em `i18n/Strings.kt`, com as três versões de cada frase na mesma linha.
 
+**Primeira abertura (#131):** sem idioma gravado, o app usa o do aparelho (`expect fun deviceLanguage()`:
+`Locale` no Android, `NSLocale.preferredLanguages` no iPhone; escolha em `Lang.fromDevice`). `pt`, `en` e `es`
+entram direto, com qualquer região (es-MX, es-419 e es-ES viram espanhol); qualquer outro idioma cai em
+**inglês**. Quem já escolheu (Ajustes ou `lang_code` da nuvem) mantém a escolha; o valor detectado é gravado
+na hora. O `Info.plist` declara `CFBundleLocalizations` (pt, en, es) para o iPhone informar o idioma do jogo.
+
 A **Loja do Arsenal** vende; o **Estaleiro** combina o que já foi conquistado — mostra só
 as linhas de casco e as pinturas que o comandante já tem, com um cartão que leva direto à
 aba certa da loja para conseguir mais. Toda compra

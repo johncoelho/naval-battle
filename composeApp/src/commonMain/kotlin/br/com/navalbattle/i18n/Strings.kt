@@ -12,6 +12,24 @@ enum class Lang(val code: String, val label: String) {
 
     companion object {
         fun of(code: String): Lang = entries.firstOrNull { it.code == code } ?: PT
+
+        /**
+         * Idioma do aparelho (#131): `pt`, `en` e `es` entram direto, com qualquer região ou script
+         * (`pt-BR`, `es-MX`, `es-419`, `es_Latn_MX`); qualquer outro idioma, vazio ou nulo cai em inglês.
+         */
+        fun fromDevice(tag: String?): Lang =
+            when (tag?.trim()?.lowercase()?.split('-', '_')?.firstOrNull()) {
+                "pt" -> PT
+                "es" -> ES
+                else -> EN
+            }
+
+        /**
+         * Idioma da abertura: o que o jogador já escolheu (Ajustes ou nuvem) manda; só sem nada
+         * gravado vale o do aparelho.
+         */
+        fun initial(saved: String, deviceTag: String?): Lang =
+            if (saved.isBlank()) fromDevice(deviceTag) else of(saved)
     }
 }
 
