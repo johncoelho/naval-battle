@@ -9,6 +9,13 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.1] — 2026-11-22 · Batalha do Dia, bandeira no perfil e mais três correções (#165, #166, #138, #124)
+
+App 0.48.1 (versionCode 137). Refs #165, #166, #138, #124. **Publica junto a 0.47.1 (#118), a 0.47.2 (#131) e a 0.48.0**: as quatro entram na `main` num push só e a Play e o TestFlight recebem só esta (137); 134, 135 e 136 nunca são enviados. **Sem dependência nova.**
+
+### Corrigido
+- **#165** Os véus que ainda usavam `clickable(enabled = false) {}` deixavam o toque atravessar (um `clickable` desligado não consome o toque): saída da partida (`QuitOverlay`), painel do grito de guerra, convite recebido (`InviteBanner`), oferta de partida rápida (`QuickOfferBanner`), as três confirmações do Perfil (apagar carreira, sair sem salvar, "Já joga com Google?") e o véu da vitória na rede local (`VictoryCard`, que não tinha nada) passam a usar o `Modifier.consumeVeilTouch()` da #164. O relatório e o "jogar de novo" da rede local ficam por cima do véu e continuam respondendo.
+
 ## [0.48.0] — 2026-11-22 · Funil medido, gancho do fim da 1ª partida, pedido de avaliação e quatro correções (#137, #135, #136, #159, #162, #163, #164)
 
 App 0.48.0 (versionCode 136). Refs #137, #135, #136, #159, #162, #163, #164 (plano de engajamento #132, aprovado pelo John em 22/11: "aprovo o lote 0.48.0 e a linha na política"). **Sem dependência nova.** **Banco: aplicar `supabase/funnel.sql` (migração `funnel_counters`) ANTES de publicar o app** (app novo contra banco sem a migração recebe 404 no RPC e ignora; nada quebra, mas o evento se perde). Sobe depois da 0.47.1 e da 0.47.2 (o `versionCode` se ajusta se a ordem mudar).

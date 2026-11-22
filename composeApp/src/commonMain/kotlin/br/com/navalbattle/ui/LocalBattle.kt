@@ -132,7 +132,8 @@ private fun VictoryCard(match: Match, winner: Side) {
     }
     if (!shown) return
     val color = commanderColor(winner)
-    Box(Modifier.fillMaxSize().background(Naval.bg.copy(alpha = 0.55f)), contentAlignment = Alignment.Center) {
+    // o véu engole o toque (#165): sem isto o toque no tabuleiro de baixo ainda disparava; o relatório vem por cima (overlay)
+    Box(Modifier.fillMaxSize().background(Naval.bg.copy(alpha = 0.55f)).consumeVeilTouch(), contentAlignment = Alignment.Center) {
         Column(
             Modifier
                 .background(Naval.surface2)

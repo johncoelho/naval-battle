@@ -584,7 +584,7 @@ private fun QuitOverlay(onKeep: () -> Unit, onQuit: () -> Unit) {
         Modifier
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.94f))
-            .clickable(enabled = false) {}
+            .consumeVeilTouch()
             .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.Center
@@ -710,7 +710,7 @@ private fun TauntOverlay(onPick: (String) -> Unit, onClose: () -> Unit) {
                 .align(Alignment.Center)
                 .navalPanelWidth()
                 .verticalScroll(rememberScrollState())
-                .clickable(enabled = false) {}
+                .consumeVeilTouch()
         ) {
             HudLabel(t(K.BATTLE_TAUNT_EYEBROW), Naval.muted)
             Gap(8)

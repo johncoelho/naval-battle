@@ -387,7 +387,7 @@ fun ProfileScreen(state: AppState) {
                 Modifier
                     .fillMaxSize()
                     .background(Naval.bg.copy(alpha = 0.94f))
-                    .clickable(enabled = false) {}
+                    .consumeVeilTouch()
                     .navalSafeArea()
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
@@ -415,7 +415,7 @@ fun ProfileScreen(state: AppState) {
                 Modifier
                     .fillMaxSize()
                     .background(Naval.bg.copy(alpha = 0.94f))
-                    .clickable(enabled = false) {}
+                    .consumeVeilTouch()
                     .navalSafeArea()
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
@@ -457,7 +457,7 @@ fun ProfileScreen(state: AppState) {
                 Modifier
                     .fillMaxSize()
                     .background(Naval.bg.copy(alpha = 0.94f))
-                    .clickable(enabled = false) {}
+                    .consumeVeilTouch()
                     .navalSafeArea()
                     .padding(24.dp),
                 contentAlignment = Alignment.Center

@@ -2,7 +2,6 @@ package br.com.navalbattle.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +34,7 @@ fun InviteBanner(state: AppState, invite: OnlineMatch) {
         Modifier
             .fillMaxSize()
             .background(Naval.bg.copy(alpha = 0.86f))
-            .clickable(enabled = false) {}
+            .consumeVeilTouch()
             .navalSafeArea()
             .padding(24.dp),
         contentAlignment = Alignment.Center
