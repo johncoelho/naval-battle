@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import br.com.navalbattle.AppState
@@ -296,6 +297,7 @@ private fun PremiumOffer(
         // botão na largura toda: o rótulo "Entrar com N dobrões" não quebra em tela estreita
         Box(
             Modifier
+                .testTag("season_join_cta")
                 .fillMaxWidth()
                 .background(if (busy) Naval.surface3 else theme.accent)
                 .clickable(enabled = !busy, onClick = onBuy)

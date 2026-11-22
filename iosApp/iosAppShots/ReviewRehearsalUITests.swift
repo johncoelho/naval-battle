@@ -26,6 +26,9 @@ final class ReviewRehearsalUITests: XCTestCase {
     private var violacoes: [String] = []
     private var telasVarridas: [String] = []
     private var passo = 0
+    /// Diagnóstico para o relatório: limites da tela, e a árvore de acessibilidade resumida quando algo não é achado.
+    private var diag: [String] = []
+    private var arvores: [String] = []
     private let limite: TimeInterval = 10
     /// Estado da conta de demonstração nesta rodada (`sem-saldo` | `com-saldo`), preparado antes por tools/ios-qa/demo-estado.sql.
     private var estado = ""
@@ -61,13 +64,19 @@ final class ReviewRehearsalUITests: XCTestCase {
         XCTAssertTrue(["sem-saldo", "com-saldo"].contains(estado), "ESTADO deve ser sem-saldo ou com-saldo (recebido: \(estado))")
         app = XCUIApplication()
         app.launch()
+        shotSeguro("00-abertura")
 
         // sessão semeada pelo workflow: sem login, sem digitação
         guard element("Loja|Store|Tienda|Estaleiro|Shipyard").waitForExistence(timeout: 90) else {
             falhar("Abertura", "o app não chegou ao menu com a sessão semeada (90 s)")
             return
         }
+        // o app é só de iPhone (TARGETED_DEVICE_FAMILY = 1): no iPad roda em modo de compatibilidade; os limites ajudam a ler os frames
+        diag.append("app.frame = \(app.frame); janela = \(app.windows.firstMatch.frame); tela = \(XCUIScreen.main.screenshot().image.size)")
+        shotSeguro("01-menu-inicial")
         varrer("menu (primeira tela)")
+        // avisos que cobrem a tela da conta (notificação, Valeu, Diário de bordo...) ficam para depois: o convite do Passe tem de aparecer
+        shotSeguro("02-antes-do-passe")
 
         ensaioPasse()
         ensaioPacotes()
@@ -90,7 +99,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             return
         }
         varrer("Passe de Temporada")
-        guard existe(ctaPasse) else {
+        guard ctaPorId() || existe(ctaPasse) else {
             // demo já com o Passe, ou estado errado: sem o CTA o ensaio não prova nada do Passe
             falhar("Passe", "CTA \"Entrar com N dobrões\" ausente (conta demo já com passe? prepare o estado \(estado) com tools/ios-qa/demo-estado.sql)")
             fecharPasse()
@@ -134,8 +143,9 @@ final class ReviewRehearsalUITests: XCTestCase {
     }
 
     private func abrirPasse() -> Bool {
-        for _ in 0..<10 {
-            if existe(ctaPasse) || existe("Passe de Temporada|Season Pass|Pase de Temporada") && existe("Agora não|Not now|Ahora no|Fechar|Close|Cerrar") { return true }
+        for ciclo in 0..<12 {
+            if ciclo == 3 || ciclo == 8 { shotSeguro("passe-procura-\(ciclo)"); registrarArvore("Passe: ciclo \(ciclo) sem o CTA") }
+            if ctaPorId() || existe(ctaPasse) || existe("Passe de Temporada|Season Pass|Pase de Temporada") && existe("Agora não|Not now|Ahora no|Fechar|Close|Cerrar") { return true }
             // o convite abre sozinho em conta sem passe; senão, o chip "Temporada de..." do menu
             if existe("Temporada de|Season$|Season of|Temporada$") {
                 if tocar("Temporada de|Season of|Temporada", espera: 3) { sleep(2); continue }
@@ -145,6 +155,9 @@ final class ReviewRehearsalUITests: XCTestCase {
         }
         return existe(ctaPasse) || existe("Passe de Temporada|Season Pass|Pase de Temporada")
     }
+
+    /// O CTA do Passe tem `testTag("season_join_cta")` no Compose (identificador estável, não depende do idioma).
+    private func ctaPorId() -> Bool { app.descendants(matching: .any)["season_join_cta"].exists }
 
     private func fecharPasse() {
         _ = tocar("Fechar|Close|Cerrar|Agora não|Not now|Ahora no", espera: 3)
@@ -161,7 +174,9 @@ final class ReviewRehearsalUITests: XCTestCase {
     // MARK: - Dobrões: os 4 pacotes
 
     private func irParaDobroes() -> Bool {
+        limparAvisos()
         voltarAoMenu()
+        shotSeguro("10-antes-da-loja")
         guard tocar("Loja|Store|Tienda", espera: 15) else { falhar("Loja", "botão da Loja não encontrado"); return false }
         sleep(2)
         guard tocar("Dobrões|Doubloons|Doblones", espera: 20) else { falhar("Loja", "aba Dobrões não aparece (venda fechada para a conta?)"); return false }
@@ -174,7 +189,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             return
         }
         varrer("Loja > Dobrões")
-        shotSeguro("dobroes-vitrine")
+        shotSeguro("20-dobroes-vitrine")
         let pacotes: [(String, String, String)] = [
             ("Bolsa", "Bolsa|Pouch", "pacote-1"),
             ("Baú", "Baú|Chest|Baúl", "pacote-2"),
@@ -204,6 +219,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         }
         sleep(2)
         varrer("Milhas náuticas")
+        shotSeguro("30-milhas")
         _ = tocarEEsperar("Milhas: comprar pacote", "Comprar [0-9]+ milha|Buy [0-9]+ mile|Comprar [0-9]+ milla",
                           esperado: "Faltam|short|Faltan|comprou|bought|compraste|Limite|limit|Sem conexão|No connection|Sin conexión|Não foi possível|Couldn.t|No se pudo|Você tem|You have|Tienes",
                           estrito: true)
@@ -218,9 +234,14 @@ final class ReviewRehearsalUITests: XCTestCase {
         guard tocar("Loja|Store|Tienda", espera: 15) else { falhar("Loja", "botão da Loja não encontrado"); return }
         sleep(2)
         for (aba, regex) in [("Cascos", "Cascos|Hulls|Cascos"), ("Camuflagens", "Camuflagens|Camos|Camuflajes"), ("Habilidades", "Habilidades|Abilities|Habilidades")] {
-            guard tocar(regex, espera: 8) else { avisar("Loja", "aba \(aba) não encontrada: NÃO exercitada"); continue }
+            guard tocar(regex, espera: 8) else {
+                avisar("Loja", "aba \(aba) não encontrada: NÃO exercitada")
+                registrarArvore("Loja: aba \(aba) não encontrada")
+                continue
+            }
             sleep(2)
             varrer("Loja > \(aba)")
+            shotSeguro("40-loja-" + aba.lowercased())
             // botão de preço de um item que ainda não é da conta: abre o cartão de confirmação ou explica o que falta
             guard let botao = primeiroPreco() else { avisar("Loja", "nenhum botão de preço visível em \(aba): NÃO exercitado"); continue }
             let antes = assinatura()
@@ -256,8 +277,13 @@ final class ReviewRehearsalUITests: XCTestCase {
             ("Estaleiro", "Estaleiro|Shipyard|Astillero"),
         ]
         for (nome, regex) in telas {
-            guard tocar(regex, espera: 6) else { avisar("Telas", "\(nome): entrada não encontrada, varredura de texto desta tela NÃO feita"); continue }
+            guard tocar(regex, espera: 6) else {
+                avisar("Telas", "\(nome): entrada não encontrada, varredura de texto desta tela NÃO feita")
+                registrarArvore("Telas: entrada \(nome) não encontrada")
+                continue
+            }
             sleep(3)
+            shotSeguro("50-tela-" + nome.lowercased())
             varrer(nome)
             if nome == "Configurações", tocar("Novidades|What.s new|Novedades", espera: 4) {
                 sleep(2)
@@ -382,12 +408,39 @@ final class ReviewRehearsalUITests: XCTestCase {
 
     private func voltarAoMenu() {
         for _ in 0..<8 {
-            if existe("Estaleiro|Shipyard|Astillero") && existe("Amigos|Friends") && existe("Placar|Ranking|Clasificación") { return }
+            if element("Estaleiro|Shipyard|Astillero").exists && element("Amigos|Friends").exists && element("Placar|Ranking|Clasificación").exists { return }
             if folhaDoSistema() != .nenhuma { fecharFolhaDeCompra() }
             fecharAvisos(excluindo: nil)
             if existe("^(Voltar|Back|Volver)$") { _ = tocar("^(Voltar|Back|Volver)$", espera: 2) }
             sleep(1)
         }
+    }
+
+    /// Mesmo laço do StoreShotsUITests (que acha a vitrine com esta conta): fecha notificação, Valeu, Agora não, Entendi,
+    /// Fechar do Diário de bordo, Pular e o check-in, até duas voltas seguidas sem nada para fechar.
+    private func limparAvisos() {
+        let prioridade = [
+            "FECHAR|Close|Cerrar", "VALEU|Thanks|Gracias", "AGORA NÃO|Not now|Ahora no", "ENTENDI|Got it|Entendido", "PULAR|Skip|Saltar",
+            "FAZER CHECK-IN.*|Check in.*|Hacer check-in.*",
+        ]
+        var vazios = 0
+        var ciclos = 0
+        while ciclos < 14 && vazios < 2 {
+            ciclos += 1
+            var feito = false
+            for r in ["Allow", "Permitir"] where springboard.buttons[r].exists {
+                springboard.buttons[r].tap(); feito = true; break
+            }
+            if !feito {
+                for regex in prioridade {
+                    let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(regex))[ !.]*(\n.*)?")
+                    let b = app.buttons.matching(p).firstMatch
+                    if b.exists && b.isHittable { b.tap(); feito = true; break }
+                }
+            }
+            if feito { vazios = 0; sleep(2) } else { vazios += 1; sleep(3) }
+        }
+        diag.append("limparAvisos: \(ciclos) ciclos")
     }
 
     /// Fecha os avisos que cobrem a tela (presente, Diário de bordo, rosa dos ventos), em ordem de prioridade.
@@ -415,13 +468,31 @@ final class ReviewRehearsalUITests: XCTestCase {
 
     /// Só conta elemento visível: o frame inteiro dentro da tela do app (texto fora da dobra ou de outra camada não vale).
     private func existe(_ regex: String) -> Bool {
+        // limites: a janela do app (no iPad em modo de compatibilidade o app.frame pode não ser a área desenhada), com 2 pt de folga
+        let janela = app.windows.firstMatch
+        let limites = (janela.exists && !janela.frame.isEmpty ? janela.frame : app.frame).insetBy(dx: -2, dy: -2)
         let q = app.descendants(matching: .any).matching(lbl(regex))
         let n = min(q.count, 20)
+        var achouFora = false
         for i in 0..<n {
             let e = q.element(boundBy: i)
-            if e.exists, !e.frame.isEmpty, app.frame.contains(e.frame) { return true }
+            guard e.exists, !e.frame.isEmpty else { continue }
+            if limites.contains(e.frame) { return true }
+            achouFora = true
         }
+        if achouFora { diag.append("existe(\(regex.prefix(40))): achado, mas com o frame fora de \(limites) (não conta)") }
         return false
+    }
+
+    /// Resume a árvore de acessibilidade do app (rótulos, identificadores e frames) para o relatório; só do app, nunca de folhas do sistema.
+    private func registrarArvore(_ titulo: String) {
+        var out: [String] = []
+        for linha in app.debugDescription.components(separatedBy: "\n") where linha.contains("label: '") || linha.contains("identifier: '") {
+            out.append(String(linha.trimmingCharacters(in: .whitespaces).prefix(170)))
+            if out.count >= 90 { break }
+        }
+        arvores.append("### \(titulo)\n" + out.map { "- `\($0)`" }.joined(separator: "\n"))
+        if arvores.count > 12 { arvores.removeFirst() }
     }
 
     /// Primeiro elemento tocável (de cima para baixo) cujo rótulo casa.
@@ -465,7 +536,9 @@ final class ReviewRehearsalUITests: XCTestCase {
     private func falhar(_ nome: String, _ motivo: String) {
         passo += 1
         falhas.append("\(nome): \(motivo)")
-        linhas.append("| \(passo) | \(nome) | - | **FALHA**: \(motivo) | - | - |")
+        let png = shotSeguro("falha-\(passo)-" + nome.lowercased().filter { $0.isLetter || $0.isNumber })
+        registrarArvore("\(nome): \(motivo)")
+        linhas.append("| \(passo) | \(nome) | - | **FALHA**: \(motivo) | - | \(png ?? "-") |")
         XCTFail("\(nome): \(motivo)")
     }
 
@@ -481,6 +554,8 @@ final class ReviewRehearsalUITests: XCTestCase {
         md += "Nada foi digitado; a folha de login do Apple ID nunca é fotografada.\n\n"
         md += "| # | Passo | Ação | Resposta | Tempo | PNG |\n|---|---|---|---|---|---|\n"
         md += linhas.joined(separator: "\n") + "\n\n"
+        if !diag.isEmpty { md += "## Diagnóstico\n" + diag.prefix(40).map { "- \($0)" }.joined(separator: "\n") + "\n\n" }
+        if !arvores.isEmpty { md += "## Árvore de acessibilidade quando algo não foi achado\n" + arvores.joined(separator: "\n\n") + "\n\n" }
         md += "## Telas varridas contra tools/ios-forbidden-terms.txt (\(telasVarridas.count))\n"
         md += telasVarridas.map { "- \($0)" }.joined(separator: "\n") + "\n\n"
         md += violacoes.isEmpty ? "Nenhum termo proibido nas telas varridas.\n" : "Ocorrências:\n" + violacoes.map { "- \($0)" }.joined(separator: "\n") + "\n"
