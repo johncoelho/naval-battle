@@ -1,1 +1,1 @@
-Ajustes internos na loja e mais estabilidade. Nenhuma mudanca de jogo.
+Passe de Temporada: botao agora diz "Entrar com N dobroes" e todo toque tem resposta na tela (dobroes insuficientes com atalho para a loja, sem conexao, falha ou sucesso). Pacote da loja sem preco avisa em vez de ficar mudo. Ajustes internos de texto. Mais estabilidade.

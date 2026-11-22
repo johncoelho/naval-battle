@@ -86,6 +86,8 @@ notificação, volta do segundo plano, teclado e área segura do iPhone. Nada di
 
 ### O que o simulador do CI cobre (#116)
 
+Antes de enviar à revisão da Apple, o Release roda o **ensaio de revisão** no simulador de iPad (`ios-qa.yml -f modo=ensaio-revisao`, caso IOS-SIM-05): ele faz o que o revisor faz (toca os 4 pacotes, o Passe e os botões de compra) e só um ensaio verde libera o envio (skill `apple-review`).
+
 O workflow `ios-qa.yml` roda no simulador, sem aparelho, o roteiro convidado → vs. IA → Clássico → batalha e prova que "Passe o aparelho" não aparece contra a IA (casos IOS-SIM-01 a 03 em [QA_TEST_PLAN.md](QA_TEST_PLAN.md)). Serve de regressão rápida do fluxo; não troca os casos acima, que dependem do aparelho.
 
 ### Regras da QA03 para o QA (não do John)

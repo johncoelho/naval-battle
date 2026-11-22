@@ -9,6 +9,24 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.47.1] — 2026-11-22 · Em definitivo: Passe com resposta visível, nada de Google Play no binário do iPhone e ensaio de revisão (#118)
+
+App 0.47.1 (versionCode 134). Refs #118. A Apple recusou a 0.47.0 (iPad Air 11" M3, iPadOS 27.2.1) por **2.1(b)** ("Comprar Passe" não respondia) e **2.3.10** (o binário citava Google Play). Causa raiz: só corrigíamos o que a Apple citava e nunca rodávamos o que o revisor roda. **Sem dependência nova, sem banco.** Android: só o rótulo e o popup do Passe mudam (textos de Google Play/beta idênticos).
+
+### Alterado
+- **Passe de Temporada (todas as plataformas):** o botão agora é "Entrar com N dobrões" / "Join with N doubloons" / "Entrar con N doblones" (e o upgrade), com a linha "Pago com os dobrões do jogo. Sem cobrança em dinheiro e sem renovação." junto do preço; botão na largura toda; "Entrando…" enquanto cobra. Sai "Comprar passe".
+- **Todo toque termina num popup** por cima de tudo e fora da coluna rolável (`SeasonResultPopup`): "Dobrões insuficientes" com "Abrir a loja de Dobrões" (no iPhone só com a venda aberta) e "Agora não"; "Sem conexão" e "Não deu certo" com "Tentar de novo"; confirmação de sucesso. Passe não carregado busca de novo e, se continuar nulo, mostra "Sem conexão". `seasonNotice` (linha no fim do cartão) saiu.
+- **Auditoria de todo CTA de compra:** o aviso da compra de pacote (cancelada, pendente, falha) ficava no fim da coluna rolável da aba Dobrões e agora é fixo no pé da Loja; pacote sem preço da loja (cartão apagado) não respondia e agora avisa "indisponível"; sessão ausente no toque vira "não foi possível". Loja (cascos, camuflagens, habilidades) e milhas já respondiam (confirmação e aviso fixos).
+- **Textos de Google Play, beta e teste fechado fora do `commonMain`:** `expect fun androidOnlyText(AndroidOnlyKey)` com o texto no `androidMain` e vazio no `iosMain`. Movidos: `LAUNCH_TITLE`, `LAUNCH_BODY_TESTER`, `LAUNCH_BODY_NEW`, `DOUBLOON_BETA_CHARGE`, `PREMIO_*`, `BADGE_BETA_TESTER*`. A medalha de testador some no iPhone (sem texto). `FLEET_GHO_SUB` (pt): "baixa assinatura" virou "quase não aparecem no radar" porque a lista veta a palavra "assinatura".
+
+### Adicionado
+- `game/SeasonJoin.kt` (`SeasonResult`, `seasonJoinPrice`, `seasonJoinPrecheck`, `seasonJoinOutcome`) e `SeasonJoinTest`.
+- `tools/ios-forbidden-terms.txt` (lista única, um regex por linha) e `BinaryTextTest` (JVM, lê a lista): nenhuma chave `K`, sem exceção, casa a lista. Substitui o `IosVisibleTextTest`, que isentava as chaves "só Android" e todas as `LAUNCH_*`. `AndroidOnlyTextTest` (iPhone vazio, Android preenchido) e `AndroidOnlyTextAndroidTest` (o texto do Android não mudou).
+- **Varredura do binário** (`tools/ios-binary-scan.py`, `tools/ios-binary-allowlist.txt`): `strings -a` no executável, no `Info.plist` e no `.storekit`, em `ios.yml` e `ios-release.yml`. **Primeira rodada só relatório**; `IOS_SCAN_ENFORCE=true` liga o reprovar.
+- **Ensaio de revisão** (`ios-qa.yml`, modo `ensaio-revisao`, simulador de iPad; `iosApp/iosAppShots/ReviewRehearsalUITests.swift`): toca os 4 pacotes, o Passe, as milhas e os botões de preço; cada toque exige resposta em até 10 s; varre o texto das telas contra a lista. Saída: PNGs e `ensaio-revisao.md`. Ensaio vermelho = não enviar. Nunca digita; a folha de login do Apple ID nunca é fotografada.
+- **Portão no `ios-release.yml`** (`IOS_REVIEW_GATE`: `off`, `warn` padrão, `on`): só envia com ensaio verde no mesmo SHA. **Entra como aviso**; ligar `on` depende do OK do John depois do primeiro ensaio verde.
+- Skill `apple-review` (checklist do Release) e `tools/release-check.sh` exigindo a lista, a allowlist, o scan e o `BinaryTextTest`.
+
 ## CI — 2026-11-21 · Capturas com o preço real da Apple (#122)
 
 Sem App x.y.z (`[skip ci]`, sem subir versão): só teste e docs. O ensaio 11 do `ios-qa` mostrou que o `xcodebuild test` não aplica a StoreKit Configuration do plano `iosApp-Shots`: a vitrine veio com $0.99, $1.99, $3.99 e $7.99 (produtos do App Store Connect na loja dos EUA do simulador). Decisão do PM: seguir com o preço real do StoreKit, que é o que a Apple precisa ver.

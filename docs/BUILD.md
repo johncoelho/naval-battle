@@ -299,6 +299,10 @@ Só falta uma linha: mandar o **Client ID do cliente Web** (não o Android) para
 para quem entra pelo Google — é o mesmo mecanismo que já funciona para o cadastro por
 e-mail, sem mudança nenhuma na base.
 
+## Ensaio de revisão da Apple e varredura do binário (#118)
+
+A Apple lê o **binário** (2.3.10) e roda os botões no iPad (2.1(b)). Por isso, antes de todo envio: (1) `ios.yml` e `ios-release.yml` rodam `tools/ios-binary-scan.py` (`strings -a` no executável, no `Info.plist` e no `.storekit`) contra `tools/ios-forbidden-terms.txt`, com `tools/ios-binary-allowlist.txt` para o ruído do runtime Kotlin aprovado pelo Tech Lead; **primeira rodada só relatório**, depois a variável de repositório `IOS_SCAN_ENFORCE=true` liga o reprovar; (2) `gh workflow run ios-qa.yml --ref main -f modo=ensaio-revisao` roda o `ReviewRehearsalUITests` no simulador de iPad (iPad Air 11" M3, ou o iPad mais próximo da imagem do runner) e sobe PNGs e `ensaio-revisao.md`; (3) o `ios-release.yml` confere se há ensaio verde no mesmo SHA (`IOS_REVIEW_GATE`: `off`, `warn` padrão, `on`; precisa de `actions: read`). Ligar `on` e `IOS_SCAN_ENFORCE` muda o fluxo de publicação e depende do OK do John depois do primeiro ensaio verde. Checklist completo: skill `apple-review`. A lista de termos é uma só (`tools/ios-forbidden-terms.txt`), usada pelo `BinaryTextTest`, pela varredura e pelo ensaio.
+
 ## QA iOS no simulador (`ios-qa.yml`, #116)
 
 Workflow manual (`gh workflow run ios-qa.yml --ref main`), `macos-15`, sem segredo e sem publicar: compila o app com `-sdk iphonesimulator -arch arm64`, cria o simulador (`SIM_DEVICE`, runtime iOS mais novo da imagem, en-US), instala `br.com.navalbattle` e roda o Maestro (`MAESTRO_VERSION`, baixado do release oficial) com `tools/ios-qa/vs-ia.yaml` e `local-controle.yaml`, gravando vídeo. O artefato `ios-qa-<run>` (7 dias) traz prints, `qa.mp4` e junit. Repositório público: minutos de macOS gratuitos. Não substitui o aparelho: Entrar com a Apple, push e compra seguem em [QA_IPHONE.md](QA_IPHONE.md).
