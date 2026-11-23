@@ -385,7 +385,17 @@ final class ReviewRehearsalUITests: XCTestCase {
         }
         let antes = assinatura()
         let inicio = Date()
-        alvo.tap()
+        if id != nil {
+            // #167: o CTA do Passe existe e está visível, mas o XCUITest o dá como "Not hittable" (fora do app.frame no iPad).
+            // Toca pelas coordenadas da JANELA (centro do frame do alvo), sem depender de isHittable.
+            let janela = app.windows.firstMatch
+            let f = alvo.frame, jf = janela.frame, af = app.frame
+            diag.append("toque \(id ?? ""): isHittable=\(alvo.isHittable); alvo.frame=\(f); app.frame=\(af); janela.frame=\(jf)")
+            let origem = janela.coordinate(withNormalizedOffset: .zero)
+            origem.withOffset(CGVector(dx: f.midX - jf.minX, dy: f.midY - jf.minY)).tap()
+        } else {
+            alvo.tap()
+        }
         var resposta: String?
         while Date().timeIntervalSince(inicio) < limite {
             if let esperado = esperado, existe(esperado) { resposta = "mensagem/popup esperado"; break }
