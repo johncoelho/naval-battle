@@ -9,6 +9,19 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.2] — 2026-11-23 · Atalho da loja no Passe do iPhone e ensaio sem falso verde (#118)
+
+App 0.48.2 (versionCode 138). Refs #118. John decidiu em 23/11 seguir com a `main` (0.48.1) como base do iPhone; a branch `esteira/issue-118-0.47.1` não foi mesclada, só estas duas peças foram portadas. **Sem dependência nova.**
+
+### Corrigido
+- **Passe sem saldo no iPhone:** o `SeasonResultPopup` consulta `refreshIosSaleGate()` ao abrir um resultado `NoFunds`, para o atalho "Abrir a loja de Dobrões" aparecer mesmo quando a venda ainda não tinha sido consultada.
+
+### Alterado
+- **Ensaio de revisão (`ReviewRehearsalUITests.swift`):** toque por coordenada da janela (`tocarElemento`/`tocavel`, mantendo o diagnóstico da #167), passos obrigatórios (`obrigatorios`/`concluidos`), falha do XCUITest vira vermelho no `tearDown`, `fecharPasseForcado`, `retentarAtalho` e `OBRIGATORIOS:` no relatório.
+- **`ios-qa.yml`:** a rodada só vale se o relatório traz `OBRIGATORIOS: OK` e `RESULTADO: VERDE`.
+- Versão 0.48.2 (138) no Android e no iPhone; notas da Play ganharam o atalho do Passe.
+- Sem teste de unidade novo: a mudança é um efeito de Compose sobre `refreshIosSaleGate()`, sem regra pura nova.
+
 ## [0.48.1] — 2026-11-22 · Batalha do Dia e duas correções (#165, #166, #138)
 
 App 0.48.1 (versionCode 137). Refs #165, #166, #138. A #124 (bandeira) saiu do lote: espera o OK do John na linha nova da política de privacidade (branch `esteira/issue-124-bandeira`). **Publica junto a 0.47.1 (#118), a 0.47.2 (#131) e a 0.48.0**: as quatro entram na `main` num push só e a Play e o TestFlight recebem só esta (137); 134, 135 e 136 nunca são enviados. **Sem dependência nova.**

@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -136,6 +137,8 @@ fun SeasonPopup(state: AppState) {
 fun SeasonResultPopup(state: AppState) {
     val result = state.seasonResult ?: return
     val scope = rememberCoroutineScope()
+    // iPhone: sem saldo, o atalho da loja depende da venda aberta; consulta ao abrir o resultado (#118)
+    LaunchedEffect(result) { if (result is SeasonResult.NoFunds) state.refreshIosSaleGate() }
     val theme = SeasonTheme.ofKey(state.seasonPass?.seasonKey ?: state.currentSeason?.seasonKey ?: "")
     // iPhone: a aba Dobrões só existe com a venda aberta (#65); sem ela o atalho levaria a outra aba, então some
     val storeShortcut = result is SeasonResult.NoFunds &&

@@ -238,6 +238,10 @@ jobs:
           find . -type f ! -name '*.png' ! -name '*.md' -delete
           ls -l
           if [ -f ensaio-revisao.md ]; then cat ensaio-revisao.md >> "$GITHUB_STEP_SUMMARY"; fi
+          if ! grep -q "OBRIGATORIOS: OK" ensaio-revisao.md 2>/dev/null; then
+            echo "::error::Ensaio sem todos os passos obrigatórios (CTA e popup do Passe, os 4 pacotes e, no sem-saldo, o atalho da loja): não vale como verde."
+            exit 1
+          fi
           if ! grep -q "RESULTADO: VERDE" ensaio-revisao.md 2>/dev/null; then
             echo "::error::Ensaio VERMELHO (ou sem relatório): não enviar à Apple. Veja ensaio-revisao.md no artefato."
             exit 1
