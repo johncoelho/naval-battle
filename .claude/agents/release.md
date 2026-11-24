@@ -53,7 +53,8 @@ e acompanhe com `gh run list -w promote-production.yml` / `gh run watch <id> --e
    `Produção: 20% (versionCode N)`.
 3. **advance** (`fraction=0.5`, depois `fraction=1`): **com o OK do John no briefing**, ≥ 24 h depois do *Published* da produção (informado pelo QA,
    não a hora do run) na etapa anterior, sem ALARME no vitals e nenhuma P0 aberta contra a versão. Antes de cada `advance`, rode `gh workflow run promote-production.yml -R johncoelho/naval-battle -f action=vitals -f version_code=N`, espere o run e leia `gh run view <id> --log | grep -E 'vitals(_json)?: '` (linha `vitals: <VEREDITO>` e `vitals_json:`). `SEM_DADOS` e `POUCOS_USUARIOS` **não travam** o `advance` (quase nenhuma versão chega a 100 usuários por dia; exigir o veredito `OK` do vitals deixaria tudo parado em 20%). Leitura que falhou (run vermelho, exit 1): não avance nesta rodada, tente na próxima, não faça halt. Comente na issue: `Vitals (versionCode N, até D): falha X%, ANR Y%, U usuários → VEREDITO`.
-   Comente `Produção: 50% (versionCode N)` / `Produção: 100% (versionCode N)`. A 100%: mova os cartões para
+   Comente `Produção: 50% (versionCode N)` / `Produção: 100% (versionCode N)`. A 100%, depois do `advance` `fraction=1` ter dado certo: marque a versão no banco (`android_prod`, #178), só ela e nunca `<=`:
+   `update public.app_releases set android_prod = true where version_code = N;` (Supabase MCP `execute_sql`). Só então comente `Produção: 100%`, mova os cartões para
    **Concluído** e feche as issues citando a versão.
 4. **halt**, sem esperar o John: P0 aberta contra a versão ou falha em lote no log de diagnóstico. **vitals em `ALARME`** (ação `vitals`, #51: falha percebida > 1,09% ou ANR percebido > 0,47% em algum dia da janela de 3 dias com ≥ 100 usuários). Só `ALARME` pausa; `SEM_DADOS`, `POUCOS_USUARIOS` e leitura que falhou não. Rode
    `action=halt`, comente nas issues; o cartão fica em **Em produção** e a P0 vai para a Fila. `resume` volta

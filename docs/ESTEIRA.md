@@ -83,7 +83,7 @@ fica sem trava. A trava vale também para o Claude Code do John neste repo: para
 | **Publicado** | CI verde e enviado; em revisão do Google | tarefa do QA, quando o Play Console mostra Published |
 | **Liberado para testes** | Play liberou para os testadores; QA testando | QA |
 | **Em produção** | QA aprovou todos os cartões da versão; promovida na produção com liberação gradual (20%, 50%); issue aberta | Release, quando a versão chega a 100% |
-| **Concluído** | versão em 100% na produção, issue fechada | — |
+| **Concluído** | versão em 100% na produção, `app_releases.android_prod = true`, issue fechada | — |
 
 ## Regras
 
@@ -209,7 +209,7 @@ O histórico de runs (`gh run list -w promote-production.yml`) é o registro das
   naquele dia), ou P0 aberta pelo Suporte contra a versão, ou falha em lote no log de diagnóstico. A correção da P0 sai em versão nova
   pelo caminho normal e substitui o release `halted`. Problema numa função com chave em `app_config`: desliga a chave antes.
 - **Comentário:** a cada etapa, o Release comenta em cada issue da versão `Produção: 20% (versionCode N)`
-  (e 50%, 100%). Ao chegar a 100%: cartão para **Concluído** e fecha a issue.
+  (e 50%, 100%). Ao chegar a 100%: o Release marca `android_prod = true` em `app_releases` (`update public.app_releases set android_prod = true where version_code = N;`, só aquela versão, depois do `advance` `fraction=1` com sucesso; `android_live` continua significando "na Alpha + aviso de versão"), comenta `Produção: 100%`, move o cartão para **Concluído** e fecha a issue.
 - **O John pausa pelo celular:** GitHub → Actions → *Promote production* → Run workflow → `halt` (sem
   versionCode: pausa o único release em andamento).
 - **Permissões prontas (John, 25/10):** `play-publisher-ci` com produção e relatórios no Play Console e a

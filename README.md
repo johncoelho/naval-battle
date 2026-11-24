@@ -813,6 +813,7 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   (`composeApp/src/main/play/release-notes/pt-BR/default.txt`, ≤ 500 caracteres, sem acento).
 - Cada versão ganha uma linha em `app_releases` (notas em pt/en/es) para a janela "Versão nova";
   `ios_live` só quando a App Store já oferece a versão (conferido pelo `lookup` do iTunes), não pelo TestFlight.
+  `android_prod` (#178) fica `true` só quando a versão chega a 100% na produção da Play (o Release marca depois do `advance` 100%, só aquela versão); `android_live` = publicada na Alpha + aviso. Nenhum cliente lê a coluna.
 - **Produção:** o CI não promove. Depois do QA, o Release dispara o workflow manual `promote-production.yml`
   (`tools/play-rollout.sh`: openssl, curl e jq sobre a Play Developer API v3) com o versionCode explícito:
   20% → 50% → 100%, `halt`/`resume`, `vitals` (só leitura: falha e ANR percebidos por versionCode na Reporting API, veredito `ALARME`/`OK`/`POUCOS_USUARIOS`/`SEM_DADOS`; só `ALARME` pausa), travas e gatilhos em `docs/ESTEIRA.md`. Variável de repositório

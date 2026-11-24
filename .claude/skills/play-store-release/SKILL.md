@@ -146,6 +146,8 @@ depois do QA aprovar a versão no emulador:
 - Mesma conta de serviço e mesmo secret (`PLAY_SERVICE_ACCOUNT_JSON`); o John já concedeu as permissões de
   produção e de relatórios e ativou a Reporting API (25/10). Falta só `PLAY_PRODUCTION_LIVE=true` depois do
   *Published* da 91. A ação `vitals <versionCode>` (#51, só leitura, Reporting API, escopo `playdeveloperreporting`, janela de 3 dias) dá o veredito `ALARME`/`OK`/`POUCOS_USUARIOS`/`SEM_DADOS` (1,09% de falha, 0,47% de ANR, piso de 100 usuários no dia); só `ALARME` faz halt, e o run só sai com 1 se a leitura falhar. `dry_run=true` roda o autoteste do veredito, sem API. Notas só em pt-BR por enquanto (en-US e es-ES: issue à parte).
+- **100% = `android_prod` (#178):** quando o `advance` `fraction=1` termina com sucesso, o Release marca só aquela versão em `app_releases`:
+  `update public.app_releases set android_prod = true where version_code = N;` (nunca `<=`, diferente do `ios_live`). `android_live` continua valendo "publicada na Alpha + aviso de versão"; nenhum app lê `android_prod`.
 - Conflito de edição com o upload da Alpha: o script tenta de novo até 3 vezes, 60 s entre elas.
 
 ## 5. Manual upload path (fallback only — normally not needed anymore)

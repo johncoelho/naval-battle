@@ -9,6 +9,14 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [Servidor] — 2026-11-24 · Coluna `app_releases.android_prod` (#178)
+
+Refs #178. **Sem versão do app, sem dependência nova**; não mexe em `composeApp/`, `iosApp/` nem `gradle/` (commit com `[skip ci]`).
+
+- **Banco:** `app_releases.android_prod boolean not null default false` (`supabase/releases.sql` e migração `app_releases_android_prod`, mesmo conteúdo), com backfill `version_code = 128` → `true`. Fica `true` só quando a versão chega a 100% na produção da Play; `android_live` segue = publicada na Alpha + aviso de versão. Aditiva: o app lê `app_releases` com `select` explícito e nenhum cliente enxerga a coluna; o gatilho `push_on_release` não olha para ela.
+- **Ensaio:** `supabase/tests/app_releases_android_prod_ensaio.sql` (bloco que desfaz): coluna boolean not null default false, 128 = true e as demais false, insert sem a coluna cai em false, gatilho não dispara por `android_prod`.
+- **Esteira:** o Release marca `android_prod = true` (só a versão, `where version_code = N`) depois do `advance` 100%; atualizados a skill `play-store-release`, `.claude/agents/release.md` e `docs/ESTEIRA.md`.
+
 ## [0.48.5] — 2026-11-24 · Resultado da Batalha do Dia com o link da Play (#174)
 
 App 0.48.5 (versionCode 141). Refs #174, #128 e #177. **Sem dependência nova.** Sem servidor, banco nem `app_config`; compatível com o app antigo (só texto local).
