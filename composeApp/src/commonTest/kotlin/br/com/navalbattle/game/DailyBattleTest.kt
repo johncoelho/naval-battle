@@ -1,5 +1,7 @@
 package br.com.navalbattle.game
 
+import br.com.navalbattle.data.dailyBattleStoreLink
+import br.com.navalbattle.data.platformName
 import br.com.navalbattle.i18n.Lang
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -158,6 +160,52 @@ class DailyBattleTest {
         // derrota também leva a sequência
         val loss = assertNotNull(DailyBattle.shareText(DailyBattle.finished(20_782L, false, 3, "MHM"), Lang.PT))
         assertTrue(loss.endsWith(listOf('M', 'H', 'M').joinToString("") { DailyBattle.emojiOf(it) }), loss)
+    }
+
+    @Test
+    fun placarComLinkDaLojaTerminaNeleNasTresLinguas() {
+        val link = "https://example.test/loja?referrer=utm_source%3Dbatalha_do_dia"
+        val seq = "MMHHSMHHHSMMMHS"
+        val records = listOf(
+            DailyBattle.finished(20_782L, true, seq.length, seq),
+            DailyBattle.finished(20_782L, false, 3, "MHM"),
+            DailyBattle.finished(20_782L, true, 41) // registro antigo, sem sequência
+        )
+        Lang.entries.forEach { lang ->
+            records.forEach { r ->
+                val sem = assertNotNull(DailyBattle.shareText(r, lang))
+                val com = assertNotNull(DailyBattle.shareText(r, lang, link))
+                // sem link o texto é o de antes; com link só acrescenta uma linha em branco e o link no fim
+                assertEquals(sem, assertNotNull(DailyBattle.shareText(r, lang, "")))
+                assertEquals("$sem\n\n$link", com, lang.code)
+                assertTrue(com.endsWith(link), com)
+                // o emoji de cada tiro segue igual
+                assertEquals(sem.count { it in DailyBattle.SHOT_EMOJIS.joinToString("") }, com.count { it in DailyBattle.SHOT_EMOJIS.joinToString("") })
+            }
+        }
+        // começou e não terminou: nada a compartilhar, nem o link sozinho
+        assertNull(DailyBattle.shareText(DailyBattle.started(20_782L), Lang.PT, link))
+    }
+
+    @Test
+    fun linkDoPlacarDaBatalhaDoDiaTemAOrigemEFicaCurto() {
+        if (platformName == "ios") {
+            // o binário do iPhone não leva link da Play (#174): o placar sai sem link
+            assertEquals("", dailyBattleStoreLink)
+            return
+        }
+        assertEquals(
+            "https://play.google.com/store/apps/details?id=aigamesfactory.navalbattleclassic" +
+                "&referrer=utm_source%3Dbatalha_do_dia%26utm_medium%3Dorganic%26utm_campaign%3Dbatalha_do_dia",
+            dailyBattleStoreLink
+        )
+        // o `&` do referrer vai codificado: um `&` cru cortaria a origem na Play
+        assertFalse("&utm_" in dailyBattleStoreLink)
+        // mensagem de WhatsApp: o texto sem a grade de emojis, com o link, continua curto
+        Lang.entries.forEach { lang ->
+            val text = assertNotNull(DailyBattle.shareText(DailyBattle.finished(20_782L, true, 41), lang, dailyBattleStoreLink))
+            assertTrue(text.length <= 280, "${lang.code}: ${text.length}")
+        }
     }
 
     @Test

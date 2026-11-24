@@ -6,3 +6,9 @@ package br.com.navalbattle.data
  * própria plataforma, para o binário do iPhone não carregar link nem nome da Play (Apple 2.3.10, 0.45.4).
  */
 expect val storeInviteLink: String
+
+/**
+ * Link da Play para o placar da Batalha do Dia (#174), com a origem `batalha_do_dia` no referrer para o Play Console
+ * mostrar as instalações vindas desse compartilhamento. Vazio no iPhone (o placar sai sem link, como em #169).
+ */
+expect val dailyBattleStoreLink: String

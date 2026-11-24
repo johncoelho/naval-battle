@@ -116,10 +116,11 @@ object DailyBattle {
     /**
      * Texto do placar para compartilhar: o número do dia, o resultado, os tiros e, depois de uma linha em branco, um emoji
      * por tiro na ordem jogada, quebrando a cada [EMOJIS_PER_LINE] (#169). Sem coordenada nem grade posicional (o mar é o
-     * mesmo para todos e a posição entregaria os navios a quem ainda não jogou) e sem link (o iPhone ainda não tem loja).
-     * Registro antigo, sem sequência: só o texto.
+     * mesmo para todos e a posição entregaria os navios a quem ainda não jogou). Se [storeLink] não for vazio (só no
+     * Android, #174), ele vai no fim, depois de uma linha em branco, em todos os casos. Registro antigo, sem sequência:
+     * só o texto (mais o link).
      */
-    fun shareText(record: Record, lang: Lang): String? {
+    fun shareText(record: Record, lang: Lang, storeLink: String = ""): String? {
         val won = record.won ?: return null
         val shots = record.shots ?: return null
         val key = if (won) K.DAILY_BATTLE_SHARE_WIN else K.DAILY_BATTLE_SHARE_LOSS
@@ -129,9 +130,12 @@ object DailyBattle {
             Lang.ES -> key.es
         }
         val head = text.replace("%1", number(record.day).toString()).replace("%2", shots.toString())
-        val seq = record.sequence?.takeIf { it.isNotEmpty() } ?: return head
-        val grid = seq.chunked(EMOJIS_PER_LINE).joinToString("\n") { line -> line.map(::emojiOf).joinToString("") }
-        return "$head\n\n$grid"
+        val seq = record.sequence?.takeIf { it.isNotEmpty() }
+        val body = if (seq == null) head else {
+            val grid = seq.chunked(EMOJIS_PER_LINE).joinToString("\n") { line -> line.map(::emojiOf).joinToString("") }
+            "$head\n\n$grid"
+        }
+        return if (storeLink.isEmpty()) body else "$body\n\n$storeLink"
     }
 }
 

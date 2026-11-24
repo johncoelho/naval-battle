@@ -106,6 +106,7 @@ import br.com.navalbattle.data.RankedOutcome
 import br.com.navalbattle.data.Session
 import br.com.navalbattle.data.appVersionLabel
 import br.com.navalbattle.data.checkUpdateAvailable
+import br.com.navalbattle.data.dailyBattleStoreLink
 import br.com.navalbattle.data.platformName
 import br.com.navalbattle.data.deviceCheckKey
 import br.com.navalbattle.data.StoreReview
@@ -760,10 +761,10 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         saveDailyBattle(DailyBattle.finished(dailyBattleDay, won, m.shotsOf(m.mySide), DailyBattle.sequenceOf(m.playerShotLog)))
     }
 
-    /** Compartilha só o placar do dia (número, resultado, tiros e um emoji por tiro, sem coordenada) pela folha do sistema. */
+    /** Compartilha só o placar do dia (número, resultado, tiros e um emoji por tiro, sem coordenada, e o link da Play no Android) pela folha do sistema. */
     fun shareDailyBattle() {
         val r = dailyBattleRecord ?: return
-        DailyBattle.shareText(r, I18n.lang)?.let { shareText(it) }
+        DailyBattle.shareText(r, I18n.lang, dailyBattleStoreLink)?.let { shareText(it) }
     }
 
     // ---------------- avaliação na Play (#45) ----------------
