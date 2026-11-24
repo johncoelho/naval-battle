@@ -17,6 +17,18 @@ Refs #178. **Sem versão do app, sem dependência nova**; não mexe em `composeA
 - **Ensaio:** `supabase/tests/app_releases_android_prod_ensaio.sql` (bloco que desfaz): coluna boolean not null default false, 128 = true e as demais false, insert sem a coluna cai em false, gatilho não dispara por `android_prod`.
 - **Esteira:** o Release marca `android_prod = true` (só a versão, `where version_code = N`) depois do `advance` 100%; atualizados a skill `play-store-release`, `.claude/agents/release.md` e `docs/ESTEIRA.md`.
 
+## [0.48.6] — 2026-11-24 · Bandeira de nacionalidade no perfil e a sequência de tiros na tela da Batalha do Dia (#124, #138)
+
+App 0.48.6 (versionCode 142). Refs #124 e #138. **Sem dependência nova.** **Banco antes do app:** aplicar `supabase/country.sql` (migração `profiles_country_code`) e rodar o ensaio `supabase/tests/country_ensaio.sql` ANTES do push: o app novo manda `country_code` no upsert da carreira e, sem a coluna, o PostgREST recusaria o upsert inteiro.
+
+### Adicionado
+- **Bandeira de nacionalidade no perfil (#124):** campo "Nacionalidade" no Perfil com lista fechada de 77 países e busca, "Prefiro não mostrar" primeiro e como padrão; sugere o país pela região do idioma do aparelho e só grava quando o jogador confirma (nunca pelo IP). Bandeira em emoji do sistema no "Adversário encontrado" (confronto "🇧🇷 x 🇦🇷", jogador deste aparelho primeiro), no placar e no adversário virtual (persona com bandeira coerente com o nome, parte sem). Sem bandeira, a tela fica igual à de antes. Servidor: `profiles.country_code`, lista `country_codes()`, gatilho que ignora código inválido sem erro e `opponent_profile`, `leaderboard_overall` e `leaderboard_season` com `country_code` no fim (o app antigo lê por nome). `game/Countries.kt`, `ui/CountryPicker.kt`, `CountriesTest` e `CountryParityTest`. Linha nova em `site/privacy.html` (pt, en, es), texto aprovado pelo John em 24/11. Código da branch `esteira/issue-124-bandeira`, rebaseado sobre a 0.48.5.
+- **Batalha do Dia (#138):** a tela de resultado mostra a sequência de tiros em emoji (um por tiro, na ordem, 10 por linha, sem coordenada nem grade posicional), a mesma do texto compartilhado desde a 0.48.4 (`DailyBattle.emojiLines`). Registro antigo, sem sequência: nada aparece. Teste em `DailyBattleTest`, caso BDD-06d.
+
+### Alterado
+- Versão 0.48.6 (142) no Android e no iPhone; notas da Play; `RN_V0480` (Novidades) ganhou a bandeira no Perfil.
+- **#112 (bot com espera curta e "Adversário encontrado"):** sem mudança de código neste lote; a correção está no app desde a 0.45.1 (`BotRules.waitMillis` sorteia 3 a 6 s; `OpponentFoundPopup` usa `botOpponentProfile`), falta só a validação do QA no aparelho (BOT-18, BOT-32).
+
 ## [0.48.5] — 2026-11-24 · Resultado da Batalha do Dia com o link da Play (#174)
 
 App 0.48.5 (versionCode 141). Refs #174, #128 e #177. **Sem dependência nova.** Sem servidor, banco nem `app_config`; compatível com o app antigo (só texto local).
