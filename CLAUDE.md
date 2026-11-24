@@ -1,11 +1,11 @@
 # Naval Battle — guia para a IA
 
-Jogo de batalha naval em Kotlin Multiplatform + Compose (Android na Play, iOS pelo TestFlight), back-end
+Jogo de batalha naval em Kotlin Multiplatform + Compose (Android na Play, iOS na App Store; TestFlight para beta testers), back-end
 Supabase. Dono: **John Coelho** (GitHub `johncoelho`). **Fale com ele em português do Brasil.**
 
 ## Ler antes de trabalhar
 
-1. [MEMORY.md](MEMORY.md) — regras de ouro, como ele trabalha, estado atual, pendências, backlog.
+1. [MEMORY.md](MEMORY.md) — regras de ouro, como ele trabalha, estado atual, pendências e armadilhas do ambiente.
 2. [README.md → Especificação técnica](README.md#especificação-técnica) — stack, estrutura, padrões
    de código, back-end, release. **É o padrão: código novo segue, mudança de padrão atualiza.**
 3. [HISTORY.md](HISTORY.md) — por que o projeto é como é. Consulte antes de mudar algo já decidido.
@@ -17,7 +17,7 @@ Supabase. Dono: **John Coelho** (GitHub `johncoelho`). **Fale com ele em portugu
 
 | Quando | Skill |
 |---|---|
-| Qualquer mudança que vá para a `main` (código, banco, site) | `dev-cycle` |
+| Roteiro do Dev/Release para levar uma mudança à `main` (código, banco, site); o PM chega aqui pela `ciclo-agentico` | `dev-cycle` |
 | Tela, popup, componente, cor, texto de interface, ícone | `design-system` |
 | SQL, RPC, RLS, regra de pontos/moeda/milhas, `app_config` | `supabase-change` |
 | Detalhes do pipeline Android → Play Console | `play-store-release` |
@@ -34,7 +34,7 @@ Padrão que se repete e ainda não tem skill: proponha criar uma.
 tech-lead, dev, release, qa, game-designer), quadro no GitHub Projects, backlog no
 [GitHub Issues](https://github.com/johncoelho/naval-battle/issues) via `gh` (sem navegador).
 **Bug vai direto para a Fila e é resolvido logo; melhoria só com aprovação do John.**
-`MEMORY.md` guarda só assuntos em andamento e decisões.
+O backlog fica no GitHub Issues; pendência nova vira issue, não linha no `MEMORY.md`.
 
 ## Inegociável
 
