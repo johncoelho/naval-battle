@@ -1298,7 +1298,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         if (start.ranked) uiScope?.launch { loadRankBefore() }
         // pontos da ficha = os do adversario sorteado pelo servidor (bot_rating), sem esperar rede
         val look = BotPersonas.look(persona, BotLevel.of(start.level), profile.xp, start.rating, exact = true)
-        botOpponentProfile = OpponentProfile(persona, "", look.avatarId, look.xp, look.rating)
+        botOpponentProfile = OpponentProfile(persona, "", look.avatarId, look.xp, look.rating, BotPersonas.countryOf(persona))
         botOpponentRanked = start.ranked
         // a partida custa 1 milha, debitada pelo servidor (`bot_match_start`): le o saldo novo
         uiScope?.launch { loadMiles() }
@@ -3749,7 +3749,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         botSession = BotSession(id, start.ranked, bot.name)
         match = Match(old.mode, Opponent.AI, bot = BotProfile(bot.name, BotLevel.of(start.level)))
         val look = BotPersonas.look(bot.name, BotLevel.of(start.level), profile.xp, start.rating, exact = true)
-        botOpponentProfile = OpponentProfile(bot.name, "", look.avatarId, look.xp, look.rating)
+        botOpponentProfile = OpponentProfile(bot.name, "", look.avatarId, look.xp, look.rating, BotPersonas.countryOf(bot.name))
         botOpponentRanked = start.ranked
         if (start.ranked) uiScope?.launch { loadRankBefore() }
         uiScope?.launch { loadMiles() }

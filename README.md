@@ -316,6 +316,13 @@ vale até 3 partidas recompensadas por dia contra o mesmo adversário.
   completa: partidas, vitórias, aproveitamento, precisão, navios afundados e sequências.
   **Excluir conta** fica no próprio Perfil, com confirmação: apaga tudo no servidor
   (`supabase/account.sql`) e a carreira do aparelho volta ao começo.
+- **Nacionalidade** (#124, 0.48.6), opcional: a bandeira de um país de uma lista fechada (`game/Countries.kt`, 77 países,
+  só membros da ONU e os observadores Palestina e Santa Sé; nomes neutros, sem território disputado). O padrão é sem
+  bandeira; o Perfil sugere o país pela região do idioma do aparelho (`pt-BR` → Brasil) e só grava quando o jogador
+  confirma, e "Prefiro não mostrar" não volta a sugerir. Bandeira em **emoji do sistema** (sem imagem nem fonte nova).
+  Aparece no "Adversário encontrado" (o confronto "🇧🇷 x 🇦🇷", jogador deste aparelho primeiro, e o país do adversário),
+  no placar ao lado do nome e no adversário virtual (cada persona tem a bandeira coerente com o nome, cerca de um quarto
+  sem bandeira, `BotPersonas.countryOf`). Sem bandeira, a tela fica igual à de antes.
 - **Dobrões** (a moeda do jogo) compram na loja, pela Google Play (aba Dobrões). O **Prêmio Beta**
   (6.500 dobrões uma vez por dia, pegos direto no servidor, `claim_premio_beta`, sem a Play e sem
   cobrança) e os brindes valem só para as contas QA e a do John desde 0.34.5 (#35); quem testou o
@@ -780,6 +787,14 @@ imediata. Booleanos vindos do servidor no iOS são lidos com `(x as? Boolean) ?:
   leitura do que é seu). Números em `app_config` (`referral_*`). Ensaio: `supabase/tests/referral_ensaio.sql`. App:
   `game/Referral.kt`, `AppState.redeemReferral/loadReferralStatus` e o `referral_settle` em `flushOnlineAwards`.
 - Registro diário de atividade (`supabase/behavior.sql`, #97): `activity_days(user_id, day)`, uma linha por conta por dia, gravada pela `touch_presence` na primeira batida do dia (Brasília) por `log_activity_day`, em melhor esforço. **Tem `user_id`**: RLS sem política, `revoke all` de anon e authenticated, só service_role lê; retenção de 90 dias por `purge_activity()` na rodada diária; cascata em `auth.users`. Grava todas as contas; as views privadas `behavior_ativos_diarios`, `behavior_ativos_semanais` e `behavior_retorno_semanal` (D1/D7/D30 por coorte) excluem `is_test` e contas internas na leitura e anulam célula com menos de 5 contas (`activity_min_cell`). Início da série em `app_config.activity_series_start`. Mede "abriu o app com conta e com rede" (IA conta; convidado não). Partidas contra bot (#105): `bot_matches` (`supabase/bots.sql`) também **tem `user_id`**: RLS sem política, só RPC (definer) e service_role, retenção de 90 dias por `purge_bots()` na rodada diária, cascata em `auth.users`; grava as contas elegíveis (conta de teste não joga contra bot) e a leitura exclui teste e internas; persona só para medição (padrão `[[:alnum:]_ .-]`, até 40). Inventário em `site/privacy.html` (linha própria nas 3 línguas desde 15/11, com nome fictício da persona, força sorteada e, com o 0.45.0, tiros, acertos, afundados, turnos e o que foi pago; termos em `site/terms.html`, seção "Adversário virtual e pontos"). Consulta: `docs/medicao-retorno.sql`. Ensaio: `supabase/tests/behavior_ensaio.sql`.
+- Bandeira de nacionalidade (`supabase/country.sql`, #124, 0.48.6): `profiles.country_code` (nulo = sem bandeira, check de
+  duas letras), lista fechada em `public.country_codes()` igual a `Countries.all` (o `CountryParityTest` confere), gatilho
+  `profiles_country_filter` que **ignora sem erro** código fora da lista (mantém o anterior; no insert, o que a conta já tem,
+  por causa do upsert com ON CONFLICT) e grava texto vazio como nulo ("Prefiro não mostrar"; o iPhone não manda nulo no
+  JSON). Quem grava é só o dono (RLS de `profiles`). O app só manda o campo quando o jogador escolheu (`CountryChoice`), então
+  o app antigo e o aparelho que nunca escolheu não apagam a bandeira da nuvem. `opponent_profile`, `leaderboard_overall` e
+  `leaderboard_season` devolvem `country_code` no fim (drop + create; o app antigo lê por nome). Ensaio:
+  `supabase/tests/country_ensaio.sql`.
 - Funil de uso (`supabase/funnel.sql`, #137, 0.48.0): **contadores diários sem identificador de pessoa**. `funnel_counters(day, event,
   origin, platform, interno, n)` (sem `user_id`, hora, aparelho nem texto), vocabulário fechado em `funnel_catalog` (evento ou origem
   fora da lista é descartado em silêncio; **evento novo = migração do catálogo + entrada em `data/Funnel.kt` + linha no `FunnelTest`**).

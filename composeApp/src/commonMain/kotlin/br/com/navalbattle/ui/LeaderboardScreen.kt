@@ -1,5 +1,6 @@
 package br.com.navalbattle.ui
 
+import br.com.navalbattle.game.Countries
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -155,6 +156,7 @@ private fun LiveBoard(state: AppState, entries: List<LeaderboardEntry>) {
             position = position,
             username = entry.username,
             avatar = entry.avatar,
+            country = entry.countryCode,
             points = entry.rating,
             record = "${entry.wins}/${entry.matches}",
             tier = tier,
@@ -221,6 +223,7 @@ private fun BoardRow(
     position: Int,
     username: String,
     avatar: String,
+    country: String? = null,
     points: Int,
     record: String?,
     tier: String?,
@@ -255,7 +258,9 @@ private fun BoardRow(
                 )
             }
             GapW(10)
-            Text(displayOther(username, t(K.COMMANDER)).uppercase(), style = NavalType.mono, color = Naval.ink)
+            // bandeira (#124) antes do nome; sem bandeira, a linha fica como antes
+            val flag = Countries.of(country)?.flag?.let { "$it " }.orEmpty()
+            Text(flag + displayOther(username, t(K.COMMANDER)).uppercase(), style = NavalType.mono, color = Naval.ink)
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(t(K.LEADERBOARD_POINTS, points), style = NavalType.button, color = Naval.amberStrong)

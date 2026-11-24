@@ -105,7 +105,8 @@ actual class CloudApi actual constructor() {
                 owned = o.optString("owned", "std,br"),
                 equipped = o.optString("equipped", "br"),
                 fleets = o.optString("fleets", "std"),
-                fleet = o.optString("fleet", "std")
+                fleet = o.optString("fleet", "std"),
+                countryCode = o.optCountry()
             )
         )
     }
@@ -131,6 +132,8 @@ actual class CloudApi actual constructor() {
                 .put("equipped", profile.equipped)
                 .put("fleets", profile.fleets)
                 .put("fleet", profile.fleet)
+            // bandeira (#124): só quando o jogador escolheu; "" = "Prefiro não mostrar" (o servidor grava nulo)
+            profile.countryCode?.let { body.put("country_code", it) }
             // upsert: cria a linha na primeira vez, atualiza nas seguintes
             post(
                 path = "/rest/v1/profiles?on_conflict=id",
@@ -465,7 +468,8 @@ actual class CloudApi actual constructor() {
                 insignia = o.optString("insignia", "anc"),
                 avatar = o.optString("avatar", "om1"),
                 xp = o.optInt("xp"),
-                rankedRating = o.optInt("ranked_rating", 1000)
+                rankedRating = o.optInt("ranked_rating", 1000),
+                countryCode = o.optCountry()
             )
         )
     }
@@ -491,7 +495,8 @@ actual class CloudApi actual constructor() {
                 avatar = o.optString("avatar", "om1"),
                 rating = o.optInt("rating"),
                 matches = o.optInt("matches"),
-                wins = o.optInt("wins")
+                wins = o.optInt("wins"),
+                countryCode = o.optCountry()
             )
         }
         CloudResult.Ok(list)
@@ -510,7 +515,8 @@ actual class CloudApi actual constructor() {
                 avatar = o.optString("avatar", "om1"),
                 rating = o.optInt("points"),
                 matches = o.optInt("matches"),
-                wins = o.optInt("wins")
+                wins = o.optInt("wins"),
+                countryCode = o.optCountry()
             )
         }
         CloudResult.Ok(list)
@@ -1331,3 +1337,7 @@ actual class CloudApi actual constructor() {
         )
     }
 }
+
+/** Bandeira (#124): o código, ou nulo quando ausente, nulo no JSON ou vazio. */
+private fun JSONObject.optCountry(): String? =
+    if (isNull("country_code")) null else optString("country_code", "").ifBlank { null }

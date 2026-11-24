@@ -10,6 +10,7 @@ import br.com.navalbattle.game.ProfileKeys.K_ABILITY_CHARGES
 import br.com.navalbattle.game.ProfileKeys.K_ACCEPT_INVITES
 import br.com.navalbattle.game.ProfileKeys.K_AVATAR
 import br.com.navalbattle.game.ProfileKeys.K_BEST_STREAK
+import br.com.navalbattle.game.ProfileKeys.K_COUNTRY
 import br.com.navalbattle.game.ProfileKeys.K_CREDITS
 import br.com.navalbattle.game.ProfileKeys.K_CURRENCY_TIP
 import br.com.navalbattle.game.ProfileKeys.K_DAILY_ABILITIES
@@ -610,6 +611,7 @@ class Profile(private val prefs: Prefs) {
         equipped = guest.equipped
         ownedFleets = guest.ownedFleets
         equippedFleet = guest.equippedFleet
+        countryChoice = CountryChoice.UNSET
         abilityCharges = emptyMap()
         walletFor = ""
         welcomePending = false
@@ -642,7 +644,8 @@ class Profile(private val prefs: Prefs) {
         owned = owned.joinToString(","),
         equipped = equipped,
         fleets = ownedFleets.joinToString(","),
-        fleet = equippedFleet
+        fleet = equippedFleet,
+        countryCode = CountryChoice.toCloud(countryChoice)
     )
 
     /** Adota a carreira que veio da nuvem e grava tudo no aparelho. */
@@ -664,6 +667,8 @@ class Profile(private val prefs: Prefs) {
         equipped = remote.equipped.ifBlank { "br" }
         ownedFleets = remote.fleets.split(",").filter { it.isNotBlank() }.toSet().ifEmpty { setOf("std") }
         equippedFleet = remote.fleet.ifBlank { "std" }
+        // bandeira (#124): a da nuvem vale; nuvem sem bandeira mantém a escolha do aparelho (não volta a sugerir)
+        countryChoice = CountryChoice.fromCloud(countryChoice, remote.countryCode)
         persistAll()
     }
 
@@ -685,6 +690,7 @@ class Profile(private val prefs: Prefs) {
         prefs.putString(K_EQUIPPED, equipped)
         prefs.putString(K_FLEETS, ownedFleets.joinToString(","))
         prefs.putString(K_FLEET, equippedFleet)
+        prefs.putString(K_COUNTRY, countryChoice)
     }
 
     val rank: Rank get() = Rank.of(xp)
@@ -731,6 +737,19 @@ class Profile(private val prefs: Prefs) {
     fun setLang(code: String) {
         langCode = code
         prefs.putString(K_LANG, code)
+    }
+
+    /**
+     * Bandeira de nacionalidade (#124): [CountryChoice.UNSET] (nunca escolheu, o Perfil sugere), [CountryChoice.NONE]
+     * ("Prefiro não mostrar") ou um código de [Countries]. Vai para a nuvem no snapshot da carreira.
+     */
+    var countryChoice: String by mutableStateOf(prefs.getString(K_COUNTRY, CountryChoice.UNSET))
+        private set
+
+    fun chooseCountry(value: String) {
+        if (value != CountryChoice.NONE && !Countries.isValid(value)) return
+        countryChoice = value
+        prefs.putString(K_COUNTRY, value)
     }
 
     fun chooseInsignia(value: Insignia) {
@@ -869,6 +888,7 @@ class Profile(private val prefs: Prefs) {
         equipped = "br"
         equippedFleet = "std"
         avatar = Avatar.COMMANDER_M
+        countryChoice = CountryChoice.UNSET
         if (keepWallet) {
             credits = keepCredits
             owned = keepOwned

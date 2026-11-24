@@ -496,6 +496,8 @@ grant execute on function public.search_commander(text) to authenticated;
 
 -- ------------------------------------------------------------------ ranking: só o suspenso sai
 
+-- leaderboard_overall e leaderboard_season substituídas de novo em country.sql (#124): o retorno ganhou country_code;
+-- não rodar estas duas depois daquela.
 -- substituem leaderboard_overall, leaderboard_season, my_rank e season_trophies (online.sql): mesma assinatura
 -- e mesmo retorno, com o filtro de suspensão. O bloqueado continua no placar.
 create or replace function public.leaderboard_overall(p_limit integer default 50)

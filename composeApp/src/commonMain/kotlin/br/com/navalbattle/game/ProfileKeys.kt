@@ -24,6 +24,8 @@ internal object ProfileKeys {
     const val K_EQUIPPED = "equipped"
     const val K_FLEETS = "fleets"
     const val K_FLEET = "fleet"
+    /** Bandeira (#124): "" nunca escolheu, "-" prefere não mostrar, ou o código. É da carreira (sai com a conta). */
+    const val K_COUNTRY = "country_code"
     const val K_ABILITY_CHARGES = "ability_charges"
     const val K_UID = "uid"
     const val K_EMAIL = "email"

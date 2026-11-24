@@ -1,5 +1,8 @@
 package br.com.navalbattle.ui
 
+import br.com.navalbattle.i18n.I18n
+import br.com.navalbattle.game.CountryChoice
+import br.com.navalbattle.game.Countries
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -93,6 +96,16 @@ fun OpponentFoundPopup(state: AppState) {
             Text(displayOther(opponent.username, t(K.COMMANDER)).uppercase(), style = NavalType.title, color = Naval.ink)
             Gap(4)
             HudLabel(Rank.of(opponent.xp).label.uppercase(), Naval.amberStrong)
+            // bandeira (#124): o confronto com o jogador deste aparelho primeiro; sem bandeira do adversário, igual a antes
+            Countries.of(opponent.countryCode)?.let { opp ->
+                val mine = Countries.of(CountryChoice.shown(state.profile.countryChoice))
+                Gap(8)
+                if (mine != null) {
+                    Text("${mine.flag}  x  ${opp.flag}", style = NavalType.title, color = Naval.ink)
+                    Gap(2)
+                }
+                HudLabel("${opp.flag} ${opp.name(I18n.lang)}".uppercase(), Naval.inkSoft)
+            }
             Gap(10)
             val ranked = if (virtual) state.botOpponentRanked else state.onlineMatchRanked
             MatchTags(ranked = ranked, mode = state.match?.mode?.name ?: state.mode.name)

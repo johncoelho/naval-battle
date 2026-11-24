@@ -49,7 +49,12 @@ data class CloudProfile(
     val owned: String,
     val equipped: String,
     val fleets: String,
-    val fleet: String
+    val fleet: String,
+    /**
+     * Bandeira (#124). Na ida: nulo = não manda o campo (nunca apaga a da nuvem), "" = "Prefiro não mostrar",
+     * código = a bandeira. Na volta: o código gravado ou nulo.
+     */
+    val countryCode: String? = null
 )
 
 /** Resultado de uma chamada à nuvem, com a mensagem já pronta para a tela. */
@@ -113,7 +118,9 @@ data class LeaderboardEntry(
     val avatar: String,
     val rating: Int,
     val matches: Int,
-    val wins: Int
+    val wins: Int,
+    /** Bandeira (#124); nulo = sem bandeira (ou servidor sem a coluna). */
+    val countryCode: String? = null
 )
 
 /** A temporada corrente — as 4 estações do ano, calculadas no servidor. */
@@ -343,7 +350,9 @@ data class OpponentProfile(
     val insignia: String,
     val avatar: String,
     val xp: Int,
-    val rankedRating: Int
+    val rankedRating: Int,
+    /** Bandeira (#124); nulo = sem bandeira (ou servidor sem a coluna). */
+    val countryCode: String? = null
 )
 
 /**

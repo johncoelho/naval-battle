@@ -474,6 +474,24 @@ view `funnel_eventos_semanais` não a mostra. Evidência só em contagem; nunca 
 | DAY-11 | P0 | Terminar a Batalha do Dia com erros, acertos e ao menos um afundado, anotando a ordem; compartilhar em PT, EN e ES (#169, 0.48.4) | Depois do texto, linha em branco e um emoji por tiro na ordem jogada (🌊 erro, 🔥 acerto, 💥 afundado), 10 por linha; total de emojis = tiros; sem letra/número de casa, sem grade posicional e sem navio não atingido |
 | DAY-12 | P2 | Atualizar da 0.48.3 no mesmo dia em que já jogou a Batalha do Dia (#169) | Continua "já jogou hoje" com o placar; compartilhar sai sem a linha de emoji (registro antigo), sem erro |
 
+### 11e. Bandeira de nacionalidade (#124)
+
+Pré-requisito: migração `profiles_country_code` (`supabase/country.sql`) aplicada **antes** do app 0.48.1 (Release).
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| FLAG-01 | P1 | Aparelho em pt-BR, perfil sem nacionalidade: abrir o Perfil | "Sugerido: 🇧🇷 Brasil" com Confirmar, Trocar e Prefiro não mostrar; `profiles.country_code` continua nulo até Confirmar, depois 'BR' |
+| FLAG-02 | P1 | Trocar → buscar "arg" → Argentina | A lista mostra Argentina; o campo vira "🇦🇷 Argentina" |
+| FLAG-03 | P1 | "Prefiro não mostrar"; reabrir o Perfil e o app | Campo "Prefiro não mostrar", sem sugestão; `country_code` nulo |
+| FLAG-04 | P1 | QA01 🇧🇷 e QA02 🇦🇷 na partida rápida online | "Adversário encontrado": QA01 vê "🇧🇷 x 🇦🇷" e "🇦🇷 ARGENTINA"; QA02 vê "🇦🇷 x 🇧🇷" e "🇧🇷 BRASIL" |
+| FLAG-05 | P1 | Adversário sem bandeira | Popup igual ao de antes (sem linha de bandeira, sem espaço vazio) |
+| FLAG-06 | P1 | 20 partidas contra o adversário virtual | Bandeira coerente com o nome (nome brasileiro 🇧🇷), parte sem bandeira, e varia |
+| FLAG-07 | P1 | Placar geral e da temporada | Bandeira antes do nome de quem escolheu; sem bandeira, linha igual |
+| FLAG-08 | P1 | App 0.48.0 (antigo) com a migração aplicada: jogar, sincronizar, abrir perfis | Nada falha; a bandeira gravada pela conta não é apagada |
+| FLAG-09 | P1 | Ensaio SQL (Release) | `country_ensaio.sql` com todos os itens ok (código inválido ignorado, só o dono grava, app antigo não apaga) |
+| FLAG-10 | P1 | Android mais antigo do QA e iPhone | A bandeira aparece como bandeira (não "BR" em letras nem quadrado) no Perfil, popup e placar; se falhar, volta ao John a decisão por imagem |
+| FLAG-11 | P2 | PT, EN e ES | Rótulos e nomes de países no idioma, sem chave crua |
+
 ## 12. Economia, loja e personalização
 
 | ID | P | Passos | Esperado |

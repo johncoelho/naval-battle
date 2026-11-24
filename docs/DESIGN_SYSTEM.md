@@ -57,6 +57,9 @@ para identificar um jogador.
 | `timer` | mono | Bold 26 · +2 sp | cronômetro de turno |
 
 Fontes **embarcadas** (`design/Fonts.kt`, `LocalNavalFonts` fornecido pelo `NavalTheme`): sans = Roboto 400/700/800/900, mono = Roboto Mono 400/500/700, as mesmas do `bundle.css` do design system, iguais no Android e no iPhone, por um caminho de código só no `commonMain`. Motivo (#80, 07/11): `SansSerif`/`Monospace` do sistema resolvem para fontes de métricas diferentes em cada plataforma (San Francisco e um mono largo no iPhone) e o HUD saía "achatado". Peso ~0,38 MB (teto de 1 MB, subset Latin), licença OFL 1.1 em `composeResources/files/licenses/`; nada depende de rede. Setas (→, ⇄) não existem em Roboto nem em Roboto Mono: esse glifo cai na fonte do sistema (o Compose faz a troca só para ele), assim como os emojis. Fonte nova: só OFL ou Apache, TTF estático.
+
+**Bandeira de país (#124):** emoji do sistema (dois indicadores regionais, `Countries.flagOf`), nunca imagem; vai no estilo do texto ao lado (`NavalType.title` no confronto "🇧🇷 x 🇦🇷" do "Adversário encontrado", `NavalType.mono` no placar, `NavalType.button` no Perfil). Sem bandeira, a linha some inteira (sem espaço vazio). Lista de escolha: `CountryPickerPopup` (véu com `consumeVeilTouch`, busca, "Prefiro não mostrar" primeiro).
+
 Rótulos passam por `HudLabel`, que aplica caixa alta — não escreva `.uppercase()` à mão.
 
 ## Componentes (`ui/Components.kt`)

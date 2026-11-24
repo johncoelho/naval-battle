@@ -19,6 +19,27 @@ object BotPersonas {
     )
 
     /**
+     * Bandeira de cada persona (#124), coerente com o nome e da mesma lista fechada ([Countries]). Cerca de um quarto
+     * fica sem bandeira, como o humano que escolhe "Prefiro não mostrar", para o adversário virtual não se denunciar
+     * por sempre ter uma. Persona fora do mapa = sem bandeira.
+     */
+    private val COUNTRY: Map<String, String> = buildMap {
+        listOf(
+            "MarujoLeo", "Capitao_Sul", "VentoNorte", "Kaique77", "BiaTorpedo", "Duda Mares", "Timoneiro91",
+            "CaboRocha", "Rafa_Proa", "Lara Convés", "Tonho_Naval", "Joca Farol", "Pedro_Bombordo", "Sereia_Lu",
+            "Gabi Tribordo", "Cabo_Vitor", "IlhaGrande7", "Zeca_Popa", "Bru Marujo", "Dani_Radar", "Tiago Cais",
+            "Caio_Escuna", "Gui_Fragata", "Nina_Proa", "Fabi Salgado"
+        ).forEach { put(it, "BR") }
+        put("Ruy_Vela", "PT")
+        put("Bento_Corveta", "PT")
+        put("SeaFox_Jr", "US")
+        put("RedWake", "GB")
+    }
+
+    /** Código da bandeira da persona, ou nulo (sem bandeira). */
+    fun countryOf(name: String): String? = COUNTRY[name]?.takeIf { Countries.isValid(it) }
+
+    /**
      * Sorteia uma persona diferente da [last] (nunca a mesma em partidas seguidas do mesmo jogador) e do
      * [playerName] (nunca com o proprio nome do jogador na tela).
      */

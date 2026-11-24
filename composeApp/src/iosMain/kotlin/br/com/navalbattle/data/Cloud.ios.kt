@@ -120,7 +120,8 @@ actual class CloudApi actual constructor() {
                     owned = row.strOr("owned", "std,br"),
                     equipped = row.strOr("equipped", "br"),
                     fleets = row.strOr("fleets", "std"),
-                    fleet = row.strOr("fleet", "std")
+                    fleet = row.strOr("fleet", "std"),
+                    countryCode = row.country()
                 )
             )
         }
@@ -146,7 +147,10 @@ actual class CloudApi actual constructor() {
             "equipped" to profile.equipped,
             "fleets" to profile.fleets,
             "fleet" to profile.fleet
-        )
+        ).let { base ->
+            // bandeira (#124): só quando o jogador escolheu; "" = "Prefiro não mostrar" (nunca nulo: o NSDictionary não aceita)
+            profile.countryCode?.let { base + ("country_code" to it) } ?: base
+        }
         post(
             path = "/rest/v1/profiles?on_conflict=id",
             body = body,
@@ -473,7 +477,8 @@ actual class CloudApi actual constructor() {
                     insignia = it.strOr("insignia", "anc"),
                     avatar = it.strOr("avatar", "om1"),
                     xp = it.intOr("xp", 0),
-                    rankedRating = it.intOr("ranked_rating", 1000)
+                    rankedRating = it.intOr("ranked_rating", 1000),
+                    countryCode = it.country()
                 )
             }
         )
@@ -500,7 +505,8 @@ actual class CloudApi actual constructor() {
                     avatar = it.strOr("avatar", "om1"),
                     rating = it.intOr("rating", 0),
                     matches = it.intOr("matches", 0),
-                    wins = it.intOr("wins", 0)
+                    wins = it.intOr("wins", 0),
+                    countryCode = it.country()
                 )
             }
         )
@@ -518,7 +524,8 @@ actual class CloudApi actual constructor() {
                     avatar = it.strOr("avatar", "om1"),
                     rating = it.intOr("points", 0),
                     matches = it.intOr("matches", 0),
-                    wins = it.intOr("wins", 0)
+                    wins = it.intOr("wins", 0),
+                    countryCode = it.country()
                 )
             }
         )
@@ -1385,6 +1392,9 @@ actual class CloudApi actual constructor() {
 }
 
 private fun Map<*, *>.strOr(key: String, default: String): String = (this[key] as? String) ?: default
+
+/** Bandeira (#124): o código, ou nulo quando ausente, NSNull ou vazio. */
+private fun Map<*, *>.country(): String? = (this["country_code"] as? String)?.ifBlank { null }
 
 private fun Map<*, *>.intOr(key: String, default: Int): Int = when (val v = this[key]) {
     is Int -> v

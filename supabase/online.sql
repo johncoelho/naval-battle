@@ -540,6 +540,7 @@ grant execute on function public.friend_profile(uuid) to authenticated;
 -- retrato e patente públicos de qualquer comandante, sem exigir amizade
 -- (diferente de friend_profile) — usado pra mostrar quem foi encontrado na
 -- partida rápida e o nome do adversário durante o combate
+-- substituída em country.sql (#124): o retorno ganhou country_code; não rodar esta versão depois daquela
 create or replace function public.opponent_profile(p_user_id uuid)
 returns table (username text, insignia text, avatar text, xp integer, ranked_rating integer)
 language sql security definer set search_path = public stable as $$

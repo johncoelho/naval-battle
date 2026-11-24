@@ -96,6 +96,8 @@ fun ProfileScreen(state: AppState) {
     var nameError by remember { mutableStateOf<String?>(null) }
     val nameScope = rememberCoroutineScope()
     var confirmReset by remember { mutableStateOf(false) }
+    // lista de países da bandeira (#124), por cima da tela
+    var countryPicker by remember { mutableStateOf(false) }
     // sair da conta com progresso que a nuvem ainda não tem (#64): avisa antes de apagar
     var signOutUnsaved by remember { mutableStateOf(false) }
     var signOutBusy by remember { mutableStateOf(false) }
@@ -338,6 +340,9 @@ fun ProfileScreen(state: AppState) {
                 HudLabel(profile.insignia.label.uppercase(), Naval.muted)
 
                 Gap(22)
+                CountrySection(profile) { countryPicker = true }
+
+                Gap(22)
                 HudLabel(t(K.PROFILE_RECORD))
                 Gap(8)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -381,6 +386,8 @@ fun ProfileScreen(state: AppState) {
             Gap(10)
             PrimaryButton(t(K.BACK_TO_DECK)) { state.screen = Screen.MENU }
         }
+
+        if (countryPicker) CountryPickerPopup(profile) { countryPicker = false }
 
         if (confirmReset) {
             Box(
