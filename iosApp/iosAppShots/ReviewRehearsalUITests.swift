@@ -295,7 +295,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         shotSeguro("10-antes-da-loja")
         guard tocar("Loja|Store|Tienda", espera: 15) else { falhar("Loja", "botão da Loja não encontrado"); return false }
         sleep(2)
-        guard tocar("Dobrões|Doubloons|Doblones", espera: 20) else { falhar("Loja", "aba Dobrões não aparece (venda fechada para a conta?)"); return false }
+        guard !existe("Diário de bordo|Captain.s logbook|Diario de a bordo"), tocar("Dobrões|Doubloons|Doblones", espera: 20) else { falhar("Loja", "aba Dobrões não aparece (venda fechada para a conta?)"); return false }
         let fim = Date().addingTimeInterval(25)
         while Date() < fim { if lojaDobroesAberta() { return true }; sleep(1) }
         return false
@@ -599,6 +599,7 @@ final class ReviewRehearsalUITests: XCTestCase {
                     if tocavel(b) { tocarElemento(b); feito = true; break }
                 }
             }
+            if !feito && fecharDiarioPeloVeu() { feito = true }
             if feito { vazios = 0; sleep(2) } else { vazios += 1; sleep(3) }
         }
         diag.append("limparAvisos: \(ciclos) ciclos")
@@ -615,6 +616,18 @@ final class ReviewRehearsalUITests: XCTestCase {
             let b = app.buttons.matching(p).firstMatch
             if tocavel(b) { tocarElemento(b); sleep(1); return }
         }
+        _ = fecharDiarioPeloVeu()
+    }
+
+    /// Diário de bordo aberto sem botão Fechar visível (fica abaixo da dobra do cartão rolável): o toque no véu, fora do cartão
+    /// (borda esquerda da janela), fecha o popup (`DailyPopup`: clique no fundo = closeDailyPopup). Sem isso o Diário ficava aberto
+    /// por cima do menu e o ensaio "tocava" na aba Dobrões pelo subtítulo dele ("ganhe dobrões").
+    private func fecharDiarioPeloVeu() -> Bool {
+        guard existe("Diário de bordo|Captain.s logbook|Diario de a bordo") else { return false }
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5)).tap()
+        diag.append("Diário de bordo fechado por toque no véu (Fechar abaixo da dobra)")
+        sleep(1)
+        return true
     }
 
     private func lbl(_ regex: String) -> NSPredicate { NSPredicate(format: "label MATCHES[c] %@", "(?s).*(\(regex)).*") }
