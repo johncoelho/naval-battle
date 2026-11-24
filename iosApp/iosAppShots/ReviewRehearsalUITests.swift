@@ -174,7 +174,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             concluidos.insert("passe-popup")
             registrar("Passe sem saldo", "popup \"Dobrões insuficientes\"", "visível sem rolar", 0, shotSeguro("passe-sem-saldo"))
             if achar(atalhoRx, espera: 10) != nil {
-                if tocarEEsperar("Passe: atalho para a loja de Dobrões", atalhoRx, esperado: nil, estrito: true, pronto: { self.lojaDobroesAberta() }) != nil {
+                if tocarEEsperar("Passe: atalho para a loja de Dobrões", atalhoRx, esperado: nil, estrito: true, pronto: { self.lojaDobroesAberta() }, limiteSeg: 25) != nil {
                     concluidos.insert("passe-atalho")
                     registrar("Passe sem saldo", "atalho \"Abrir a loja de Dobrões\"", "abriu a aba Dobrões", 0, shotSeguro("passe-atalho-loja"))
                     varrer("Loja > Dobrões (pelo atalho do Passe)")
@@ -336,7 +336,8 @@ final class ReviewRehearsalUITests: XCTestCase {
         let mensagem = "indisponíve|unavailable|no disponible|Não foi possível|Couldn.t|No se pudo|pendente|pending|pendiente"
         for (nome, id, png) in pacotes {
             ultimoPasso = "Pacote \(nome)"
-            let r = tocarEEsperar("Pacote \(nome)", id, esperado: mensagem, estrito: false, png: png, id: id)
+            // o 1º toque acorda o StoreKitUIService (partida a frio do simulador, passou de 10 s): só ele ganha 30 s; os demais seguem em 10 s
+            let r = tocarEEsperar("Pacote \(nome)", id, esperado: mensagem, estrito: false, png: png, id: id, limiteSeg: nome == "Bolsa" ? 30 : nil)
             if r != nil { concluidos.insert("pacote-\(nome)"); fecharFolhaDeCompra() }
             sleep(2)
         }
@@ -470,7 +471,8 @@ final class ReviewRehearsalUITests: XCTestCase {
     /// Toca o elemento e exige resposta em até 10 s. `estrito`: só vale `esperado` (ou folha da Apple); senão vale também
     /// qualquer mudança na árvore. Devolve a descrição da resposta, ou nil (e registra a falha) se ficou mudo.
     @discardableResult
-    private func tocarEEsperar(_ nome: String, _ regex: String, esperado: String?, estrito: Bool, png: String? = nil, id: String? = nil, pronto: (() -> Bool)? = nil) -> String? {
+    private func tocarEEsperar(_ nome: String, _ regex: String, esperado: String?, estrito: Bool, png: String? = nil, id: String? = nil, pronto: (() -> Bool)? = nil, limiteSeg: TimeInterval? = nil) -> String? {
+        let limite = limiteSeg ?? self.limite
         negarNotificacao()
         let alvoOpt: XCUIElement?
         if let id = id {
