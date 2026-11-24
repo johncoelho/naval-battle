@@ -64,4 +64,15 @@ class ReleaseNotesTest {
         assertTrue(chaves.all { it.name.startsWith("RN_V") }, "Chave fora do padrão RN_V")
         assertTrue(K.values().count { it.name.startsWith("RN_V") } >= chaves.size)
     }
+
+    /** #177: Novidades aparece no iPhone; texto de loja simulada, conta de teste ou revisao do Google contraria Apple 2.2 e 2.3.10. */
+    @Test
+    fun novidadesNaoCitamLojaSimuladaContaDeTesteNemGoogle() {
+        val proibido = Regex("simulad|simulated|conta[s]? de teste|test account|cuenta[s]? de prueba|revis(ã|a)o do google|google.s review|revisión de google", RegexOption.IGNORE_CASE)
+        releaseNotes.map { it.key }.forEach { key ->
+            listOf(key.pt, key.en, key.es).forEach { text ->
+                assertTrue(!proibido.containsMatchIn(text), "${key.name} cita termo proibido no iPhone: $text")
+            }
+        }
+    }
 }
