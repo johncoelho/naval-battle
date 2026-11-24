@@ -603,8 +603,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             if !feito && fecharDiarioPeloVeu() { feito = true }
             if !feito {
                 // último recurso: o check-in também fecha o Diário (não é tocado enquanto houver Fechar ou véu para tocar)
-                let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(checkIn))[ !.]*(
-.*)?")
+                let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(checkIn))[ !.]*(\n.*)?")
                 let b = app.buttons.matching(p).firstMatch
                 if tocavel(b) { tocarElemento(b); feito = true }
             }
