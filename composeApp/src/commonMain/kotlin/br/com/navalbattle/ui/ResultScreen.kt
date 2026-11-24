@@ -307,8 +307,15 @@ fun ResultScreen(state: AppState, match: Match) {
             // contra o adversario virtual a jornada e a da partida online (#112): revanche e "voltar ao convés" iguais
             if (state.firstMatchHookFor === match) FirstMatchHookCard(state, match, victory) else RematchSection(state, match)
         } else if (daily) {
-            // um mar por dia: no lugar de "Nova partida", o placar para compartilhar (sem grade nem dado pessoal)
-            state.dailyBattleRecord?.let { r -> HudLabel(t(K.DAILY_BATTLE, DailyBattle.number(r.day)).uppercase(), Naval.amberStrong) }
+            // um mar por dia: no lugar de "Nova partida", o placar para compartilhar e a sequência de tiros em emoji
+            // (#138: a mesma do texto compartilhado; sem coordenada, grade posicional nem dado pessoal)
+            state.dailyBattleRecord?.let { r ->
+                HudLabel(t(K.DAILY_BATTLE, DailyBattle.number(r.day)).uppercase(), Naval.amberStrong)
+                DailyBattle.emojiLines(r)?.let { lines ->
+                    Gap(8)
+                    Text(lines, style = NavalType.body, color = Naval.ink, textAlign = TextAlign.Center)
+                }
+            }
             Gap(8)
             PrimaryButton(t(K.DAILY_BATTLE_SHARE)) { state.shareDailyBattle() }
         } else {

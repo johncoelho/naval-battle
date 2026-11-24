@@ -157,6 +157,14 @@ class DailyBattleTest {
         }
         // três símbolos diferentes: erro, acerto e afundado não se confundem
         assertEquals(3, DailyBattle.SHOT_EMOJIS.toSet().size)
+        // a tela de resultado mostra exatamente a sequência do texto compartilhado (#138)
+        Lang.entries.forEach { lang ->
+            val text = assertNotNull(DailyBattle.shareText(win, lang))
+            assertTrue(text.endsWith("\n\n" + assertNotNull(DailyBattle.emojiLines(win))), text)
+        }
+        // sem sequência (registro antigo) ou sem fim de partida: nada a mostrar
+        assertNull(DailyBattle.emojiLines(DailyBattle.finished(20_782L, true, seq.length)))
+        assertNull(DailyBattle.emojiLines(DailyBattle.started(20_782L)))
         // derrota também leva a sequência
         val loss = assertNotNull(DailyBattle.shareText(DailyBattle.finished(20_782L, false, 3, "MHM"), Lang.PT))
         assertTrue(loss.endsWith(listOf('M', 'H', 'M').joinToString("") { DailyBattle.emojiOf(it) }), loss)

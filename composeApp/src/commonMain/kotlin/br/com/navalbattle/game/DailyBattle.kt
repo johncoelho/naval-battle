@@ -114,6 +114,17 @@ object DailyBattle {
     }
 
     /**
+     * A sequência de tiros em emoji, um por tiro na ordem jogada, [EMOJIS_PER_LINE] por linha (#138): a mesma que vai no
+     * texto compartilhado e que a tela de resultado mostra. Sem coordenada nem grade posicional. Nulo quando o dia não
+     * terminou ou o registro é antigo, sem sequência (0.48.1 a 0.48.3).
+     */
+    fun emojiLines(record: Record): String? {
+        if (record.won == null) return null
+        val seq = record.sequence?.takeIf { it.isNotEmpty() } ?: return null
+        return seq.chunked(EMOJIS_PER_LINE).joinToString("\n") { line -> line.map(::emojiOf).joinToString("") }
+    }
+
+    /**
      * Texto do placar para compartilhar: o número do dia, o resultado, os tiros e, depois de uma linha em branco, um emoji
      * por tiro na ordem jogada, quebrando a cada [EMOJIS_PER_LINE] (#169). Sem coordenada nem grade posicional (o mar é o
      * mesmo para todos e a posição entregaria os navios a quem ainda não jogou). Se [storeLink] não for vazio (só no
@@ -130,11 +141,8 @@ object DailyBattle {
             Lang.ES -> key.es
         }
         val head = text.replace("%1", number(record.day).toString()).replace("%2", shots.toString())
-        val seq = record.sequence?.takeIf { it.isNotEmpty() }
-        val body = if (seq == null) head else {
-            val grid = seq.chunked(EMOJIS_PER_LINE).joinToString("\n") { line -> line.map(::emojiOf).joinToString("") }
-            "$head\n\n$grid"
-        }
+        val grid = emojiLines(record)
+        val body = if (grid == null) head else "$head\n\n$grid"
         return if (storeLink.isEmpty()) body else "$body\n\n$storeLink"
     }
 }

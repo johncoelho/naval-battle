@@ -116,7 +116,9 @@ por callout. Hoje o Submarino recebe tiro normalmente, como qualquer outro navio
   emoji por tiro na ordem jogada** (🌊 erro, 🔥 acerto, 💥 afundado), 10 por linha só para ler melhor. Sem coordenada,
   grade posicional nem navio não atingido (o mar é o mesmo para todos e a posição entregaria os navios), sem link, sem
   apelido, e-mail ou id. A ordem vem de `Match.playerShotLog` e fica no registro como `dia:1:tiros:SEQ` (`M`, `H`, `S`
-  por tiro); o registro antigo, de 3 partes, continua valendo e compartilha sem a linha de emoji.
+  por tiro); o registro antigo, de 3 partes, continua valendo e compartilha sem a linha de emoji. Desde a 0.48.6 (#138)
+  a tela de resultado mostra a mesma sequência em emoji acima do botão de compartilhar (`DailyBattle.emojiLines`, usada
+  também no texto compartilhado).
 - Regras puras em `game/DailyBattle.kt` (dia, semente, sorteio SplitMix64 próprio para o mar não depender do `Random` da
   biblioteca, registro e texto) com `DailyBattleTest`, que trava os primeiros números do sorteio de um dia.
 

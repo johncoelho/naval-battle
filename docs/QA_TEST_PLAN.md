@@ -737,6 +737,7 @@ Regras confirmadas pelo John no chat em 23/11/2026: uma tentativa por dia, sem r
 | BDD-06 | P0 | Compartilhar o resultado | Abre o menu do sistema; texto só com número do dia, placar e grade de tiros (acerto, erro, afundado); sem apelido, e-mail, id nem navio não atingido |
 | BDD-06b | P0 | Terminar uma Batalha do Dia com acertos, erros e um afundado; compartilhar e comparar com a sequência jogada | O texto traz um emoji por tiro, na ordem jogada (acerto, erro, afundado); sem coordenadas, sem letra/número de casa, sem grade posicional e sem navio não atingido; mesmo resultado em PT, EN e ES |
 | BDD-06c | P1 | Android: terminar a Batalha do Dia e compartilhar; abrir o link no fim da mensagem | O texto termina com o link da Play (`referrer` com `utm_source=batalha_do_dia`), depois de uma linha em branco; a ficha abre. No iPhone o texto sai sem link |
+| BDD-06d | P1 | Terminar a Batalha do Dia com erros, acertos e um afundado (#138, 0.48.6) | A tela de resultado mostra, abaixo de "Batalha do Dia #N" e acima de "Compartilhar resultado", a mesma sequência de emoji do texto compartilhado (um por tiro, na ordem, 10 por linha); sem coordenada nem grade posicional. Registro antigo (0.48.1 a 0.48.3): sem a linha, sem espaço vazio |
 | BDD-07 | P1 | Modo avião | A Batalha do Dia abre, joga e grava o resultado |
 | BDD-08 | P1 | Sem conta (convidado) | Joga e compartilha sem exigir login |
 | BDD-09 | P1 | Fuso do aparelho em outro país | Mesmo mar e mesmo número do dia de quem está em Brasília |
