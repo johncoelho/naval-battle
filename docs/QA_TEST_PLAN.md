@@ -366,6 +366,7 @@ O ensaio `supabase/tests/safety_ensaio.sql` roda antes da migração. Casos com 
 | SAF-08 | P1 | QA01 desbloqueia QA02 (Ajustes → Jogadores bloqueados) | Tudo volta a funcionar |
 | SAF-09 | P1 | Duas denúncias seguidas por contas diferentes dentro de 1 h | O John recebe só um push "Nova denúncia no Naval Battle" |
 | SAF-10 | P1 | Ajustes: Política de privacidade, Regras da comunidade e Fale conosco (Android e iPhone) | Abrem o site na língua do jogo; "Fale conosco" abre a política (Contato), sem app de e-mail |
+| PRIV-01 | P1 | Abrir `https://johncoelho.github.io/naval-battle/privacy.html#en` e `#es` sem login, com o navegador em outra língua (#128) | Todo o texto na língua da URL, mesmas 15 seções do pt-BR, sem depender da língua do navegador; contato abre `#contato-en` e `#contato-es` |
 | SAF-11 | P1 | Cliente alterado manda provocação com texto livre | Nada aparece na partida |
 | SAF-12 | P0 | App antigo (0.41.0) contra o novo, com bloqueio feito | O bloqueio vale (a partida rápida não casa os dois) |
 | SAF-13 | P2 | `select * from public.purge_moderation();` com uma denúncia de 13 meses atrás | A antiga some, as recentes ficam |
