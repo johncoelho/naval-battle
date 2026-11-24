@@ -340,9 +340,39 @@ final class ReviewRehearsalUITests: XCTestCase {
         for (nome, id, png) in pacotes {
             ultimoPasso = "Pacote \(nome)"
             // o 1º toque acorda o StoreKitUIService (partida a frio do simulador, passou de 10 s): só ele ganha 30 s; os demais seguem em 10 s
+            // a compra anterior ainda pode estar na folha da Apple (o app desabilita os 4 botões enquanto ela está aberta): espera fechar
+            esperarPacotesHabilitados()
+            rolarAtePacote(id)
             let r = tocarEEsperar("Pacote \(nome)", id, esperado: mensagem, estrito: false, png: png, id: id, limiteSeg: nome == "Bolsa" ? 30 : nil)
             if r != nil { concluidos.insert("pacote-\(nome)"); fecharFolhaDeCompra() }
             sleep(2)
+        }
+        esperarPacotesHabilitados()
+    }
+
+    /// Espera até 30 s a folha da Apple fechar (cancelando-a, sem digitar) e os 4 pacotes voltarem a `isEnabled`.
+    private func esperarPacotesHabilitados() {
+        let fim = Date().addingTimeInterval(30)
+        while Date() < fim {
+            if folhaDoSistema() != .nenhuma { fecharFolhaDeCompra() }
+            if idsPacotes.allSatisfy({ app.descendants(matching: .any)[$0].isEnabled }) { return }
+            sleep(1)
+        }
+        diag.append("pacotes ainda desabilitados após 30 s de espera")
+    }
+
+    /// Rola a vitrine (arrasto na janela) até o pacote ficar tocável; no iPad em compatibilidade a API pode negar isHittable
+    /// para sempre, então são só 2 tentativas e o toque segue pela coordenada da janela.
+    private func rolarAtePacote(_ id: String) {
+        let janela = app.windows.firstMatch
+        for _ in 0..<2 {
+            let e = app.descendants(matching: .any)[id]
+            if e.exists, e.isHittable { return }
+            let de = janela.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            let ate = janela.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+            de.press(forDuration: 0.1, thenDragTo: ate)
+            diag.append("vitrine rolada para tocar \(id)")
+            sleep(1)
         }
     }
 
