@@ -87,10 +87,14 @@ fun DailyPopup(state: AppState) {
                 .background(Naval.surface2)
                 .border(1.dp, Naval.amber)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
-                .verticalScroll(rememberScrollState())
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+          // o conteúdo rola; o Fechar fica FIXO embaixo, sempre visível (janela compacta, iPad em modo iPhone: #118)
+          Column(
+            Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+          ) {
             HudLabel(t(K.DAILY_TITLE).uppercase(), Naval.amberStrong)
             Gap(2)
             Text(t(K.DAILY_SUB), style = NavalType.body, color = Naval.inkSoft, textAlign = TextAlign.Center)
@@ -265,6 +269,7 @@ fun DailyPopup(state: AppState) {
             }
             Gap(12)
             HudLabel(t(K.DAILY_RESETS, countdown(d.resetsInSeconds)), Naval.muted)
+          }
             Gap(12)
             SecondaryButton(t(K.MILES_CLOSE), modifier = Modifier.fillMaxWidth()) { state.closeDailyPopup() }
         }

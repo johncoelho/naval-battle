@@ -584,11 +584,12 @@ final class ReviewRehearsalUITests: XCTestCase {
     private func limparAvisos() {
         let prioridade = [
             "PULAR|Skip|Saltar", "FECHAR|Close|Cerrar", "VALEU|Thanks|Gracias", "AGORA NÃO|Not now|Ahora no", "ENTENDI|Got it|Entendido",
-            "FAZER CHECK-IN.*|Check in.*|Hacer check-in.*",
         ]
+        let checkIn = "FAZER CHECK-IN.*|Check in.*|Hacer check-in.*"
         var vazios = 0
         var ciclos = 0
-        while ciclos < 8 && vazios < 2 {
+        // fila de avisos de conta nova após o Passe: Primeira Missão, presente, Diário de bordo, rosa dos ventos... (até 14 voltas)
+        while ciclos < 14 && vazios < 2 {
             ciclos += 1
             var feito = false
             if negarNotificacao() { feito = true }
@@ -600,6 +601,13 @@ final class ReviewRehearsalUITests: XCTestCase {
                 }
             }
             if !feito && fecharDiarioPeloVeu() { feito = true }
+            if !feito {
+                // último recurso: o check-in também fecha o Diário (não é tocado enquanto houver Fechar ou véu para tocar)
+                let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(checkIn))[ !.]*(
+.*)?")
+                let b = app.buttons.matching(p).firstMatch
+                if tocavel(b) { tocarElemento(b); feito = true }
+            }
             if feito { vazios = 0; sleep(2) } else { vazios += 1; sleep(3) }
         }
         diag.append("limparAvisos: \(ciclos) ciclos")
