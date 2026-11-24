@@ -31,6 +31,8 @@ final class ReviewRehearsalUITests: XCTestCase {
     /// Passo em que o teste está (vai para o relatório se ele abortar) e passos obrigatórios que já tiveram resultado.
     private var obrigatoriosFaltando: [String] = []
     private var atalhoPendente = false
+    /// Avisos de conta nova que cobriram a tela e foram fechados (Primeira Missão, presente, Diário...): vão para o relatório, para o QA conferir.
+    private var avisosFechados: [String] = []
     private let insuficienteRx = "Dobrões insuficientes|Not enough doubloons|Doblones insuficientes"
     private let atalhoRx = "Abrir a loja de Dobr|Open the Doubloon store|Abrir la tienda de Doblones"
     private var ultimoPasso = "abertura"
@@ -131,6 +133,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             let b = app.buttons.matching(p).firstMatch
             guard b.exists else { break }
             shotSeguro("passe-primeira-missao")
+            avisosFechados.append("Primeira Missão: PULAR (passo \(passo + 1), etapa \"\(ultimoPasso)\")")
             tocarElemento(b)
             sleep(2)
         }
@@ -353,7 +356,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             return
         }
         guard existe("Milhas náuticas|Nautical miles|Millas náuticas") || irParaDobroes() else { return }
-        guard tocar("Milhas náuticas|Nautical miles|Millas náuticas", espera: 10) else {
+        guard tocarLinhaDeMilhas() else {
             avisar("Milhas", "linha de milhas não encontrada na aba Dobrões: NÃO exercitada")
             return
         }
@@ -365,6 +368,27 @@ final class ReviewRehearsalUITests: XCTestCase {
                           estrito: true)
         _ = tocar("Fechar|Close|Cerrar", espera: 3)
         sleep(1)
+    }
+
+    /// A linha "Milhas náuticas" é o BOTÃO (a descrição da aba também cita "milhas náuticas" e vem antes na tela) e fica atrás da barra
+    /// Voltar/Estaleiro até rolar: rola a aba até a linha subir e toca o botão.
+    private func tocarLinhaDeMilhas() -> Bool {
+        let rx = "Milhas náuticas|Nautical miles|Millas náuticas"
+        let janela = app.windows.firstMatch
+        let fim = Date().addingTimeInterval(15)
+        while Date() < fim {
+            let b = app.buttons.matching(lbl(rx)).firstMatch
+            if b.exists, !b.frame.isEmpty {
+                let jf = janela.frame
+                if b.frame.midY < jf.minY + jf.height * 0.7 && tocavel(b) { tocarElemento(b); return true }
+                let de = janela.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                let ate = janela.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+                de.press(forDuration: 0.1, thenDragTo: ate)
+                diag.append("aba Dobrões rolada para a linha de milhas aparecer")
+            }
+            sleep(1)
+        }
+        return false
     }
 
     // MARK: - Botões de compra da Loja (cascos, camuflagens, habilidades)
@@ -597,7 +621,7 @@ final class ReviewRehearsalUITests: XCTestCase {
                 for regex in prioridade {
                     let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(regex))[ !.]*(\n.*)?")
                     let b = app.buttons.matching(p).firstMatch
-                    if tocavel(b) { tocarElemento(b); feito = true; break }
+                    if tocavel(b) { avisosFechados.append("limparAvisos: \"\(b.label.prefix(30))\" (etapa \"\(ultimoPasso)\")"); tocarElemento(b); feito = true; break }
                 }
             }
             if !feito && fecharDiarioPeloVeu() { feito = true }
@@ -633,6 +657,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         guard existe("Diário de bordo|Captain.s logbook|Diario de a bordo") else { return false }
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5)).tap()
         diag.append("Diário de bordo fechado por toque no véu (Fechar abaixo da dobra)")
+        avisosFechados.append("Diário de bordo: fechado por toque no véu (etapa \"\(ultimoPasso)\")")
         sleep(1)
         return true
     }
@@ -762,6 +787,8 @@ final class ReviewRehearsalUITests: XCTestCase {
         md += "| # | Passo | Ação | Resposta | Tempo | PNG |\n|---|---|---|---|---|---|\n"
         md += linhas.joined(separator: "\n") + "\n\n"
         if !diag.isEmpty { md += "## Diagnóstico\n" + diag.prefix(40).map { "- \($0)" }.joined(separator: "\n") + "\n\n" }
+        md += "## Avisos de conta nova que cobriram a tela e foram fechados (\(avisosFechados.count))\n"
+        md += (avisosFechados.isEmpty ? ["nenhum (Primeira Missão, presente e Diário não apareceram nesta rodada)"] : avisosFechados).map { "- \($0)" }.joined(separator: "\n") + "\n\n"
         if !arvores.isEmpty { md += "## Árvore de acessibilidade quando algo não foi achado\n" + arvores.joined(separator: "\n\n") + "\n\n" }
         md += "## Telas varridas contra tools/ios-forbidden-terms.txt (\(telasVarridas.count))\n"
         md += telasVarridas.map { "- \($0)" }.joined(separator: "\n") + "\n\n"
