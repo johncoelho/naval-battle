@@ -475,6 +475,7 @@ view `funnel_eventos_semanais` não a mostra. Evidência só em contagem; nunca 
 | ID | P | Passos | Esperado |
 |---|---|---|---|
 | ECO-01 | P1 | Diário de bordo | Balão abre com prêmio; check-in +25 só uma vez por dia; desafio do dia conta e resgata +50 |
+| ECO-01b | P0 | Diário de bordo em janela compacta (iPad rodando o app de iPhone, ou aparelho pequeno): abrir o Diário e NÃO rolar | Botão Fechar visível o tempo todo no rodapé (fixo, fora da rolagem); o conteúdo rola por cima; tocar Fechar fecha (#118) |
 | ECO-02 | P1 | Milhas | 10/dia; cada partida online gasta 1; aviso em vermelho com 2 ou menos |
 | LOJA-01 | P1 | Loja → abas cascos, camuflagens, habilidades, dobrões | Itens com preço; sem saldo: apagado, cadeado e "faltam ◆ X" |
 | LOJA-02 | P1 | Comprar uma camuflagem | Cartão de confirmação com saldo antes/depois; item vai para o Estaleiro |

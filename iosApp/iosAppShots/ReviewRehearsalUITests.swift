@@ -31,6 +31,8 @@ final class ReviewRehearsalUITests: XCTestCase {
     /// Passo em que o teste está (vai para o relatório se ele abortar) e passos obrigatórios que já tiveram resultado.
     private var obrigatoriosFaltando: [String] = []
     private var atalhoPendente = false
+    /// Avisos de conta nova que cobriram a tela e foram fechados (Primeira Missão, presente, Diário...): vão para o relatório, para o QA conferir.
+    private var avisosFechados: [String] = []
     private let insuficienteRx = "Dobrões insuficientes|Not enough doubloons|Doblones insuficientes"
     private let atalhoRx = "Abrir a loja de Dobr|Open the Doubloon store|Abrir la tienda de Doblones"
     private var ultimoPasso = "abertura"
@@ -131,6 +133,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             let b = app.buttons.matching(p).firstMatch
             guard b.exists else { break }
             shotSeguro("passe-primeira-missao")
+            avisosFechados.append("Primeira Missão: PULAR (passo \(passo + 1), etapa \"\(ultimoPasso)\")")
             tocarElemento(b)
             sleep(2)
         }
@@ -174,10 +177,12 @@ final class ReviewRehearsalUITests: XCTestCase {
             concluidos.insert("passe-popup")
             registrar("Passe sem saldo", "popup \"Dobrões insuficientes\"", "visível sem rolar", 0, shotSeguro("passe-sem-saldo"))
             if achar(atalhoRx, espera: 10) != nil {
-                if tocarEEsperar("Passe: atalho para a loja de Dobrões", atalhoRx, esperado: "Bolsa|Pouch", estrito: true) != nil {
+                if tocarEEsperar("Passe: atalho para a loja de Dobrões", atalhoRx, esperado: nil, estrito: true, pronto: { self.lojaDobroesAberta() }, limiteSeg: 25) != nil {
                     concluidos.insert("passe-atalho")
                     registrar("Passe sem saldo", "atalho \"Abrir a loja de Dobrões\"", "abriu a aba Dobrões", 0, shotSeguro("passe-atalho-loja"))
                     varrer("Loja > Dobrões (pelo atalho do Passe)")
+                    // a loja já está aberta na aba Dobrões: prova os 4 pacotes aqui, sem navegação extra
+                    provarPacotes()
                     voltarAoMenu()
                 }
             } else {
@@ -219,7 +224,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             fecharPasseForcado()
             return
         }
-        if tocarEEsperar("Passe: atalho para a loja de Dobrões (2ª tentativa)", atalhoRx, esperado: "Bolsa|Pouch", estrito: true) != nil {
+        if tocarEEsperar("Passe: atalho para a loja de Dobrões (2ª tentativa)", atalhoRx, esperado: nil, estrito: true, pronto: { self.lojaDobroesAberta() }) != nil {
             concluidos.insert("passe-atalho")
             registrar("Passe sem saldo", "atalho \"Abrir a loja de Dobrões\" (2ª tentativa)", "abriu a aba Dobrões", 0, shotSeguro("passe-atalho-loja"))
             voltarAoMenu()
@@ -287,36 +292,58 @@ final class ReviewRehearsalUITests: XCTestCase {
 
     private func irParaDobroes() -> Bool {
         fecharPasseForcado()
+        pularPrimeiraMissao()
         limparAvisos()
         voltarAoMenu()
         shotSeguro("10-antes-da-loja")
         guard tocar("Loja|Store|Tienda", espera: 15) else { falhar("Loja", "botão da Loja não encontrado"); return false }
         sleep(2)
-        guard tocar("Dobrões|Doubloons|Doblones", espera: 20) else { falhar("Loja", "aba Dobrões não aparece (venda fechada para a conta?)"); return false }
-        return element("Bolsa|Pouch").waitForExistence(timeout: 25)
+        guard !existe("Diário de bordo|Captain.s logbook|Diario de a bordo"), tocar("Dobrões|Doubloons|Doblones", espera: 20) else { falhar("Loja", "aba Dobrões não aparece (venda fechada para a conta?)"); return false }
+        let fim = Date().addingTimeInterval(25)
+        while Date() < fim { if lojaDobroesAberta() { return true }; sleep(1) }
+        return false
     }
 
+    /// A aba Dobrões está aberta quando os 4 pacotes existem na árvore, pelo identificador (testTag do Compose): não depende do
+    /// idioma, do rótulo (que leva bônus e preço da App Store) nem do frame, que no iPad em compatibilidade sai das coordenadas da janela.
+    private let idsPacotes = ["pack_dobroes_bolsa", "pack_dobroes_bau", "pack_dobroes_cofre", "pack_dobroes_tesouro"]
+    private func lojaDobroesAberta() -> Bool {
+        idsPacotes.allSatisfy { app.descendants(matching: .any)[$0].exists }
+    }
+
+    private var pacotesProvados = false
+
     private func ensaioPacotes() {
-        guard irParaDobroes() else {
-            falhar("Dobrões", "a vitrine não mostrou os pacotes (Bolsa, Baú, Cofre, Tesouro)")
-            return
+        // já provados com a loja aberta pelo atalho do Passe (rodada sem-saldo): não repete a navegação
+        if !pacotesProvados {
+            guard irParaDobroes() else {
+                falhar("Dobrões", "a vitrine não mostrou os pacotes (Bolsa, Baú, Cofre, Tesouro)")
+                return
+            }
+            varrer("Loja > Dobrões")
+            shotSeguro("20-dobroes-vitrine")
+            provarPacotes()
         }
-        varrer("Loja > Dobrões")
-        shotSeguro("20-dobroes-vitrine")
+        if atalhoPendente && ["Bolsa", "Baú", "Cofre", "Tesouro do Almirante"].allSatisfy({ concluidos.contains("pacote-\($0)") }) { retentarAtalho() }
+    }
+
+    /// Com a aba Dobrões aberta: toca os 4 pacotes (pelo identificador) e exige resposta visível em cada um.
+    private func provarPacotes() {
+        pacotesProvados = true
         let pacotes: [(String, String, String)] = [
-            ("Bolsa", "Bolsa|Pouch", "pacote-1"),
-            ("Baú", "Baú|Chest|Baúl", "pacote-2"),
-            ("Cofre", "Cofre|Strongbox|Caja fuerte", "pacote-3"),
-            ("Tesouro do Almirante", "Tesouro do Almirante|Admiral.s Treasure|Tesoro del Almirante", "pacote-4"),
+            ("Bolsa", "pack_dobroes_bolsa", "pacote-1"),
+            ("Baú", "pack_dobroes_bau", "pacote-2"),
+            ("Cofre", "pack_dobroes_cofre", "pacote-3"),
+            ("Tesouro do Almirante", "pack_dobroes_tesouro", "pacote-4"),
         ]
         let mensagem = "indisponíve|unavailable|no disponible|Não foi possível|Couldn.t|No se pudo|pendente|pending|pendiente"
-        for (nome, regex, png) in pacotes {
+        for (nome, id, png) in pacotes {
             ultimoPasso = "Pacote \(nome)"
-            let r = tocarEEsperar("Pacote \(nome)", regex, esperado: mensagem, estrito: false, png: png)
+            // o 1º toque acorda o StoreKitUIService (partida a frio do simulador, passou de 10 s): só ele ganha 30 s; os demais seguem em 10 s
+            let r = tocarEEsperar("Pacote \(nome)", id, esperado: mensagem, estrito: false, png: png, id: id, limiteSeg: nome == "Bolsa" ? 30 : nil)
             if r != nil { concluidos.insert("pacote-\(nome)"); fecharFolhaDeCompra() }
             sleep(2)
         }
-        if atalhoPendente && ["Bolsa", "Baú", "Cofre", "Tesouro do Almirante"].allSatisfy({ concluidos.contains("pacote-\($0)") }) { retentarAtalho() }
     }
 
     // MARK: - Milhas
@@ -329,7 +356,7 @@ final class ReviewRehearsalUITests: XCTestCase {
             return
         }
         guard existe("Milhas náuticas|Nautical miles|Millas náuticas") || irParaDobroes() else { return }
-        guard tocar("Milhas náuticas|Nautical miles|Millas náuticas", espera: 10) else {
+        guard tocarLinhaDeMilhas() else {
             avisar("Milhas", "linha de milhas não encontrada na aba Dobrões: NÃO exercitada")
             return
         }
@@ -341,6 +368,27 @@ final class ReviewRehearsalUITests: XCTestCase {
                           estrito: true)
         _ = tocar("Fechar|Close|Cerrar", espera: 3)
         sleep(1)
+    }
+
+    /// A linha "Milhas náuticas" é o BOTÃO (a descrição da aba também cita "milhas náuticas" e vem antes na tela) e fica atrás da barra
+    /// Voltar/Estaleiro até rolar: rola a aba até a linha subir e toca o botão.
+    private func tocarLinhaDeMilhas() -> Bool {
+        let rx = "Milhas náuticas|Nautical miles|Millas náuticas"
+        let janela = app.windows.firstMatch
+        let fim = Date().addingTimeInterval(15)
+        while Date() < fim {
+            let b = app.buttons.matching(lbl(rx)).firstMatch
+            if b.exists, !b.frame.isEmpty {
+                let jf = janela.frame
+                if b.frame.midY < jf.minY + jf.height * 0.7 && tocavel(b) { tocarElemento(b); return true }
+                let de = janela.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+                let ate = janela.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+                de.press(forDuration: 0.1, thenDragTo: ate)
+                diag.append("aba Dobrões rolada para a linha de milhas aparecer")
+            }
+            sleep(1)
+        }
+        return false
     }
 
     // MARK: - Botões de compra da Loja (cascos, camuflagens, habilidades)
@@ -447,7 +495,8 @@ final class ReviewRehearsalUITests: XCTestCase {
     /// Toca o elemento e exige resposta em até 10 s. `estrito`: só vale `esperado` (ou folha da Apple); senão vale também
     /// qualquer mudança na árvore. Devolve a descrição da resposta, ou nil (e registra a falha) se ficou mudo.
     @discardableResult
-    private func tocarEEsperar(_ nome: String, _ regex: String, esperado: String?, estrito: Bool, png: String? = nil, id: String? = nil) -> String? {
+    private func tocarEEsperar(_ nome: String, _ regex: String, esperado: String?, estrito: Bool, png: String? = nil, id: String? = nil, pronto: (() -> Bool)? = nil, limiteSeg: TimeInterval? = nil) -> String? {
+        let limite = limiteSeg ?? self.limite
         negarNotificacao()
         let alvoOpt: XCUIElement?
         if let id = id {
@@ -477,6 +526,7 @@ final class ReviewRehearsalUITests: XCTestCase {
         var resposta: String?
         while Date().timeIntervalSince(inicio) < limite {
             if let esperado = esperado, existe(esperado) { resposta = "mensagem/popup esperado"; break }
+            if let pronto = pronto, pronto() { resposta = "tela esperada"; break }
             switch folhaDoSistema() {
             case .compra: resposta = "folha de compra da Apple"
             case .login: resposta = "folha de login do sistema (não registrada)"
@@ -557,12 +607,13 @@ final class ReviewRehearsalUITests: XCTestCase {
     /// Fechar do Diário de bordo, Pular e o check-in, até duas voltas seguidas sem nada para fechar.
     private func limparAvisos() {
         let prioridade = [
-            "FECHAR|Close|Cerrar", "VALEU|Thanks|Gracias", "AGORA NÃO|Not now|Ahora no", "ENTENDI|Got it|Entendido", "PULAR|Skip|Saltar",
-            "FAZER CHECK-IN.*|Check in.*|Hacer check-in.*",
+            "PULAR|Skip|Saltar", "FECHAR|Close|Cerrar", "VALEU|Thanks|Gracias", "AGORA NÃO|Not now|Ahora no", "ENTENDI|Got it|Entendido",
         ]
+        let checkIn = "FAZER CHECK-IN.*|Check in.*|Hacer check-in.*"
         var vazios = 0
         var ciclos = 0
-        while ciclos < 8 && vazios < 2 {
+        // fila de avisos de conta nova após o Passe: Primeira Missão, presente, Diário de bordo, rosa dos ventos... (até 14 voltas)
+        while ciclos < 14 && vazios < 2 {
             ciclos += 1
             var feito = false
             if negarNotificacao() { feito = true }
@@ -570,8 +621,15 @@ final class ReviewRehearsalUITests: XCTestCase {
                 for regex in prioridade {
                     let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(regex))[ !.]*(\n.*)?")
                     let b = app.buttons.matching(p).firstMatch
-                    if tocavel(b) { tocarElemento(b); feito = true; break }
+                    if tocavel(b) { avisosFechados.append("limparAvisos: \"\(b.label.prefix(30))\" (etapa \"\(ultimoPasso)\")"); tocarElemento(b); feito = true; break }
                 }
+            }
+            if !feito && fecharDiarioPeloVeu() { feito = true }
+            if !feito {
+                // último recurso: o check-in também fecha o Diário (não é tocado enquanto houver Fechar ou véu para tocar)
+                let p = NSPredicate(format: "label MATCHES[c] %@", "(?s)(\(checkIn))[ !.]*(\n.*)?")
+                let b = app.buttons.matching(p).firstMatch
+                if tocavel(b) { tocarElemento(b); feito = true }
             }
             if feito { vazios = 0; sleep(2) } else { vazios += 1; sleep(3) }
         }
@@ -581,7 +639,7 @@ final class ReviewRehearsalUITests: XCTestCase {
     /// Fecha os avisos que cobrem a tela (presente, Diário de bordo, rosa dos ventos), em ordem de prioridade.
     private func fecharAvisos(excluindo: String?) {
         let prioridade = [
-            "FECHAR|Close|Cerrar", "VALEU|Thanks|Gracias", "AGORA NÃO|Not now|Ahora no", "ENTENDI|Got it|Entendido", "PULAR|Skip|Saltar",
+            "PULAR|Skip|Saltar", "FECHAR|Close|Cerrar", "VALEU|Thanks|Gracias", "AGORA NÃO|Not now|Ahora no", "ENTENDI|Got it|Entendido",
         ]
         if negarNotificacao() { return }
         for regex in prioridade where regex != excluindo {
@@ -589,6 +647,19 @@ final class ReviewRehearsalUITests: XCTestCase {
             let b = app.buttons.matching(p).firstMatch
             if tocavel(b) { tocarElemento(b); sleep(1); return }
         }
+        _ = fecharDiarioPeloVeu()
+    }
+
+    /// Diário de bordo aberto sem botão Fechar visível (fica abaixo da dobra do cartão rolável): o toque no véu, fora do cartão
+    /// (borda esquerda da janela), fecha o popup (`DailyPopup`: clique no fundo = closeDailyPopup). Sem isso o Diário ficava aberto
+    /// por cima do menu e o ensaio "tocava" na aba Dobrões pelo subtítulo dele ("ganhe dobrões").
+    private func fecharDiarioPeloVeu() -> Bool {
+        guard existe("Diário de bordo|Captain.s logbook|Diario de a bordo") else { return false }
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5)).tap()
+        diag.append("Diário de bordo fechado por toque no véu (Fechar abaixo da dobra)")
+        avisosFechados.append("Diário de bordo: fechado por toque no véu (etapa \"\(ultimoPasso)\")")
+        sleep(1)
+        return true
     }
 
     private func lbl(_ regex: String) -> NSPredicate { NSPredicate(format: "label MATCHES[c] %@", "(?s).*(\(regex)).*") }
@@ -716,6 +787,8 @@ final class ReviewRehearsalUITests: XCTestCase {
         md += "| # | Passo | Ação | Resposta | Tempo | PNG |\n|---|---|---|---|---|---|\n"
         md += linhas.joined(separator: "\n") + "\n\n"
         if !diag.isEmpty { md += "## Diagnóstico\n" + diag.prefix(40).map { "- \($0)" }.joined(separator: "\n") + "\n\n" }
+        md += "## Avisos de conta nova que cobriram a tela e foram fechados (\(avisosFechados.count))\n"
+        md += (avisosFechados.isEmpty ? ["nenhum (Primeira Missão, presente e Diário não apareceram nesta rodada)"] : avisosFechados).map { "- \($0)" }.joined(separator: "\n") + "\n\n"
         if !arvores.isEmpty { md += "## Árvore de acessibilidade quando algo não foi achado\n" + arvores.joined(separator: "\n\n") + "\n\n" }
         md += "## Telas varridas contra tools/ios-forbidden-terms.txt (\(telasVarridas.count))\n"
         md += telasVarridas.map { "- \($0)" }.joined(separator: "\n") + "\n\n"

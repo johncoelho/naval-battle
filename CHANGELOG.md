@@ -9,6 +9,18 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.3] — 2026-11-24 · Diário de bordo com Fechar sempre visível e ensaio da revisão corrigido (#118)
+
+App 0.48.3 (versionCode 139). Refs #118. **Sem dependência nova.**
+
+### Corrigido
+- **Diário de bordo (`DailyPopup`):** o botão Fechar ficava no fim do cartão rolável; na janela compacta (iPad rodando o app de iPhone, 375x667) ele ficava abaixo da dobra e o revisor da Apple, que abre o Diário sozinho ao sair do Passe, ficava preso (só o toque no véu fecha, e ele é uma faixa de ~36 pt). Agora o conteúdo rola e o Fechar é um rodapé fixo. Sem mudança no Android além disso.
+
+### Alterado
+- **Ensaio de revisão (`ReviewRehearsalUITests.swift`):** a loja é reconhecida pelos ids `pack_dobroes_*`; os 4 pacotes são provados logo após o atalho do Passe; o 1º toque de compra e o atalho têm folga para a partida a frio do StoreKit; `limparAvisos` pula a Primeira Missão primeiro, fecha o Diário pelo véu, deixa o check-in por último e tem até 14 voltas.
+- Versão 0.48.3 (139) no Android e no iPhone; notas da Play.
+- Sem teste de unidade novo: a mudança é de layout (Compose), sem regra pura.
+
 ## [0.48.2] — 2026-11-23 · Atalho da loja no Passe do iPhone e ensaio sem falso verde (#118)
 
 App 0.48.2 (versionCode 138). Refs #118. John decidiu em 23/11 seguir com a `main` (0.48.1) como base do iPhone; a branch `esteira/issue-118-0.47.1` não foi mesclada, só estas duas peças foram portadas. **Sem dependência nova.**
