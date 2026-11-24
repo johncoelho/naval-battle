@@ -116,8 +116,8 @@ android {
         applicationId = "aigamesfactory.navalbattleclassic"
         minSdk = libs.versions.androidMinSdk.get().toInt()
         targetSdk = libs.versions.androidTargetSdk.get().toInt()
-        versionCode = 140
-        versionName = "0.48.4"
+        versionCode = 141
+        versionName = "0.48.5"
         // Play Games Services (#48): app_id do console (gradle.properties, vazio = recurso desligado).
         // Não é segredo; vira a meta-data APP_ID do manifesto
         resValue("string", "game_services_project_id", (findProperty("pgsAppId") as String?).orEmpty())

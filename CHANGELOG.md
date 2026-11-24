@@ -9,6 +9,15 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.5] — 2026-11-24 · Resultado da Batalha do Dia com o link da Play (#174)
+
+App 0.48.5 (versionCode 141). Refs #174 e #128. **Sem dependência nova.** Sem servidor, banco nem `app_config`; compatível com o app antigo (só texto local).
+
+- **#174, link no compartilhamento (Android):** o texto do resultado da Batalha do Dia termina com o link da ficha da Play, depois de uma linha em branco, em todos os casos (inclusive registro antigo sem sequência). O `referrer` leva `utm_source=batalha_do_dia`, `utm_medium=organic` e `utm_campaign=batalha_do_dia`, codificados, para o Play Console mostrar as instalações vindas desse compartilhamento. `DailyBattle.shareText(record, lang, storeLink = "")` e `dailyBattleStoreLink` (`expect/actual` em `data/StoreLink*.kt`, junto do `storeInviteLink`); no iPhone o `actual` devolve vazio (o binário não leva link da Play, Apple 2.3.10) e o placar sai como na 0.48.4. Testes em `DailyBattleTest`.
+- **Documentação:** `docs/QA_TEST_PLAN.md` ganha a seção 12g (Batalha do Dia, BDD-01 a BDD-09 e BDD-06b) e o caso BDD-06c; `HISTORY.md` registra as decisões de 23 e 24/11 (cargas táticas, resultado compartilhado, pedidos do marketing) e a do link.
+- **#128, privacidade em EN/ES:** conferida, sem mudança no site. `site/privacy.html` já traz pt, en e es com as mesmas 15 seções; as URLs diretas são `privacy.html#en` e `privacy.html#es`. John aprovou a tradução fiel sem revisão jurídica. Só documentação (HISTORY e caso PRIV-01 no `docs/QA_TEST_PLAN.md`): nada de `site/` mudou, então não precisa de `pages.yml`.
+- **Fora do lote:** #168 (alinhar hook e `factory.yaml` ao Contrato v1) não entrou nesta versão.
+
 ## [0.48.4] — 2026-11-24 · Batalha do Dia sem recompensa e com a sequência de tiros para compartilhar (#169)
 
 App 0.48.4 (versionCode 140). Refs #169 (cobre a #138). **Sem dependência nova.** Sem servidor, banco nem `app_config`.

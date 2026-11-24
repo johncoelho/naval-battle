@@ -705,6 +705,24 @@ publicada. Regressão do Android junto: a QA01 recebe o mesmo envio.
 | PSH-IOS-06 | P1 | Negar a permissão de aviso → fechar e abrir o app várias vezes | Não pede de novo; segue sem erro; o token continua registrado |
 | PSH-IOS-07 | P1 | Linha de `push_outbox` com token iOS falso (`BadDeviceToken`) e outro aparelho na mesma conta | O token falso fica `check_status = 'unregistered'`; o outro aparelho recebe; `new_version` nunca vai ao iPhone |
 
+### 12g. Batalha do Dia (#138)
+
+Regras confirmadas pelo John no chat em 23/11/2026: uma tentativa por dia, sem recompensa, virada 00:00 de Brasília (UTC-3), grade só com tiros, convidado joga.
+
+| ID | P | Passos | Esperado |
+|---|---|---|---|
+| BDD-01 | P0 | Dois aparelhos (QA01 e QA02), mesmo dia: abrir a Batalha do Dia e conferir o mar | Frota inimiga idêntica nos dois |
+| BDD-02 | P0 | Passar o relógio para depois de 00:00 de Brasília do dia seguinte | Novo número do dia e mar diferente; botão liberado de novo |
+| BDD-03 | P0 | Terminar a batalha e voltar ao menu | O botão mostra o resultado e não deixa jogar de novo no mesmo dia |
+| BDD-04 | P0 | Começar a batalha e fechar o app no meio; reabrir | A tentativa do dia está gasta (não repete) |
+| BDD-05 | P0 | Terminar a Batalha do Dia com conta: conferir dobrões, milhas, patente/XP, desafio do dia e conquistas | Nada muda (sem recompensa nenhuma) |
+| BDD-06 | P0 | Compartilhar o resultado | Abre o menu do sistema; texto só com número do dia, placar e grade de tiros (acerto, erro, afundado); sem apelido, e-mail, id nem navio não atingido |
+| BDD-06b | P0 | Terminar uma Batalha do Dia com acertos, erros e um afundado; compartilhar e comparar com a sequência jogada | O texto traz um emoji por tiro, na ordem jogada (acerto, erro, afundado); sem coordenadas, sem letra/número de casa, sem grade posicional e sem navio não atingido; mesmo resultado em PT, EN e ES |
+| BDD-06c | P1 | Android: terminar a Batalha do Dia e compartilhar; abrir o link no fim da mensagem | O texto termina com o link da Play (`referrer` com `utm_source=batalha_do_dia`), depois de uma linha em branco; a ficha abre. No iPhone o texto sai sem link |
+| BDD-07 | P1 | Modo avião | A Batalha do Dia abre, joga e grava o resultado |
+| BDD-08 | P1 | Sem conta (convidado) | Joga e compartilha sem exigir login |
+| BDD-09 | P1 | Fuso do aparelho em outro país | Mesmo mar e mesmo número do dia de quem está em Brasília |
+
 ## 13. Ajustes, notificações, feedback e idioma
 
 | ID | P | Passos | Esperado |
