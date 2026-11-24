@@ -9,6 +9,20 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.4] — 2026-11-24 · Batalha do Dia sem recompensa e com a sequência de tiros para compartilhar (#169)
+
+App 0.48.4 (versionCode 140). Refs #169 (cobre a #138). **Sem dependência nova.** Sem servidor, banco nem `app_config`.
+
+### Corrigido
+- **Batalha do Dia não paga nada:** a tela de resultado deixou de chamar `registerMatch` e `recordDailyMatch` nessa partida (`DailyBattle.countsForCareer`). XP, patente, estatísticas de carreira, conquistas, desafio do dia, relatório de carreira e pedido de avaliação ficam de fora. Partidas da Batalha do Dia jogadas até a 0.48.3 continuam contadas (sem retroação).
+- **Compartilhar traz a sequência de tiros:** depois do texto de antes (número do dia, resultado e tiros), uma linha em branco e um emoji por tiro na ordem jogada (🌊 erro, 🔥 acerto, 💥 afundado), 10 por linha. Sem coordenada, grade posicional, navio não atingido, link, apelido, e-mail ou id.
+
+### Alterado
+- `Match.playerShotLog`: resultado de cada tiro do jogador na ordem (tiro repetido não entra).
+- Registro local `day_battle`: `dia:1:tiros:SEQ` (`M`/`H`/`S` por tiro). O registro de 3 partes da 0.48.1 a 0.48.3 continua valendo e compartilha sem a linha de emoji; sequência estragada só some, sem apagar o "já jogou hoje". Voltar para uma versão anterior lê o registro novo como "não jogou hoje" (só em downgrade).
+- Testes: `DailyBattleTest` (registro com sequência e antigo, `sequenceOf`, texto com um emoji por tiro em PT/EN/ES sem letra nem número na grade, `countsForCareer`) e `MatchTest` (`playerShotLog`). QA: DAY-04 atualizado, DAY-10 a DAY-12 novos.
+- Versão 0.48.4 (140) no Android e no iPhone; notas da Play.
+
 ## [0.48.3] — 2026-11-24 · Diário de bordo com Fechar sempre visível e ensaio da revisão corrigido (#118)
 
 App 0.48.3 (versionCode 139). Refs #118. **Sem dependência nova.**
