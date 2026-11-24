@@ -55,6 +55,22 @@ class MatchTest {
     }
 
     @Test
+    fun registroDosTirosDoJogadorNaOrdemSemTiroRepetido() {
+        val m = battle()
+        // destróier (2 casas) na linha 8: acerto, tiro repetido, acerto que afunda; depois um erro
+        assertEquals(ShotResult.HIT, m.act(Coord(0, 8))?.result)
+        assertNull(m.act(Coord(0, 8)), "tiro repetido")
+        assertEquals(ShotResult.SUNK, m.act(Coord(1, 8))?.result)
+        assertEquals(ShotResult.MISS, m.act(water)?.result)
+        assertEquals(listOf(ShotResult.HIT, ShotResult.SUNK, ShotResult.MISS), m.playerShotLog)
+        assertEquals(m.playerShots, m.playerShotLog.size)
+        // tiro do outro lado não entra no registro do jogador
+        m.act(water)
+        assertEquals(3, m.playerShotLog.size)
+        assertEquals("HSM", DailyBattle.sequenceOf(m.playerShotLog))
+    }
+
+    @Test
     fun afundarAFrotaInteiraEncerraComVencedor() {
         val m = battle()
         fixedFleet().flatMap { it.cells }.forEach { m.act(it) }

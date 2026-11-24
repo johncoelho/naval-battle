@@ -75,8 +75,11 @@ fun ResultScreen(state: AppState, match: Match) {
     val bot = match.bot != null
     // referência desta vitória para o "dobrar dobrões" (#29), fotografada antes de a sala fechar
     val adRef = remember(match) { state.adWinRef(match) }
-    // Batalha do Dia (#138): placar do dia para o menu e o compartilhamento
+    // Batalha do Dia (#138): placar do dia para o menu e o compartilhamento. Não paga nada (#169): sem registerMatch
+    // (XP, patente, estatísticas), então também sem conquistas, relatório de carreira e pedido de avaliação (dependem
+    // do award), e sem desafio do dia
     val daily = state.dailyBattleMatch === match
+    val career = DailyBattle.countsForCareer(daily)
     LaunchedEffect(match) {
         state.clearReviewCandidate()
         if (daily) state.noteDailyBattleFinished(match)
@@ -89,7 +92,8 @@ fun ResultScreen(state: AppState, match: Match) {
         // números que o servidor confere para pagar a partida online (contra a IA não há dobrões)
         var onlineArgs: IntArray? = null
         if (match.opponent == Opponent.AI) {
-            award = state.profile.registerMatch(
+            // Batalha do Dia (#169): não entra na carreira; o placar já foi gravado acima
+            if (career) award = state.profile.registerMatch(
                 victory = victory,
                 shotsFired = match.playerShots,
                 hitsLanded = match.playerHits,
@@ -153,8 +157,8 @@ fun ResultScreen(state: AppState, match: Match) {
                 rankUp = a.rankUp
             )
         }
-        // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou)
-        if ((match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
+        // desafio do dia: conta contra a IA e online, como a carreira (nunca quem abandonou nem a Batalha do Dia, #169)
+        if (career && (match.opponent == Opponent.AI || online) && !match.forfeitedBySelf && !noCombat) state.recordDailyMatch(match)
         // anúncio premiado (#29): só lê o servidor; o botão aparece se ele liberar
         if (victory && (online || bot) && state.onlineAwardAmount > 0) state.loadAds()
     }

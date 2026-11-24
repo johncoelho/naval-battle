@@ -6,8 +6,9 @@ import kotlin.random.Random
 
 /**
  * Batalha do Dia (#138): o mesmo mar para todo mundo no mesmo dia de Brasília, contra a IA, no Clássico. Regras puras:
- * o dia, a semente, o sorteio, o "já jogou hoje" e o texto do placar. Sem servidor e sem prêmio novo (a partida conta
- * como qualquer partida contra a IA); funciona offline.
+ * o dia, a semente, o sorteio, o "já jogou hoje" e o texto do placar. Sem servidor e **sem recompensa nenhuma** (#169):
+ * a partida não conta na carreira (XP, patente, estatísticas), nas conquistas nem no desafio do dia ([countsForCareer]);
+ * funciona offline.
  *
  * - **Dia:** relógio do aparelho com o fuso de Brasília **fixo em UTC-3** (o Brasil não tem horário de verão desde 2019),
  *   nunca o fuso do aparelho: um viajante joga o mesmo mar que quem está no Brasil. Relógio adiantado só antecipa o mar
@@ -16,7 +17,9 @@ import kotlin.random.Random
  *   `Random(seed)` da biblioteca, que pode mudar de uma versão do Kotlin para outra (Android e iPhone precisam do mesmo).
  * - **Uma tentativa por dia:** marcada quando a batalha começa (abandonar ou fechar o app no meio gasta a vez) e guardada
  *   só no aparelho ([encode]/[decode]).
- * - **Placar:** só o dia, o resultado e os tiros; nunca apelido, e-mail, id, posição de navio nem grade.
+ * - **Placar:** o dia, o resultado, os tiros e a sequência deles em emoji, um por tiro e na ordem jogada (#169: erro,
+ *   acerto, afundado). Nunca coordenada, grade posicional, navio não atingido, apelido, e-mail nem id: com o mesmo mar
+ *   para todos, a posição dos tiros entregaria a frota a quem ainda não jogou; a ordem dos resultados não entrega.
  */
 object DailyBattle {
     private const val DAY_MILLIS = 86_400_000L
@@ -37,37 +40,84 @@ object DailyBattle {
     /** Sorteio da partida do dia: com ele a frota inimiga sai igual em todo aparelho. */
     fun random(day: Long): Random = DailyRandom(seed(day))
 
-    /** Resultado guardado no aparelho. [won] e [shots] nulos = começou e não terminou (abandono ou app fechado). */
-    data class Record(val day: Long, val won: Boolean?, val shots: Int?)
+    /**
+     * Resultado guardado no aparelho. [won] e [shots] nulos = começou e não terminou (abandono ou app fechado).
+     * [sequence]: um caractere por tiro, na ordem (`M` erro, `H` acerto, `S` afundado); nulo no registro antigo
+     * (0.48.1 a 0.48.3), que não guardava a ordem.
+     */
+    data class Record(val day: Long, val won: Boolean?, val shots: Int?, val sequence: String? = null)
 
     fun playedToday(record: Record?, today: Long): Boolean = record?.day == today
 
     /** Marca de "começou hoje", gravada quando a batalha começa. */
     fun started(day: Long): Record = Record(day, null, null)
 
-    fun finished(day: Long, won: Boolean, shots: Int): Record = Record(day, won, shots.coerceAtLeast(0))
+    fun finished(day: Long, won: Boolean, shots: Int, sequence: String? = null): Record =
+        Record(day, won, shots.coerceAtLeast(0), sequence)
 
-    /** Formato no aparelho: `dia`, ou `dia:1:tiros` (vitória) / `dia:0:tiros` (derrota). */
-    fun encode(r: Record): String =
-        if (r.won == null || r.shots == null) r.day.toString() else "${r.day}:${if (r.won) 1 else 0}:${r.shots}"
+    /**
+     * A Batalha do Dia não paga nada (#169): sem XP, patente, estatísticas de carreira, conquistas nem desafio do dia.
+     * A tela de resultado consulta esta regra antes de registrar a partida.
+     */
+    fun countsForCareer(daily: Boolean): Boolean = !daily
+
+    /** Sequência dos tiros para o registro: `M`, `H` ou `S` por tiro, na ordem; tiro repetido não conta. */
+    fun sequenceOf(shots: List<ShotResult>): String = buildString {
+        shots.forEach { r ->
+            when (r) {
+                ShotResult.MISS -> append('M')
+                ShotResult.HIT -> append('H')
+                ShotResult.SUNK -> append('S')
+                ShotResult.ALREADY_FIRED -> Unit
+            }
+        }
+    }
+
+    /** Emoji de erro (onda), acerto (fogo) e afundado (explosão), nessa ordem. */
+    internal val SHOT_EMOJIS: List<String> = listOf("🌊", "🔥", "💥")
+
+    /** Emoji de um caractere da sequência (`M`, `H`, `S`); outro caractere não aparece. */
+    internal fun emojiOf(c: Char): String = when (c) {
+        'M' -> SHOT_EMOJIS[0]
+        'H' -> SHOT_EMOJIS[1]
+        'S' -> SHOT_EMOJIS[2]
+        else -> ""
+    }
+
+    /** Tiros por linha na sequência compartilhada: só para ler melhor, sem relação com o tabuleiro. */
+    private const val EMOJIS_PER_LINE = 10
+
+    private fun validSequence(seq: String, shots: Int): Boolean =
+        seq.length == shots && seq.all { it == 'M' || it == 'H' || it == 'S' }
+
+    /** Formato no aparelho: `dia`, ou `dia:1:tiros:SEQ` (vitória) / `dia:0:tiros:SEQ` (derrota); sem `:SEQ` no antigo. */
+    fun encode(r: Record): String = when {
+        r.won == null || r.shots == null -> r.day.toString()
+        r.sequence == null -> "${r.day}:${if (r.won) 1 else 0}:${r.shots}"
+        else -> "${r.day}:${if (r.won) 1 else 0}:${r.shots}:${r.sequence}"
+    }
 
     fun decode(raw: String): Record? {
         val parts = raw.trim().split(':')
         val day = parts.getOrNull(0)?.toLongOrNull() ?: return null
         if (parts.size == 1) return Record(day, null, null)
-        if (parts.size != 3) return null
+        if (parts.size != 3 && parts.size != 4) return null
         val won = when (parts[1]) {
             "1" -> true
             "0" -> false
             else -> return null
         }
         val shots = parts[2].toIntOrNull()?.takeIf { it >= 0 } ?: return null
-        return Record(day, won, shots)
+        // sequência estragada não apaga o resultado (o dia continua jogado); só some a linha de emoji
+        val sequence = parts.getOrNull(3)?.takeIf { validSequence(it, shots) }
+        return Record(day, won, shots, sequence)
     }
 
     /**
-     * Texto do placar para compartilhar: só o número do dia, o resultado e os tiros. Sem grade (o mar é o mesmo para
-     * todos e a grade entregaria a posição dos navios a quem ainda não jogou) e sem link (o iPhone ainda não tem loja).
+     * Texto do placar para compartilhar: o número do dia, o resultado, os tiros e, depois de uma linha em branco, um emoji
+     * por tiro na ordem jogada, quebrando a cada [EMOJIS_PER_LINE] (#169). Sem coordenada nem grade posicional (o mar é o
+     * mesmo para todos e a posição entregaria os navios a quem ainda não jogou) e sem link (o iPhone ainda não tem loja).
+     * Registro antigo, sem sequência: só o texto.
      */
     fun shareText(record: Record, lang: Lang): String? {
         val won = record.won ?: return null
@@ -78,7 +128,10 @@ object DailyBattle {
             Lang.EN -> key.en
             Lang.ES -> key.es
         }
-        return text.replace("%1", number(record.day).toString()).replace("%2", shots.toString())
+        val head = text.replace("%1", number(record.day).toString()).replace("%2", shots.toString())
+        val seq = record.sequence?.takeIf { it.isNotEmpty() } ?: return head
+        val grid = seq.chunked(EMOJIS_PER_LINE).joinToString("\n") { line -> line.map(::emojiOf).joinToString("") }
+        return "$head\n\n$grid"
     }
 }
 

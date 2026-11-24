@@ -753,14 +753,14 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         saveDailyBattle(DailyBattle.started(dailyBattleDay))
     }
 
-    /** Fim da Batalha do Dia: grava o placar (vitória e tiros) para o menu e o compartilhamento. */
+    /** Fim da Batalha do Dia: grava o placar (vitória, tiros e a sequência deles, #169) para o menu e o compartilhamento. */
     fun noteDailyBattleFinished(m: Match) {
         if (m !== dailyBattleMatch || m.winner == null) return
         val won = m.winner == m.mySide && !m.forfeitedBySelf
-        saveDailyBattle(DailyBattle.finished(dailyBattleDay, won, m.shotsOf(m.mySide)))
+        saveDailyBattle(DailyBattle.finished(dailyBattleDay, won, m.shotsOf(m.mySide), DailyBattle.sequenceOf(m.playerShotLog)))
     }
 
-    /** Compartilha só o placar do dia (número, resultado e tiros) pela folha do sistema. */
+    /** Compartilha só o placar do dia (número, resultado, tiros e um emoji por tiro, sem coordenada) pela folha do sistema. */
     fun shareDailyBattle() {
         val r = dailyBattleRecord ?: return
         DailyBattle.shareText(r, I18n.lang)?.let { shareText(it) }

@@ -174,6 +174,13 @@ class Match(
     var enemyHits by mutableStateOf(0)
         private set
 
+    /**
+     * Resultado de cada tiro do lado PLAYER, na ordem jogada (só MISS, HIT e SUNK; tiro repetido não entra). Serve à
+     * sequência de emoji da Batalha do Dia (#169). Lista comum, sem estado do Compose: ninguém desenha a partir dela.
+     */
+    private val playerShotResults = mutableListOf<ShotResult>()
+    val playerShotLog: List<ShotResult> get() = playerShotResults
+
     private var calloutSeq = 0L
 
     /** Nomes escolhidos pelos dois jogadores no modo local (vazio = nome padrão). */
@@ -487,6 +494,7 @@ class Match(
         if (attacker == Side.PLAYER) {
             playerImpact = impact
             playerShots++
+            playerShotResults += outcome.result
             if (scored) playerHits++
         } else {
             enemyImpact = impact

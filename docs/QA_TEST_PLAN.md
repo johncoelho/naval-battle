@@ -463,12 +463,15 @@ view `funnel_eventos_semanais` não a mostra. Evidência só em contagem; nunca 
 | DAY-01 | P1 | QA01 e QA02 no mesmo dia: Menu → Batalha do Dia → posicionar → atirar nas mesmas casas | Mesmo número "#N" e mesmos acertos/erros nas mesmas casas nos dois aparelhos (frota inimiga idêntica) |
 | DAY-02 | P1 | Mudar a data do aparelho para o dia seguinte (ou esperar a meia-noite de Brasília) | Número "#N+1", o botão volta a "Jogar" e o mar muda |
 | DAY-03 | P1 | Aparelho em outro fuso (ex.: Lisboa) às 22h de Brasília | Mesmo número e mesmo mar de quem está no Brasil |
-| DAY-04 | P1 | Terminar a batalha (vitória e, em outro dia, derrota) | Resultado mostra "Batalha do Dia #N" e "Compartilhar resultado" no lugar de "Nova partida"; a folha do sistema abre com só o número, o resultado e os tiros (sem nome, e-mail, id, grade nem link) |
+| DAY-04 | P1 | Terminar a batalha (vitória e, em outro dia, derrota) | Resultado mostra "Batalha do Dia #N" e "Compartilhar resultado" no lugar de "Nova partida"; a folha do sistema abre com o número, o resultado, os tiros e a linha de emoji (DAY-11), sem nome, e-mail, id, coordenada, grade posicional nem link |
 | DAY-05 | P1 | Voltar ao menu depois de jogar | O botão mostra o placar ("afundou a frota em X tiros" ou "resistiu") e tocar compartilha; não dá para jogar de novo no mesmo dia |
 | DAY-06 | P1 | Entrar na batalha e sair no meio (ou fechar o app) | A tentativa do dia está gasta: "Você já jogou hoje…", botão apagado |
 | DAY-07 | P1 | Modo avião e convidado sem conta | Joga normalmente; nada quebra |
 | DAY-08 | P2 | Sair da conta depois de jogar | Continua "já jogou hoje" (a marca é do aparelho) |
 | DAY-09 | P2 | Textos em PT, EN e ES | Botão, legenda, placar e texto compartilhado no idioma, sem chave crua |
+| DAY-10 | P0 | Com conta: anotar XP/patente, estatísticas da carreira, dobrões, milhas, desafio do dia e conquistas; terminar a Batalha do Dia (vitória) e voltar ao menu (#169, 0.48.4) | Nada muda; o resultado não mostra o relatório de carreira (XP, medalha) e não pede avaliação |
+| DAY-11 | P0 | Terminar a Batalha do Dia com erros, acertos e ao menos um afundado, anotando a ordem; compartilhar em PT, EN e ES (#169, 0.48.4) | Depois do texto, linha em branco e um emoji por tiro na ordem jogada (🌊 erro, 🔥 acerto, 💥 afundado), 10 por linha; total de emojis = tiros; sem letra/número de casa, sem grade posicional e sem navio não atingido |
+| DAY-12 | P2 | Atualizar da 0.48.3 no mesmo dia em que já jogou a Batalha do Dia (#169) | Continua "já jogou hoje" com o placar; compartilhar sai sem a linha de emoji (registro antigo), sem erro |
 
 ## 12. Economia, loja e personalização
 

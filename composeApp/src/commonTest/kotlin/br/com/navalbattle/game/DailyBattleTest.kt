@@ -86,6 +86,37 @@ class DailyBattleTest {
     }
 
     @Test
+    fun registroComSequenciaIdaEVolta() {
+        listOf(
+            DailyBattle.finished(20_780L, true, 5, "MHHSM"),
+            DailyBattle.finished(20_781L, false, 3, "MMH"),
+            DailyBattle.finished(20_782L, true, 0, "")
+        ).forEach { assertEquals(it, DailyBattle.decode(DailyBattle.encode(it))) }
+        assertEquals("20780:1:5:MHHSM", DailyBattle.encode(DailyBattle.finished(20_780L, true, 5, "MHHSM")))
+        // registro antigo (0.48.1 a 0.48.3), de 3 partes: continua valendo, sem sequência
+        assertEquals(DailyBattle.Record(20_780L, true, 37, null), DailyBattle.decode("20780:1:37"))
+        assertEquals("20780:1:37", DailyBattle.encode(DailyBattle.finished(20_780L, true, 37)))
+        // sequência estragada (letra estranha ou tamanho diferente dos tiros): o resultado fica, a sequência some
+        assertEquals(DailyBattle.Record(20_780L, true, 3, null), DailyBattle.decode("20780:1:3:MXH"))
+        assertEquals(DailyBattle.Record(20_780L, true, 3, null), DailyBattle.decode("20780:1:3:MH"))
+        // lixo continua nulo
+        assertNull(DailyBattle.decode("20780:1:3:MHS:extra"))
+        assertNull(DailyBattle.decode("20780:2:3:MHS"))
+        assertNull(DailyBattle.decode("abc:1:3:MHS"))
+    }
+
+    @Test
+    fun sequenciaDosTirosNaOrdem() {
+        assertEquals(
+            "MHSHM",
+            DailyBattle.sequenceOf(listOf(ShotResult.MISS, ShotResult.HIT, ShotResult.SUNK, ShotResult.HIT, ShotResult.MISS))
+        )
+        // tiro repetido nunca vira tiro na sequência
+        assertEquals("MH", DailyBattle.sequenceOf(listOf(ShotResult.MISS, ShotResult.ALREADY_FIRED, ShotResult.HIT)))
+        assertEquals("", DailyBattle.sequenceOf(emptyList()))
+    }
+
+    @Test
     fun placarSoComDiaResultadoETiros() {
         val win = DailyBattle.finished(20_782L, true, 41)
         val pt = assertNotNull(DailyBattle.shareText(win, Lang.PT))
@@ -93,14 +124,60 @@ class DailyBattleTest {
         assertTrue("Daily Battle #3" in assertNotNull(DailyBattle.shareText(win, Lang.EN)))
         assertTrue("Batalla del Día #3" in assertNotNull(DailyBattle.shareText(win, Lang.ES)))
         assertTrue("resistiu" in assertNotNull(DailyBattle.shareText(DailyBattle.finished(20_782L, false, 55), Lang.PT)))
-        // sem link, sem grade, sem placeholder cru
+        // registro antigo, sem sequência: o texto de antes, sem linha de emoji, sem link nem placeholder cru
         Lang.entries.forEach { lang ->
             val text = assertNotNull(DailyBattle.shareText(win, lang))
-            assertFalse("http" in text || "%" in text || "🟦" in text, text)
+            assertFalse("http" in text || "%" in text, text)
+            assertFalse(DailyBattle.SHOT_EMOJIS.any { it in text }, text)
         }
         // começou e não terminou: nada a compartilhar
         assertNull(DailyBattle.shareText(DailyBattle.started(20_782L), Lang.PT))
     }
+
+    @Test
+    fun placarComUmEmojiPorTiroNaOrdemSemCoordenada() {
+        val seq = "MMHHSMHHHSMMMHS"
+        val win = DailyBattle.finished(20_782L, true, seq.length, seq)
+        val expected = seq.map { DailyBattle.emojiOf(it) }
+        Lang.entries.forEach { lang ->
+            val text = assertNotNull(DailyBattle.shareText(win, lang))
+            val base = assertNotNull(DailyBattle.shareText(DailyBattle.finished(20_782L, true, seq.length), lang))
+            // o texto de antes continua no começo; a sequência vem depois, separada por linha em branco
+            assertTrue(text.startsWith("$base\n\n"), text)
+            val grid = text.removePrefix("$base\n\n")
+            val lines = grid.split('\n')
+            // quebra a cada 10 tiros só para ler melhor
+            assertEquals(listOf(10, 5), lines.map { emojisIn(it).size }, text)
+            assertEquals(expected, lines.flatMap { emojisIn(it) }, text)
+            // na grade não há letra nem número de casa (sem coordenada, sem posição de navio)
+            assertTrue(grid.none { it.isLetterOrDigit() }, grid)
+            assertFalse("http" in text || "%" in text || "@" in text, text)
+        }
+        // três símbolos diferentes: erro, acerto e afundado não se confundem
+        assertEquals(3, DailyBattle.SHOT_EMOJIS.toSet().size)
+        // derrota também leva a sequência
+        val loss = assertNotNull(DailyBattle.shareText(DailyBattle.finished(20_782L, false, 3, "MHM"), Lang.PT))
+        assertTrue(loss.endsWith(listOf('M', 'H', 'M').joinToString("") { DailyBattle.emojiOf(it) }), loss)
+    }
+
+    @Test
+    fun batalhaDoDiaNaoContaNaCarreira() {
+        assertFalse(DailyBattle.countsForCareer(daily = true))
+        assertTrue(DailyBattle.countsForCareer(daily = false))
+    }
+
+    /** Separa uma linha da grade em emojis (cada um é um par substituto em UTF-16). */
+    private fun emojisIn(line: String): List<String> =
+        DailyBattle.SHOT_EMOJIS.let { all ->
+            val out = mutableListOf<String>()
+            var rest = line
+            while (rest.isNotEmpty()) {
+                val e = all.firstOrNull { rest.startsWith(it) } ?: error("símbolo inesperado em '$line'")
+                out += e
+                rest = rest.removePrefix(e)
+            }
+            out
+        }
 
     private companion object {
         val GOLDEN_FIRST_FIVE: List<Int> = listOf(20, 42, 36, 15, 67)
