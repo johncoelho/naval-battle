@@ -8,7 +8,12 @@ on:
     types: [created]
   schedule:
     - cron: '17 * * * *'   # varredura de seguranca (so aciona o Claude se houver issue sem triagem)
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: 'Numero da issue a triar (vazio = a mais antiga sem triagem)'
+        required: false
+        type: string
 
 jobs:
   agente:
@@ -16,8 +21,7 @@ jobs:
     permissions:
       contents: read
       issues: write
-      id-token: write
-    uses: johncoelho/ai-games-factory/.github/workflows/fabrica-agente.yml@main
+    uses: ./.github/workflows/fabrica-agente-v1.yml   # contrato v1 (#28): copia local, so nesta branch; a main segue no workflow publico
     with:
       squad: naval-battle
       quadro: 1
