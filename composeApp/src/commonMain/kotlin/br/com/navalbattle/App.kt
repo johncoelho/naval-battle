@@ -88,6 +88,8 @@ import br.com.navalbattle.data.LanGame
 import br.com.navalbattle.data.LanLink
 import br.com.navalbattle.data.LeaderboardEntry
 import br.com.navalbattle.data.LinkState
+import br.com.navalbattle.data.CloudRoomApi
+import br.com.navalbattle.data.SessionExpiryGate
 import br.com.navalbattle.data.MyRank
 import br.com.navalbattle.data.OnlineLink
 import br.com.navalbattle.data.OnlineMessage
@@ -1000,7 +1002,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         private set
 
     private val onlineLink: OnlineLink by lazy {
-        OnlineLink(cloud, uiScope!!) { renew() }.also { link ->
+        OnlineLink(CloudRoomApi(cloud), uiScope!!) { renewResult() }.also { link ->
             link.onResync = { log, stamp -> onMain { onResyncLog(log, stamp) } }
         }
     }
@@ -1094,7 +1096,32 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         closeOnline()
     }
 
+    /** Aviso "sua sessão expirou" no Perfil, enquanto o refresh recusado não for trocado por um login novo (#160). */
+    var sessionExpiredNotice by mutableStateOf<String?>(null)
+        private set
+
+    private val sessionExpiryGate = SessionExpiryGate()
+
+    /**
+     * Único caminho da sessão que não renova (#160): sala, partida rápida, entrar por código e chamadas
+     * por [authed] caem aqui. Para o link e o `botWatch` e abre o Perfil com o aviso [K.AUTH_EXPIRED]; a
+     * conta continua no aparelho, só a sessão caiu. [background] (chamada que o jogador não pediu, como o
+     * Placar ou a sincronização) não tira ninguém de partida nem de tela que não seja de menu.
+     */
+    private val sessionExpiredScreens = setOf(Screen.MENU, Screen.ONLINE, Screen.FRIENDS, Screen.LEADERBOARD)
+
+    private fun onSessionExpired(background: Boolean = false) {
+        sessionExpiredNotice = t(K.AUTH_EXPIRED)
+        if (background && (match != null || screen !in sessionExpiredScreens)) return
+        closeOnline()
+        if (match == null) screen = Screen.PROFILE
+    }
+
     private fun onOnlineState(state: LinkState, side: Side) {
+        if (state == LinkState.AUTH_EXPIRED) {
+            onSessionExpired()
+            return
+        }
         // o cancelamento da sala para o bot (#105) fecha a sala `waiting`; o laco do anfitriao le "abandoned" e
         // avisaria falha: nao e falha, quem decide o que fazer e o fluxo do bot
         if (botCancelling && state == LinkState.FAILED) return
@@ -1804,6 +1831,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         profile.signOut()
         profile.resetToGuest()
         clearAccountState()
+        sessionExpiredNotice = null
         return SignOutResult.DONE
     }
 
@@ -3816,6 +3844,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
             is CloudResult.Ok -> {
                 val local = profile.credits  // carteira do convidado: vai para a conta uma vez
                 profile.rememberSession(r.value)
+                sessionExpiredNotice = null
                 applyNameReset()
                 val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
                 ensureWallet(local)
@@ -3847,6 +3876,7 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
     private suspend fun afterIdTokenLogin(session: Session): String {
         val local = profile.credits  // carteira do convidado: vai para a conta uma vez
         profile.rememberSession(session)
+        sessionExpiredNotice = null
         applyNameReset()  // nome trocado à força no servidor volta para cá antes de a carreira subir (#58)
         val merged = mergeWithCloud() ?: t(K.AUTH_CONNECTED_NO_SYNC)
         ensureWallet(local)
@@ -4051,21 +4081,29 @@ class AppState(val profile: Profile, private val cloud: CloudApi) {
         val first = block(session)
         if (first !is CloudResult.Fail || !first.expired) return first
 
-        val renewed = renew() ?: return CloudResult.Fail(t(K.AUTH_EXPIRED))
-        return block(renewed)
+        return when (val r = renewResult()) {
+            is CloudResult.Ok -> block(r.value)
+            is CloudResult.Fail -> {
+                // refresh recusado leva ao login uma vez só; falha de rede não é sessão morta
+                if (!r.network && sessionExpiryGate.report(session.refreshToken)) onSessionExpired(background = true)
+                CloudResult.Fail(t(K.AUTH_EXPIRED))
+            }
+        }
     }
 
     /** Troca o refresh token guardado por uma sessão nova. */
-    private suspend fun renew(): Session? {
-        val current = profile.currentSession() ?: return null
-        return when (val r = cloud.refresh(current.refreshToken)) {
-            is CloudResult.Ok -> {
-                profile.rememberSession(r.value)
-                r.value
-            }
-            // refresh recusado: a conta continua no aparelho, só a sessão caiu
-            is CloudResult.Fail -> null
+    private suspend fun renew(): Session? = (renewResult() as? CloudResult.Ok)?.value
+
+    /** Como [renew], mas com a falha: o `network` separa "sem rede" de refresh recusado (#160). */
+    private suspend fun renewResult(): CloudResult<Session> {
+        val current = profile.currentSession() ?: return CloudResult.Fail(t(K.AUTH_SIGN_IN_TO_SYNC))
+        val r = cloud.refresh(current.refreshToken)
+        if (r is CloudResult.Ok) {
+            profile.rememberSession(r.value)
+            sessionExpiredNotice = null
         }
+        // refresh recusado: a conta continua no aparelho, só a sessão caiu
+        return r
     }
 
     /**

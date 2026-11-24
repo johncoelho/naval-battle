@@ -115,7 +115,7 @@ fun ProfileScreen(state: AppState) {
     val scroll = rememberScrollState()
     var accountTop by remember { mutableStateOf(-1) }
     LaunchedEffect(accountTop) {
-        if (state.loginReturn != null && accountTop >= 0) scroll.animateScrollTo(accountTop)
+        if ((state.loginReturn != null || state.sessionExpiredNotice != null) && accountTop >= 0) scroll.animateScrollTo(accountTop)
     }
     LaunchedEffect(profile.signedIn) {
         val back = state.loginReturn
@@ -563,6 +563,10 @@ private fun AccountSection(
     // só liga quando o aviso de "não sincronizado" terminou em saída (não mexe no AUTH_DELETED do excluir conta)
     LaunchedEffect(signedOutNotice) {
         if (signedOutNotice) { failed = false; message = t(K.AUTH_SIGNED_OUT) }
+    }
+    // sessão que não renovou (#160): o aviso "entre de novo" sobe para a conta
+    LaunchedEffect(state.sessionExpiredNotice) {
+        state.sessionExpiredNotice?.let { failed = true; message = it }
     }
     // resposta do popup da 1ª autorização da Apple (#63); vazio = o jogador cancelou a janela do Google
     LaunchedEffect(offerResult) {

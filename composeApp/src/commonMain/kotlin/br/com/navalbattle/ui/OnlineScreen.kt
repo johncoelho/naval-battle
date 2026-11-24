@@ -217,6 +217,7 @@ private fun onlineStateLabel(state: LinkState): String = t(
         LinkState.CONNECTING -> K.LAN_STATE_CONNECTING
         LinkState.CONNECTED -> K.ONLINE_CONNECTED
         LinkState.FAILED -> K.LAN_STATE_FAILED
+        LinkState.AUTH_EXPIRED -> K.AUTH_EXPIRED
     }
 )
 

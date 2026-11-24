@@ -466,7 +466,9 @@ Mesmo protocolo de texto do modo rede local (`data/Protocol.kt`), o transporte �
 em vez de socket TCP, cada jogada vira uma linha na tabela `online_messages` do Supabase, e
 cada lado consulta por linhas novas a cada 1-2 segundos (`data/OnlineLink.kt`, puro
 `commonMain` — não precisa de código por plataforma, porque só reaproveita o `CloudApi` que
-já fala com o Supabase). Sala de amigo e partida rápida vivem em `online_matches`; quem
+já fala com o Supabase, pela interface `OnlineRoomApi` que permite um Cloud falso nos testes).
+Sessão que não renova (refresh recusado) vira `LinkState.AUTH_EXPIRED` e o `onSessionExpired()` do
+`App` abre o Perfil com `K.AUTH_EXPIRED`, uma vez por refresh token (`SessionExpiryGate`). Sala de amigo e partida rápida vivem em `online_matches`; quem
 cria sempre joga primeiro. Amizades (`friendships`) e a busca de comandante por nome
 (`search_commander`) são independentes da sala — servem para montar a lista e convidar
 depois. Detalhe do schema em [supabase/online.sql](supabase/online.sql).

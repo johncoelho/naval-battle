@@ -326,6 +326,7 @@ mDNS. Rodar estes casos em dois aparelhos reais no mesmo Wi-Fi; nos emuladores, 
 |---|---|---|---|
 | ROOM-01 | P1 | A cria sala → código | Código curto visível e compartilhável |
 | ROOM-02 | P1 | B entra com o código | Entra no modo da sala de A; partida começa |
+| ROOM-03 | P1 | Conta logada com a sessão vencida (refresh revogado, ex.: sair em outro aparelho): Criar sala de amigo, Partida rápida e Entrar com código | Os três mostram "Sua sessão expirou. Entre de novo" e abrem o Perfil, nunca "Sem ligação"; o Placar também leva ao aviso (#160) |
 
 ## 10. Amigos, presença e convites (A × B)
 

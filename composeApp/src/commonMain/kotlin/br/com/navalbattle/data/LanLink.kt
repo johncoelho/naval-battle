@@ -4,7 +4,7 @@ package br.com.navalbattle.data
 data class LanGame(val name: String, val host: String, val port: Int)
 
 /** Em que pé está a ligação entre os dois aparelhos. */
-enum class LinkState { IDLE, HOSTING, SEARCHING, CONNECTING, CONNECTED, FAILED }
+enum class LinkState { IDLE, HOSTING, SEARCHING, CONNECTING, CONNECTED, FAILED, AUTH_EXPIRED }
 
 /**
  * Ligação direta entre dois celulares na mesma rede sem fio: um anuncia a partida,

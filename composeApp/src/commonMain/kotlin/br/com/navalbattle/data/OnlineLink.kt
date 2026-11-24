@@ -32,9 +32,9 @@ import kotlinx.coroutines.launch
  * segundos, o que alimenta [selfOffline] e [opponentAwaySeconds] para a tela avisar.
  */
 class OnlineLink(
-    private val cloud: CloudApi,
+    private val cloud: OnlineRoomApi,
     private val scope: CoroutineScope,
-    private val renewSession: suspend () -> Session?
+    private val renewSession: suspend () -> CloudResult<Session>
 ) {
     private var pollJob: Job? = null
     private var heartbeatJob: Job? = null
@@ -113,12 +113,21 @@ class OnlineLink(
             if (first is CloudResult.Ok) lastOkMillis = nowMillis()
             return first
         }
-        val renewed = renewSession() ?: return first
+        val renewed = when (val r = renewSession()) {
+            is CloudResult.Ok -> r.value
+            // refresh recusado: devolve o `expired` do 401 (vira AUTH_EXPIRED); falha de rede no refresh não é sessão morta
+            is CloudResult.Fail -> return if (r.network) CloudResult.Fail(r.message, network = true) else first
+        }
         session = renewed
         val second = block(renewed)
         if (second is CloudResult.Ok) lastOkMillis = nowMillis()
         return second
     }
+
+    private fun expiredFailure(result: CloudResult<*>) = result is CloudResult.Fail && result.expired
+
+    /** Falha ao abrir a sala (#160): sessão que não renovou pede login; o resto segue "sem ligação". */
+    private fun failureState(result: CloudResult<*>) = if (expiredFailure(result)) LinkState.AUTH_EXPIRED else LinkState.FAILED
 
     var matchId: String? = null
         private set
@@ -153,7 +162,7 @@ class OnlineLink(
                 for ((seq, line) in pending) {
                     val r = cloud.sendOnlineMessage(current, id, line, seq)
                     if (r is CloudResult.Fail && r.expired) {
-                        current = renewSession() ?: return@launch
+                        current = (renewSession() as? CloudResult.Ok)?.value ?: return@launch
                         cloud.sendOnlineMessage(current, id, line, seq)
                     }
                 }
@@ -226,13 +235,15 @@ class OnlineLink(
         onState(LinkState.HOSTING, Side.PLAYER)
         pollJob = scope.launch {
             val code = randomCode()
-            val result = cloud.createOnlineMatch(
-                session, mode, quick = false, inviteCode = code, hostName = session.username,
-                invitedId = invitedId, ranked = ranked
-            )
+            val result = withSession {
+                cloud.createOnlineMatch(
+                    it, mode, quick = false, inviteCode = code, hostName = it.username,
+                    invitedId = invitedId, ranked = ranked
+                )
+            }
             val match = (result as? CloudResult.Ok)?.value
             if (match == null) {
-                onState(LinkState.FAILED, Side.PLAYER)
+                onState(failureState(result), Side.PLAYER)
                 return@launch
             }
             matchId = match.id
@@ -292,9 +303,10 @@ class OnlineLink(
         stopRoomJobs()
         onState(LinkState.CONNECTING, Side.ENEMY)
         pollJob = scope.launch {
-            val joined = (cloud.joinOnlineMatch(session, matchId, session.username) as? CloudResult.Ok)?.value
+            val result = withSession { cloud.joinOnlineMatch(it, matchId, it.username) }
+            val joined = (result as? CloudResult.Ok)?.value
             if (joined == null) {
-                onState(LinkState.FAILED, Side.ENEMY)
+                onState(failureState(result), Side.ENEMY)
                 return@launch
             }
             this@OnlineLink.matchId = joined.id
@@ -361,9 +373,14 @@ class OnlineLink(
         onState(LinkState.SEARCHING, Side.PLAYER)
         pollJob = scope.launch {
             repeat(QUICK_MATCH_SEARCH_ATTEMPTS) { attempt ->
-                val found = (cloud.findQuickMatch(session, mode, ranked) as? CloudResult.Ok)?.value
+                val search = withSession { cloud.findQuickMatch(it, mode, ranked) }
+                if (expiredFailure(search)) {
+                    onState(LinkState.AUTH_EXPIRED, Side.PLAYER)
+                    return@launch
+                }
+                val found = (search as? CloudResult.Ok)?.value
                 if (found != null) {
-                    val joined = (cloud.joinOnlineMatch(session, found.id, session.username) as? CloudResult.Ok)?.value
+                    val joined = (withSession { cloud.joinOnlineMatch(it, found.id, it.username) } as? CloudResult.Ok)?.value
                     if (joined != null) {
                         matchId = joined.id
                         this@OnlineLink.ranked = joined.ranked
@@ -377,11 +394,12 @@ class OnlineLink(
                 }
                 if (attempt < QUICK_MATCH_SEARCH_ATTEMPTS - 1) delay(QUICK_MATCH_SEARCH_INTERVAL_MS)
             }
-            val created = (cloud.createOnlineMatch(
-                session, mode, quick = true, inviteCode = null, hostName = session.username, ranked = ranked
-            ) as? CloudResult.Ok)?.value
+            val createResult = withSession {
+                cloud.createOnlineMatch(it, mode, quick = true, inviteCode = null, hostName = it.username, ranked = ranked)
+            }
+            val created = (createResult as? CloudResult.Ok)?.value
             if (created == null) {
-                onState(LinkState.FAILED, Side.PLAYER)
+                onState(failureState(createResult), Side.PLAYER)
                 return@launch
             }
             matchId = created.id
@@ -395,14 +413,16 @@ class OnlineLink(
         pollJob?.cancel()
         onState(LinkState.CONNECTING, Side.ENEMY)
         pollJob = scope.launch {
-            val found = (cloud.findMatchByCode(session, code.trim().uppercase()) as? CloudResult.Ok)?.value
+            val search = withSession { cloud.findMatchByCode(it, code.trim().uppercase()) }
+            val found = (search as? CloudResult.Ok)?.value
             if (found == null) {
-                onState(LinkState.FAILED, Side.ENEMY)
+                onState(failureState(search), Side.ENEMY)
                 return@launch
             }
-            val joined = (cloud.joinOnlineMatch(session, found.id, session.username) as? CloudResult.Ok)?.value
+            val joinResult = withSession { cloud.joinOnlineMatch(it, found.id, it.username) }
+            val joined = (joinResult as? CloudResult.Ok)?.value
             if (joined == null) {
-                onState(LinkState.FAILED, Side.ENEMY)
+                onState(failureState(joinResult), Side.ENEMY)
                 return@launch
             }
             matchId = joined.id
@@ -425,7 +445,7 @@ class OnlineLink(
         startWaitingBeat(matchId)
         while (true) {
             delay(1500)
-            val match = (cloud.getOnlineMatch(session, matchId) as? CloudResult.Ok)?.value ?: continue
+            val match = (withSession { cloud.getOnlineMatch(it, matchId) } as? CloudResult.Ok)?.value ?: continue
             if (match.guestId != null) {
                 captureOpponent(match, session)
                 onState(LinkState.CONNECTED, Side.PLAYER)
@@ -579,7 +599,7 @@ class OnlineLink(
         val id = matchId ?: return
         scope.launch {
             val r = cloud.closeOnlineMatch(s, id, status)
-            if (r is CloudResult.Fail && r.expired) renewSession()?.let { cloud.closeOnlineMatch(it, id, status) }
+            if (r is CloudResult.Fail && r.expired) (renewSession() as? CloudResult.Ok)?.let { cloud.closeOnlineMatch(it.value, id, status) }
         }
     }
 

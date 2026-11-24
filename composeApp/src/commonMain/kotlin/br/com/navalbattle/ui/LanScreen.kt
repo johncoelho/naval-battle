@@ -191,7 +191,7 @@ private fun stateLabel(state: LinkState): String = t(
         LinkState.SEARCHING -> K.LAN_STATE_SEARCHING
         LinkState.CONNECTING -> K.LAN_STATE_CONNECTING
         LinkState.CONNECTED -> K.LAN_STATE_CONNECTED
-        LinkState.FAILED -> K.LAN_STATE_FAILED
+        LinkState.FAILED, LinkState.AUTH_EXPIRED -> K.LAN_STATE_FAILED
     }
 )
 
