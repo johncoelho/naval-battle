@@ -9,6 +9,15 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.8] — 2026-11-25 · Correção do teste do replay no iPhone (#139)
+
+App 0.48.8 (versionCode 144). Refs #139. **Sem dependência nova, sem mudança no banco e sem mudança de jogo.**
+
+### Corrigido
+- `BotReplayTest.boardAtAplicaSoOsPrimeirosTirosEPreservaAFrota` falhava só no simulador iOS (CI da 0.48.7): o teste comparava um `Set` com `marks.keys` do `SnapshotStateMap`, cuja visão de chaves não tem `equals` de conjunto no Kotlin/Native; agora compara `marks.keys.toSet()`. A asserção é a mesma, o código do app não mudou.
+
+---
+
 ## [0.48.7] — 2026-11-25 · Selo "Adversário virtual" e replay da mira da IA (#139)
 
 App 0.48.7 (versionCode 143). Refs #139. **Sem dependência nova, sem mudança no banco.** Item 5 do plano #132, aprovado pelo John em 22/11; a #119 (nome do bot igual na batalha e no resultado) já estava na `main` desde a 0.45.3.

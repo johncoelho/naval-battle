@@ -57,10 +57,10 @@ class BotReplayTest {
         val fleet = m.playerBoard.ships
         assertEquals(0, BotReplay.boardAt(fleet, log, 0).marks.size, "passo 0: frota intocada")
         val dois = BotReplay.boardAt(fleet, log, 2)
-        assertEquals(log.take(2).map { it.coord }.toSet(), dois.marks.keys)
+        assertEquals(log.take(2).map { it.coord }.toSet(), dois.marks.keys.toSet())
         assertEquals(fleet.size, dois.ships.size)
         val fim = BotReplay.boardAt(fleet, log, 9_999)
-        assertEquals(log.map { it.coord }.toSet(), fim.marks.keys, "passo alem do fim vale o fim")
+        assertEquals(log.map { it.coord }.toSet(), fim.marks.keys.toSet(), "passo alem do fim vale o fim")
         assertEquals(0, BotReplay.boardAt(fleet, log, -5).marks.size)
     }
 
