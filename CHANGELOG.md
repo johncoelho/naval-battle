@@ -14,7 +14,7 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 App 0.48.8 (versionCode 144). Refs #139. **Sem dependência nova, sem mudança no banco e sem mudança de jogo.**
 
 ### Corrigido
-- `BotReplayTest.boardAtAplicaSoOsPrimeirosTirosEPreservaAFrota` falhava só no simulador iOS (CI da 0.48.7): o teste comparava um `Set` com `marks.keys` do `SnapshotStateMap`, cuja visão de chaves não tem `equals` de conjunto no Kotlin/Native; agora compara `marks.keys.toSet()`. A asserção é a mesma, o código do app não mudou.
+- `BotReplayTest.boardAtAplicaSoOsPrimeirosTirosEPreservaAFrota` falhava só no simulador iOS (CI da 0.48.7). Causa provável, ainda não confirmada no iOS: o teste comparava um `Set` com `marks.keys` do `SnapshotStateMap`, cuja visão de chaves provavelmente não tem `equals` de conjunto no Kotlin/Native; agora compara `marks.keys.toSet()`. A asserção é a mesma, o código do app não mudou. A confirmação vem do CI iOS da 0.48.8.
 
 ---
 
