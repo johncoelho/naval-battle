@@ -95,6 +95,11 @@ class Match(
                 (playerBoard.remainingShips().size == 1 || enemyBoard.remainingShips().size == 1)
         }
 
+    private val _aiShotLog = mutableListOf<ShotOutcome>()
+
+    /** Tiros da IA em ordem, com o resultado de cada um (#139). Vazio fora da partida contra a IA. */
+    val aiShotLog: List<ShotOutcome> get() = _aiShotLog
+
     private val ai = Ai(random, easyAi, bot?.level?.errorChance ?: 0.0)
 
     /** O ultimo tiro do bot acertou (a proxima jogada dele demora um pouco mais). */
@@ -500,6 +505,8 @@ class Match(
             enemyImpact = impact
             enemyShots++
             if (scored) enemyHits++
+            // replay da mira do adversario virtual (#139): so o que a IA atirou, na ordem
+            if (opponent == Opponent.AI) _aiShotLog += outcome
         }
 
         announce(outcome, attacker)

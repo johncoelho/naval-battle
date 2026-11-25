@@ -1267,5 +1267,16 @@ enum class K(val pt: String, val en: String, val es: String) {
     SETTINGS_CONTACT("Fale conosco", "Contact us", "Contáctanos"),
     SETTINGS_CONTACT_SUB("Abre o contato da política", "Opens the contact in the policy", "Abre el contacto de la política"),
     ACCOUNT_RULES_ACCEPT("Ao criar a conta você aceita as Regras da comunidade.", "By creating the account you accept the Community rules.", "Al crear la cuenta aceptas las Reglas de la comunidad."),
-    ACCOUNT_RULES_LINK("Ler as regras", "Read the rules", "Leer las reglas")
+    ACCOUNT_RULES_LINK("Ler as regras", "Read the rules", "Leer las reglas"),
+
+    // ---------------------------------------------------------------- adversário virtual transparente (#139)
+    BOT_BADGE("Adversário virtual", "Virtual opponent", "Oponente virtual"),
+    BOT_REPLAY_OPEN("Ver replay da mira", "See aim replay", "Ver repetición de la mira"),
+    BOT_REPLAY_OPEN_SUB("Os tiros do adversário virtual, em ordem", "The virtual opponent's shots, in order", "Los disparos del oponente virtual, en orden"),
+    BOT_REPLAY_TITLE("Replay da mira", "Aim replay", "Repetición de la mira"),
+    BOT_REPLAY_STEP("Tiro %1 de %2", "Shot %1 of %2", "Disparo %1 de %2"),
+    BOT_REPLAY_PREV("Anterior", "Previous", "Anterior"),
+    BOT_REPLAY_NEXT("Próximo", "Next", "Siguiente"),
+    BOT_REPLAY_AGAIN("Rever", "Replay", "Repetir"),
+    BOT_REPLAY_CLOSE("Fechar replay", "Close replay", "Cerrar repetición")
 }

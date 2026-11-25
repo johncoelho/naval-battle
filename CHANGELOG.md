@@ -9,6 +9,15 @@ Atualizar este arquivo é obrigatório a cada versão compilada — ver
 
 ---
 
+## [0.48.7] — 2026-11-25 · Selo "Adversário virtual" e replay da mira da IA (#139)
+
+App 0.48.7 (versionCode 143). Refs #139. **Sem dependência nova, sem mudança no banco.** Item 5 do plano #132, aprovado pelo John em 22/11; a #119 (nome do bot igual na batalha e no resultado) já estava na `main` desde a 0.45.3.
+
+### Adicionado
+- **Selo "Adversário virtual" (#139):** contra o bot, a tela de resultado mostra um selo discreto abaixo da chamada de vitória/derrota e no placar da partida (coluna do bot, ao lado do nome, o mesmo da batalha). Decisão do John (22/11): **só no resultado e na classificação**; o popup "Adversário encontrado" não ganha o selo. "Classificação" = resultado + placar local da partida (decisão do PO em 25/11); o bot nunca vai ao ranking do servidor. Contra humano, treino com a IA sem persona e partida local, nenhum selo. PT/EN/ES.
+- **Replay da mira (#139):** no resultado contra o bot, o botão "Ver replay da mira" mostra os tiros da IA em ordem sobre a frota do jogador (toca sozinho, um tiro a cada 450 ms; anterior, próximo, rever e fechar). Usa só os tiros já guardados na partida (`Match.aiShotLog`), sem mexer na IA, na dificuldade nem nos pontos. Não é oferecido em partida abandonada, por ausência ou em andamento. Texto sem afirmar o que a IA "enxerga".
+- **Testes:** `BotReplayTest` (selo só contra o bot, log em ordem e coerente com o tabuleiro, replay só no fim e sem abandono, tabuleiro por passo e que a mira da IA, com as mesmas marcas, não muda conforme a frota do jogador).
+
 ## [Servidor] — 2026-11-24 · Coluna `app_releases.android_prod` (#178)
 
 Refs #178. **Sem versão do app, sem dependência nova**; não mexe em `composeApp/`, `iosApp/` nem `gradle/` (commit com `[skip ci]`).

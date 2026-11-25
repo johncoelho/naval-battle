@@ -40,6 +40,8 @@ import br.com.navalbattle.i18n.t
 import br.com.navalbattle.design.NavalType
 import br.com.navalbattle.design.drawMedal
 import br.com.navalbattle.design.drawShip
+import br.com.navalbattle.game.BotReplay
+import kotlinx.coroutines.delay
 import br.com.navalbattle.game.AdPlace
 import br.com.navalbattle.game.Award
 import br.com.navalbattle.game.Match
@@ -194,6 +196,11 @@ fun ResultScreen(state: AppState, match: Match) {
                 },
                 Naval.inkSoft
             )
+            // selo discreto (#139): so contra o bot, so no resultado; o popup "Adversario encontrado" nao ganha
+            if (BotReplay.showBadge(match)) {
+                Gap(8)
+                BotBadge()
+            }
 
             resultSections(local, online || bot).forEach { section ->
                 when (section) {
@@ -298,6 +305,11 @@ fun ResultScreen(state: AppState, match: Match) {
                     }
                     ResultSection.CAREER -> award?.let { a -> CareerReport(state, match, a) }
                 }
+            }
+            // replay da mira do adversario virtual (#139): so partida terminada contra o bot, nunca abandono
+            if (BotReplay.offered(match)) {
+                Gap(22)
+                BotReplayPanel(state, match)
             }
             Gap(16)
         }
@@ -420,6 +432,13 @@ private fun Comparison(match: Match) {
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1f)
         )
+    }
+    // placar da partida (#139): o selo acompanha o nome do bot, alinhado a coluna dele
+    if (BotReplay.showBadge(match)) {
+        Row(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
+            Spacer(Modifier.weight(2.4f))
+            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { BotBadge() }
+        }
     }
     CompareRow(t(K.RESULT_SHOTS_FIRED), match.shotsOf(me), match.shotsOf(them), higherIsBetter = null)
     CompareRow(t(K.RESULT_HITS), match.hitsOf(me), match.hitsOf(them))
@@ -860,6 +879,72 @@ private fun FleetRoll(match: Match, state: AppState, afloat: Int) {
             )
         }
     }
+}
+
+/** Selo discreto "Adversário virtual" (#139): contorno fino e texto apagado, sem competir com o resultado. */
+@Composable
+private fun BotBadge() {
+    Text(
+        t(K.BOT_BADGE).uppercase(),
+        style = NavalType.monoSmall,
+        color = Naval.muted,
+        modifier = Modifier.border(1.dp, Naval.line).padding(horizontal = 6.dp, vertical = 2.dp)
+    )
+}
+
+/**
+ * Replay da mira do adversário virtual (#139): os tiros dele, em ordem, sobre a frota deste jogador. Usa só os tiros
+ * já guardados na partida; toca sozinho passo a passo e dá para avançar, voltar ou fechar.
+ */
+@Composable
+private fun BotReplayPanel(state: AppState, match: Match) {
+    val shots = match.aiShotLog
+    var open by remember(match) { mutableStateOf(false) }
+    if (!open) {
+        SecondaryButton(t(K.BOT_REPLAY_OPEN), t(K.BOT_REPLAY_OPEN_SUB)) { open = true }
+        return
+    }
+    var step by remember(match) { mutableStateOf(0) }
+    var playing by remember(match) { mutableStateOf(true) }
+    // toca sozinho: um tiro a cada 450 ms ate o fim (leve: so troca o passo, o tabuleiro e refeito por passo)
+    LaunchedEffect(match, playing, step) {
+        if (playing && step < shots.size) {
+            delay(450)
+            step++
+        } else if (step >= shots.size) {
+            playing = false
+        }
+    }
+    val board = remember(match, step) { BotReplay.boardAt(match.playerBoard.ships, shots, step) }
+    SectionHead(t(K.BOT_REPLAY_TITLE), t(K.BOT_REPLAY_STEP, step, shots.size))
+    BoardView(
+        board = board,
+        skin = state.skin,
+        showShips = true,
+        sweep = false,
+        markTint = commanderColor(Side.ENEMY),
+        modifier = Modifier.fillMaxWidth()
+    )
+    Gap(10)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SecondaryButton(t(K.BOT_REPLAY_PREV), enabled = step > 0, modifier = Modifier.weight(1f)) {
+            playing = false
+            step = (step - 1).coerceAtLeast(0)
+        }
+        if (step >= shots.size) {
+            SecondaryButton(t(K.BOT_REPLAY_AGAIN), modifier = Modifier.weight(1f)) {
+                step = 0
+                playing = true
+            }
+        } else {
+            SecondaryButton(t(K.BOT_REPLAY_NEXT), modifier = Modifier.weight(1f)) {
+                playing = false
+                step = (step + 1).coerceAtMost(shots.size)
+            }
+        }
+    }
+    Gap(8)
+    SecondaryButton(t(K.BOT_REPLAY_CLOSE)) { open = false }
 }
 
 /** Cabeçalho de seção: rótulo, fio até a margem e um valor opcional à direita. */
