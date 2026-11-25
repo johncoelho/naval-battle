@@ -398,7 +398,7 @@ servidor: `supabase/tests/bots_ensaio.sql` (bloco que desfaz).
 | BOT-07 | P1 | `select bot_rating, level, ranked, status, won from bot_matches` da partida | `bot_rating` entre R-100 e R+100; nível fácil para conta nova |
 | BOT-08 | P1 | 3 partidas: ver o intervalo entre jogadas do adversário | Nenhuma jogada em menos de 1,2 s; o intervalo varia; só provocações da lista (emoji ou frase pronta), nunca texto livre |
 | BOT-09 | P1 | Conferir nomes das personas vistas | Passam no filtro, não são pessoa conhecida, não coincidem com `profiles.username`, não aparecem na busca de comandantes nem no ranking |
-| BOT-10 | P0 | `bot_ranked_daily_limit = 3`: três ranqueadas contra bot no dia e uma quarta espera | Não entra bot na quarta (cai no treino de hoje); idem `bot_max_per_day` |
+| BOT-10 | P0 | Limites do bot sem teto na fase de engajamento (`bot_ranked_daily_limit`, `bot_ranked_total_limit` e `bot_max_per_day` = 100000 desde 24/11/2026; antes 3, 10 e 10) | A quarta ranqueada do dia ainda recebe bot; para testar o corte, ponha 3 temporariamente e devolva 100000 |
 | BOT-11 | P1 | Partida contra bot em andamento, `bots_enabled = 'false'` | A partida atual termina e fecha no servidor; a próxima busca já não tem bot, sem atualizar o app |
 | BOT-12 | P1 | Versão 0.44.5 instalada com `bots_enabled = 'test'` | Nada quebra: só o treino de hoje |
 | BOT-13 | P1 | 10 partidas contra bot: contar chamadas | No máximo `bot_wait_info`, `cancel_quick_room`, `bot_match_start` e o relato por partida; nenhuma linha nova em `online_matches` além da sala cancelada nem em `online_messages` |

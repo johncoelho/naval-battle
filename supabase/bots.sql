@@ -59,9 +59,9 @@ insert into public.app_config (key, value) values
   ('bot_percent', '100'),                   -- com 'true': percentual de contas (0 a 100) que o bot alcança
   ('bot_wait_seconds', '30'),               -- espera na casual antes do bot (lida pelo app em bot_wait_info)
   ('bot_wait_seconds_ranked', '45'),        -- espera na ranqueada
-  ('bot_max_per_day', '10'),                -- partidas contra bot por dia (Brasília), casual + ranqueada
-  ('bot_ranked_daily_limit', '3'),          -- ranqueadas contra bot por dia
-  ('bot_ranked_total_limit', '10'),         -- ranqueadas contra bot na vida da conta (teto de adulteração)
+  ('bot_max_per_day', '100000'),            -- partidas contra bot por dia (Brasília), casual + ranqueada; 100000 = sem limite (era 10, 24/11/2026)
+  ('bot_ranked_daily_limit', '100000'),     -- ranqueadas contra bot por dia; 100000 = sem limite (era 3, 24/11/2026)
+  ('bot_ranked_total_limit', '100000'),     -- ranqueadas contra bot na vida da conta; 100000 = sem limite (era 10, 24/11/2026)
   ('bot_ranked_delta_pct', '50'),           -- % do delta normal do Elo contra bot
   ('bot_ranked_max_delta', '16'),           -- teto duro do delta por partida
   ('bot_rating_spread', '100'),             -- desvio máximo do rating do bot em torno do jogador
